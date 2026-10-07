@@ -1,0 +1,222 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1135.32 729.3333333333334" width="1135.32" height="729.3333333333334" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+</defs>
+<polyline class="er-relationship" data-entity1="SCHEDULES" data-entity2="JOURNALS" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="logs" points="279.2,617.3333333333334 498.946,617.3333333333334" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="JOURNALS" data-entity2="ATTENDANCES" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="records" points="665.546,617.3333333333334 922.12,617.3333333333334" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="STUDENTS" data-entity2="ATTENDANCES" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="attends" points="675.446,296 685.446,296 685.446,576.6666666666666 922.12,576.6666666666666" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="GRADE_COMPONENTS" data-entity2="GRADES" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="categorizes" points="675.446,112 922.12,112" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="STUDENTS" data-entity2="GRADES" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="achieves" points="675.446,268 842.12,268 842.12,160 922.12,160" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="STUDENTS" data-entity2="REPORT_CARDS" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="earns" points="675.446,282 695.446,282 695.446,372 922.12,372" fill="none" stroke="var(--_line)" stroke-width="1" />
+<g class="entity" data-id="SCHEDULES" data-label="SCHEDULES">
+  <rect x="40" y="545.3333333333334" width="239.2" height="144" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="545.3333333333334" width="239.2" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="159.6" y="562.3333333333334" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">SCHEDULES</text>
+  <line x1="40" y1="579.3333333333334" x2="279.2" y2="579.3333333333334" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="46" y="583.3333333333334" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="57.155" y="590.3333333333334" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="76.31" y="590.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="271.2" y="590.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="46" y="605.3333333333334" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="57.155" y="612.3333333333334" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="76.31" y="612.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="271.2" y="612.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">teaching_assignment_id</tspan></text>
+  <text x="48" y="634.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">int</tspan></text>
+  <text x="271.2" y="634.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">day_of_week</tspan></text>
+  <text x="48" y="656.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">time</tspan></text>
+  <text x="271.2" y="656.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">start_time</tspan></text>
+  <text x="48" y="678.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">time</tspan></text>
+  <text x="271.2" y="678.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">end_time</tspan></text>
+</g>
+<g class="entity" data-id="JOURNALS" data-label="JOURNALS">
+  <rect x="498.946" y="545.3333333333334" width="166.6" height="144" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="498.946" y="545.3333333333334" width="166.6" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="582.246" y="562.3333333333334" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">JOURNALS</text>
+  <line x1="498.946" y1="579.3333333333334" x2="665.546" y2="579.3333333333334" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="504.946" y="583.3333333333334" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="516.101" y="590.3333333333334" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="535.256" y="590.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="657.546" y="590.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="504.946" y="605.3333333333334" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="516.101" y="612.3333333333334" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="535.256" y="612.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="657.546" y="612.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">schedule_id</tspan></text>
+  <text x="506.946" y="634.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">date</tspan></text>
+  <text x="657.546" y="634.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">date</tspan></text>
+  <text x="506.946" y="656.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="657.546" y="656.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">topic</tspan></text>
+  <text x="506.946" y="678.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="657.546" y="678.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">notes</tspan></text>
+</g>
+<g class="entity" data-id="ATTENDANCES" data-label="ATTENDANCES">
+  <rect x="922.12" y="536" width="160" height="122" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="922.12" y="536" width="160" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1002.12" y="553" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">ATTENDANCES</text>
+  <line x1="922.12" y1="570" x2="1082.12" y2="570" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="928.12" y="574" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="581" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="958.43" y="581" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1074.12" y="581" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="928.12" y="596" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="603" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="603" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1074.12" y="603" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">journal_id</tspan></text>
+  <rect x="928.12" y="618" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="625" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="625" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1074.12" y="625" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">student_id</tspan></text>
+  <g><title>present|late|excused|sick|absent</title>
+  <text x="930.12" y="647" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="1074.12" y="647" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">status</tspan></text>
+  </g>
+</g>
+<g class="entity" data-id="GRADE_COMPONENTS" data-label="GRADE_COMPONENTS">
+  <rect x="489.046" y="40" width="186.4" height="144" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="489.046" y="40" width="186.4" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="582.246" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">GRADE_COMPONENTS</text>
+  <line x1="489.046" y1="74" x2="675.446" y2="74" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="495.046" y="78" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="506.20099999999996" y="85" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="525.356" y="85" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="667.446" y="85" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="495.046" y="100" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="506.20099999999996" y="107" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="525.356" y="107" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="667.446" y="107" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">subject_id</tspan></text>
+  <rect x="495.046" y="122" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="506.20099999999996" y="129" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="525.356" y="129" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="667.446" y="129" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">grade_level_id</tspan></text>
+  <text x="497.046" y="151" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="667.446" y="151" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">name</tspan></text>
+  <text x="497.046" y="173" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">decimal</tspan></text>
+  <text x="667.446" y="173" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">weight</tspan></text>
+</g>
+<g class="entity" data-id="GRADES" data-label="GRADES">
+  <rect x="922.12" y="64" width="173.2" height="144" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="922.12" y="64" width="173.2" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1008.72" y="81" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">GRADES</text>
+  <line x1="922.12" y1="98" x2="1095.32" y2="98" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="928.12" y="102" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="109" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="958.43" y="109" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1087.32" y="109" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="928.12" y="124" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="131" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="131" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1087.32" y="131" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">student_id</tspan></text>
+  <rect x="928.12" y="146" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="153" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="153" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1087.32" y="153" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">component_id</tspan></text>
+  <rect x="928.12" y="168" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="175" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="175" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1087.32" y="175" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">period_id</tspan></text>
+  <text x="930.12" y="197" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">decimal</tspan></text>
+  <text x="1087.32" y="197" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">score</tspan></text>
+</g>
+<g class="entity" data-id="REPORT_CARDS" data-label="REPORT_CARDS">
+  <rect x="922.12" y="278" width="166.6" height="188" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="922.12" y="278" width="166.6" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1005.42" y="295" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">REPORT_CARDS</text>
+  <line x1="922.12" y1="312" x2="1088.72" y2="312" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="928.12" y="316" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="323" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="958.43" y="323" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1080.72" y="323" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="928.12" y="338" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="345" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="345" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1080.72" y="345" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">student_id</tspan></text>
+  <rect x="928.12" y="360" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="367" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="367" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1080.72" y="367" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">semester_id</tspan></text>
+  <text x="930.12" y="389" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">jsonb</tspan></text>
+  <text x="1080.72" y="389" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">data_snapshot</tspan></text>
+  <text x="930.12" y="411" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="1080.72" y="411" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">status</tspan></text>
+  <rect x="928.12" y="426" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="939.275" y="433" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="958.43" y="433" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1080.72" y="433" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">approved_by</tspan></text>
+  <text x="930.12" y="455" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="1080.72" y="455" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">verify_token</tspan></text>
+</g>
+<g class="entity" data-id="STUDENTS" data-label="STUDENTS">
+  <rect x="535.446" y="254" width="140" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="535.446" y="254" width="140" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="605.446" y="271" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">STUDENTS</text>
+  <line x1="535.446" y1="288" x2="675.446" y2="288" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="605.446" y="299" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<line x1="283.2" y1="611.3333333333334" x2="283.2" y2="623.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="287.2" y1="611.3333333333334" x2="287.2" y2="623.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="494.946" y1="624.3333333333334" x2="482.946" y2="617.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="494.946" y1="617.3333333333334" x2="482.946" y2="617.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="494.946" y1="610.3333333333334" x2="482.946" y2="617.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="478.946" cy="617.3333333333334" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="669.546" y1="611.3333333333334" x2="669.546" y2="623.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="673.546" y1="611.3333333333334" x2="673.546" y2="623.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="624.3333333333334" x2="906.12" y2="617.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="617.3333333333334" x2="906.12" y2="617.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="610.3333333333334" x2="906.12" y2="617.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="902.12" cy="617.3333333333334" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="679.446" y1="290" x2="679.446" y2="302" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="683.446" y1="290" x2="683.446" y2="302" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="583.6666666666666" x2="906.12" y2="576.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="576.6666666666666" x2="906.12" y2="576.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="569.6666666666666" x2="906.12" y2="576.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="902.12" cy="576.6666666666666" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="679.446" y1="106" x2="679.446" y2="118" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="683.446" y1="106" x2="683.446" y2="118" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="119" x2="906.12" y2="112" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="112" x2="906.12" y2="112" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="105" x2="906.12" y2="112" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="902.12" cy="112" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="679.446" y1="262" x2="679.446" y2="274" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="683.446" y1="262" x2="683.446" y2="274" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="167" x2="906.12" y2="160" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="160" x2="906.12" y2="160" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="153" x2="906.12" y2="160" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="902.12" cy="160" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="679.446" y1="276" x2="679.446" y2="288" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="683.446" y1="276" x2="683.446" y2="288" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="379" x2="906.12" y2="372" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="372" x2="906.12" y2="372" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="918.12" y1="365" x2="906.12" y2="372" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="902.12" cy="372" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<rect x="374.15" y="607.1833333333334" width="29.846" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="389.073" y="617.3333333333334" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">logs</text>
+<rect x="769.4060000000001" y="607.1833333333334" width="48.854" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="793.8330000000001" y="617.3333333333334" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">records</text>
+<rect x="663.395" y="539.5203333333333" width="44.102" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="685.446" y="549.6703333333332" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">attends</text>
+<rect x="765.446" y="101.85" width="66.674" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="798.783" y="112" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">categorizes</text>
+<rect x="815.317" y="247.18699999999998" width="53.606" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="842.12" y="257.337" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">achieves</text>
+<rect x="734.702" y="361.85" width="38.162" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="753.783" y="372" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">earns</text>
+</svg>
