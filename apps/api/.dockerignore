@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Composer & Vendor
+/vendor/
+
+# Environment files
+.env
+.env.backup
+.env.production
+
+# Node & NPM
+node_modules/
+npm-debug.log
+
+# Storage & Cache
+storage/*.key
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+!storage/framework/.gitignore
+
+# PHPUnit / Tests
+.phpunit.cache
+.phpunit.result.cache

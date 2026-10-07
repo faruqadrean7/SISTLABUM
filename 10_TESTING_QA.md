@@ -86,8 +86,8 @@ Fitur dianggap **selesai** bila semua terpenuhi:
 
 ## 9. Template UAT
 ```
-ID Skenario : UAT-ACD-05
-Fitur       : BE-ACD-08 / ADM-ACD-08 / MOB-ORT-03
+ID Skenario : UAT-GRD-01
+Fitur       : BE-GRD-03 / ADM-GRD-03 / MOB-ORT-03
 Peran       : Wali kelas, Kepala sekolah, Orang tua
 Langkah     : 1) ... 2) ... 3) ...
 Hasil harap : ...
@@ -98,3 +98,4 @@ Penguji     : (nama, tanggal)
 
 ## Changelog
 - 1.0: Draf awal.
+- 1.1: Pembaruan referensi ID skenario UAT e-progress report ke modul `GRD` (`BE-GRD-03 / ADM-GRD-03`).

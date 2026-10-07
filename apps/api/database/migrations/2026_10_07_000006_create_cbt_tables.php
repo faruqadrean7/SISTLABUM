@@ -75,6 +75,9 @@ return new class extends Migration
 
             $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('restrict');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('restrict');
+        });
+
+        Schema::table('exams', function (Blueprint $table) {
             $table->foreign('parent_exam_id')->references('id')->on('exams')->onDelete('set null');
         });
 

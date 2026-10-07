@@ -82,7 +82,7 @@ Album foto (lightbox, lazy load), video (embed), buletin/majalah (PDF viewer/fli
 Daftar dokumen per kategori (brosur, panduan akademik, tata tertib) dengan ukuran file dan tombol unduh.
 
 ### WEB-GUEST-01: Buku tamu digital [P0]
-Form: nama, instansi, no. HP, keperluan, tujuan (dropdown guru/pejabat), foto opsional (kamera). Captcha/honeypot. Sukses → halaman konfirmasi.
+Form: nama, instansi, no. HP, keperluan, tujuan (dropdown guru/pejabat), foto opsional (kamera), canvas tanda tangan digital tamu [P2 via BE-GUEST-03]. Captcha/honeypot. Sukses → halaman konfirmasi.
 Catatan: juga dapat dipakai di tablet pos jaga (mode kiosk: layar penuh, reset otomatis setelah submit).
 
 ### WEB-ASP-01: Aspirasi & pengaduan [P0]
@@ -208,11 +208,12 @@ Token desain: warna brand dari logo sekolah (primary/secondary/accent), tipograf
 | Fitur web | Fitur backend |
 |---|---|
 | WEB-HOME/PRF/NEWS/CAL/GAL/DL | BE-CMS-01 s.d. 06 |
-| WEB-GUEST-01 | BE-GUEST-01 |
+| WEB-GUEST-01 | BE-GUEST-01, BE-GUEST-03 |
 | WEB-ASP-01 | BE-GUEST-02 |
 | WEB-PPDB-01..09 | BE-PPDB-01..09, BE-FILE-01 |
-| WEB-VER-01 | BE-ACD-08/09 (verify) |
+| WEB-VER-01 | BE-GRD-03, BE-GRD-04 (verify token) |
 | WEB-PPDB-10 | BE-NTF-02 |
 
 ## Changelog
 - 1.0: Draf awal.
+- 1.1: Pemisahan modul GUEST dari HUM, pembaruan ketergantungan verifikasi QR dokumen ke `BE-GRD-03/04`, penambahan dukungan tanda tangan canvas pada buku tamu digital (`BE-GUEST-03`).

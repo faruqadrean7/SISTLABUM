@@ -199,6 +199,10 @@ Kategori, isi, lampiran, opsi anonim, kode tiket pelacak. Pelapor dapat mengecek
 Status: `baru → ditinjau → ditindaklanjuti → selesai/ditolak`.
 Endpoint: `POST /public/complaints`, `GET /public/complaints/{code}`, `/complaints`.
 
+### BE-GUEST-03: Tanda tangan digital buku tamu [P2]
+Fitur penandatanganan digital berbasis canvas/sentuh pada formulir buku tamu digital; gambar tanda tangan disimpan dengan hash integritas dan tersemat pada log kunjungan tamu.
+Endpoint: `POST /public/guests/{id}/signature`, `GET /guests/{id}/signature`.
+
 ---
 
 ## 7. ACD: Akademik
@@ -224,35 +228,39 @@ Endpoint: `/leave-requests`, `PATCH /leave-requests/{id}/decision`.
 Check-in/out (opsional GPS/selfie dengan radius), rekap, persentase kehadiran untuk dashboard.
 Endpoint: `/staff-attendances`.
 
-### BE-ACD-06: Komponen & buku nilai bulanan [P0]
-Komponen nilai (harian, tugas, proyek, ulangan, sikap) dengan bobot per mapel; input massal per kelas; validasi 0-100; kunci periode.
-Aturan: nilai dari CBT dapat otomatis masuk komponen yang dipetakan; perubahan nilai setelah kunci perlu persetujuan dan tercatat.
-Endpoint: `/grade-components`, `/grades`, `POST /grades/bulk`, `PATCH /grade-periods/{id}/lock`.
-
-### BE-ACD-07: Catatan karakter bulanan [P0]
-Penilaian profil pelajar/pembiasaan (skala/deskripsi) + catatan wali kelas per siswa per bulan.
-Endpoint: `/character-notes`.
-
-### BE-ACD-08: E-Progress Report bulanan [P0]
-Ringkasan 1 halaman: nilai per mapel, % kehadiran, poin sikap, catatan walas. Alur: generate (queue) → kepala sekolah ACC → publish ke ortu/siswa. PDF bertanda tangan QR; QR mengarah ke halaman verifikasi publik yang memvalidasi keaslian.
-Status: `draft → menunggu ACC → disetujui → terbit`.
-Endpoint: `POST /progress-reports/generate`, `PATCH /progress-reports/{id}/approve`, `GET /progress-reports/{id}/pdf`, `GET /public/verify/{token}`.
-
-### BE-ACD-09: E-Rapor semester [P0]
-Nilai akhir (rumus bobot), deskripsi capaian otomatis (template + nilai), absensi, ekstrakurikuler, catatan walas. Kunci/buka oleh admin, pengesahan kepala sekolah, cetak massal (queue), arsip.
-Endpoint: `/report-cards`, `POST /report-cards/generate`, `PATCH /report-cards/{id}/lock`.
-
-### BE-ACD-10: Bank modul ajar & perangkat [P1]
+### BE-ACD-06: Bank modul ajar & perangkat [P1]
 Repositori modul ajar, ATP, silabus, modul P5 per tingkat/mapel dengan versi.
 Endpoint: `/teaching-materials`.
 
-### BE-ACD-11: Tugas & materi pembelajaran (LMS ringan) [P1]
+### BE-ACD-07: Tugas & materi pembelajaran (LMS ringan) [P1]
 Guru unggah materi dan tugas; siswa mengumpulkan; guru menilai; masuk komponen nilai.
 Endpoint: `/materials`, `/assignments`, `/assignments/{id}/submissions`.
 
 ---
 
-## 8. CBT: Ujian Digital
+## 8. GRD: Penilaian & Rapor
+
+### BE-GRD-01: Komponen & buku nilai bulanan [P0]
+Komponen nilai (harian, tugas, proyek, ulangan, sikap) dengan bobot per mapel; input massal per kelas; validasi 0-100; kunci periode.
+Aturan: nilai dari CBT dapat otomatis masuk komponen yang dipetakan; perubahan nilai setelah kunci perlu persetujuan dan tercatat.
+Endpoint: `/grade-components`, `/grades`, `POST /grades/bulk`, `PATCH /grade-periods/{id}/lock`.
+
+### BE-GRD-02: Catatan karakter bulanan [P0]
+Penilaian profil pelajar/pembiasaan (skala/deskripsi) + catatan wali kelas per siswa per bulan.
+Endpoint: `/character-notes`.
+
+### BE-GRD-03: E-Progress Report bulanan [P0]
+Ringkasan 1 halaman: nilai per mapel, % kehadiran, poin sikap, catatan walas. Alur: generate (queue) → kepala sekolah ACC → publish ke ortu/siswa. PDF bertanda tangan QR; QR mengarah ke halaman verifikasi publik yang memvalidasi keaslian.
+Status: `draft → menunggu ACC → disetujui → terbit`.
+Endpoint: `POST /progress-reports/generate`, `PATCH /progress-reports/{id}/approve`, `GET /progress-reports/{id}/pdf`, `GET /public/verify/{token}`.
+
+### BE-GRD-04: E-Rapor semester [P0]
+Nilai akhir (rumus bobot), deskripsi capaian otomatis (template + nilai), absensi, ekstrakurikuler, catatan walas. Kunci/buka oleh admin, pengesahan kepala sekolah, cetak massal (queue), arsip.
+Endpoint: `/report-cards`, `POST /report-cards/generate`, `PATCH /report-cards/{id}/lock`.
+
+---
+
+## 9. CBT: Ujian Digital
 
 ### BE-CBT-01: Bank soal [P0]
 Tipe: PG, PG kompleks, benar/salah, menjodohkan, isian singkat, uraian. Atribut: mapel, tingkat, bab, CP, level kognitif (LOTS/MOTS/HOTS), tingkat kesulitan, bobot, pembahasan, lampiran (gambar/audio), rumus (LaTeX).
@@ -297,9 +305,13 @@ PDF berita acara (hadir, pelanggaran, catatan pengawas).
 ### BE-CBT-11: Mode server lokal & sinkronisasi [P2]
 Paket ujian diekspor ke server lokal; hasil disinkronkan kembali.
 
+### BE-CBT-12: Deteksi anomali perangkat/IP pada sesi ujian [P1]
+Pencatatan pergantian IP, perubahan user-agent/fingerprint, atau lonjakan jeda waktu janggal selama ujian berlangsung; dicatat ke tabel pelanggaran/log audit untuk ditinjau pengawas tanpa memblokir sesi ujian siswa secara otomatis.
+Endpoint: `POST /exam-sessions/{id}/heartbeat`, `GET /exams/{id}/anomalies`.
+
 ---
 
-## 9. STD: Kesiswaan
+## 10. STD: Kesiswaan
 
 ### BE-STD-01: Poin pelanggaran & prestasi [P0]
 Master jenis & bobot poin; pencatatan oleh guru; akumulasi poin; ambang memicu tindak lanjut (peringatan, panggilan ortu) otomatis tercatat dan notifikasi.
@@ -314,12 +326,12 @@ Pendaftaran delegasi, hasil lomba, galeri piala, otomatis tercatat sebagai poin 
 Endpoint: `/competitions`, `/achievements`.
 
 ### BE-STD-04: Study trip / outing class [P2]
-Rencana perjalanan, rute, panduan, persetujuan ortu per siswa (izin digital), daftar peserta.
+Rencana perjalanan, rute, panduan, persetujuan ortu per siswa (izin digital), daftar peserta. Rincian biaya hanya berupa catatan teks informatif tanpa modul transaksi keuangan.
 Endpoint: `/trips`, `/trips/{id}/consents`.
 
 ---
 
-## 10. BK: Bimbingan & Konseling (data sangat sensitif)
+## 11. BK: Bimbingan & Konseling (data sangat sensitif)
 
 ### BE-BK-01: Kasus & sesi konseling [P0]
 Konseling privat siswa/ortu, catatan sesi, riwayat pembinaan, jadwal. Hanya `counselor` (dan kepala sekolah untuk ringkasan non-detail) yang dapat membaca isi; guru lain hanya melihat status rujukan.
@@ -336,7 +348,7 @@ Endpoint: `/counseling/requests`.
 
 ---
 
-## 11. SAR: Sarana & Prasarana
+## 12. SAR: Sarana & Prasarana
 
 ### BE-SAR-01: Booking fasilitas & ruang [P0]
 Cek ketersediaan real-time, pengajuan, persetujuan, deteksi bentrok, status (diajukan/disetujui/ditolak/selesai), termasuk peralatan (proyektor, sound system).
@@ -356,7 +368,7 @@ Endpoint: `/library/books`, `/loans`.
 
 ---
 
-## 12. HUM: Humas & Kemitraan
+## 13. HUM: Humas & Kemitraan
 
 ### BE-HUM-01: Kerja sama & MoU [P1]
 Dokumen MoU, mitra, masa berlaku, pengingat kedaluwarsa, program pertukaran pelajar dan pelacakan peserta.
@@ -368,7 +380,9 @@ Endpoint: `/alumni`, `/tracer-surveys`.
 
 ---
 
-## 13. NTF: Notifikasi
+---
+
+## 14. NTF: Notifikasi
 
 ### BE-NTF-01: Notifikasi in-app & push [P0]
 Registrasi device, kirim push per user/role/kelas, inbox notifikasi (baca/belum), deep link.
@@ -387,10 +401,10 @@ Pengguna memilih kanal dan jenis notifikasi.
 
 ---
 
-## 14. RPT: Laporan & Dashboard
+## 15. RPT: Laporan & Dashboard Eksekutif
 
 ### BE-RPT-01: Laporan rekap [P0]
-Kehadiran, nilai, PPDB, poin, tiket, peminjaman; filter periode/kelas; ekspor Excel/PDF (queue untuk besar).
+Kehadiran, nilai, PPDB, poin, tiket, peminjaman; filter periode/kelas; ekspor Excel/PDF (queue untuk data besar).
 Endpoint: `/reports/{type}`, `/reports/{type}/export`.
 
 ### BE-RPT-02: Dashboard eksekutif [P0]
@@ -399,7 +413,7 @@ Endpoint: `GET /dashboard/executive`, `GET /dashboard/teacher`, `GET /dashboard/
 
 ---
 
-## 15. FILE: Penyimpanan
+## 16. SYS & FILE: Penyimpanan & Utilitas Sistem
 
 ### BE-FILE-01: Upload bertanda tangan [P0]
 Presign upload, konfirmasi, validasi tipe/ukuran, bucket privat/publik, akses unduh dengan signed URL berumur pendek.
@@ -407,7 +421,7 @@ Endpoint: `POST /files/presign`, `POST /files/confirm`, `GET /files/{id}/url`.
 
 ---
 
-## 16. Job Terjadwal (Scheduler)
+## 17. Job Terjadwal (Scheduler)
 | Job | Jadwal | Fungsi |
 |---|---|---|
 | ppdb-close-wave | Tiap menit | Tutup gelombang saat lewat waktu |
@@ -418,19 +432,21 @@ Endpoint: `POST /files/presign`, `POST /files/confirm`, `GET /files/{id}/url`.
 | ticket-sla-reminder | Per jam | Tiket pending lewat SLA |
 | backup-verify | Mingguan | Verifikasi backup |
 
-## 17. Matriks Ketergantungan Fitur (ringkas)
+## 18. Matriks Ketergantungan Fitur (ringkas)
 | Fitur | Bergantung pada |
 |---|---|
 | BE-PPDB-08 | MST-02, MST-04, MST-05, AUTH-01 |
 | BE-ACD-02, 03 | MST-05, MST-06, ACD-01 |
-| BE-ACD-08 | ACD-03, ACD-06, ACD-07, STD-01, NTF-01 |
-| BE-ACD-09 | ACD-06, ACD-07, STD-02 |
+| BE-GRD-03 | ACD-03, GRD-01, GRD-02, STD-01, NTF-01 |
+| BE-GRD-04 | GRD-01, GRD-02, STD-02 |
 | BE-CBT-04 | CBT-01, CBT-02, CBT-03 |
-| BE-CBT-07 | CBT-04, ACD-06 |
-| BE-BK-02 | ACD-03, ACD-06, STD-01 |
+| BE-CBT-07 | CBT-04, GRD-01 |
+| BE-CBT-12 | CBT-04, AUTH-04 |
+| BE-BK-02 | ACD-03, GRD-01, STD-01 |
+| BE-RPT-01, 02 | Modul sumber data terkait (MST, ACD, GRD, CBT, STD, BK, SAR, PPDB) |
 | Semua modul | AUTH-01, AUTH-03, AUTH-05, FILE-01 |
 
-## 18. Acceptance Umum Backend
+## 19. Acceptance Umum Backend
 - Semua endpoint punya validasi DTO, dokumentasi OpenAPI, dan test minimal happy path + 1 negatif.
 - Tiap endpoint dilindungi permission; skenario 401 dan 403 diuji.
 - Tidak ada N+1 query pada endpoint daftar (dicek lewat log query).
@@ -439,3 +455,4 @@ Endpoint: `POST /files/presign`, `POST /files/confirm`, `GET /files/{id}/url`.
 
 ## Changelog
 - 1.0: Draf awal.
+- 1.1: Pemisahan GRD dari ACD (BE-GRD-01..04), pemisahan modul GUEST (BE-GUEST-01..03 dengan penambahan tanda tangan digital), penambahan BE-CBT-12 deteksi anomali sesi ujian, penyesuaian matriks dependensi lintas modul, dan penegasan status menunggu keputusan untuk pembiayaan study trip.

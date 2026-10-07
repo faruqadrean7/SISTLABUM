@@ -342,7 +342,7 @@ erDiagram
 
 ---
 
-## 4. Akademik I: Jadwal, Jurnal, Presensi, Izin
+## 4. Akademik / ACD (Jadwal, Jurnal, Presensi, Izin, LMS Ringan)
 ```mermaid
 erDiagram
   TIME_SLOTS {
@@ -452,7 +452,7 @@ erDiagram
 
 ---
 
-## 5. Akademik II: Nilai, Karakter, Progress Report, Rapor
+## 5. Penilaian & Rapor / GRD (Nilai, Karakter, Progress Report, Rapor)
 ```mermaid
 erDiagram
   GRADE_COMPONENTS {
@@ -1008,6 +1008,7 @@ erDiagram
     string content
     string status "draft|terbit|arsip"
     string visibility "publik|internal"
+    integer views_count
     timestamptz published_at
   }
   POST_CATEGORIES {
@@ -1148,3 +1149,4 @@ erDiagram
 
 ## Changelog
 - 1.0: ERD awal per domain, selaras dengan `08_DATABASE_SCHEMA.md`.
+- 1.1: Penambahan kolom `integer views_count` pada `POSTS`, penegasan pembagian kelompok domain ACD vs GRD.

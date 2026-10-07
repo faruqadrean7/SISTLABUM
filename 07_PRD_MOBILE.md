@@ -265,10 +265,11 @@ Tema (light, dark P2) dengan token warna/typografi dari brand sekolah; komponen:
 | Mobile | Backend |
 |---|---|
 | MOB-UMM-* | BE-AUTH-*, BE-NTF-*, BE-CMS-02/04 |
-| MOB-ORT-* | BE-ACD-03/04/06/08/09, BE-STD-01, BE-RPT-02 |
-| MOB-GRU-* | BE-ACD-01..07, BE-STD-01, BE-CBT-07, BE-SAR-01/03 |
-| MOB-SIS-* | BE-ACD-*, BE-STD-01, BE-CBT-03 |
-| MOB-CBT-* | BE-CBT-04/05/06 |
+| MOB-ORT-* | BE-ACD-03/04, BE-GRD-01/03/04, BE-STD-01, BE-RPT-02 |
+| MOB-GRU-* | BE-ACD-01..05, BE-GRD-01/02, BE-STD-01, BE-CBT-07, BE-SAR-01/03 |
+| MOB-SIS-* | BE-ACD-*, BE-GRD-*, BE-STD-01, BE-CBT-03 |
+| MOB-CBT-* | BE-CBT-04/05/06/12 |
 
 ## Changelog
 - 1.0: Draf awal.
+- 1.1: Pembaruan ketergantungan backend merujuk modul nilai `BE-GRD-*` dan fitur anomali ujian `BE-CBT-12`.

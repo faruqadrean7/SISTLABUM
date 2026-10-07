@@ -147,27 +147,31 @@ Antrean pengajuan untuk walas: lihat surat, setuju/tolak, catatan.
 ### ADM-ACD-05: Presensi guru & staf [P1]
 Rekap kehadiran, koreksi, laporan.
 
-### ADM-ACD-06: Buku nilai bulanan [P0]
-Grid siswa × komponen (seperti spreadsheet): navigasi keyboard, tempel dari Excel, validasi, simpan otomatis, indikator kelengkapan, kunci periode (admin).
-
-### ADM-ACD-07: Catatan karakter [P0]
-Form per siswa per bulan (skala + catatan), tampilan massal per kelas.
-
-### ADM-ACD-08: E-Progress Report [P0]
-Pilih kelas/bulan → generate (job) → pratinjau → ajukan ACC → kepala sekolah ACC (satuan/massal) → terbitkan; cetak massal; unduh PDF; status per siswa.
-
-### ADM-ACD-09: E-Rapor [P0]
-Pengaturan komponen & template deskripsi → hitung nilai akhir → periksa kelengkapan → kunci → pengesahan → cetak massal/ZIP → arsip. Pembukaan kunci memerlukan alasan.
-
-### ADM-ACD-10: Bank modul ajar [P1]
+### ADM-ACD-06: Bank modul ajar [P1]
 Unggah/versi/kategori; pencarian; tautkan ke tingkat & mapel.
 
-### ADM-ACD-11: Tugas & materi [P1]
+### ADM-ACD-07: Tugas & materi [P1]
 Buat tugas/materi, daftar pengumpulan, penilaian cepat.
 
 ---
 
-## 8. CBT
+## 8. GRD: Penilaian & Rapor (Admin)
+
+### ADM-GRD-01: Buku nilai bulanan [P0]
+Grid siswa × komponen (seperti spreadsheet): navigasi keyboard, tempel dari Excel, validasi, simpan otomatis, indikator kelengkapan, kunci periode (admin).
+
+### ADM-GRD-02: Catatan karakter [P0]
+Form per siswa per bulan (skala + catatan), tampilan massal per kelas.
+
+### ADM-GRD-03: E-Progress Report [P0]
+Pilih kelas/bulan → generate (job) → pratinjau → ajukan ACC → kepala sekolah ACC (satuan/massal) → terbitkan; cetak massal; unduh PDF; status per siswa.
+
+### ADM-GRD-04: E-Rapor [P0]
+Pengaturan komponen & template deskripsi → hitung nilai akhir → periksa kelengkapan → kunci → pengesahan → cetak massal/ZIP → arsip. Pembukaan kunci memerlukan alasan.
+
+---
+
+## 9. CBT
 
 ### ADM-CBT-01: Bank soal [P0]
 Daftar & filter (mapel, bab, CP, level, tipe), editor soal per tipe (rich text, gambar, audio, rumus), pratinjau tampilan siswa, import dari Word/Excel (template), duplikasi, status draft/final.
@@ -195,7 +199,7 @@ Isi catatan pengawas → PDF.
 
 ---
 
-## 9. Kesiswaan
+## 10. Kesiswaan
 
 ### ADM-STD-01: Poin pelanggaran & prestasi [P0]
 Master jenis poin, input cepat (cari siswa → pilih jenis → simpan), akumulasi per siswa/kelas, aturan tindak lanjut otomatis, riwayat.
@@ -207,11 +211,11 @@ Master ekskul, pendaftaran daring (persetujuan), jurnal kehadiran, nilai untuk r
 Pendaftaran delegasi, hasil, galeri piala.
 
 ### ADM-STD-04: Study trip [P2]
-Rencana, rute, peserta, status izin ortu, ekspor daftar.
+Rencana, rute, peserta, status izin ortu, ekspor daftar. Rincian biaya hanya dicatat sebagai teks catatan non-keuangan.
 
 ---
 
-## 10. BK (akses ketat)
+## 11. BK (akses ketat)
 
 ### ADM-BK-01: Kasus & konseling [P0]
 Daftar kasus (hanya milik BK), catatan sesi terenkripsi, jadwal, rujukan dari guru, riwayat pembinaan. Banner "Data rahasia: akses dicatat".
@@ -221,7 +225,7 @@ Daftar siswa berisiko (kehadiran/nilai/poin), tindak lanjut, penyesuaian ambang.
 
 ---
 
-## 11. Sarpras & Perpustakaan
+## 12. Sarpras & Perpustakaan
 
 ### ADM-SAR-01: Booking fasilitas [P0]
 Kalender ketersediaan, form pengajuan, antrean persetujuan, bentrok ditolak otomatis.
@@ -237,23 +241,30 @@ Katalog, peminjaman/pengembalian (scan), jatuh tempo, denda opsional.
 
 ---
 
-## 12. Humas
+## 13. GUEST: Buku Tamu & Aspirasi
 
-### ADM-HUM-01: Buku tamu [P0]
-Daftar tamu hari ini, checkout, pencarian, ekspor.
+### ADM-GUEST-01: Buku tamu [P0]
+Daftar tamu hari ini, checkout, pencarian, pratinjau tanda tangan digital [P2], ekspor data tamu.
 
-### ADM-HUM-02: Aspirasi/pengaduan [P0]
-Antrean, penugasan, tanggapan, perubahan status; pengaduan anonim tidak menampilkan identitas.
+### ADM-GUEST-02: Aspirasi/pengaduan [P0]
+Antrean tiket aspirasi, penugasan ke unit kerja, tanggapan resmi, perubahan status; pengaduan anonim tidak menampilkan identitas pelapor.
 
-### ADM-HUM-03: MoU & pertukaran [P1]
+### ADM-GUEST-03: Verifikasi tanda tangan digital buku tamu [P2]
+Pratinjau visual dan audit tanda tangan digital pengunjung pada detail data buku tamu.
+
+---
+
+## 14. HUM: Humas & Kemitraan
+
+### ADM-HUM-01: MoU & pertukaran [P1]
 Daftar MoU dengan masa berlaku & pengingat; program pertukaran dan peserta.
 
-### ADM-HUM-04: Alumni & tracer [P1]
+### ADM-HUM-02: Alumni & tracer [P1]
 Direktori alumni, kuesioner tracer (builder sederhana), rekap hasil.
 
 ---
 
-## 13. CMS
+## 15. CMS
 
 ### ADM-CMS-01: Pengaturan situs & profil [P0]
 Form pengaturan identitas, visi-misi, sambutan, akreditasi, kontak.
@@ -266,7 +277,7 @@ Kelola album/media, buletin, agenda publik/internal, dokumen unduhan.
 
 ---
 
-## 14. Laporan & Pengaturan
+## 16. Laporan & Pengaturan
 
 ### ADM-RPT-01: Pusat laporan [P0]
 Daftar jenis laporan, filter, pratinjau, ekspor PDF/Excel (via JobCenter).
@@ -288,7 +299,7 @@ Hari libur, jam pelajaran, ambang peringatan dini, batas edit jurnal, template r
 
 ---
 
-## 15. Matriks Hak Akses Ringkas (menu)
+## 17. Matriks Hak Akses Ringkas (menu)
 | Menu | Admin | Kepsek | Guru | Walas | BK | Sarpras | Panitia |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | Dashboard | ✅ | ✅ eksekutif | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -296,18 +307,20 @@ Hari libur, jam pelajaran, ambang peringatan dini, batas edit jurnal, template r
 | PPDB | ✅ | lihat | - | - | - | - | ✅ |
 | Jadwal | ✅ | lihat | lihat | lihat | - | - | - |
 | Jurnal & presensi | konfigurasi | rekap | input | input + izin | lihat | - | - |
-| Nilai & karakter | cetak/kunci | ACC | input | input + karakter | - | - | - |
+| Nilai & karakter (GRD) | cetak/kunci | ACC | input | input + karakter | - | - | - |
 | CBT | review | live monitor | buat/atur | buat/atur | - | - | - |
 | Poin siswa | konfigurasi | rekap | input | input | lihat | - | - |
 | BK | sistem | laporan | rujuk | rujuk | ✅ | - | - |
 | Sarpras | disposisi | pantau | pinjam/lapor | pinjam/lapor | - | ✅ | - |
-| Humas & aspirasi | ✅ | pantau | - | - | - | - | - |
+| Buku tamu & aspirasi (GUEST) | ✅ | pantau | - | - | - | - | - |
+| Humas & kemitraan (HUM) | ✅ | pantau | - | - | - | - | - |
 | CMS | ✅ | lihat | - | - | - | - | - |
+| Pusat Laporan (RPT) | ✅ | ✅ | rekap mapel | rekap kelas | rekap kasus | rekap sarpras | rekap PPDB |
 | Pengaturan | ✅ | - | - | - | - | - | - |
 
 Sumber otoritatif tetap tabel permission di backend; matriks ini hanya acuan awal seed.
 
-## 16. Kriteria Penerimaan Umum
+## 18. Kriteria Penerimaan Umum
 - Menu dan tombol hanya tampil sesuai permission; akses langsung via URL tanpa izin → halaman 403.
 - Semua tabel mendukung paginasi server-side (tidak memuat semua data).
 - Form menampilkan error validasi dari server pada field terkait.
@@ -317,3 +330,4 @@ Sumber otoritatif tetap tabel permission di backend; matriks ini hanya acuan awa
 
 ## Changelog
 - 1.0: Draf awal.
+- 1.1: Pemisahan modul GRD dari ACD (ADM-GRD-01..04), pemisahan modul GUEST dari HUM (ADM-GUEST-01..03 dengan audit tanda tangan tamu), penyelarasan modul RPT, dan pembaruan matriks menu hak akses.

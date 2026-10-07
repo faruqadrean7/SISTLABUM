@@ -11,21 +11,22 @@ class Post extends Model
     use HasUuids;
 
     protected $fillable = [
+        'school_id',
         'category_id',
-        'title',
+        'author_id',
+        'cover_file_id',
         'slug',
+        'title',
         'content',
-        'excerpt',
-        'featured_image_file_id',
-        'author_user_id',
         'status',
+        'visibility',
+        'views_count',
         'published_at',
-        'view_count',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
-        'view_count' => 'integer',
+        'views_count' => 'integer',
     ];
 
     public function category(): BelongsTo
@@ -33,13 +34,13 @@ class Post extends Model
         return $this->belongsTo(PostCategory::class, 'category_id');
     }
 
-    public function featuredImage(): BelongsTo
+    public function coverFile(): BelongsTo
     {
-        return $this->belongsTo(File::class, 'featured_image_file_id');
+        return $this->belongsTo(File::class, 'cover_file_id');
     }
 
     public function author(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'author_user_id');
+        return $this->belongsTo(User::class, 'author_id');
     }
 }

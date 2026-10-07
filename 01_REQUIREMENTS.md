@@ -51,23 +51,24 @@ Website publik, PPDB, sistem admin, API backend, mobile (ortu/guru/siswa), CBT, 
 Satu user bisa punya lebih dari satu role (contoh: guru sekaligus wali kelas).
 
 ## 5. Kebutuhan Fungsional (ringkas)
-Rincian ada di PRD per platform. Ringkasan per modul:
+Rincian ada di PRD per platform dan `13_MASTER_MODULES.md`. Ringkasan per 14 modul:
 
-| Modul | Kebutuhan inti |
-|---|---|
-| AUTH | Login, refresh, reset password, RBAC, multi-role, audit |
-| MST | Tahun ajaran, siswa, guru, ortu, kelas, mapel, ruang, import Excel |
-| CMS | Profil, berita, galeri, agenda publik, unduhan, mading digital |
-| PPDB | Gelombang/jalur/kuota, pendaftaran, berkas, verifikasi, seleksi, daftar ulang, konversi ke siswa |
-| GUEST | Buku tamu digital + notifikasi ke tujuan, aspirasi/whistleblowing (opsi anonim) |
-| ACD | Jadwal, jurnal mengajar, presensi, buku nilai bulanan, catatan karakter, e-progress report (PDF+QR), e-rapor, bank modul ajar |
-| CBT | Bank soal (6 tipe, CP, LOTS/MOTS/HOTS), ujian harian/STS/SAS, token, anti-cheat, monitor live, koreksi, analisis butir, remedial |
-| STD | Poin pelanggaran/prestasi, ekskul/OSIS, lomba, study trip |
-| BK | Konseling privat, riwayat pembinaan, deteksi dini |
-| SAR | Booking fasilitas, aset QR, tiket perbaikan, pustaka, alat lab |
-| HUM | Validasi PPDB, MoU, pertukaran pelajar, tracer alumni |
-| NTF | Push, WhatsApp, email, template, log |
-| RPT | Rekap, ekspor, dashboard eksekutif |
+| Modul | Prioritas | Kebutuhan inti |
+|---|:-:|---|
+| AUTH | P0 | Login, refresh token, reset password, RBAC multi-role, audit log, sesi perangkat |
+| MST | P0 | Master tahun ajaran, siswa, guru, staf, ortu, rombel/kelas, mapel, ruang, import Excel |
+| CMS | P0 | Profil sekolah, berita & pengumuman, agenda publik, unduhan, galeri & mading digital [P1] |
+| PPDB | P0 | Gelombang/jalur/kuota, formulir bertahap, berkas, verifikasi, seleksi ranking, daftar ulang, konversi siswa |
+| GUEST | P0 | Buku tamu digital + notifikasi otomatis, aspirasi/whistleblowing tiket anonim, tanda tangan digital tamu [P2] |
+| ACD | P0 | Jadwal pelajaran, jurnal mengajar guru, presensi siswa & gerbang, izin/sakit, presensi staf [P1], modul ajar & tugas LMS [P1] |
+| GRD | P0 | Komponen & buku nilai bulanan, catatan karakter walas, e-progress report PDF+QR, e-rapor semester, antrean generate |
+| CBT | P0 | Bank soal (6 tipe, CP, LOTS/MOTS/HOTS), jadwal ujian, token, anti-cheat, monitor live, koreksi, analisis butir, deteksi anomali IP/device [P1] |
+| STD | P1 | Poin pelanggaran & prestasi, ekskul/OSIS [P1], lomba [P1], study trip / outing class [P2] (biaya hanya catatan teks) |
+| BK | P1 | Kasus & konseling privat terenkripsi, riwayat pembinaan, deteksi dini (kehadiran/nilai/poin), permintaan konseling [P1] |
+| SAR | P1 | Booking fasilitas [P0], aset inventaris QR [P1], helpdesk perbaikan [P0], perpustakaan & alat lab [P1] |
+| HUM | P2 | Kemitraan & MoU [P1], program pertukaran pelajar [P1], direktori alumni & survei tracer study [P1] |
+| RPT | P0 | Laporan rekapitulasi data (kehadiran, nilai, PPDB, poin, tiket, pinjaman), ekspor PDF/Excel (queue), dashboard eksekutif kepsek & manajerial |
+| NTF/SYS | P0 | Notifikasi in-app & push, WhatsApp & email [P1], pengumuman terarah, file storage bertanda tangan, scheduler, job queue, app_config |
 
 ## 6. Kebutuhan Non-Fungsional
 | ID | Kebutuhan | Target / Ukuran |
@@ -101,15 +102,19 @@ Rincian ada di PRD per platform. Ringkasan per modul:
 | Object storage | File | S3, MinIO, R2 |
 | Peta | Lokasi sekolah | Google Maps / OpenStreetMap |
 
-## 9. Pertanyaan Terbuka (harus dijawab sebelum fase terkait)
-1. Keuangan/SPP masuk proyek atau tidak? (blokir fase keuangan)
-2. Jenjang sekolah dan jumlah siswa? (sizing server, struktur rapor)
-3. Perlu integrasi Dapodik? (modul master data)
-4. Hosting cloud atau server sekolah? (arsitektur deploy)
-5. Format resmi rapor semester, progress report, dan kop surat?
-6. Skema seleksi PPDB: jalur apa saja, rumus ranking tiap jalur?
-7. Sistem poin pelanggaran: tabel poin dan sanksi bertingkat dari sekolah?
-8. Kebijakan retensi data alumni dan siswa lulus?
+## 9. Pertanyaan Terbuka & Status Keputusan Sekolah
+Item bertanda **[Menunggu Keputusan]** tidak boleh dirancang mendalam sampai sekolah menetapkan keputusan resmi:
+
+1. **Keuangan / Pembayaran SPP [Menunggu Keputusan]**: Apakah modul pembayaran SPP/keuangan masuk proyek atau tidak? (v1 hanya mencatat status administrasi bebas tanggungan teks; fitur gateway keuangan ditunda).
+2. **Sinkronisasi Data Dapodik / e-Rapor Kemdikbud [Menunggu Keputusan]**: Apakah sistem wajib ekspor/sinkronisasi dua arah ke Dapodik? (v1 menyediakan import/export spreadsheet format standar).
+3. **Struktur Biaya & Pembiayaan Study Trip [Menunggu Keputusan]**: Biaya pelaksanaan trip hanya dicatat sebagai teks catatan non-keuangan di formulir izin ortu, tanpa modul buku kas/pembayaran digital.
+4. **Chat Real-time Interaktif Ortu-Guru [Menunggu Keputusan]**: Obrolan langsung pesan instan tidak dibangun pada v1; komunikasi dialihkan ke integrasi tombol WhatsApp resmi atau tiket permohonan konseling/tamu.
+5. Jenjang sekolah dan jumlah siswa definitif? (sizing server, variasi kurikulum P5/KKTP).
+6. Hosting cloud vs server lokal sekolah untuk server ujian CBT (arsitektur deploy).
+7. Format resmi rapor semester, progress report, dan kop surat resmi dari sekolah.
+8. Skema seleksi PPDB: variasi jalur (prestasi, afirmasi, zonasi/tes), bobot penilaian, dan rumus ranking tiap jalur.
+9. Sistem poin pelanggaran: tabel master jenis poin dan batasan sanksi bertingkat resmi dari sekolah.
+10. Kebijakan retensi data alumni dan siswa lulus.
 
 ## 10. Glosarium
 | Istilah | Arti |
@@ -119,7 +124,7 @@ Rincian ada di PRD per platform. Ringkasan per modul:
 | STS / SAS (ASAT) | Sumatif Tengah Semester / Sumatif Akhir Semester |
 | CP | Capaian Pembelajaran |
 | ATP | Alur Tujuan Pembelajaran |
-| KKTP | Kriteria Ketercapaian Tujuan Pembelajaran |
+| KKTP | Kriteria Ketercapaian Tujuan Pembelajaran (pengganti standar KKM pada Kurikulum Merdeka) |
 | P5 | Projek Penguatan Profil Pelajar Pancasila |
 | LOTS/MOTS/HOTS | Tingkat kognitif soal: rendah/menengah/tinggi |
 | Walas | Wali Kelas |
@@ -130,3 +135,4 @@ Rincian ada di PRD per platform. Ringkasan per modul:
 
 ## Changelog
 - 1.0: Draf awal.
+- 1.1: Penyelarasan master 14 modul (pemisahan GRD & GUEST, penambahan RPT), pembaruan istilah KKTP, penegasan 4 area berstatus "Menunggu Keputusan" (Dapodik, Keuangan/SPP, Chat real-time, Pembiayaan trip).
