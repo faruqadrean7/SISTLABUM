@@ -18,27 +18,26 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Roles
         $rolesData = [
-            ['name' => 'super_admin', 'display_name' => 'Super Administrator', 'description' => 'Akses penuh ke seluruh sistem'],
-            ['name' => 'admin_tu', 'display_name' => 'Admin Tata Usaha', 'description' => 'Pengelolaan administrasi, siswa, staf, dan persuratan'],
-            ['name' => 'principal', 'display_name' => 'Kepala Sekolah', 'description' => 'Akses eksekutif, persetujuan dan monitoring laporan'],
-            ['name' => 'teacher', 'display_name' => 'Guru Mata Pelajaran', 'description' => 'Pengajaran, penilaian, jurnal, dan CBT'],
-            ['name' => 'homeroom', 'display_name' => 'Wali Kelas', 'description' => 'Pengelolaan kelas, rekap nilai, rapor, dan karakter'],
-            ['name' => 'counselor', 'display_name' => 'Guru BK (Bimbingan Konseling)', 'description' => 'Pencatatan konseling privat, poin, dan deteksi dini'],
-            ['name' => 'facility_staff', 'display_name' => 'Staf Sarana & Prasarana', 'description' => 'Aset, booking fasilitas, dan tiket perbaikan'],
-            ['name' => 'ppdb_committee', 'display_name' => 'Panitia PPDB', 'description' => 'Verifikasi berkas, seleksi, dan pendaftaran ulang PPDB'],
-            ['name' => 'librarian', 'display_name' => 'Pustakawan', 'description' => 'Manajemen buku dan peminjaman perpustakaan'],
-            ['name' => 'student', 'display_name' => 'Siswa', 'description' => 'Akses materi, jadwal, tugas, CBT, dan rapor'],
-            ['name' => 'guardian', 'display_name' => 'Orang Tua / Wali Murid', 'description' => 'Monitoring kehadiran, nilai, dan tagihan anak'],
-            ['name' => 'guest', 'display_name' => 'Tamu / Calon Siswa', 'description' => 'Pendaftaran PPDB, buku tamu digital, dan pengaduan'],
+            ['code' => 'super_admin', 'name' => 'Super Administrator'],
+            ['code' => 'admin_tu', 'name' => 'Admin Tata Usaha'],
+            ['code' => 'principal', 'name' => 'Kepala Sekolah'],
+            ['code' => 'teacher', 'name' => 'Guru Mata Pelajaran'],
+            ['code' => 'homeroom', 'name' => 'Wali Kelas'],
+            ['code' => 'counselor', 'name' => 'Guru BK (Bimbingan Konseling)'],
+            ['code' => 'facility_staff', 'name' => 'Staf Sarana & Prasarana'],
+            ['code' => 'ppdb_committee', 'name' => 'Panitia PPDB'],
+            ['code' => 'librarian', 'name' => 'Pustakawan'],
+            ['code' => 'student', 'name' => 'Siswa'],
+            ['code' => 'guardian', 'name' => 'Orang Tua / Wali Murid'],
+            ['code' => 'guest', 'name' => 'Tamu / Calon Siswa'],
         ];
 
         $roleModels = [];
         foreach ($rolesData as $roleInfo) {
-            $roleModels[$roleInfo['name']] = Role::firstOrCreate(
-                ['name' => $roleInfo['name']],
+            $roleModels[$roleInfo['code']] = Role::firstOrCreate(
+                ['code' => $roleInfo['code']],
                 [
-                    'display_name' => $roleInfo['display_name'],
-                    'description' => $roleInfo['description'],
+                    'name' => $roleInfo['name'],
                     'is_system' => true,
                 ]
             );
@@ -47,60 +46,59 @@ class DatabaseSeeder extends Seeder
         // 2. Core Permissions
         $permissionsData = [
             // Auth & Users
-            ['name' => 'auth.user.read', 'module' => 'AUTH', 'description' => 'Melihat daftar pengguna'],
-            ['name' => 'auth.user.write', 'module' => 'AUTH', 'description' => 'Mengelola akun pengguna'],
-            ['name' => 'auth.role.manage', 'module' => 'AUTH', 'description' => 'Mengelola role dan permission'],
+            ['code' => 'auth.user.read', 'description' => 'Melihat daftar pengguna'],
+            ['code' => 'auth.user.write', 'description' => 'Mengelola akun pengguna'],
+            ['code' => 'auth.role.manage', 'description' => 'Mengelola role dan permission'],
 
             // Master Data
-            ['name' => 'master.academic_year.manage', 'module' => 'MST', 'description' => 'Mengelola tahun ajaran dan semester'],
-            ['name' => 'master.student.read', 'module' => 'MST', 'description' => 'Melihat data siswa'],
-            ['name' => 'master.student.write', 'module' => 'MST', 'description' => 'Mengubah data siswa'],
-            ['name' => 'master.teacher.manage', 'module' => 'MST', 'description' => 'Mengelola data guru'],
-            ['name' => 'master.class.manage', 'module' => 'MST', 'description' => 'Mengelola kelas dan rombel'],
-            ['name' => 'master.subject.manage', 'module' => 'MST', 'description' => 'Mengelola mata pelajaran'],
+            ['code' => 'master.academic_year.manage', 'description' => 'Mengelola tahun ajaran dan semester'],
+            ['code' => 'master.student.read', 'description' => 'Melihat data siswa'],
+            ['code' => 'master.student.write', 'description' => 'Mengubah data siswa'],
+            ['code' => 'master.teacher.manage', 'description' => 'Mengelola data guru'],
+            ['code' => 'master.class.manage', 'description' => 'Mengelola kelas dan rombel'],
+            ['code' => 'master.subject.manage', 'description' => 'Mengelola mata pelajaran'],
 
             // PPDB
-            ['name' => 'ppdb.wave.manage', 'module' => 'PPDB', 'description' => 'Mengelola gelombang dan jalur PPDB'],
-            ['name' => 'ppdb.applicant.read', 'module' => 'PPDB', 'description' => 'Melihat pendaftar PPDB'],
-            ['name' => 'ppdb.applicant.verify', 'module' => 'PPDB', 'description' => 'Verifikasi berkas pendaftar PPDB'],
-            ['name' => 'ppdb.selection.run', 'module' => 'PPDB', 'description' => 'Menjalankan proses seleksi PPDB'],
+            ['code' => 'ppdb.wave.manage', 'description' => 'Mengelola gelombang dan jalur PPDB'],
+            ['code' => 'ppdb.applicant.read', 'description' => 'Melihat pendaftar PPDB'],
+            ['code' => 'ppdb.applicant.verify', 'description' => 'Verifikasi berkas pendaftar PPDB'],
+            ['code' => 'ppdb.selection.run', 'description' => 'Menjalankan proses seleksi PPDB'],
 
             // Akademik & LMS
-            ['name' => 'academic.schedule.manage', 'module' => 'ACD', 'description' => 'Mengelola jadwal pelajaran'],
-            ['name' => 'academic.journal.write', 'module' => 'ACD', 'description' => 'Mengisi jurnal mengajar'],
-            ['name' => 'academic.attendance.write', 'module' => 'ACD', 'description' => 'Mencatat presensi siswa'],
-            ['name' => 'academic.grade.read', 'module' => 'ACD', 'description' => 'Melihat nilai'],
-            ['name' => 'academic.grade.write', 'module' => 'ACD', 'description' => 'Menginput nilai'],
-            ['name' => 'academic.report.generate', 'module' => 'ACD', 'description' => 'Mencetak rapor'],
+            ['code' => 'academic.schedule.manage', 'description' => 'Mengelola jadwal pelajaran'],
+            ['code' => 'academic.journal.write', 'description' => 'Mengisi jurnal mengajar'],
+            ['code' => 'academic.attendance.write', 'description' => 'Mencatat presensi siswa'],
+            ['code' => 'academic.grade.read', 'description' => 'Melihat nilai'],
+            ['code' => 'academic.grade.write', 'description' => 'Menginput nilai'],
+            ['code' => 'academic.report.generate', 'description' => 'Mencetak rapor'],
 
             // CBT
-            ['name' => 'cbt.bank.write', 'module' => 'CBT', 'description' => 'Mengelola bank soal'],
-            ['name' => 'cbt.exam.manage', 'module' => 'CBT', 'description' => 'Mengelola jadwal dan sesi ujian CBT'],
-            ['name' => 'cbt.proctor.action', 'module' => 'CBT', 'description' => 'Aksi pengawas ujian CBT'],
-            ['name' => 'cbt.exam.take', 'module' => 'CBT', 'description' => 'Mengerjakan ujian CBT'],
+            ['code' => 'cbt.bank.write', 'description' => 'Mengelola bank soal'],
+            ['code' => 'cbt.exam.manage', 'description' => 'Mengelola jadwal dan sesi ujian CBT'],
+            ['code' => 'cbt.proctor.action', 'description' => 'Aksi pengawas ujian CBT'],
+            ['code' => 'cbt.exam.take', 'description' => 'Mengerjakan ujian CBT'],
 
             // Kesiswaan & BK
-            ['name' => 'student.point.read', 'module' => 'STD', 'description' => 'Melihat poin pelanggaran/prestasi'],
-            ['name' => 'student.point.write', 'module' => 'STD', 'description' => 'Mencatat poin pelanggaran/prestasi'],
-            ['name' => 'counseling.case.read', 'module' => 'BK', 'description' => 'Melihat kasus konseling BK'],
-            ['name' => 'counseling.case.write', 'module' => 'BK', 'description' => 'Mencatat sesi dan kasus konseling BK'],
+            ['code' => 'student.point.read', 'description' => 'Melihat poin pelanggaran/prestasi'],
+            ['code' => 'student.point.write', 'description' => 'Mencatat poin pelanggaran/prestasi'],
+            ['code' => 'counseling.case.read', 'description' => 'Melihat kasus konseling BK'],
+            ['code' => 'counseling.case.write', 'description' => 'Mencatat sesi dan kasus konseling BK'],
 
             // Sarpras & Pustaka
-            ['name' => 'facility.booking.manage', 'module' => 'SAR', 'description' => 'Menyetujui/menolak booking fasilitas'],
-            ['name' => 'facility.asset.manage', 'module' => 'SAR', 'description' => 'Mengelola inventaris aset'],
-            ['name' => 'library.book.manage', 'module' => 'SAR', 'description' => 'Mengelola buku dan peminjaman pustaka'],
+            ['code' => 'facility.booking.manage', 'description' => 'Menyetujui/menolak booking fasilitas'],
+            ['code' => 'facility.asset.manage', 'description' => 'Mengelola inventaris aset'],
+            ['code' => 'library.book.manage', 'description' => 'Mengelola buku dan peminjaman pustaka'],
 
             // CMS & Notifikasi
-            ['name' => 'cms.post.manage', 'module' => 'CMS', 'description' => 'Mengelola artikel dan berita CMS'],
-            ['name' => 'notification.broadcast', 'module' => 'NTF', 'description' => 'Kirim broadcast pengumuman'],
+            ['code' => 'cms.post.manage', 'description' => 'Mengelola artikel dan berita CMS'],
+            ['code' => 'notification.broadcast', 'description' => 'Kirim broadcast pengumuman'],
         ];
 
         $allPermissionIds = [];
         foreach ($permissionsData as $perm) {
             $p = Permission::firstOrCreate(
-                ['name' => $perm['name']],
+                ['code' => $perm['code']],
                 [
-                    'module' => $perm['module'],
                     'description' => $perm['description'],
                 ]
             );
@@ -112,14 +110,12 @@ class DatabaseSeeder extends Seeder
 
         // 3. Initial Super Admin User
         $superAdmin = User::firstOrCreate(
-            ['email' => 'admin@labschool.sch.id'],
+            ['username' => 'superadmin'],
             [
-                'username' => 'superadmin',
+                'email' => 'admin@labschool.sch.id',
                 'password_hash' => Hash::make('Admin123!@#'),
-                'name' => 'Super Administrator Sistem',
-                'status' => 'ACTIVE',
-                'is_active' => true,
-                'email_verified_at' => now(),
+                'status' => 'active',
+                'must_change_password' => false,
             ]
         );
 

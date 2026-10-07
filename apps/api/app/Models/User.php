@@ -73,8 +73,7 @@ class User extends Authenticatable
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role_id')
-            ->withPivot('scope_class_id')
-            ->withTimestamps();
+            ->withPivot('scope_class_id');
     }
 
     public function devices(): HasMany

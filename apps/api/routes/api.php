@@ -16,11 +16,19 @@ Route::prefix('v1')->group(function () {
             $dbStatus = 'error: ' . $e->getMessage();
         }
 
+        $redisStatus = 'ok';
+        try {
+            \Illuminate\Support\Facades\Redis::ping();
+        } catch (\Throwable $e) {
+            $redisStatus = 'error: ' . $e->getMessage();
+        }
+
         return response()->json([
-            'status' => 'ok',
+            'status' => ($dbStatus === 'ok' && $redisStatus === 'ok') ? 'ok' : 'degraded',
             'timestamp' => now()->toIso8601String(),
             'services' => [
                 'database' => $dbStatus,
+                'redis' => $redisStatus,
             ],
             'version' => '1.1.0',
         ]);
