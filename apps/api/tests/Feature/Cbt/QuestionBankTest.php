@@ -524,4 +524,27 @@ class QuestionBankTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    /**
+     * SEC-CBT: Siswa dilarang melihat daftar atau detail butir soal CBT dan paket bank soal secara langsung.
+     */
+    public function test_student_cannot_list_or_view_questions_and_banks(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        // 1. Siswa dilarang membaca daftar bank soal
+        $responseBankList = $this->actingAs($this->studentUser, 'sanctum')
+            ->getJson('/api/v1/question-banks');
+        $responseBankList->assertStatus(403);
+
+        // 2. Siswa dilarang membaca detail bank soal
+        $responseBankDetail = $this->actingAs($this->studentUser, 'sanctum')
+            ->getJson("/api/v1/question-banks/{$this->bank->id}");
+        $responseBankDetail->assertStatus(403);
+
+        // 3. Siswa dilarang membaca butir soal dan kunci jawaban
+        $responseQuestionList = $this->actingAs($this->studentUser, 'sanctum')
+            ->getJson("/api/v1/questions?bank_id={$this->bank->id}");
+        $responseQuestionList->assertStatus(403);
+    }
 }

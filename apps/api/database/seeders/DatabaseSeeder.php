@@ -82,6 +82,7 @@ class DatabaseSeeder extends Seeder
             ['code' => 'cbt.exam.manage', 'description' => 'Mengelola jadwal dan sesi ujian CBT'],
             ['code' => 'cbt.proctor.action', 'description' => 'Aksi pengawas ujian CBT'],
             ['code' => 'cbt.exam.take', 'description' => 'Mengerjakan ujian CBT'],
+            ['code' => 'cbt.exam.review', 'description' => 'Melihat review dan pembahasan ujian CBT'],
 
             // Kesiswaan & BK
             ['code' => 'student.point.read', 'description' => 'Melihat poin pelanggaran/prestasi'],
@@ -128,18 +129,182 @@ class DatabaseSeeder extends Seeder
         // Hubungkan super_admin dengan semua permission
         $roleModels['super_admin']->permissions()->sync($allPermissionIds);
 
-        // Decision #9: Hubungkan Kepala Sekolah (principal) & Guru BK (counselor) dengan izin pengaduan
-        if (isset($roleModels['principal'])) {
-            $roleModels['principal']->permissions()->syncWithoutDetaching([
-                $permissionModelMap['complaint.read'],
-                $permissionModelMap['complaint.manage'],
-            ]);
+        // GAP-F: Pemetaan default permissions resmi berbasis Matriks Hak Akses SISTLABUM (Idempoten via syncWithoutDetaching)
+        $assignRolePermissions = function (string $roleCode, array $permCodes) use ($roleModels, $permissionModelMap) {
+            if (! isset($roleModels[$roleCode])) {
+                return;
+            }
+            $ids = [];
+            foreach ($permCodes as $code) {
+                if (isset($permissionModelMap[$code])) {
+                    $ids[] = $permissionModelMap[$code];
+                }
+            }
+            if (! empty($ids)) {
+                $roleModels[$roleCode]->permissions()->syncWithoutDetaching($ids);
+            }
+        };
+
+        // 1. Kepala Sekolah (principal)
+        $assignRolePermissions('principal', [
+            'academic.grade.read',
+            'academic.report.generate',
+            'academic.attendance.read',
+            'academic.schedule.read',
+            'academic.journal.read',
+            'cbt.exam.manage',
+            'student.point.read',
+            'counseling.case.read',
+            'facility.booking.manage',
+            'facility.asset.manage',
+            'guest.book.read',
+            'complaint.read',
+            'complaint.manage',
+            'audit.read',
+            'master.student.read',
+            'master.teacher.manage',
+            'ppdb.applicant.read',
+        ]);
+
+        // 2. Admin Tata Usaha (admin_tu)
+        $assignRolePermissions('admin_tu', [
+            'master.academic_year.manage',
+            'master.student.read',
+            'master.student.write',
+            'master.teacher.manage',
+            'master.class.manage',
+            'master.subject.manage',
+            'master.room.manage',
+            'master.promotion.manage',
+            'academic.schedule.read',
+            'academic.schedule.manage',
+            'academic.attendance.read',
+            'academic.attendance.write',
+            'academic.report.generate',
+            'guest.book.read',
+            'guest.book.manage',
+            'student.point.read',
+            'facility.booking.manage',
+            'facility.asset.manage',
+            'audit.read',
+        ]);
+
+        // 3. Guru Mata Pelajaran (teacher)
+        $assignRolePermissions('teacher', [
+            'academic.schedule.read',
+            'academic.journal.read',
+            'academic.journal.write',
+            'academic.attendance.read',
+            'academic.attendance.write',
+            'academic.grade.read',
+            'academic.grade.write',
+            'cbt.bank.write',
+            'cbt.proctor.action',
+            'student.point.read',
+            'student.point.write',
+        ]);
+
+        // 4. Wali Kelas (homeroom)
+        $assignRolePermissions('homeroom', [
+            'academic.schedule.read',
+            'academic.journal.read',
+            'academic.journal.write',
+            'academic.attendance.read',
+            'academic.attendance.write',
+            'academic.grade.read',
+            'academic.grade.write',
+            'academic.report.generate',
+            'cbt.bank.write',
+            'cbt.proctor.action',
+            'student.point.read',
+            'student.point.write',
+        ]);
+
+        // 5. Guru BK (counselor)
+        $assignRolePermissions('counselor', [
+            'counseling.case.read',
+            'counseling.case.write',
+            'complaint.read',
+            'complaint.manage',
+            'student.point.read',
+            'student.point.write',
+            'academic.attendance.read',
+            'academic.grade.read',
+        ]);
+
+        // 6. Staf Sarana & Prasarana (facility_staff)
+        $assignRolePermissions('facility_staff', [
+            'facility.booking.manage',
+            'facility.asset.manage',
+        ]);
+
+        // 7. Pustakawan (librarian)
+        $assignRolePermissions('librarian', [
+            'library.book.manage',
+            'facility.asset.manage',
+        ]);
+
+        // 8. Panitia PPDB (ppdb_committee)
+        $assignRolePermissions('ppdb_committee', [
+            'ppdb.wave.manage',
+            'ppdb.applicant.read',
+            'ppdb.applicant.verify',
+            'ppdb.selection.run',
+        ]);
+
+        // 9. Siswa (student)
+        $assignRolePermissions('student', [
+            'cbt.exam.take',
+            'cbt.exam.review',
+            'academic.schedule.read',
+            'student.point.read',
+            'academic.grade.read',
+        ]);
+
+        // 10. Orang Tua / Wali Murid (guardian)
+        $assignRolePermissions('guardian', [
+            'academic.attendance.read',
+            'academic.grade.read',
+            'student.point.read',
+        ]);
+
+        // Enforce Least Privilege: pastikan peran siswa & wali murid tidak memiliki izin administratif
+        $prohibitedStudentPerms = [
+            'cbt.bank.write',
+            'cbt.exam.manage',
+            'cbt.proctor.action',
+            'academic.grade.write',
+            'academic.attendance.write',
+            'academic.journal.write',
+            'academic.report.generate',
+            'facility.booking.manage',
+            'facility.asset.manage',
+            'complaint.manage',
+            'counseling.case.write',
+        ];
+        $prohibitedStudentIds = array_filter(array_map(fn ($c) => $permissionModelMap[$c] ?? null, $prohibitedStudentPerms));
+        if (! empty($prohibitedStudentIds) && isset($roleModels['student'])) {
+            $roleModels['student']->permissions()->detach($prohibitedStudentIds);
         }
-        if (isset($roleModels['counselor'])) {
-            $roleModels['counselor']->permissions()->syncWithoutDetaching([
-                $permissionModelMap['complaint.read'],
-                $permissionModelMap['complaint.manage'],
-            ]);
+
+        $prohibitedGuardianPerms = [
+            'cbt.exam.take',
+            'cbt.exam.review',
+            'cbt.bank.write',
+            'cbt.exam.manage',
+            'cbt.proctor.action',
+            'academic.grade.write',
+            'academic.attendance.write',
+            'academic.journal.write',
+            'academic.report.generate',
+            'facility.booking.manage',
+            'facility.asset.manage',
+            'complaint.manage',
+            'counseling.case.write',
+        ];
+        $prohibitedGuardianIds = array_filter(array_map(fn ($c) => $permissionModelMap[$c] ?? null, $prohibitedGuardianPerms));
+        if (! empty($prohibitedGuardianIds) && isset($roleModels['guardian'])) {
+            $roleModels['guardian']->permissions()->detach($prohibitedGuardianIds);
         }
 
         // 3. Initial Super Admin User

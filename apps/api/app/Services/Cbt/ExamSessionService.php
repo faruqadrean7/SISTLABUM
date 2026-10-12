@@ -508,8 +508,8 @@ class ExamSessionService
 
         $student = Student::where('user_id', $user->id)->first();
 
-        // Fallback jika login via NIS atau email siswa tanpa user_id relasi langsung
-        if (! $student) {
+        // Fallback jika login via NIS siswa tanpa user_id relasi langsung, HANYA jika akun memiliki role student
+        if (! $student && $user->hasRole('student')) {
             $student = Student::where('nis', $user->username)->first();
         }
 
@@ -921,6 +921,185 @@ class ExamSessionService
                 'blur_events' => $blurCount,
             ],
             'anomalies' => $list,
+        ];
+    }
+
+    /**
+     * BE-CBT-04 / GAP-B: Siswa melihat hasil dan pembahasan mandiri ujian.
+     */
+    public function getExamReview(string $examId, Request $request): array
+    {
+        $user = $request->user();
+        $student = $this->resolveStudentForUser($user);
+
+        $exam = Exam::with(['subject'])->findOrFail($examId);
+
+        if (in_array($exam->status, ['draft', 'dibatalkan'])) {
+            throw new HttpException(403, 'Ujian ini tidak dalam status yang dapat direview.');
+        }
+
+        $participant = ExamParticipant::where('exam_id', $exam->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if (! $participant) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak terdaftar sebagai peserta ujian ini.');
+        }
+
+        $session = ExamSession::where('exam_id', $exam->id)
+            ->where('student_id', $student->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (! $session) {
+            throw new HttpException(404, 'Sesi ujian Anda tidak ditemukan.');
+        }
+
+        if ($session->status !== 'selesai') {
+            throw new HttpException(403, 'Hasil dan pembahasan hanya dapat diakses setelah sesi ujian selesai dikumpulkan.');
+        }
+
+        $mode = $exam->show_result_mode ?? 'never';
+
+        if ($mode === 'never') {
+            throw new HttpException(403, 'Hasil dan pembahasan mandiri dinonaktifkan untuk ujian ini.');
+        }
+
+        if ($mode === 'after_release') {
+            if (! in_array($exam->status, ['selesai', 'arsip'])) {
+                throw new HttpException(403, 'Hasil dan pembahasan ujian belum dirilis oleh pihak sekolah.');
+            }
+        }
+
+        $packageCode = $participant->package_code;
+        $examQuestionsQuery = ExamQuestion::with(['question.options'])
+            ->where('exam_id', $exam->id);
+
+        if ($packageCode) {
+            $examQuestionsQuery->where(function ($q) use ($packageCode) {
+                $q->where('package_code', $packageCode)
+                    ->orWhereNull('package_code');
+            });
+        }
+
+        $examQuestions = $examQuestionsQuery->orderBy('sort_order', 'asc')->get();
+
+        $savedAnswers = ExamAnswer::where('session_id', $session->id)
+            ->get()
+            ->keyBy('question_id');
+
+        $questionItems = $examQuestions->map(fn ($eq) => $eq->question)->filter()->values();
+        if ($exam->shuffle_questions) {
+            $questionItems = $this->shuffleWithSeed($questionItems, $session->seed.'_q');
+        }
+
+        $examQuestionsByKey = $examQuestions->keyBy('question_id');
+
+        $reviewedQuestions = [];
+        $totalAnswered = 0;
+        $totalCorrect = 0;
+        $hasEssay = false;
+
+        foreach ($questionItems as $index => $q) {
+            $answer = $savedAnswers->get($q->id);
+            $eq = $examQuestionsByKey->get($q->id);
+            $maxWeight = (float) ($eq?->weight_override ?? $q->weight ?? 1.0);
+            $userAnswer = $answer?->answer;
+
+            if ($userAnswer !== null) {
+                $totalAnswered++;
+            }
+
+            $isEssay = ($q->question_type === 'uraian');
+            if ($isEssay) {
+                $hasEssay = true;
+            }
+
+            $options = $q->options;
+            if ($exam->shuffle_options && in_array($q->question_type, ['pg', 'pg_kompleks', 'bs'])) {
+                $options = $this->shuffleWithSeed($options, $session->seed.'_opt_'.$q->id);
+            }
+
+            $optionsData = $options->map(function ($opt) {
+                return [
+                    'id' => $opt->id,
+                    'label' => $opt->label,
+                    'body' => $opt->body,
+                    'is_correct' => (bool) $opt->is_correct,
+                    'match_key' => $opt->match_key,
+                ];
+            })->values()->all();
+
+            $score = $answer?->score !== null ? (float) $answer->score : null;
+            $isCorrect = null;
+
+            if (! $isEssay) {
+                if ($score !== null) {
+                    $isCorrect = ($score >= $maxWeight);
+                }
+                if ($isCorrect) {
+                    $totalCorrect++;
+                }
+            }
+
+            $reviewedQuestions[] = [
+                'number' => $index + 1,
+                'question_id' => $q->id,
+                'question_type' => $q->question_type,
+                'body' => $q->body,
+                'options' => $optionsData,
+                'max_score' => $maxWeight,
+                'student_answer' => $userAnswer,
+                'score' => $score,
+                'is_correct' => $isCorrect,
+                'is_graded' => $isEssay ? ($score !== null) : true,
+                'explanation' => $q->explanation,
+            ];
+        }
+
+        $totalScore = $session->score !== null ? (float) $session->score : null;
+        $passingGrade = $exam->passing_grade !== null ? (float) $exam->passing_grade : 75.0;
+        $isPassed = $totalScore !== null ? ($totalScore >= $passingGrade) : null;
+
+        $remedialExam = null;
+        if ($isPassed === false) {
+            $remedial = Exam::where('parent_exam_id', $exam->id)
+                ->whereIn('status', ['dijadwalkan', 'berlangsung'])
+                ->first();
+            if ($remedial) {
+                $remedialExam = [
+                    'remedial_exam_id' => $remedial->id,
+                    'title' => $remedial->title,
+                    'start_at' => $remedial->start_at?->toIso8601String(),
+                    'end_at' => $remedial->end_at?->toIso8601String(),
+                ];
+            }
+        }
+
+        return [
+            'exam' => [
+                'id' => $exam->id,
+                'title' => $exam->title,
+                'exam_type' => $exam->exam_type,
+                'subject_name' => $exam->subject?->name,
+                'passing_grade' => $passingGrade,
+                'show_result_mode' => $mode,
+            ],
+            'attempt' => [
+                'session_id' => $session->id,
+                'student_id' => $student->id,
+                'student_name' => $student->full_name,
+                'status' => $session->status,
+                'started_at' => $session->started_at?->toIso8601String(),
+                'submitted_at' => $session->submitted_at?->toIso8601String(),
+                'total_score' => $totalScore,
+                'is_passed' => $isPassed,
+                'total_questions' => count($questionItems),
+                'total_answered' => $totalAnswered,
+                'has_ungraded_essay' => $hasEssay && ($totalScore === null),
+            ],
+            'remedial' => $remedialExam,
+            'questions' => $reviewedQuestions,
         ];
     }
 

@@ -79,6 +79,14 @@ class ExamParticipantCardController extends Controller
             return $this->service->downloadParticipantCardPdf($id, $participantId, $request);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Data kartu peserta ujian tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                401 => 'UNAUTHENTICATED',
+                403 => 'FORBIDDEN',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

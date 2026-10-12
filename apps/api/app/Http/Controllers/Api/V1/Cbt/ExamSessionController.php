@@ -271,4 +271,33 @@ class ExamSessionController extends Controller
             return $this->errorResponse('Terjadi kesalahan saat memuat daftar anomali ujian.', 'INTERNAL_ERROR', 500);
         }
     }
+
+    /**
+     * BE-CBT-04 / GAP-B: Siswa melihat hasil dan pembahasan mandiri ujian.
+     * GET /api/v1/exams/{id}/review
+     */
+    public function review(string $id, Request $request): JsonResponse
+    {
+        try {
+            $result = $this->service->getExamReview($id, $request);
+
+            return $this->successResponse($result, 200);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Data ujian tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                401 => 'UNAUTHENTICATED',
+                403 => 'FORBIDDEN',
+                404 => 'NOT_FOUND',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat pembahasan ujian.', 'INTERNAL_ERROR', 500);
+        }
+    }
 }

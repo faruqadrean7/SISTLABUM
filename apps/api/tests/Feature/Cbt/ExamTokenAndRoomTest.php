@@ -529,4 +529,100 @@ class ExamTokenAndRoomTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonPath('error.message', 'Tidak ada ruang ujian yang tersedia untuk didistribusikan.');
     }
+
+    /**
+     * SEC-CBT: Siswa dilarang mengintip status token ruang ujian secara langsung.
+     */
+    public function test_student_cannot_access_token_status_endpoint(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->studentUser, 'sanctum')
+            ->getJson("/api/v1/exam-rooms/{$this->examRoom1->id}/token-status");
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * SEC-CBT: Siswa dilarang melihat daftar kartu peserta ujian seluruh kelas.
+     */
+    public function test_student_cannot_list_all_participant_cards(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->studentUser, 'sanctum')
+            ->getJson("/api/v1/exams/{$this->exam->id}/participant-cards");
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * SEC-CBT / IDOR: Siswa dilarang mengunduh kartu ujian milik siswa lain.
+     */
+    public function test_student_cannot_download_other_student_card_pdf_idor(): void
+    {
+        $this->student1->update(['user_id' => $this->studentUser->id]);
+
+        $participant2 = ExamParticipant::create([
+            'exam_id' => $this->exam->id,
+            'student_id' => $this->student2->id,
+            'exam_room_id' => $this->examRoom2->id,
+            'package_code' => 'PAKET-B',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        // Siswa 1 mencoba mengunduh kartu ujian milik siswa 2
+        $response = $this->actingAs($this->studentUser, 'sanctum')
+            ->get("/api/v1/exams/{$this->exam->id}/participants/{$participant2->id}/card-pdf");
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * SEC-CBT: Siswa berhak mengunduh kartu ujian milik dirinya sendiri.
+     */
+    public function test_student_can_download_own_card_pdf(): void
+    {
+        $this->student1->update(['user_id' => $this->studentUser->id]);
+
+        $participant1 = ExamParticipant::create([
+            'exam_id' => $this->exam->id,
+            'student_id' => $this->student1->id,
+            'exam_room_id' => $this->examRoom1->id,
+            'package_code' => 'PAKET-A',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->studentUser, 'sanctum')
+            ->get("/api/v1/exams/{$this->exam->id}/participants/{$participant1->id}/card-pdf");
+
+        $response->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    /**
+     * SEC-CBT: Rate limit proteksi regenerasi token ujian maksimal 10 request per menit.
+     */
+    public function test_regenerate_token_endpoint_is_rate_limited(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        for ($i = 0; $i < 10; $i++) {
+            $response = $this->actingAs($this->adminUser, 'sanctum')
+                ->postJson("/api/v1/exam-rooms/{$this->examRoom1->id}/regenerate-token", [
+                    'validity_minutes' => 30,
+                ]);
+            $response->assertStatus(200);
+        }
+
+        // Request ke-11 harus diblokir oleh throttle:10,1 (429 Too Many Requests)
+        $rateLimitedResponse = $this->actingAs($this->adminUser, 'sanctum')
+            ->postJson("/api/v1/exam-rooms/{$this->examRoom1->id}/regenerate-token", [
+                'validity_minutes' => 30,
+            ]);
+
+        $rateLimitedResponse->assertStatus(429);
+    }
 }

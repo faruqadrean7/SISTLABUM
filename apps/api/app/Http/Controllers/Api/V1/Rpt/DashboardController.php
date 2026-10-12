@@ -78,9 +78,9 @@ class DashboardController extends Controller
 
     /**
      * BE-RPT-02: Dashboard Wali Murid / Orang Tua.
-     * GET /api/v1/dashboard/guardian/{studentId}
+     * GET /api/v1/dashboard/guardian/{studentId?}
      */
-    public function guardian(string $studentId, Request $request): JsonResponse
+    public function guardian(Request $request, ?string $studentId = null): JsonResponse
     {
         try {
             $data = $this->service->getGuardianDashboard($studentId, $request);

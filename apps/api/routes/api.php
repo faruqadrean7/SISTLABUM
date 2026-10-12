@@ -751,26 +751,32 @@ Route::prefix('v1')->group(function () {
         // BE-CBT-01: Bank Soal CBT
         // =====================================================================
         // Paket Bank Soal
-        Route::get('/question-banks', [QuestionBankController::class, 'index']);
+        Route::get('/question-banks', [QuestionBankController::class, 'index'])
+            ->middleware('permission:cbt.bank.write');
         Route::post('/question-banks', [QuestionBankController::class, 'store'])
             ->middleware('permission:cbt.bank.write');
-        Route::get('/question-banks/{id}', [QuestionBankController::class, 'show']);
+        Route::get('/question-banks/{id}', [QuestionBankController::class, 'show'])
+            ->middleware('permission:cbt.bank.write');
         Route::put('/question-banks/{id}', [QuestionBankController::class, 'update'])
             ->middleware('permission:cbt.bank.write');
         Route::delete('/question-banks/{id}', [QuestionBankController::class, 'destroy'])
             ->middleware('permission:cbt.bank.write');
 
         // Alias paket soal sesuai PRD /question-packages
-        Route::get('/question-packages', [QuestionBankController::class, 'index']);
+        Route::get('/question-packages', [QuestionBankController::class, 'index'])
+            ->middleware('permission:cbt.bank.write');
         Route::post('/question-packages', [QuestionBankController::class, 'store'])
             ->middleware('permission:cbt.bank.write');
-        Route::get('/question-packages/{id}', [QuestionBankController::class, 'show']);
+        Route::get('/question-packages/{id}', [QuestionBankController::class, 'show'])
+            ->middleware('permission:cbt.bank.write');
 
         // Butir Soal & Import Massal
-        Route::get('/questions', [QuestionController::class, 'index']);
+        Route::get('/questions', [QuestionController::class, 'index'])
+            ->middleware('permission:cbt.bank.write');
         Route::post('/questions', [QuestionController::class, 'store'])
             ->middleware('permission:cbt.bank.write');
-        Route::get('/questions/{id}', [QuestionController::class, 'show']);
+        Route::get('/questions/{id}', [QuestionController::class, 'show'])
+            ->middleware('permission:cbt.bank.write');
         Route::put('/questions/{id}', [QuestionController::class, 'update'])
             ->middleware('permission:cbt.bank.write');
         Route::delete('/questions/{id}', [QuestionController::class, 'destroy'])
@@ -791,17 +797,20 @@ Route::prefix('v1')->group(function () {
             ->middleware('permission:cbt.exam.manage');
 
         // Plotting Soal Ujian
-        Route::get('/exams/{id}/questions', [ExamController::class, 'getQuestions']);
+        Route::get('/exams/{id}/questions', [ExamController::class, 'getQuestions'])
+            ->middleware('permission:cbt.exam.manage');
         Route::post('/exams/{id}/questions', [ExamController::class, 'assignQuestions'])
             ->middleware('permission:cbt.exam.manage');
 
         // Plotting Ruang & Pengawas Ujian
-        Route::get('/exams/{id}/rooms', [ExamController::class, 'getRooms']);
+        Route::get('/exams/{id}/rooms', [ExamController::class, 'getRooms'])
+            ->middleware('permission:cbt.exam.manage');
         Route::post('/exams/{id}/rooms', [ExamController::class, 'assignRooms'])
             ->middleware('permission:cbt.exam.manage');
 
         // Plotting Peserta Ujian
-        Route::get('/exams/{id}/participants', [ExamController::class, 'getParticipants']);
+        Route::get('/exams/{id}/participants', [ExamController::class, 'getParticipants'])
+            ->middleware('permission:cbt.exam.manage');
         Route::post('/exams/{id}/participants', [ExamController::class, 'enrollParticipants'])
             ->middleware('permission:cbt.exam.manage');
 
@@ -813,7 +822,8 @@ Route::prefix('v1')->group(function () {
         // BE-CBT-03: Token Ujian & Plotting Ruang CBT
         // =====================================================================
         // Token Ruang Ujian
-        Route::post('/exam-rooms/{id}/regenerate-token', [ExamRoomTokenController::class, 'regenerate']);
+        Route::post('/exam-rooms/{id}/regenerate-token', [ExamRoomTokenController::class, 'regenerate'])
+            ->middleware('throttle:10,1');
         Route::get('/exam-rooms/{id}/token-status', [ExamRoomTokenController::class, 'status']);
 
         // Plotting & Auto-Distribusi Peserta Ujian
@@ -821,7 +831,8 @@ Route::prefix('v1')->group(function () {
             ->middleware('permission:cbt.exam.manage');
 
         // Cetak / Kartu Peserta Ujian
-        Route::get('/exams/{id}/participant-cards', [ExamParticipantCardController::class, 'index']);
+        Route::get('/exams/{id}/participant-cards', [ExamParticipantCardController::class, 'index'])
+            ->middleware('permission:cbt.exam.manage');
         Route::get('/exams/{id}/participants/{participantId}/card-pdf', [ExamParticipantCardController::class, 'downloadPdf']);
 
         // =====================================================================
@@ -833,6 +844,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/exams/{id}/save-answer', [ExamSessionController::class, 'saveAnswer']);
         Route::post('/exams/{id}/log-violation', [ExamSessionController::class, 'logViolation']);
         Route::post('/exams/{id}/finish-session', [ExamSessionController::class, 'finish']);
+        Route::get('/exams/{id}/review', [ExamSessionController::class, 'review']);
 
         // Pengawas / Proctor Mengelola Sesi Terkunci & Tambahan Waktu
         Route::post('/exam-sessions/{sessionId}/manage', [ExamSessionController::class, 'manage']);
@@ -1179,7 +1191,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/dashboard/executive', [DashboardController::class, 'executive']);
         Route::get('/dashboard/teacher', [DashboardController::class, 'teacher']);
         Route::get('/dashboard/student', [DashboardController::class, 'student']);
-        Route::get('/dashboard/guardian/{studentId}', [DashboardController::class, 'guardian']);
+        Route::get('/dashboard/guardian/{studentId?}', [DashboardController::class, 'guardian']);
 
         // =====================================================================
         // BE-FILE-01: Penyimpanan & Utilitas Berkas (Upload Bertanda Tangan)

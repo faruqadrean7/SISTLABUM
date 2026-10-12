@@ -64,10 +64,18 @@ class ExamController extends Controller
      * BE-CBT-02: Detail ujian CBT.
      * GET /api/v1/exams/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
             $exam = $this->service->getExam($id);
+
+            $user = $request->user();
+            if ($user && ! $user->hasRole(['super_admin', 'admin']) && ! $user->hasPermission('cbt.exam.manage')) {
+                $exam->unsetRelation('questions');
+                if ($exam->relationLoaded('rooms')) {
+                    $exam->rooms->makeHidden(['token']);
+                }
+            }
 
             return $this->successResponse($exam);
         } catch (ModelNotFoundException) {

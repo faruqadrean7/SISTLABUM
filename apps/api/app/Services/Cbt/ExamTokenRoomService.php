@@ -53,6 +53,7 @@ class ExamTokenRoomService
     public function getTokenStatus(string $examRoomId, Request $request): array
     {
         $examRoom = ExamRoom::with(['exam', 'room', 'proctor'])->findOrFail($examRoomId);
+        $this->authorizeProctorOrAdmin($examRoom, $request->user());
 
         $now = Carbon::now();
         $isExpired = false;
@@ -238,6 +239,14 @@ class ExamTokenRoomService
             ->where('exam_id', $examId)
             ->where('id', $participantId)
             ->firstOrFail();
+
+        $user = $request->user();
+        $isOwner = $user && $participant->student && $participant->student->user_id === $user->id;
+        $isPrivileged = $user && ($user->hasRole(['admin', 'super_admin']) || $user->hasPermission('cbt.exam.manage'));
+
+        if (! $isOwner && ! $isPrivileged) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki hak akses mengunduh kartu ujian peserta ini.');
+        }
 
         $pdfBinary = $this->buildCardPdfContent($participant);
 
