@@ -35,23 +35,21 @@ Keputusan di bawah **mengikat** untuk AI agent dan developer. Mengubahnya harus 
 ## 2. Struktur Repository
 Dua pendekatan; pilih **A** (rekomendasi).
 
-### A. Monorepo (web + admin + backend) + repo mobile terpisah
+### A. Monorepo Struktur Terpadu
 ```
-school-portal/                  # monorepo (pnpm + turborepo)
+school-portal/                  # monorepo (pnpm + turborepo / unified workspace)
 ├─ apps/
-│  ├─ api/                      # NestJS
-│  ├─ web/                      # Next.js website + PPDB
-│  └─ admin/                    # Sistem admin
+│  ├─ api/                      # Backend REST API (Laravel / NestJS)
+│  ├─ web/                      # Next.js Web Portal Terpadu (Publik, PPDB, Admin, Guru, Siswa, Ortu)
+│  └─ mobile/                   # Android Native (Kotlin 2.x + Jetpack Compose)
 ├─ packages/
 │  ├─ api-client/               # TS client hasil generate OpenAPI
-│  ├─ ui/                       # komponen UI bersama (web+admin)
+│  ├─ ui/                       # komponen UI web bersama (shadcn/ui preset)
 │  ├─ config/                   # eslint, tsconfig, tailwind preset
 │  └─ shared/                   # zod schema, enum, konstanta
-├─ docs/                        # paket PRD ini
-├─ infra/                       # docker, nginx, CI, terraform (opsional)
-└─ AGENTS.md                    # salin dari 11_AI_AGENT_RULES.md
-
-school-portal-mobile/           # Flutter, repo terpisah
+├─ docs/                        # paket PRD, audit, dan spesifikasi desain
+├─ infra/                       # docker, nginx, CI
+└─ AGENTS.md                    # aturan kerja AI agent
 ```
 
 ### B. Repo terpisah penuh (api, web, admin, mobile)
@@ -135,7 +133,7 @@ Sediakan `.env.example` yang lengkap, tanpa rahasia.
 | Bahasa kode | Identifier & komentar teknis Bahasa Inggris; teks UI Bahasa Indonesia |
 | Penamaan DB | `snake_case`, tabel jamak (`students`) |
 | Penamaan API | `kebab-case` path, `camelCase` JSON |
-| Format | Prettier + ESLint (TS), `dart format` + `flutter_lints` |
+| Format | Prettier + ESLint (TS), ktlint + Android Lint (Kotlin) |
 | Commit | Conventional Commits: `feat(be-ppdb-03): ...` |
 | Branch | `main` (rilis), `develop`, `feat/<ID>-<slug>`, `fix/<slug>` |
 | PR | Wajib review, CI hijau, mencantumkan ID fitur |

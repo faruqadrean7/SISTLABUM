@@ -53,7 +53,7 @@ flowchart TD
 | `/ppdb/dashboard/*` | Area pendaftar | CSR (auth) |
 | `/ppdb/pengumuman` | Cek hasil | CSR |
 | `/verifikasi/{token}` | Verifikasi keaslian dokumen QR | SSR |
-| `/masuk` | Pintu login (arahkan ke admin/mobile/CBT) | Statis |
+| `/masuk` | Pintu login portal terpadu (Siswa, Guru, Ortu, Admin/Staf) & tautan unduh APK Mobile | Statis / CSR |
 
 ---
 
@@ -94,8 +94,10 @@ Alamat, peta (embed), telepon, email, jam layanan, tombol WhatsApp, tautan media
 ### WEB-VER-01: Verifikasi dokumen QR [P0]
 Halaman publik memverifikasi QR e-progress report/rapor: tampil nama (disamarkan sebagian), periode, status keabsahan; tidak menampilkan nilai.
 
-### WEB-AUTH-01: Pintu login portal [P0]
-Halaman memilih peran/arah: Admin, CBT siswa, unduh aplikasi mobile (tautan Play Store/App Store).
+### WEB-AUTH-01: Pintu login portal terpadu (/masuk) [P0]
+Halaman gerbang masuk terpadu civitas sekolah:
+- Form login akun tunggal yang mendeteksi peran pengguna otomatis (Siswa, Guru, Orang Tua, Admin TU, Kepala Sekolah) dan mengarahkan langsung ke dashboard web perannya masing-masing (`/admin/dashboard`, `/portal/siswa`, `/portal/ortu`).
+- Kartu informasi unduh Aplikasi Mobile Android Native (QR code scan & tautan unduh APK / Google Play Store) bagi pengguna smartphone (Siswa, Guru, Ortu).
 
 ### WEB-SEO-01: SEO & performa [P0]
 Metadata dinamis, sitemap.xml, robots.txt, schema.org (`EducationalOrganization`, `NewsArticle`), gambar dioptimalkan (next/image, WebP), kompresi, cache header. Target Lighthouse ≥ 90 semua kategori utama.

@@ -4,9 +4,8 @@
 ```mermaid
 flowchart LR
   subgraph Client
-    W[Website + PPDB]
-    A[Sistem Admin]
-    M[Mobile App]
+    WP["Web Portal Terpadu (Next.js)<br/>Publik, PPDB, Admin, Guru, Siswa, Ortu"]
+    MA["Mobile App Android Native (Kotlin)<br/>Siswa, Guru, Ortu"]
   end
   subgraph Edge
     P[Nginx/Caddy + HTTPS + WAF/rate limit]
@@ -26,9 +25,8 @@ flowchart LR
     WA[WhatsApp Gateway]
     ML[Email]
   end
-  W --> P
-  A --> P
-  M --> P
+  WP --> P
+  MA --> P
   P --> API
   P --> WS
   API --> DB

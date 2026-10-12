@@ -10,7 +10,11 @@
 1. [Fondasi Desain & Design Tokens (Unified)](#1-fondasi-desain--design-tokens-unified)
 2. [Pustaka Komponen UI Bersama](#2-pustaka-komponen-ui-bersama)
 3. [Spesifikasi Web Portal Publik & PPDB (Next.js)](#3-spesifikasi-web-portal-publik--ppdb-nextjs)
-4. [Spesifikasi Web Admin Dashboard (Next.js)](#4-spesifikasi-web-admin-dashboard-nextjs)
+4. [Spesifikasi Web Portal & Dashboard Terpadu (Next.js)](#4-spesifikasi-web-portal--dashboard-terpadu-nextjs)
+   - 4.1 Shell Navigasi Multi-Role
+   - 4.2 Layar Admin & Guru (`/admin/*`)
+   - 4.3 Layar Portal Siswa (`/portal/siswa/*` & Web CBT Desktop)
+   - 4.4 Layar Portal Orang Tua (`/portal/ortu/*` & Multi-Anak Switcher)
 5. [Spesifikasi Mobile Portal Android (Jetpack Compose)](#5-spesifikasi-mobile-portal-android-jetpack-compose)
 6. [Prinsip State & Interaksi UI (Loading, Empty, Error, Offline)](#6-prinsip-state--interaksi-ui)
 
@@ -164,20 +168,28 @@ Sistem warna menggunakan kombinasi biru akademik Labschool UM dengan aksen moder
 - Halaman verifikasi publik keaslian e-rapor dan progress report saat QR code dokumen dipindai. Menampilkan nama siswa, kelas, tanggal pengesahan, dan status valid.
 
 #### 11. Pintu Masuk Portal (`/masuk`)
-- Halaman gateway bersih dengan 2 kartu pilihan akses:
-  - **Portal Sistem Admin & Guru** (Web Next.js)
-  - **Download Aplikasi Mobile Siswa & Orang Tua** (Play Store APK)
+- Halaman gateway terpadu modern & bersih:
+  - **Form Login Terpadu**: Satu formulir kredensial (NIS/NIP/Username/Email + Password) dengan deteksi otomatis role pengguna (`student`, `teacher`, `guardian`, `admin`, `staff`) yang langsung mengarahkan ke shell web masing-masing.
+  - **Kartu Unduh Aplikasi Mobile**: QR Code dan tautan langsung untuk mengunduh APK Android Native (atau Play Store) bagi Siswa, Guru, dan Orang Tua yang ingin mengakses lewat smartphone.
 
 ---
 
-## 4. SPESIFIKASI WEB ADMIN DASHBOARD (NEXT.JS)
+## 4. SPESIFIKASI WEB PORTAL & DASHBOARD TERPADU (NEXT.JS)
 
-### 4.1 Layout Shell Dashboard
-- **Sidebar**: Navigasi hirarkis berakar role pengguna; dapat di-collapse.
-- **Topbar**: Pemilih Tahun Ajaran Aktif (Dropdown), Search global, Bell notifikasi realtime, Menu profil & logout.
-- **Breadcrumbs**: Panduan navigasi hirarki (misal: `Akademik > Nilai > Kelas VII-A`).
+### 4.1 Layout Shell Navigasi Multi-Role
+Web Portal SISTLABUM menggunakan App Router Next.js dengan 3 shell antarmuka terpisah sesuai peran otentikasi:
+1. **Shell Manajemen Admin & Guru (`/admin/*`)**:
+   - **Sidebar**: Navigasi hirarkis berakar role pengguna; dapat diciutkan (collapsible).
+   - **Topbar**: Pemilih Tahun Ajaran Aktif (Dropdown), Search global, Bell notifikasi realtime, Menu profil & logout.
+   - **Breadcrumbs**: Panduan navigasi hirarki (misal: `Akademik > Nilai > Kelas VII-A`).
+2. **Shell Portal Siswa (`/portal/siswa/*`)**:
+   - **Header Navigasi**: Tab menu ringkas (Beranda, Jadwal, Tugas LMS, Ujian CBT, Rapor, Poin).
+   - **Distraction-Free Mode (CBT)**: Mode fullscreen khusus ujian di lab komputer tanpa sidebar/topbar navigasi umum.
+3. **Shell Portal Orang Tua (`/portal/ortu/*`)**:
+   - **Multi-Child Selector Bar**: Dropdown/kartu identitas pemilih anak aktif di sudut kanan atas. Semua data presensi, jadwal, dan nilai otomatis sinkron dengan anak yang dipilih.
+   - **Header Navigasi**: Tab menu orang tua (Beranda, Kehadiran, Nilai & Rapor, Izin & Sakit, Bantuan/BK).
 
-### 4.2 Inventaris Layar per Modul Admin
+### 4.2 Inventaris Layar per Modul Admin & Guru (`/admin/*`)
 
 #### 1. Modul Dashboard (`/admin/dashboard`)
 - **Dashboard Admin TU**: Metrik total siswa aktif, total guru, pendaftar PPDB baru, antrean verifikasi, aktivitas log sistem terbaru.
@@ -275,6 +287,113 @@ Sistem warna menggunakan kombinasi biru akademik Labschool UM dengan aksen moder
   - Template pesan WhatsApp, email, dan push notif dengan variabel dinamis (`{{student_name}}`).
 - **Audit Log Terpusat (`/admin/settings/audit-logs`)**:
   - Catatan immutable aktivitas aktor, aksi, IP address, user agent, dan perbandingan diff nilai lama vs baru.
+
+---
+
+### 4.3 Spesifikasi Layar Web Portal Siswa (`/portal/siswa/*`)
+
+Dirancang untuk perangkat layar lebar (PC Lab Komputer, Laptop, Chromebook) dengan resolusi target 1366×768 px hingga 1920×1080 px:
+
+#### 1. Dashboard Siswa Web (`/portal/siswa`)
+- **Banner Identitas & Presensi Hari Ini**: Foto siswa, NIS, kelas, nama wali kelas, badge status kehadiran hari ini (Hadir / Belum Presensi).
+- **Jadwal Pelajaran Hari Ini**: Kartu timeline jam ke-1 s.d ke-8, mata pelajaran, nama guru, ruang lab/kelas.
+- **Banner Ujian CBT Terdekat**: Kotak aksi cepat jika ada jadwal ujian aktif hari ini (Nama ujian, waktu mulai, tombol "Masuk Ujian").
+- **Daftar Tenggat Tugas (LMS)**: Daftar tugas dengan status *Mendekati Tenggat* (< 24 jam).
+- **Pengumuman & Warta Sekolah**: Carousel berita/pengumuman internal.
+
+#### 2. Web CBT Exam Workspace - Resolusi Desktop / Lab Komputer (`/portal/siswa/cbt/[examId]`)
+- **Mode Ujian Penuh (Distraction-Free Desktop UI)**:
+  - **Header Bar (Tinggi 64px, Sticky)**:
+    - Kiri: Logo sekolah, nama ujian, mata pelajaran, nama siswa & NIS.
+    - Tengah: Indikator status koneksi (Pill hijau *Online* / Pill merah *Mencoba Menghubungkan*), Autosave status (*Semua jawaban tersimpan* ber-icon centang hijau).
+    - Kanan: **Timer Countdown Server** (Font monospaced tebal; berubah oranye bila < 10 menit, merah berkedip bila < 5 menit), Tombol *Kumpulkan Ujian*.
+  - **Panel Soal (Kiri, Lebar 75%)**:
+    - Nomor soal aktif & bobot nilai butir.
+    - Konten teks soal: Render teks kaya, formula KaTeX matematika, gambar resolusi tinggi (dengan zoom popover), audio player untuk listening (dengan batas putar), tabel data.
+    - Lembar Jawaban Interaktif (6 format soal):
+      1. *Pilihan Ganda*: Radio button berukuran besar (A, B, C, D, E) dengan shortcut keyboard (1/2/3/4/5 atau A/B/C/D/E).
+      2. *Pilihan Ganda Kompleks*: Checkbox multi-opsi.
+      3. *Benar / Salah*: Tabel matriks pernyataan dengan kolom radio Benar / Salah.
+      4. *Menjodohkan*: UI dua kolom pasangan dengan dropdown pencocokan atau drag line.
+      5. *Isian Singkat*: Single-line input text field.
+      6. *Uraian / Esai*: Rich text editor dengan preview formula dan batas kata.
+    - Bar Navigasi Bawah: Tombol *<- Soal Sebelumnya*, Checkbox Amber *Ragu-Ragu*, Tombol *Soal Selanjutnya ->*.
+  - **Panel Navigasi Butir Soal (Kanan, Lebar 25%, Sticky)**:
+    - Grid tombol nomor 1 s.d 50 (5 kolom).
+    - Indikator Warna Status:
+      - *Abu-abu / Border tipis*: Belum dijawab.
+      - *Biru Tua (PrimaryBlue)*: Sudah terjawab.
+      - *Kuning Amber (AccentAmber)*: Ditandai ragu-ragu.
+      - *Border Emas*: Soal yang sedang aktif dibuka.
+    - Legend ringkasan: "Terjawab: 38/40 | Ragu-ragu: 2 | Kosong: 0".
+    - Tombol Merah/Biru di bawah grid: "*Selesaikan Ujian*".
+- **Sistem Keamanan Anti-Cheat Web**:
+  - Fullscreen API otomatis saat token diverifikasi.
+  - Modal Peringatan Pelanggaran: Memicu peringatan jika kursor berpindah ke tab/layar lain (`visibilitychange`, `window.onblur`), mencatat counter peringatan ke server via `POST /exams/{id}/log-violation`.
+  - Proteksi inspect element, disable right-click (`contextmenu`), dan blokir shortcut keyboard devtools (F12, Ctrl+Shift+I, Alt+Tab warning).
+  - Modal Konfirmasi Kumpulkan Berlapis: Menampilkan rekap nomor yang belum terjawab atau masih ditandai ragu-ragu sebelum submit final.
+
+#### 3. Jadwal & Kalender Akademik Siswa (`/portal/siswa/jadwal`)
+- Grid jadwal mingguan Senin-Jumat dengan pewarnaan per kelompok mata pelajaran (Wajib, Peminatan, Muatan Lokal).
+
+#### 4. Tugas & Modul Ajar LMS (`/portal/siswa/tugas`, `/portal/siswa/modul`)
+- **Modul Ajar**: Folder daftar unduhan bahan tayang, e-book, dan rekaman materi per mata pelajaran.
+- **Tugas Siswa**: Daftar tugas aktif, tab tugas telah selesai dinilai.
+- **Form Kumpul Tugas**: Unggah berkas dokumen (PDF/DOCX/ZIP) maksimal 25 MB dengan progres bar atau masukkan tautan Google Drive / YouTube link; riwayat revisi dan catatan guru.
+
+#### 5. E-Rapor & Progress Report Siswa (`/portal/siswa/rapor`)
+- Pratinjau digital laporan perkembangan belajar bulanan dan rapor semester.
+- Viewer PDF interaktif di browser dan tombol unduh PDF resmi ber-QR verification.
+
+#### 6. Catatan Poin Karakter & Ekskul Siswa (`/portal/siswa/poin`, `/portal/siswa/ekskul`)
+- Catatan transparansi riwayat poin sikap (prestasi / penghargaan dan catatan pembinaan).
+- Direktori kegiatan ekstrakurikuler & status keikutsertaan.
+
+#### 7. Bimbingan Konseling & Layanan Siswa (`/portal/siswa/bk`)
+- Formulir booking janji temu konseling tatap muka dengan guru BK (privat & terenkripsi).
+- Tautan pengaduan perundungan / whistleblowing anonim (modul GUEST).
+
+---
+
+### 4.4 Spesifikasi Layar Web Portal Orang Tua (`/portal/ortu/*`)
+
+Dirancang untuk wali murid melalui peramban PC/Laptop/Tablet:
+
+#### 1. Multi-Anak Switcher & Dashboard Orang Tua Web (`/portal/ortu`)
+- **Selector Bar Multi-Anak (Top Header)**:
+  - Kartu pemilih anak aktif: Avatar foto siswa, Nama Lengkap, NISN, Rombel Kelas, Wali Kelas.
+  - Jika orang tua memiliki >1 anak, dapat beralih anak dalam 1 klik tanpa memutus sesi login.
+- **Ringkasan Kehadiran Hari Ini**: Status tap mesin gerbang (Jam datang, jam pulang) dan status kehadiran di kelas.
+- **Jadwal Pelajaran Anak Hari Ini**: Menampilkan mata pelajaran anak yang sedang berlangsung.
+- **Widget Nilai & Rapor Terbaru**: Pengumuman penerbitan E-Progress Report bulanan terbaru dengan tombol unduh langsung.
+- **Pengumuman & Agenda Pertemuan Orang Tua**: Undangan rapat komite sekolah / pembagian rapor.
+
+#### 2. Riwayat Presensi & Log Gerbang Anak (`/portal/ortu/kehadiran`)
+- Kalender bulanan berukuran lebar dengan warna indikator per tanggal (Hijau: Hadir, Biru: Izin, Kuning: Sakit, Merah: Alpa).
+- Rekapitulasi persentase kehadiran semester berjalan.
+
+#### 3. Pengajuan Izin & Sakit via Web (`/portal/ortu/izin`)
+- **Tabel Riwayat Pengajuan Izin**: Tanggal, jenis izin, alasan, lampiran surat dokter, dan badge status persetujuan (*Menunggu Konfirmasi*, *Disetujui Walas*, *Ditolak*).
+- **Dialog Form Pengajuan Izin Baru**:
+  - Rentang tanggal ketidakhadiran (Date Range Picker).
+  - Pilihan Jenis: *Sakit* / *Izin Kepentingan Keluarga*.
+  - Kotak catatan keterangan.
+  - Komponen File Uploader (foto surat dokter dari RS/Klinik atau surat permohonan tertulis bertanda tangan orang tua, format PDF/JPG/PNG).
+
+#### 4. E-Progress Report & E-Rapor Semester Anak (`/portal/ortu/rapor`)
+- Grafik capaian kompetensi per mata pelajaran anak.
+- Arsip lengkap E-Progress Report bulanan dan E-Rapor semester berformat PDF resmi yang telah disahkan kepala sekolah, lengkap dengan kode QR verifikasi publik.
+
+#### 5. Catatan Poin Karakter & Prestasi Anak (`/portal/ortu/poin`)
+- Buku catatan poin disiplin dan prestasi anak di sekolah.
+- Indikator peringatan dini transparan mengenai ambang batas pemanggilan orang tua.
+
+#### 6. Informasi Administrasi & Biaya Sekolah (Informatif) (`/portal/ortu/keuangan`)
+- Halaman catatan transparansi biaya pendidikan anak (SPP bulanan, uang kegiatan, study trip) yang tercatat di bagian Tata Usaha sekolah.
+- Bersifat catatan informatif tanpa modul transaksi payment gateway.
+
+#### 7. Janji Temu Konseling & Komunikasi Guru BK (`/portal/ortu/bk`)
+- Formulir permohonan konsultasi pendampingan belajar atau bimbingan psikologis anak bersama Guru BK atau Wali Kelas.
 
 ---
 
