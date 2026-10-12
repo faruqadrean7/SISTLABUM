@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Sekolah Terpadu | SMP-SMA Laboratorium UM Malang</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+    <style>
+        /* Hero Section Styling */
+        .public-hero {
+            background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #0D9488 100%);
+            color: #fff;
+            padding: 90px 24px 100px;
+            position: relative;
+            overflow: hidden;
+        }
+        .public-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .hero-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            align-items: center;
+            gap: 48px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-headline h1 {
+            color: #fff;
+            font-size: 44px;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+        }
+        .hero-headline p {
+            font-size: 17px;
+            color: #E2E8F0;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .hero-badges-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .hero-accreditation {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            font-weight: 700;
+            color: #A7F3D0;
+        }
+        .hero-stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+        .hero-cta-btns {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        /* Features Grid */
+        .features-section {
+            padding: 80px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 650px;
+            margin: 0 auto 56px;
+        }
+        .section-header h2 {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 28px;
+        }
+        .feature-card {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            transition: all var(--transition-normal);
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: #CBD5E1;
+        }
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* News Section */
+        .news-section {
+            background: #fff;
+            border-top: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light);
+            padding: 80px 24px;
+        }
+        .news-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 28px;
+        }
+        .news-card {
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all var(--transition-normal);
+        }
+        .news-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .news-thumb-placeholder {
+            height: 180px;
+            background: linear-gradient(135deg, #1E3A8A, #0D9488);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 36px;
+        }
+        .news-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        /* Footer */
+        .public-footer {
+            background: #0F172A;
+            color: #94A3B8;
+            padding: 60px 24px 30px;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid #1E293B;
+        }
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 24px auto 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .hero-inner { grid-template-columns: 1fr; }
+            .footer-inner { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Publik -->
+    <header class="portal-header">
+        <div class="brand-section">
+            <div class="brand-logo-icon">UM</div>
+            <div class="brand-text">
+                <h2>SMP-SMA Laboratorium UM</h2>
+                <p>Portal Pendidikan Satu Pintu (SISTLABUM)</p>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <a href="/" class="nav-link active">Beranda</a>
+            <a href="/ppdb.html" class="nav-link">PPDB Online</a>
+            <a href="#warta" class="nav-link">Warta Sekolah</a>
+            <a href="#layanan" class="nav-link">Buku Tamu</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/ppdb.html" class="btn btn-secondary btn-sm">Info Pendaftaran</a>
+            <a href="/masuk.html" class="btn btn-primary btn-sm">Masuk Portal SSO ➔</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="public-hero">
+        <div class="hero-inner">
+            <div class="hero-headline">
+                <div class="hero-badges-row">
+                    <span class="hero-accreditation">★ Akreditasi A (Unggul)</span>
+                    <span class="hero-accreditation" style="background: rgba(13, 148, 136, 0.3);">NPSN: 20533812</span>
+                </div>
+                <h1>Membangun Generasi Unggul, Berkarakter & Berdaya Saing Global</h1>
+                <p>Selamat datang di ekosistem digital SMP-SMA Laboratorium Universitas Negeri Malang. Satu pintu akses terintegrasi untuk Siswa, Orang Tua, Guru, dan Masyarakat.</p>
+                <div class="hero-cta-btns">
+                    <a href="/masuk.html" class="btn btn-teal btn-lg">Akses Portal Masuk ➔</a>
+                    <a href="/ppdb.html" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">Daftar Siswa Baru (PPDB)</a>
+                </div>
+            </div>
+            <div class="hero-stat-card">
+                <h3 style="color: #fff; font-size: 20px; margin-bottom: 20px;">Sekilas Kampus Laboratorium</h3>
+                <div style="display: flex; flex-direction: column; gap: 18px;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px;">
+                        <span style="color: #CBD5E1;">Peserta Didik Aktif</span>
+                        <strong style="color: #fff; font-size: 20px; font-family: var(--font-mono);">1.250+ Siswa</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px;">
+                        <span style="color: #CBD5E1;">Tenaga Pendidik Berkualifikasi</span>
+                        <strong style="color: #fff; font-size: 20px; font-family: var(--font-mono);">86 Guru</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px;">
+                        <span style="color: #CBD5E1;">Ruang Lab Komputer & Sains</span>
+                        <strong style="color: #fff; font-size: 20px; font-family: var(--font-mono);">8 Laboratorium</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #CBD5E1;">Tahun Ajaran Aktif</span>
+                        <strong style="color: #34D399; font-weight: 700;" id="active-semester-text">2026/2027 Ganjil</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4 Pilar Layanan Terpadu -->
+    <section class="features-section" id="layanan">
+        <div class="section-header">
+            <span class="badge badge-info" style="margin-bottom: 12px;">EKOSISTEM DIGITAL</span>
+            <h2>Sistem Terpadu untuk Seluruh Civitas Sekolah</h2>
+            <p>Dirancang untuk memfasilitasi transparansi akademik, efisiensi administrasi, dan keamanan data anak.</p>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: #EFF6FF; color: var(--color-primary);">🎓</div>
+                <h3 style="font-size: 18px; margin-bottom: 8px;">Portal Siswa & CBT Lab</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 18px;">Ujian berbasis komputer layar lebar dengan 6 model soal, pengumpulan tugas daring, dan transparansi nilai rapor.</p>
+                <a href="/siswa/" class="btn btn-outline btn-sm">Buka Portal Siswa ➔</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: #F0FDFA; color: var(--color-teal);">👨‍👩‍👧</div>
+                <h3 style="font-size: 18px; margin-bottom: 8px;">Portal Orang Tua (Multi-Anak)</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 18px;">Pantau jam tap gerbang kedatangan anak harian, ajukan surat izin sakit via web, dan cek e-rapor semester.</p>
+                <a href="/ortu/" class="btn btn-outline btn-sm">Buka Portal Ortu ➔</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: #FEF3C7; color: var(--color-amber);">👨‍🏫</div>
+                <h3 style="font-size: 18px; margin-bottom: 8px;">Portal Guru & Walas</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 18px;">Jurnal mengajar digital, presensi kelas 3-klik, bank soal CBT, dan entri spreadsheet nilai Kurikulum Merdeka.</p>
+                <a href="/admin/" class="btn btn-outline btn-sm">Buka Dashboard Guru ➔</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: #FFE4E6; color: var(--color-rose);">📋</div>
+                <h3 style="font-size: 18px; margin-bottom: 8px;">PPDB Online Berkeadilan</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 18px;">Pendaftaran mandiri bertahap, verifikasi berkas terenkripsi, perangkingan nilai transparan, dan konfirmasi daftar ulang.</p>
+                <a href="/ppdb.html" class="btn btn-outline btn-sm">Informasi PPDB ➔</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Warta & Berita Terkini -->
+    <section class="news-section" id="warta">
+        <div class="section-header">
+            <span class="badge badge-success" style="margin-bottom: 12px;">WARTA RESMI</span>
+            <h2>Berita & Pengumuman Sekolah</h2>
+            <p>Informasi aktual mengenai prestasi siswa, agenda akademik, dan pengumuman resmi sekolah.</p>
+        </div>
+        <div class="news-grid" id="announcements-container">
+            <!-- Diisi secara dinamis dari SQLite via api.js -->
+        </div>
+    </section>
+
+    <!-- Footer Publik -->
+    <footer class="public-footer">
+        <div class="footer-inner">
+            <div>
+                <h3 style="color: #fff; font-size: 18px; margin-bottom: 14px;">SMP-SMA Laboratorium UM</h3>
+                <p style="font-size: 13.5px; line-height: 1.6; color: #94A3B8;">
+                    Sekolah Laboratorium Universitas Negeri Malang berkomitmen mewujudkan pendidikan berkualitas tinggi, berkarakter luhur, dan adaptif terhadap kemajuan teknologi digital.
+                </p>
+                <p style="margin-top: 14px; font-size: 13px; color: #CBD5E1;">
+                    📍 Jl. Bromo No. 16, Kauman, Kec. Klojen, Kota Malang, Jawa Timur 65119<br>
+                    📞 (0341) 362612 | ✉️ info@labschoolum.sch.id
+                </p>
+            </div>
+            <div>
+                <h4 style="color: #fff; font-size: 15px; margin-bottom: 14px;">Akses Portal</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px;">
+                    <li><a href="/masuk.html" style="color: #94A3B8;">Login SSO Terpadu</a></li>
+                    <li><a href="/siswa/" style="color: #94A3B8;">Portal Siswa</a></li>
+                    <li><a href="/siswa/cbt.html" style="color: #94A3B8;">CBT Lab Komputer</a></li>
+                    <li><a href="/ortu/" style="color: #94A3B8;">Portal Orang Tua</a></li>
+                    <li><a href="/admin/" style="color: #94A3B8;">Admin & Guru</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="color: #fff; font-size: 15px; margin-bottom: 14px;">Layanan Publik</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px;">
+                    <li><a href="/ppdb.html" style="color: #94A3B8;">Penerimaan PPDB</a></li>
+                    <li><a href="#layanan" style="color: #94A3B8;">Buku Tamu Digital</a></li>
+                    <li><a href="#layanan" style="color: #94A3B8;">Pengaduan / Aspirasi</a></li>
+                    <li><a href="#warta" style="color: #94A3B8;">Kalender Kegiatan</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="color: #fff; font-size: 15px; margin-bottom: 14px;">Mobile App</h4>
+                <p style="font-size: 13px; margin-bottom: 12px;">Unduh aplikasi khusus smartphone Android di Google Play Store.</p>
+                <a href="/masuk.html" class="btn btn-secondary btn-sm" style="width: 100%;">Unduh APK Android</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 SMP-SMA Laboratorium UM Malang. Seluruh hak cipta dilindungi.</span>
+            <span>Versi Desain 1.0 (Master Unified Blueprint)</span>
+        </div>
+    </footer>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        // Injeksi Prototype Navigator Switcher
+        App.injectRoleSwitcher('public');
+
+        // Ambil Data Pengumuman dari SQLite
+        async function loadPublicData() {
+            try {
+                const announcements = await API.getAnnouncements();
+                const container = document.getElementById('announcements-container');
+                container.innerHTML = '';
+
+                announcements.forEach((a, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'news-card';
+                    card.innerHTML = `
+                        <div class="news-thumb-placeholder">
+                            ${idx === 0 ? '💻' : (idx === 1 ? '🏆' : '📋')}
+                        </div>
+                        <div class="news-body">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span class="badge badge-info">${a.category}</span>
+                                <span style="font-size: 12px; color: var(--text-muted);">${a.date}</span>
+                            </div>
+                            <h3 style="font-size: 17px; margin-bottom: 10px; line-height: 1.35;">${a.title}</h3>
+                            <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.5; margin-bottom: 16px; flex-grow: 1;">${a.summary}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                                <span style="color: var(--text-subtle);">Oleh: ${a.author}</span>
+                                <a href="/masuk.html" style="font-weight: 700; color: var(--color-primary);">Baca Selengkapnya ➔</a>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadPublicData();
+    </script>
+</body>
+</html>

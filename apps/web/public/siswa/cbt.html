@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian CBT Digital | SMP-SMA Laboratorium UM Malang</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/cbt.css">
+</head>
+<body class="cbt-body">
+    <!-- 1. Header Bar Ujian CBT (Sticky, Distraction-Free) -->
+    <header class="cbt-header">
+        <div class="cbt-meta-left">
+            <span class="cbt-exam-badge" id="exam-code-badge">CBT-2026-INF-01</span>
+            <span class="cbt-exam-title" id="exam-title-text">Asesmen Sumatif Tengah Semester (ASTS) Informatika</span>
+        </div>
+
+        <div class="cbt-center-status">
+            <!-- Indikator Autosave Server -->
+            <div id="sync-status-indicator" class="sync-indicator synced">
+                <span class="sync-dot"></span>
+                <span>Tersimpan otomatis ke server</span>
+            </div>
+
+            <!-- Timer Countdown -->
+            <div class="cbt-timer-box">
+                <span class="timer-label">Sisa Waktu:</span>
+                <span class="timer-digits" id="cbt-timer-digits">01:30:00</span>
+            </div>
+        </div>
+
+        <div class="cbt-user-meta">
+            <div class="student-tag">
+                <div class="name">Ahmad Fauzan Maulana</div>
+                <div class="nis">NIS: 240901 • Kelas IX-A</div>
+            </div>
+            <button onclick="toggleFullscreen()" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;" title="Mode Layar Penuh">
+                ⛶ Layar Penuh
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. Main Split Workspace -->
+    <main class="cbt-workspace">
+        <!-- Panel Kiri: Lembar Soal & Jawaban (75%) -->
+        <section class="cbt-question-panel">
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-badge-pill" id="q-number-pill">Soal No. 1</span>
+                    <span class="question-type-tag" id="q-type-label">Pilihan Ganda Tunggal • Bobot 10 Poin</span>
+                </div>
+
+                <!-- Konten Teks Soal -->
+                <div class="question-text" id="q-text-body">
+                    Memuat butir soal dari database...
+                </div>
+
+                <!-- Wadah Opsi Jawaban Dinamis (6 format soal) -->
+                <div id="q-options-container"></div>
+
+                <!-- Action Bar Bawah (Ragu-Ragu & Navigasi) -->
+                <div class="cbt-action-bar">
+                    <label class="doubt-checkbox-label">
+                        <input type="checkbox" id="doubt-checkbox" onchange="player.toggleDoubtCurrent()" style="width: 18px; height: 18px; accent-color: var(--color-amber);">
+                        <span>Tandai Ragu-Ragu (Kuning)</span>
+                    </label>
+
+                    <div class="cbt-nav-btns">
+                        <button id="prev-btn" class="btn btn-secondary" onclick="player.prevQuestion()">
+                            ◀ Soal Sebelumnya
+                        </button>
+                        <button id="next-btn" class="btn btn-primary" onclick="player.nextQuestion()">
+                            Soal Berikutnya ▶
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel Kanan: Peta Nomor Soal (25%) -->
+        <aside class="cbt-map-panel">
+            <div class="map-header">
+                <span>Peta Butir Soal</span>
+                <span class="badge badge-info" id="q-total-badge">10 Butir</span>
+            </div>
+
+            <!-- Grid Tombol Nomor 1-10 -->
+            <div class="question-grid" id="question-grid-container">
+                <!-- Di-generate dinamis oleh cbt-player.js -->
+            </div>
+
+            <!-- Legend Status -->
+            <div class="map-legend">
+                <div class="legend-item">
+                    <span class="legend-box blue"></span>
+                    <span>Sudah Dijawab (<b id="legend-answered-count">0</b>)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-box amber"></span>
+                    <span>Ragu-Ragu (<b id="legend-doubt-count">0</b>)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-box gray"></span>
+                    <span>Belum Dijawab (<b id="legend-empty-count">10</b>)</span>
+                </div>
+            </div>
+
+            <!-- Tombol Selesai Ujian -->
+            <button class="btn btn-teal cbt-finish-btn" onclick="player.confirmFinishExam()">
+                Kumpulkan Ujian ➔
+            </button>
+        </aside>
+    </main>
+
+    <!-- 3. Modal Anti-Cheat Peringatan Perpindahan Tab / Jendela -->
+    <div id="anti-cheat-modal" class="anti-cheat-modal">
+        <div class="anti-cheat-card">
+            <div class="violation-icon-pulse">⚠️</div>
+            <h2 style="color: var(--color-rose); font-size: 22px; font-weight: 800; margin-bottom: 8px;">
+                PERINGATAN INTEGRITAS UJIAN!
+            </h2>
+            <p style="color: var(--text-main); font-size: 14.5px; line-height: 1.5;">
+                Terdeteksi perpindahan tab browser atau fokus layar keluar dari area ujian CBT Laboratorium.
+            </p>
+            <div class="violation-count-badge" id="violation-count-badge">
+                Total Peringatan: 1 Kali
+            </div>
+            <p style="color: var(--text-muted); font-size: 12.5px; margin-bottom: 22px;">
+                Aktivitas ini dicatat otomatis ke log audit pengawas ujian. Akumulasi pelanggaran berulang dapat menyebabkan sesi ujian dikunci.
+            </p>
+            <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="player.dismissViolation()">
+                Saya Mengerti & Kembali ke Soal
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. Modal Konfirmasi Selesai Ujian -->
+    <div id="submit-confirm-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 48px;">📋</span>
+                <h2 style="font-size: 22px; margin-top: 10px;">Konfirmasi Pengumpulan Jawaban</h2>
+                <p style="color: var(--text-muted); font-size: 14px;">
+                    Periksa kembali ringkasan pengerjaan Anda sebelum mengakhiri sesi ujian:
+                </p>
+            </div>
+
+            <div style="background: var(--bg-subtle); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                    <span>Soal Terjawab:</span>
+                    <strong style="color: var(--color-primary);" id="confirm-answered-text">0 Butir</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                    <span>Soal Ragu-Ragu:</span>
+                    <strong style="color: var(--color-amber);" id="confirm-doubt-text">0 Butir</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                    <span>Soal Kosong:</span>
+                    <strong style="color: var(--color-rose);" id="confirm-empty-text">0 Butir</strong>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
+                    <input type="checkbox" id="confirm-agree-checkbox" style="margin-top: 3px; accent-color: var(--color-primary);">
+                    <span>Saya menyatakan dengan jujur telah menyelesaikan ujian ini secara mandiri tanpa bantuan pihak luar.</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="App.closeModal('submit-confirm-modal')">
+                    Kembali Periksa
+                </button>
+                <button class="btn btn-teal" style="flex: 1;" onclick="player.submitExam()">
+                    Ya, Kumpulkan Sekarang ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/cbt-player.js"></script>
+    <script>
+        App.injectRoleSwitcher('cbt');
+
+        const player = new CbtPlayer();
+        player.init(1, 1);
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+    </script>
+</body>
+</html>

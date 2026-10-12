@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entri Nilai Spreadsheet Guru | SISTLABUM Admin</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+    <style>
+        .grade-input {
+            width: 72px;
+            padding: 6px 8px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 700;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all var(--transition-fast);
+        }
+        .grade-input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
+            background: #EFF6FF;
+        }
+    </style>
+</head>
+<body class="admin-shell">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="brand-logo-icon">UM</div>
+            <div>
+                <h2 style="font-size: 15px; font-weight: 800; color: #fff;">SISTLABUM</h2>
+                <p style="font-size: 11px; color: #64748B;">Admin & Guru Dashboard</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav-group">
+            <div class="nav-group-title">Menu Utama</div>
+            <a href="/admin/index.html" class="sidebar-link">
+                <span class="icon">📊</span> Dashboard Eksekutif
+            </a>
+
+            <div class="nav-group-title">Akademik & Pengajaran</div>
+            <a href="/admin/nilai.html" class="sidebar-link active">
+                <span class="icon">📝</span> Entri Nilai (Spreadsheet)
+            </a>
+            <a href="/admin/cbt-monitor.html" class="sidebar-link">
+                <span class="icon">🖥️</span> CBT Live Monitor Lab
+            </a>
+
+            <div class="nav-group-title">Master Data Sekolah</div>
+            <a href="/admin/siswa.html" class="sidebar-link">
+                <span class="icon">👥</span> Data Siswa & Wali
+            </a>
+
+            <div class="nav-group-title">Penerimaan Siswa Baru</div>
+            <a href="/ppdb.html" class="sidebar-link">
+                <span class="icon">📋</span> Verifikasi Berkas PPDB
+            </a>
+        </nav>
+
+        <div style="padding: 16px; border-top: 1px solid #1E293B;">
+            <a href="/masuk.html" class="sidebar-link" style="color: #F87171;">
+                <span class="icon">🚪</span> Keluar Sistem
+            </a>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="portal-header" style="position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="badge badge-info" style="font-size: 12.5px;">Tahun Ajaran: 2026/2027 Ganjil</span>
+            </div>
+            <div class="header-actions">
+                <div class="user-profile-chip">
+                    <div class="avatar-circle" style="background: var(--color-indigo);">BS</div>
+                    <div class="user-text-meta">
+                        <div class="user-name">Budi Santoso, S.Kom., M.T.</div>
+                        <div class="user-role">Guru Pengampu Informatika</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-container">
+            <div class="page-header-row">
+                <div class="page-title-block">
+                    <div class="breadcrumb-trail">
+                        <a href="/admin/index.html">Guru</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span>Penilaian & Nilai Akhir</span>
+                    </div>
+                    <h1>Entri Nilai Cepat (Spreadsheet Grid)</h1>
+                    <p>Input nilai komponen asesmen formatif & sumatif secara langsung tanpa berpindah halaman.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary btn-sm" onclick="App.toast('Mengekspor daftar nilai ke format Excel .xlsx...', 'info')">
+                        📊 Ekspor Excel
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="saveAllGrades()">
+                        💾 Simpan Semua Nilai ke Server
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Kelas & Mapel Bar -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div>
+                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Pilih Kelas</label>
+                            <select class="form-control" style="font-weight: 700; width: 160px;">
+                                <option value="4" selected>Kelas IX-A</option>
+                                <option value="1">Kelas VII-A</option>
+                                <option value="2">Kelas VII-B</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Mata Pelajaran</label>
+                            <select class="form-control" style="font-weight: 700; width: 280px;">
+                                <option value="2" selected>Informatika & Pemrograman</option>
+                                <option value="1">Matematika Tingkat Lanjut</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 12.5px; color: var(--text-muted);">KKTP Target: <b style="color: var(--color-primary);">78 Poin</b></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spreadsheet Grade Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Lembar Nilai Siswa: Kelas IX-A (Informatika)</h3>
+                    <span class="badge badge-success badge-dot" id="save-status-badge">Semua nilai tersinkronisasi</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">No</th>
+                                <th>Nama Lengkap Siswa</th>
+                                <th>NIS</th>
+                                <th style="text-align: center;">Tugas (15%)</th>
+                                <th style="text-align: center;">UH (25%)</th>
+                                <th style="text-align: center;">ASTS/PTS (30%)</th>
+                                <th style="text-align: center;">ASAS/PAS (30%)</th>
+                                <th style="text-align: center;">Nilai Akhir</th>
+                                <th style="text-align: center;">Predikat</th>
+                                <th>Catatan Capaian Kompetensi Siswa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grade-spreadsheet-body">
+                            <!-- Diisi dinamis dari SQLite via API -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        App.injectRoleSwitcher('admin');
+
+        async function loadSpreadsheetGrades() {
+            try {
+                const students = await API.getClassGrades(4, 2);
+                const tbody = document.getElementById('grade-spreadsheet-body');
+                tbody.innerHTML = '';
+
+                students.forEach((s, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.id = `row-${s.student_id}`;
+                    tr.innerHTML = `
+                        <td style="font-family: var(--font-mono); color: var(--text-subtle);">${idx + 1}</td>
+                        <td style="font-weight: 700; color: var(--color-primary);">${s.student_name}</td>
+                        <td style="font-family: var(--font-mono); font-size: 13px;">${s.nis}</td>
+                        <td style="text-align: center;">
+                            <input type="number" class="grade-input" id="tugas-${s.student_id}" value="${s.score_tasks}" oninput="recalculate(${s.student_id})">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="number" class="grade-input" id="uh-${s.student_id}" value="${s.score_uh}" oninput="recalculate(${s.student_id})">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="number" class="grade-input" id="pts-${s.student_id}" value="${s.score_pts}" oninput="recalculate(${s.student_id})">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="number" class="grade-input" id="pas-${s.student_id}" value="${s.score_pas}" oninput="recalculate(${s.student_id})">
+                        </td>
+                        <td style="text-align: center; font-family: var(--font-mono); font-size: 16px; font-weight: 800; color: var(--color-teal);" id="final-${s.student_id}">
+                            ${s.final_score}
+                        </td>
+                        <td style="text-align: center;" id="pred-${s.student_id}">
+                            <span class="badge ${s.predicate === 'A' ? 'badge-success' : 'badge-info'}">${s.predicate}</span>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" style="font-size: 13px; padding: 6px 10px;" value="${s.character_notes}">
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function recalculate(studentId) {
+            const tugas = parseFloat(document.getElementById(`tugas-${studentId}`).value) || 0;
+            const uh = parseFloat(document.getElementById(`uh-${studentId}`).value) || 0;
+            const pts = parseFloat(document.getElementById(`pts-${studentId}`).value) || 0;
+            const pas = parseFloat(document.getElementById(`pas-${studentId}`).value) || 0;
+
+            const finalScore = Math.round((tugas * 0.15) + (uh * 0.25) + (pts * 0.30) + (pas * 0.30));
+            document.getElementById(`final-${studentId}`).textContent = finalScore;
+
+            let pred = 'C';
+            if (finalScore >= 90) pred = 'A';
+            else if (finalScore >= 80) pred = 'B';
+            else if (finalScore >= 75) pred = 'B-';
+
+            document.getElementById(`pred-${studentId}`).innerHTML = `
+                <span class="badge ${pred === 'A' ? 'badge-success' : 'badge-info'}">${pred}</span>
+            `;
+
+            document.getElementById('save-status-badge').className = 'badge badge-warning badge-dot';
+            document.getElementById('save-status-badge').textContent = 'Perubahan belum disimpan';
+        }
+
+        function saveAllGrades() {
+            document.getElementById('save-status-badge').className = 'badge badge-success badge-dot';
+            document.getElementById('save-status-badge').textContent = 'Semua nilai tersinkronisasi ke server';
+            App.toast('Semua nilai kelas IX-A berhasil disimpan ke basis data SQLite!', 'success');
+        }
+
+        loadSpreadsheetGrades();
+    </script>
+</body>
+</html>

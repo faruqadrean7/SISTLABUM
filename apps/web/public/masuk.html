@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pintu Masuk Terpadu SSO | SISTLABUM</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            padding: 30px 16px 80px;
+        }
+        .login-wrapper {
+            max-width: 960px;
+            width: 100%;
+            background: #fff;
+            border-radius: var(--radius-xl);
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+        }
+        .login-left {
+            padding: 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .login-right {
+            background: linear-gradient(145deg, #0F172A, #1E3A8A);
+            color: #fff;
+            padding: 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .quick-demo-box {
+            background: #F8FAFC;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-top: 24px;
+        }
+        .quick-demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .quick-demo-btn {
+            background: #fff;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 8px 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .quick-demo-btn:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+        @media (max-width: 800px) {
+            .login-wrapper { grid-template-columns: 1fr; }
+            .login-right { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <!-- Sisi Kiri: Form Login SSO -->
+        <div class="login-left">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <div class="brand-logo-icon">UM</div>
+                <div>
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--color-primary);">SISTLABUM</h2>
+                    <p style="font-size: 12px; color: var(--text-muted);">SMP-SMA Laboratorium UM</p>
+                </div>
+            </div>
+
+            <h1 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">Masuk ke Portal Terpadu</h1>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+                Gunakan kredensial akun sekolah Anda (Siswa, Orang Tua, Guru, atau Staf TU).
+            </p>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Identitas Pengguna (NIS / NIP / Email)</label>
+                    <input type="text" id="username" class="form-control" placeholder="Contoh: 240901 atau suparman@gmail.com" required value="240901">
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin-bottom: 0;">Kata Sandi</label>
+                        <a href="#" style="font-size: 12.5px; font-weight: 600;">Lupa Sandi?</a>
+                    </div>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required value="labschool2026">
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
+                        <input type="checkbox" checked style="accent-color: var(--color-primary);"> Ingat sesi di perangkat ini
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 8px;">
+                    Masuk ke Sistem ➔
+                </button>
+            </form>
+
+            <!-- 1-Click Quick Demo Login for Reviewer -->
+            <div class="quick-demo-box">
+                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                    ⚡ DEMO SIMULATOR CEPAT (PILIH PERAN):
+                </span>
+                <div class="quick-demo-grid">
+                    <button class="quick-demo-btn" onclick="quickLogin('siswa')">
+                        <span>🎓</span>
+                        <div>
+                            <div>Siswa (Fauzan)</div>
+                            <small style="color: var(--text-subtle); font-weight: normal;">Kelas IX-A</small>
+                        </div>
+                    </button>
+                    <button class="quick-demo-btn" onclick="quickLogin('ortu')">
+                        <span>👨‍👩‍👧</span>
+                        <div>
+                            <div>Orang Tua</div>
+                            <small style="color: var(--text-subtle); font-weight: normal;">H. Suparman</small>
+                        </div>
+                    </button>
+                    <button class="quick-demo-btn" onclick="quickLogin('guru')">
+                        <span>👨‍🏫</span>
+                        <div>
+                            <div>Guru (Informatika)</div>
+                            <small style="color: var(--text-subtle); font-weight: normal;">Budi Santoso</small>
+                        </div>
+                    </button>
+                    <button class="quick-demo-btn" onclick="quickLogin('admin')">
+                        <span>🛡️</span>
+                        <div>
+                            <div>Admin TU</div>
+                            <small style="color: var(--text-subtle); font-weight: normal;">Tata Usaha</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sisi Kanan: Mobile App Showcase -->
+        <div class="login-right">
+            <div>
+                <span class="badge" style="background: rgba(13, 148, 136, 0.3); color: #34D399; margin-bottom: 16px;">
+                    📱 APLIKASI ANDROID NATIVE
+                </span>
+                <h3 style="color: #fff; font-size: 22px; font-weight: 800; line-height: 1.3; margin-bottom: 12px;">
+                    Akses Cepat di Smartphone Khusus Android
+                </h3>
+                <p style="color: #CBD5E1; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                    Pantau kehadiran anak saat tap gerbang secara realtime, ajukan surat izin sakit langsung dengan kamera, dan terima notifikasi sekolah instan.
+                </p>
+
+                <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: center; gap: 18px;">
+                    <div style="width: 72px; height: 72px; background: #fff; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: #0F172A; font-weight: 800; font-size: 11px; text-align: center; line-height: 1.1; padding: 6px;">
+                        SCAN QR CODE
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #fff; font-size: 14px; margin-bottom: 4px;">SISTLABUM Mobile</div>
+                        <div style="color: #94A3B8; font-size: 12px; margin-bottom: 8px;">Kotlin 2.x • Jetpack Compose</div>
+                        <span class="badge badge-success" style="font-size: 11px;">Versi 1.0.0 Terverifikasi</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: #94A3B8;">
+                <span>Butuh Bantuan Akun?</span>
+                <a href="/" style="color: #38BDF8; font-weight: 600;">Kembali ke Beranda</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        App.injectRoleSwitcher('login');
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            
+            App.toast('Otentikasi berhasil. Mengarahkan ke dashboard...', 'success');
+
+            // Simulasi pendeteksian role otomatis
+            setTimeout(() => {
+                if (username.startsWith('2409') || username.startsWith('2607')) {
+                    window.location.href = '/siswa/index.html';
+                } else if (username.includes('suparman') || username.includes('wali')) {
+                    window.location.href = '/ortu/index.html';
+                } else if (username.startsWith('19')) {
+                    window.location.href = '/admin/nilai.html';
+                } else {
+                    window.location.href = '/admin/index.html';
+                }
+            }, 800);
+        }
+
+        function quickLogin(role) {
+            if (role === 'siswa') {
+                App.toast('Login sebagai Siswa: Ahmad Fauzan Maulana', 'info');
+                setTimeout(() => window.location.href = '/siswa/index.html', 400);
+            } else if (role === 'ortu') {
+                App.toast('Login sebagai Orang Tua: H. Suparman', 'info');
+                setTimeout(() => window.location.href = '/ortu/index.html', 400);
+            } else if (role === 'guru') {
+                App.toast('Login sebagai Guru: Budi Santoso, S.Kom.', 'info');
+                setTimeout(() => window.location.href = '/admin/nilai.html', 400);
+            } else {
+                App.toast('Login sebagai Admin Tata Usaha', 'info');
+                setTimeout(() => window.location.href = '/admin/index.html', 400);
+            }
+        }
+    </script>
+</body>
+</html>

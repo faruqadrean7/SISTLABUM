@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Siswa | SMP-SMA Laboratorium UM Malang</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="portal-layout">
+    <!-- Header Siswa -->
+    <header class="portal-header">
+        <div class="brand-section">
+            <div class="brand-logo-icon">UM</div>
+            <div class="brand-text">
+                <h2>PORTAL SISWA</h2>
+                <p>SMP-SMA Laboratorium UM Malang</p>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <a href="/siswa/index.html" class="nav-link active">🏠 Beranda</a>
+            <a href="/siswa/cbt.html" class="nav-link">📝 Ujian CBT Lab</a>
+            <a href="/siswa/tugas.html" class="nav-link">📚 Tugas & Modul</a>
+            <a href="/siswa/rapor.html" class="nav-link">📊 E-Rapor</a>
+        </nav>
+        <div class="header-actions">
+            <div class="user-profile-chip">
+                <div class="avatar-circle" style="background: var(--color-primary);">AF</div>
+                <div class="user-text-meta">
+                    <div class="user-name">Ahmad Fauzan Maulana</div>
+                    <div class="user-role">Siswa • Kelas IX-A (NIS: 240901)</div>
+                </div>
+            </div>
+            <a href="/masuk.html" class="btn btn-outline btn-sm">Keluar</a>
+        </div>
+    </header>
+
+    <!-- Content Container -->
+    <main class="content-container">
+        <!-- Breadcrumb & Title -->
+        <div class="page-header-row">
+            <div class="page-title-block">
+                <div class="breadcrumb-trail">
+                    <a href="/siswa/index.html">Siswa</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span>Dashboard Akademik</span>
+                </div>
+                <h1>Selamat Datang Kembali, Fauzan! 👋</h1>
+                <p>Pantau jadwal belajar harian, batas pengumpulan tugas, dan asesmen digital Anda.</p>
+            </div>
+            <div>
+                <span class="badge badge-success badge-dot" style="font-size: 13px; padding: 6px 14px;">
+                    Presensi Hari Ini: Hadir (Tap Gerbang 06:42 WIB)
+                </span>
+            </div>
+        </div>
+
+        <!-- Banner Ujian CBT Aktif Hari Ini -->
+        <div class="card" style="background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; margin-bottom: 28px; border: none; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: gap; gap: 20px;">
+                <div>
+                    <span class="badge" style="background: #F59E0B; color: #78350F; font-weight: 800; margin-bottom: 10px;">
+                        🚨 ASESMEN CBT AKTIF HARI INI
+                    </span>
+                    <h2 style="color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 6px;">
+                        Asesmen Sumatif Tengah Semester: Informatika & Pemrograman
+                    </h2>
+                    <p style="color: #CBD5E1; font-size: 14px;">
+                        Kode Ujian: <code style="background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); color: #93C5FD;">CBT-2026-INF-01</code> • Durasi: 90 Menit • Lokasi: Lab Komputer R.202
+                    </p>
+                </div>
+                <div>
+                    <a href="/siswa/cbt.html" class="btn btn-teal btn-lg" style="box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);">
+                        Mulai Kerjakan Ujian CBT ➔
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat Grid Siswa -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Persentase Hadir</span>
+                    <span class="stat-value" style="color: var(--color-teal);">98.2%</span>
+                    <span class="stat-sub">44 dari 45 Pertemuan</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-teal">📅</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Rata-rata Nilai Rapor</span>
+                    <span class="stat-value" style="color: var(--color-primary);">91.3</span>
+                    <span class="stat-sub">Peringkat 2 Kelas IX-A</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-blue">🏆</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Poin Karakter / Reward</span>
+                    <span class="stat-value" style="color: var(--color-amber);">+45</span>
+                    <span class="stat-sub">Disiplin & Berprestasi</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-amber">⭐</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Tugas Tertunda</span>
+                    <span class="stat-value" style="color: var(--color-rose);">2</span>
+                    <span class="stat-sub">Mendekati Tenggat</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-rose">⏰</div>
+            </div>
+        </div>
+
+        <!-- 2 Column Section: Jadwal Hari Ini & Tugas LMS -->
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px;">
+            <!-- Jadwal Pelajaran Hari Ini -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📖 Jadwal Pelajaran Hari Ini (Senin)</h3>
+                    <span class="badge badge-info">Kelas IX-A</span>
+                </div>
+                <div class="timeline-list">
+                    <div class="timeline-item">
+                        <div class="timeline-time">07:00 - 08:30</div>
+                        <div class="timeline-subject">Upacara Bendera & Pembiasaan Karakter</div>
+                        <div class="timeline-room">Lapangan Utama</div>
+                    </div>
+                    <div class="timeline-item" style="border-left-color: var(--color-teal); background: #F0FDFA;">
+                        <div class="timeline-time">08:30 - 10:00</div>
+                        <div class="timeline-subject">Informatika & Pemrograman (ASTS CBT)</div>
+                        <div class="timeline-room">Lab Komputer • Budi Santoso, S.Kom.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">10:15 - 11:45</div>
+                        <div class="timeline-subject">Matematika Tingkat Lanjut</div>
+                        <div class="timeline-room">R.301 • Ahmad Hidayat, M.Sc.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">12:30 - 14:00</div>
+                        <div class="timeline-subject">Bahasa Indonesia (Teks Editorial)</div>
+                        <div class="timeline-room">R.301 • Dra. Sri Wahyuni, M.Pd.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tugas LMS Mendatang -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📝 Tugas LMS Aktif</h3>
+                    <a href="/siswa/tugas.html" style="font-size: 13px; font-weight: 700;">Lihat Semua ➔</a>
+                </div>
+                <div id="assignments-list" style="display: flex; flex-direction: column; gap: 14px;">
+                    <!-- Diisi dinamis dari SQLite via API -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        App.injectRoleSwitcher('siswa');
+
+        async function loadStudentDashboard() {
+            try {
+                const assignments = await API.getAssignments(4);
+                const container = document.getElementById('assignments-list');
+                container.innerHTML = '';
+
+                assignments.forEach(a => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'padding: 14px; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: #fff;';
+                    item.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <span class="badge badge-info">${a.subject_name}</span>
+                            <span style="font-size: 11.5px; color: var(--color-rose); font-weight: 700;">⏰ Tenggat: ${a.due_date.substring(0, 10)}</span>
+                        </div>
+                        <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${a.title}</div>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">${a.description.substring(0, 85)}...</p>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <a href="/siswa/tugas.html" class="btn btn-secondary btn-sm">Unggah Jawaban ➔</a>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadStudentDashboard();
+    </script>
+</body>
+</html>

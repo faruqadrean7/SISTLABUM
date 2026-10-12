@@ -1,0 +1,13 @@
+{
+  "name": "sistlabum-web",
+  "version": "1.0.0",
+  "description": "Web Portal Terpadu SISTLABUM - SMP-SMA Laboratorium Universitas Negeri Malang",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node data/seed.js"
+  },
+  "keywords": ["sistlabum", "school-portal", "cbt", "lms"],
+  "author": "Laboratorium UM",
+  "license": "Private"
+}
