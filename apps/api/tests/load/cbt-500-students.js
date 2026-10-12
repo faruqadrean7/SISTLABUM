@@ -8,7 +8,9 @@ export const cbtSaveAnswerDuration = new Trend('cbt_save_answer_duration', true)
 export const cbtHeartbeatDuration = new Trend('cbt_heartbeat_duration', true);
 export const cbtSubmitDuration = new Trend('cbt_submit_duration', true);
 export const cbtErrorRate = new Rate('cbt_error_rate');
-export const cbtSuccessfulSubmissions = new Counter('cbt_successful_submissions');
+export const cbtSuccessfulAnswers = new Counter('cbt_successful_answers');
+export const cbtSuccessfulFinishes = new Counter('cbt_successful_finishes');
+export const cbtSuccessfulSubmissions = new Counter('cbt_successful_submissions'); // Backward compatibility
 
 // Usulan Ambang Batas Penerimaan (Proposed SLA Thresholds)
 export const options = {
@@ -32,7 +34,7 @@ export const options = {
     http_req_duration: ['p(95)<500', 'p(99)<1000'],
     // 2. Tingkat kegagalan HTTP < 1%
     http_req_failed: ['rate<0.01'],
-    // 3. Tingkat error alur CBT < 1%
+    // 3. Tingkat error alur CBT < 1% (wajib diuji secara akurat)
     cbt_error_rate: ['rate<0.01'],
     // 4. Latensi penyimpanan autosave jawaban p95 < 250ms
     cbt_save_answer_duration: ['p(95)<250'],
@@ -49,7 +51,7 @@ export default function () {
   const vuId = __VU;
   const iteration = __ITER;
   
-  // 1. Autentikasi Siswa Sintetis (Berdasarkan pool 500 akun siswa)
+  // 1. Autentikasi Siswa Sintetis (Berdasarkan pool 500 akun siswa unik 1:1)
   const studentIndex = ((vuId - 1) % 500) + 1;
   const studentEmail = `student${studentIndex}@labschool.sch.id`;
   const loginPayload = JSON.stringify({
@@ -65,8 +67,9 @@ export default function () {
   const loginRes = http.post(`${BASE_URL}/auth/login`, loginPayload, { headers: loginHeaders });
   cbtLoginDuration.add(loginRes.timings.duration);
 
+  // Verifikasi otentikasi ketat: hanya 200 OK yang sah untuk akun siswa uji
   const loginSuccess = check(loginRes, {
-    'login status is 200 or 401': (r) => r.status === 200 || r.status === 401,
+    'login status is 200 OK': (r) => r.status === 200,
     'no fatal 500 error on login': (r) => r.status !== 500,
   });
 
@@ -81,6 +84,7 @@ export default function () {
 
   if (!token) {
     cbtErrorRate.add(1);
+    sleep(2);
     return;
   }
 
@@ -94,9 +98,15 @@ export default function () {
   const startPayload = JSON.stringify({ token: ROOM_TOKEN });
   const startRes = http.post(`${BASE_URL}/exams/${EXAM_ID}/start-session`, startPayload, { headers: authHeaders });
 
-  check(startRes, {
+  const startCheck = check(startRes, {
+    'start session status is 200 or 422': (r) => r.status === 200 || r.status === 422,
     'start session non-500': (r) => r.status !== 500,
   });
+
+  if (!startCheck) {
+    cbtErrorRate.add(1);
+    return;
+  }
 
   let sessionId = null;
   if (startRes.status === 200) {
@@ -106,16 +116,27 @@ export default function () {
     // Penanganan jika ujian telah diselesaikan pada iterasi sebelumnya
     const errData = startRes.json();
     if (errData && errData.message && errData.message.includes('selesai')) {
+      // Sesi telah selesai secara sah, bukan kegagalan sistem
+      cbtErrorRate.add(0);
       sleep(5);
+      return;
+    } else {
+      cbtErrorRate.add(1);
       return;
     }
   }
 
   // 3. Ambil Butir Soal Ujian (Load Exam Questions)
   const questionsRes = http.get(`${BASE_URL}/exams/${EXAM_ID}/session-questions`, { headers: authHeaders });
-  check(questionsRes, {
+  const questionsCheck = check(questionsRes, {
+    'questions load status is 200 OK': (r) => r.status === 200,
     'questions load non-500': (r) => r.status !== 500,
   });
+
+  if (!questionsCheck) {
+    cbtErrorRate.add(1);
+    return;
+  }
 
   let questionIds = [];
   if (questionsRes.status === 200) {
@@ -147,6 +168,17 @@ export default function () {
       });
       const hbRes = http.post(`${BASE_URL}/exam-sessions/${sessionId}/heartbeat`, heartbeatPayload, { headers: authHeaders });
       cbtHeartbeatDuration.add(hbRes.timings.duration);
+
+      const hbCheck = check(hbRes, {
+        'heartbeat status is 200 OK': (r) => r.status === 200,
+        'heartbeat non-500': (r) => r.status !== 500,
+      });
+
+      if (!hbCheck) {
+        cbtErrorRate.add(1);
+      } else {
+        cbtErrorRate.add(0);
+      }
     }
 
     // Waktu berpikir siswa
@@ -162,12 +194,17 @@ export default function () {
     const saveRes = http.post(`${BASE_URL}/exams/${EXAM_ID}/save-answer`, answerPayload, { headers: authHeaders });
     cbtSaveAnswerDuration.add(saveRes.timings.duration);
 
-    check(saveRes, {
+    const saveCheck = check(saveRes, {
+      'save answer status is 200 OK': (r) => r.status === 200 || r.status === 201,
       'save answer non-500': (r) => r.status !== 500,
     });
 
-    if (saveRes.status === 200 || saveRes.status === 201) {
+    if (saveCheck) {
+      cbtSuccessfulAnswers.add(1);
       cbtSuccessfulSubmissions.add(1);
+      cbtErrorRate.add(0);
+    } else {
+      cbtErrorRate.add(1);
     }
   }
 
@@ -176,10 +213,17 @@ export default function () {
     const finishRes = http.post(`${BASE_URL}/exams/${EXAM_ID}/finish-session`, JSON.stringify({}), { headers: authHeaders });
     cbtSubmitDuration.add(finishRes.timings.duration);
 
-    check(finishRes, {
+    const finishCheck = check(finishRes, {
+      'finish session status is 200 or 422': (r) => r.status === 200 || r.status === 422,
       'finish session non-500': (r) => r.status !== 500,
-      'finish session valid status': (r) => r.status === 200 || r.status === 422,
     });
+
+    if (finishCheck) {
+      cbtSuccessfulFinishes.add(1);
+      cbtErrorRate.add(0);
+    } else {
+      cbtErrorRate.add(1);
+    }
   }
 
   // Jeda akhir sebelum iterasi berikutnya

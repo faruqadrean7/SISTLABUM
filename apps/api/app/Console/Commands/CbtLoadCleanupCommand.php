@@ -27,6 +27,20 @@ class CbtLoadCleanupCommand extends Command
 
     public function handle(): int
     {
+        // SEC-SAFE-01: Production Safety Guard
+        if (app()->isProduction()) {
+            $this->error('CRITICAL SAFETY VIOLATION: cbt:load-cleanup is strictly forbidden in the production environment!');
+
+            return self::FAILURE;
+        }
+
+        $dbName = (string) DB::connection()->getDatabaseName();
+        if (str_contains(strtolower($dbName), 'prod')) {
+            $this->error("CRITICAL SAFETY VIOLATION: Database '{$dbName}' appears to be production! Cleanup aborted.");
+
+            return self::FAILURE;
+        }
+
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
@@ -36,8 +50,13 @@ class CbtLoadCleanupCommand extends Command
         $bank = QuestionBank::where('name', 'Bank Soal Load Drill')->first();
         $room = Room::withTrashed()->where('code', 'LAB-CBT-500')->first();
         $subject = Subject::withTrashed()->where('code', 'BIO-LOAD')->first();
-        $studentsCount = Student::withTrashed()->where('full_name', 'like', 'Siswa Uji Beban %')->count();
-        $usersCount = User::withTrashed()->where('email', 'like', 'student%@labschool.sch.id')->count();
+        $stagingStudents = Student::withTrashed()
+            ->where('full_name', 'like', 'Siswa Uji Beban %')
+            ->get();
+        $stagingStudentIds = $stagingStudents->pluck('id')->all();
+        $stagingUserIds = $stagingStudents->pluck('user_id')->filter()->all();
+        $studentsCount = count($stagingStudentIds);
+        $usersCount = count($stagingUserIds);
 
         $sessionIds = [];
         $answerCount = 0;
@@ -101,13 +120,18 @@ class CbtLoadCleanupCommand extends Command
                 $bank->delete();
             }
 
-            // Delete students & users
-            $studentUsers = User::withTrashed()->where('email', 'like', 'student%@labschool.sch.id')->get();
-            foreach ($studentUsers as $u) {
-                Student::withTrashed()->where('user_id', $u->id)->forceDelete();
-                $u->roles()->detach();
-                $u->tokens()->delete();
-                $u->forceDelete();
+            // Delete students & users strictly isolated to staging test records
+            foreach ($stagingStudents as $student) {
+                $student->forceDelete();
+            }
+
+            if (! empty($stagingUserIds)) {
+                $users = User::withTrashed()->whereIn('id', $stagingUserIds)->get();
+                foreach ($users as $u) {
+                    $u->roles()->detach();
+                    $u->tokens()->delete();
+                    $u->forceDelete();
+                }
             }
 
             $room = Room::withTrashed()->where('code', 'LAB-CBT-500')->first();
