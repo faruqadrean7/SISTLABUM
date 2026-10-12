@@ -63,4 +63,13 @@ trait ApiResponse
             'X-Request-Id' => $requestId,
         ]);
     }
+
+    /**
+     * Standard Not Found Response:
+     * { "error": { "code": "NOT_FOUND", "message": "...", "details": [], "requestId": "..." } }
+     */
+    protected function notFoundResponse(string $message = 'Data tidak ditemukan.'): JsonResponse
+    {
+        return $this->errorResponse($message, 'NOT_FOUND', 404);
+    }
 }
