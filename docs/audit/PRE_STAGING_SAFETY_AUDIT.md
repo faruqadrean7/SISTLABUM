@@ -6,10 +6,10 @@
 |---|---|
 | **Status Gate G-4** | **BLOCKED (PRASYARAT OPERASIONAL: KLUSTER STAGING TERISOLASI BELUM TERSEDIA)** |
 | **Keputusan Rilis Resmi** | **CONDITIONAL GO** (Tolak kenaikan ke Full Production Go tanpa bukti staging riil) |
-| **Commit Target yang Diaudit** | `8db6abf` (branch `develop`) |
-| **Total Automated Tests** | **770 Tests Passed, 4.064 Assertions, 0 Failures** |
+| **Commit Target yang Diaudit** | Baseline `97bb84c` & Remediasi Terkini (branch `develop`) |
+| **Total Automated Tests** | **772 Tests Passed, 4.078 Assertions, 0 Failures** |
 | **Code Style & Formatting** | **Laravel Pint Passed (0 Violations)** |
-| **Fokus Verifikasi** | Safety Cleanup Guard, Akurasi Threshold k6, Integritas Transaksi Konkurensi CBT, Kesiapan Staging Runtime |
+| **Fokus Verifikasi** | Safety Cleanup Guard, Akurasi Threshold k6, Integritas Transaksi Konkurensi CBT (PostgreSQL Atomic Upsert), Kesiapan Staging Runtime |
 
 ---
 
@@ -21,7 +21,7 @@
 |---|---|---|---|---|---|
 | **SEC-AUD-01** | **CRITICAL** | `app/Console/Commands/CbtLoadCleanupCommand.php` | **Ketiadaan Production Safety Guard**: Perintah cleanup sebelumnya tidak memeriksa `app()->isProduction()` maupun nama basis data, berpotensi mengeksekusi penghapusan massal jika dijalankan di server produksi. | Ditambahkan blokade keras `if (app()->isProduction())` dan validasi nama DB (`str_contains('prod')`) dengan exit code 1. | **RESOLVED** |
 | **SEC-AUD-02** | **HIGH** | `app/Console/Commands/CbtLoadCleanupCommand.php` | **Risiko Penghapusan Data Nyata via Wildcard**: Query penghapusan pengguna menggunakan `where('email', 'like', 'student%@labschool.sch.id')` yang dapat menghapus akun siswa resmi sekolah jika memiliki pola email serupa. | Diisolasi ketat: hanya menghapus siswa yang memiliki `full_name like 'Siswa Uji Beban %'` dan ID pengguna yang terikat langsung padanya. Akun mirip (`student1000`, `student.president`) terbukti 100% utuh. | **RESOLVED** |
-| **CBT-RACE-01** | **HIGH** | `app/Services/Cbt/ExamSessionService.php` | **Potensi Crash 500 pada Autosave Konkuren**: Pemanggilan `updateOrCreate` pada `saveAnswer` dapat melempar `UniqueConstraintViolationException` jika dua autosave dari siswa yang sama tiba di milidetik yang sama sebelum baris terbuat. | Ditambahkan `try-catch (\Illuminate\Database\UniqueConstraintViolationException)` yang secara elegan melakukan fallback ke `update()` tanpa melempar error 500. | **RESOLVED** |
+| **CBT-RACE-01** | **HIGH** | `app/Services/Cbt/ExamSessionService.php` | **Potensi PostgreSQL Transaction Abort (SQLSTATE 25P02) pada Autosave Konkuren**: Pemanggilan `updateOrCreate` pada `saveAnswer` memicu `UniqueConstraintViolationException` bila terjadi race condition; di PostgreSQL, jika berada dalam blok transaksi, eksepsi ini membatalkan seluruh transaksi (`transaction is aborted, commands ignored`). | Direkayasa ulang menggunakan **Atomic DB-Level UPSERT** (`ExamAnswer::upsert(...)` -> `INSERT ... ON CONFLICT (session_id, question_id) DO UPDATE`). Tidak ada eksepsi yang dilempar, UUID dan timestamp awal dipertahankan, dan transaksi PostgreSQL tidak pernah ter-abort. | **RESOLVED** |
 | **CBT-RACE-02** | **MEDIUM** | `app/Services/Cbt/ExamSessionService.php` | **Non-Atomic Sesi Transisi pada Submit**: Panggilan paralel ke `finishSession` dapat mengeksekusi audit log ganda jika belum terlindungi oleh transaksi tingkat baris. | Metode `finishSession` dibungkus dalam `DB::transaction` dengan `lockForUpdate()` pada baris sesi, menjamin idempotensi murni dan mencegah duplikasi audit. | **RESOLVED** |
 | **CBT-RACE-03** | **MEDIUM** | `app/Services/Cbt/ExamSessionService.php` | **Race Condition pada `startSession`**: Dua permintaan paralel pembuatan sesi untuk siswa yang sama dapat memicu collision unik `(exam_id, student_id)`. | `ExamSession::firstOrCreate` ditangani dengan fallback `firstOrFail()` jika tertangkap `UniqueConstraintViolationException`. | **RESOLVED** |
 | **QA-AUD-01** | **HIGH** | `apps/api/tests/load/cbt-500-students.js` | **Toleransi Autentikasi Palsu pada k6**: Check login memvalidasi `status === 200 || status === 401`, sehingga kegagalan autentikasi dicatat sebagai check SUCCEEDED (100% pass semu). | Diperketat menjadi hanya `status === 200 OK`. Kegagalan login langsung menggagalkan check dan mencatat kegagalan bisnis. | **RESOLVED** |
@@ -76,12 +76,33 @@ Tests:    4 passed (24 assertions)
 Duration: 5.15s
 ```
 
-### C. Pengujian Integritas Konkurensi CBT: `ExamConcurrencyIntegrityTest.php`
+### C. Pengujian Integritas Konkurensi CBT & Atomic Upsert: `ExamConcurrencyIntegrityTest.php`
+Implementasi atomic upsert pada `ExamSessionService::saveAnswer`:
+```php
+ExamAnswer::upsert(
+    [
+        [
+            'id' => (string) Str::uuid(),
+            'session_id' => $session->id,
+            'question_id' => $questionId,
+            'answer' => $answerData !== null ? json_encode($answerData) : null,
+            'is_flagged' => $isFlagged,
+            'answered_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ],
+    ],
+    ['session_id', 'question_id'],
+    ['answer', 'is_flagged', 'answered_at', 'updated_at']
+);
+```
 Pengujian otomatis pada [`apps/api/tests/Feature/Cbt/ExamConcurrencyIntegrityTest.php`](file:///Users/macbookprom12020/Desktop/Project/SISTLABUM/apps/api/tests/Feature/Cbt/ExamConcurrencyIntegrityTest.php):
 1. `test_concurrent_start_session_creates_single_session_consistently`: Membuktikan panggilan start-session simultan tidak memicu duplikasi sesi dan menghasilkan session ID identik.
 2. `test_concurrent_save_answer_updates_without_duplicate_key_crash`: Membuktikan panggilan autosave simultan pada butir soal yang sama tidak crash 500 akibat tabrakan unique constraint, melainkan melakukan atomic update.
-3. `test_finish_session_is_strictly_idempotent_and_prevents_duplicate_submission`: Membuktikan submit paralel mengembalikan status sukses secara konsisten tanpa duplikasi audit log.
+3. `test_finish_session_is_strictly_idempotent_and_prevents_duplicate_submission`: Membuktikan submit paralel mengembalikan status sukses secara konsisten dengan row locking (`lockForUpdate`).
 4. `test_auto_submit_command_synchronizes_without_conflict`: Membuktikan sinkronisasi mulus antara manual finish dan background `exam:auto-submit`.
+5. `test_save_answer_atomic_upsert_within_transaction_never_aborts_transaction`: Membuktikan autosave di dalam transaksi aktif PostgreSQL/SQLite tidak pernah melempar abort `SQLSTATE[25P02]` dan dapat diulang berkali-kali secara aman.
+6. `test_atomic_upsert_handles_complex_json_structures_and_preserves_original_uuid`: Memverifikasi struktur data JSON, pelestarian UUID asli, timestamp awal, serta flag ragu-ragu.
 
 Hasil PHPUnit:
 ```
@@ -90,10 +111,16 @@ PASS  Tests\Feature\Cbt\ExamConcurrencyIntegrityTest
 ✓ concurrent save answer updates without duplicate key crash
 ✓ finish session is strictly idempotent and prevents duplicate submission
 ✓ auto submit command synchronizes without conflict
+✓ save answer atomic upsert within transaction never aborts transaction
+✓ atomic upsert handles complex json structures and preserves original uuid
 
-Tests:    4 passed (23 assertions)
-Duration: 0.43s
+Tests:    6 passed (37 assertions)
+Duration: 0.48s
 ```
+
+Verifikasi Langsung pada Mesin PostgreSQL 17.11 (Homebrew):
+- Database `sistlabum_test_audit` (127 tabel termigrasi).
+- Panggilan paralel atomic upsert berhasil menghasilkan: `SUCCESS on PGSQL 17! answer={"step":2} is_flagged=false`.
 
 ---
 
@@ -155,6 +182,6 @@ Sebelum perintah `k6 run apps/api/tests/load/cbt-500-students.js` boleh diekseku
 $$\mathbf{STATUS\ GATE\ G-4:\ BLOCKED}$$
 $$\mathbf{KEPUTUSAN\ RILIS:\ CONDITIONAL\ GO}$$
 
-Sistem backend SISTLABUM berada pada tingkat keamanan dan kesiapan fungsional tertinggi (**770 automated tests passed, 4.064 assertions, 0 lint violations, 0 race condition vulnerabilities**). Namun, **ketiadaan log mentah pengujian beban 500 VU selama 30 menit dari kluster staging multi-worker nyata mewajibkan tim audit mempertahankan status CONDITIONAL GO**.
+Sistem backend SISTLABUM berada pada tingkat keamanan dan kesiapan fungsional tertinggi (**772 automated tests passed, 4.078 assertions, 0 lint violations, 0 race condition vulnerabilities**). Namun, **ketiadaan log mentah pengujian beban 500 VU selama 30 menit dari kluster staging multi-worker nyata mewajibkan tim audit mempertahankan status CONDITIONAL GO**.
 
 Setelah pengujian 30 menit di staging menghasilkan output empiris dengan `p(95) < 500 ms`, `autosave p(95) < 250 ms`, dan `error rate < 1%`, status Gate G-4 dapat disahkan menjadi **`PASS`** dan rilis dapat ditingkatkan menjadi **`FULL PRODUCTION GO`**.

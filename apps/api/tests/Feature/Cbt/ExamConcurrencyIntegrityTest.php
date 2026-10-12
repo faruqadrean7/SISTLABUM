@@ -18,6 +18,7 @@ use App\Models\Subject;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -253,5 +254,79 @@ class ExamConcurrencyIntegrityTest extends TestCase
             'entity' => 'exam_sessions',
             'entity_id' => $session->id,
         ]);
+    }
+
+    public function test_save_answer_atomic_upsert_within_transaction_never_aborts_transaction(): void
+    {
+        $token = $this->studentUser->createToken('test')->plainTextToken;
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson("/api/v1/exams/{$this->exam->id}/start-session", ['token' => 'FIS123'])
+            ->assertStatus(200);
+
+        // Simulasi autosave berulang di dalam transaksi database aktif
+        // Memastikan tidak ada UniqueConstraintViolationException atau kegagalan transaksi
+        DB::transaction(function () use ($token) {
+            $save1 = $this->withHeaders(['Authorization' => "Bearer {$token}"])
+                ->postJson("/api/v1/exams/{$this->exam->id}/save-answer", [
+                    'question_id' => $this->question->id,
+                    'answer' => ['option_id' => 'opt_1', 'note' => 'initial answer'],
+                    'is_flagged' => true,
+                ]);
+            $save1->assertStatus(200);
+
+            $save2 = $this->withHeaders(['Authorization' => "Bearer {$token}"])
+                ->postJson("/api/v1/exams/{$this->exam->id}/save-answer", [
+                    'question_id' => $this->question->id,
+                    'answer' => ['option_id' => 'opt_2', 'note' => 'revised answer'],
+                    'is_flagged' => false,
+                ]);
+            $save2->assertStatus(200);
+        });
+
+        $answers = ExamAnswer::where('question_id', $this->question->id)->get();
+        $this->assertCount(1, $answers);
+        $this->assertEquals(['option_id' => 'opt_2', 'note' => 'revised answer'], $answers->first()->answer);
+        $this->assertFalse((bool) $answers->first()->is_flagged);
+    }
+
+    public function test_atomic_upsert_handles_complex_json_structures_and_preserves_original_uuid(): void
+    {
+        $token = $this->studentUser->createToken('test')->plainTextToken;
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson("/api/v1/exams/{$this->exam->id}/start-session", ['token' => 'FIS123'])
+            ->assertStatus(200);
+
+        // Insert awal
+        $res1 = $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson("/api/v1/exams/{$this->exam->id}/save-answer", [
+                'question_id' => $this->question->id,
+                'answer' => 'First attempt',
+                'is_flagged' => false,
+            ]);
+        $res1->assertStatus(200);
+
+        $initialRecord = ExamAnswer::where('question_id', $this->question->id)->firstOrFail();
+        $initialId = $initialRecord->id;
+        $initialCreatedAt = $initialRecord->created_at?->toIso8601String();
+
+        // Update dengan JSON array kompleks
+        $res2 = $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson("/api/v1/exams/{$this->exam->id}/save-answer", [
+                'question_id' => $this->question->id,
+                'answer' => ['pairs' => [['left' => '1', 'right' => 'A'], ['left' => '2', 'right' => 'B']]],
+                'is_flagged' => true,
+            ]);
+        $res2->assertStatus(200);
+
+        $updatedRecord = ExamAnswer::where('question_id', $this->question->id)->firstOrFail();
+
+        // Buktikan UUID dan created_at tidak berubah, sedangkan data jawaban dan flag terupdate
+        $this->assertEquals($initialId, $updatedRecord->id);
+        $this->assertEquals($initialCreatedAt, $updatedRecord->created_at?->toIso8601String());
+        $this->assertEquals(['pairs' => [['left' => '1', 'right' => 'A'], ['left' => '2', 'right' => 'B']]], $updatedRecord->answer);
+        $this->assertTrue((bool) $updatedRecord->is_flagged);
+        $this->assertEquals(1, ExamAnswer::where('question_id', $this->question->id)->count());
     }
 }

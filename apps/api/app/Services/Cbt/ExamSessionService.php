@@ -279,36 +279,30 @@ class ExamSessionService
 
         $now = Carbon::now();
 
-        try {
-            $answerRecord = ExamAnswer::updateOrCreate(
+        // SEC-CBT-CONC: Atomic UPSERT berbasis DB (ON CONFLICT DO UPDATE)
+        // Mencegah abort transaksi PostgreSQL dan race condition pada autosave konkuren
+        ExamAnswer::upsert(
+            [
                 [
+                    'id' => (string) Str::uuid(),
                     'session_id' => $session->id,
                     'question_id' => $questionId,
-                ],
-                [
-                    'answer' => $answerData,
+                    'answer' => $answerData !== null ? json_encode($answerData) : null,
                     'is_flagged' => $isFlagged,
                     'answered_at' => $now,
-                ]
-            );
-        } catch (UniqueConstraintViolationException) {
-            // Race condition teratasi: baris telah terbuat secara konkuren, lakukan update
-            $answerRecord = ExamAnswer::where('session_id', $session->id)
-                ->where('question_id', $questionId)
-                ->firstOrFail();
-
-            $answerRecord->update([
-                'answer' => $answerData,
-                'is_flagged' => $isFlagged,
-                'answered_at' => $now,
-            ]);
-        }
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            ],
+            ['session_id', 'question_id'],
+            ['answer', 'is_flagged', 'answered_at', 'updated_at']
+        );
 
         return [
-            'question_id' => $answerRecord->question_id,
+            'question_id' => $questionId,
             'is_saved' => true,
-            'is_flagged' => $answerRecord->is_flagged,
-            'answered_at' => $answerRecord->answered_at?->toIso8601String(),
+            'is_flagged' => $isFlagged,
+            'answered_at' => $now->toIso8601String(),
             'server_time' => $now->toIso8601String(),
         ];
     }
