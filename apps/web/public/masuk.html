@@ -69,29 +69,6 @@
                     </button>
                 </form>
 
-                <!-- Quick Pick Demo Buttons -->
-                <div class="mt-6 pt-5 border-t border-line-light">
-                    <div class="text-[0.75rem] font-bold text-ink-muted uppercase tracking-wider mb-2.5">Akses Cepat Pengguna Demo:</div>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button type="button" onclick="quickLogin('siswa')" class="p-2 border border-line rounded-[6px] hover:border-gold hover:bg-gold-soft/10 text-left transition-colors">
-                            <div class="font-bold text-navy">🎓 Siswa (Fauzan)</div>
-                            <div class="text-[0.65rem] text-ink-muted">NISN: 0089123456</div>
-                        </button>
-                        <button type="button" onclick="quickLogin('ortu')" class="p-2 border border-line rounded-[6px] hover:border-gold hover:bg-gold-soft/10 text-left transition-colors">
-                            <div class="font-bold text-navy">👨‍👩‍👧 Wali (Suparman)</div>
-                            <div class="text-[0.65rem] text-ink-muted">Multi-Anak Aktif</div>
-                        </button>
-                        <button type="button" onclick="quickLogin('guru')" class="p-2 border border-line rounded-[6px] hover:border-gold hover:bg-gold-soft/10 text-left transition-colors">
-                            <div class="font-bold text-navy">👨‍🏫 Guru (Budi, S.Kom)</div>
-                            <div class="text-[0.65rem] text-ink-muted">Input Nilai &amp; Absensi</div>
-                        </button>
-                        <button type="button" onclick="quickLogin('admin')" class="p-2 border border-line rounded-[6px] hover:border-gold hover:bg-gold-soft/10 text-left transition-colors">
-                            <div class="font-bold text-navy">🏫 Admin Tata Usaha</div>
-                            <div class="text-[0.65rem] text-ink-muted">Kelola Siswa &amp; CBT</div>
-                        </button>
-                    </div>
-                </div>
-
                 <div class="text-center pt-4 border-t border-line-light mt-6 text-xs text-ink-muted">
                     Belum memiliki akun? <a class="text-navy font-semibold hover:text-gold" href="/kontak">Hubungi Admin IT Sekolah</a>
                 </div>
@@ -105,17 +82,6 @@
                 </a>
             </div>
         </div>
-    </div>
-
-    <!-- Role Switcher Floating Pill -->
-    <div class="role-switcher-bar">
-        <a href="/" class="role-switcher-btn">🌐 Publik</a>
-        <a href="/ppdb" class="role-switcher-btn">📝 PPDB</a>
-        <a href="/masuk.html" class="role-switcher-btn active">🔐 Masuk</a>
-        <a href="/siswa/" class="role-switcher-btn">🎓 Siswa</a>
-        <a href="/ortu/" class="role-switcher-btn">👨‍👩‍👧 Wali</a>
-        <a href="/admin/" class="role-switcher-btn">🏫 Admin</a>
-        <a href="/siswa/cbt.html" class="role-switcher-btn">💻 CBT Lab</a>
     </div>
 
     <script src="/js/api.js"></script>
@@ -172,23 +138,6 @@
                     window.location.href = '/admin/index.html';
                 }
             }, 600);
-        }
-
-        function quickLogin(role) {
-            setRole(role === 'admin' ? 'guru' : role);
-            if (role === 'siswa') {
-                App.toast('Login sebagai Siswa: Ahmad Fauzan Maulana', 'info');
-                setTimeout(() => window.location.href = '/siswa/index.html', 400);
-            } else if (role === 'ortu') {
-                App.toast('Login sebagai Orang Tua: H. Suparman (2 Anak)', 'info');
-                setTimeout(() => window.location.href = '/ortu/index.html', 400);
-            } else if (role === 'guru') {
-                App.toast('Login sebagai Guru: Budi Santoso, S.Kom.', 'info');
-                setTimeout(() => window.location.href = '/admin/nilai.html', 400);
-            } else {
-                App.toast('Login sebagai Admin Tata Usaha', 'info');
-                setTimeout(() => window.location.href = '/admin/index.html', 400);
-            }
         }
     </script>
 </body>

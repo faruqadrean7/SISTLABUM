@@ -54,25 +54,6 @@ const App = {
             month: 'long',
             year: 'numeric'
         });
-    },
-
-    // 4. Injeksi Floating Prototype Navigator (Memudahkan Demo & Peninjauan)
-    injectRoleSwitcher(activeKey) {
-        if (document.querySelector('.role-switcher-bar')) return;
-
-        const nav = document.createElement('div');
-        nav.className = 'role-switcher-bar';
-        nav.innerHTML = `
-            <span style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; margin-right: 4px; letter-spacing: 0.05em;">PROTOTYPE:</span>
-            <a href="/" class="role-switcher-btn ${activeKey === 'public' ? 'active' : ''}">🌐 Publik</a>
-            <a href="/masuk.html" class="role-switcher-btn ${activeKey === 'login' ? 'active' : ''}">🔑 Masuk SSO</a>
-            <a href="/ppdb.html" class="role-switcher-btn ${activeKey === 'ppdb' ? 'active' : ''}">📋 PPDB</a>
-            <a href="/siswa/" class="role-switcher-btn ${activeKey === 'siswa' ? 'active' : ''}">🎓 Siswa</a>
-            <a href="/siswa/cbt.html" class="role-switcher-btn ${activeKey === 'cbt' ? 'active' : ''}">📝 CBT Lab</a>
-            <a href="/ortu/" class="role-switcher-btn ${activeKey === 'ortu' ? 'active' : ''}">👨‍👩‍👧 Ortu</a>
-            <a href="/admin/" class="role-switcher-btn ${activeKey === 'admin' ? 'active' : ''}">👨‍🏫 Admin TU</a>
-        `;
-        document.body.appendChild(nav);
     }
 };
 
