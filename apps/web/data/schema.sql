@@ -222,3 +222,25 @@ CREATE TABLE announcements (
     tag TEXT NOT NULL,
     is_public INTEGER DEFAULT 1
 );
+
+CREATE TABLE ppdb_applicants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    registration_number TEXT NOT NULL UNIQUE,
+    nisn TEXT NOT NULL,
+    nama TEXT NOT NULL,
+    gender TEXT NOT NULL,
+    tempat_lahir TEXT NOT NULL,
+    tanggal_lahir TEXT NOT NULL,
+    asal_sekolah TEXT NOT NULL,
+    program TEXT NOT NULL,
+    nama_ayah TEXT,
+    nama_ibu TEXT,
+    wa TEXT NOT NULL,
+    alamat TEXT NOT NULL,
+    nilai_rapor REAL DEFAULT 0,
+    prestasi TEXT,
+    catatan TEXT,
+    status TEXT NOT NULL DEFAULT 'TERVERIFIKASI (LOLOS SELEKSI BERKAS)',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+

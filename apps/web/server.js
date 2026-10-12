@@ -409,6 +409,85 @@ const server = http.createServer(async (req, res) => {
                 return sendJson(res, 200, rows);
             }
 
+            // 17. Otentikasi Login SSO
+            if (pathname === '/api/auth/login' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { username, role } = body;
+                let redirectUrl = '/siswa/';
+                if (role === 'ortu' || username?.includes('suparman') || username?.includes('wali')) {
+                    redirectUrl = '/ortu/';
+                } else if (role === 'guru' || username?.startsWith('19')) {
+                    redirectUrl = '/admin/nilai.html';
+                } else if (role === 'admin') {
+                    redirectUrl = '/admin/';
+                }
+                return sendJson(res, 200, {
+                    success: true,
+                    token: 'dummy-token-' + Date.now(),
+                    user: { username, role: role || 'siswa' },
+                    redirect_url: redirectUrl
+                });
+            }
+
+            // 18. PPDB: Pendaftaran Calon Siswa Baru
+            if (pathname === '/api/ppdb/register' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const regNo = 'SPMB-2026-' + Math.floor(1000 + Math.random() * 9000);
+                const {
+                    program = 'Program Reguler',
+                    nisn = '',
+                    nama = '',
+                    gender = 'L',
+                    tempat_lahir = 'Malang',
+                    tanggal_lahir = '2012-01-01',
+                    asal_sekolah = '',
+                    nama_ayah = '',
+                    nama_ibu = '',
+                    wa = '',
+                    alamat = '',
+                    nilai_rapor = 85.0,
+                    prestasi = '',
+                    catatan = ''
+                } = body;
+
+                db.prepare(`
+                    INSERT INTO ppdb_applicants 
+                    (registration_number, nisn, nama, gender, tempat_lahir, tanggal_lahir, asal_sekolah, program, nama_ayah, nama_ibu, wa, alamat, nilai_rapor, prestasi, catatan, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `).run(
+                    regNo, nisn, nama, gender, tempat_lahir, tanggal_lahir, asal_sekolah, program,
+                    nama_ayah, nama_ibu, wa, alamat, Number(nilai_rapor) || 85.0, prestasi, catatan,
+                    'TERVERIFIKASI (LOLOS SELEKSI BERKAS)'
+                );
+
+                return sendJson(res, 201, {
+                    success: true,
+                    registration_number: regNo,
+                    message: 'Pendaftaran SPMB berhasil disimpan.',
+                    applicant: { registration_number: regNo, nama, program, status: 'TERVERIFIKASI (LOLOS SELEKSI BERKAS)' }
+                });
+            }
+
+            // 19. PPDB: Cek Status Seleksi
+            if (pathname === '/api/ppdb/status' && req.method === 'GET') {
+                const q = parsedUrl.searchParams.get('q') || parsedUrl.searchParams.get('no');
+                if (!q) {
+                    const all = db.prepare('SELECT * FROM ppdb_applicants ORDER BY id DESC').all();
+                    return sendJson(res, 200, all);
+                }
+
+                const applicant = db.prepare(`
+                    SELECT * FROM ppdb_applicants 
+                    WHERE registration_number = ? OR nisn = ? OR nama LIKE ?
+                    LIMIT 1
+                `).get(q, q, `%${q}%`);
+
+                if (!applicant) {
+                    return sendJson(res, 404, { error: 'Data pendaftar tidak ditemukan', query: q });
+                }
+                return sendJson(res, 200, applicant);
+            }
+
             return sendJson(res, 404, { error: 'Endpoint API tidak ditemukan' });
         } catch (err) {
             console.error('API Error:', err);
@@ -419,6 +498,7 @@ const server = http.createServer(async (req, res) => {
     // --- STATIC FILE SERVING ---
     let relativePath = pathname;
     if (relativePath === '/') relativePath = '/index.html';
+    if (relativePath === '/portal/login') relativePath = '/masuk.html';
     if (!path.extname(relativePath)) {
         // Coba periksa apakah file .html ada
         const candidateHtml = relativePath + '.html';

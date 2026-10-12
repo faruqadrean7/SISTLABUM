@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Rapor & Capaian Belajar | Portal Siswa SISTLABUM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/portal.css">
 </head>
@@ -11,11 +15,13 @@
     <!-- Header Siswa -->
     <header class="portal-header">
         <div class="brand-section">
-            <div class="brand-logo-icon">UM</div>
-            <div class="brand-text">
-                <h2>PORTAL SISWA</h2>
-                <p>SMP-SMA Laboratorium UM Malang</p>
-            </div>
+            <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+          <img src="/images/logo.png" width="38" height="38" style="object-fit:contain;" alt="Logo"/>
+          <div class="brand-text">
+              <h2 style="font-family:var(--font-heading);font-weight:700;color:var(--color-navy);font-size:16px;">SMP Laboratorium</h2>
+              <p style="color:var(--color-gold);font-weight:600;font-size:11px;">P2LP Universitas Negeri Malang</p>
+          </div>
+      </a>
         </div>
         <nav class="header-nav">
             <a href="/siswa/index.html" class="nav-link">🏠 Beranda</a>

@@ -1,56 +1,73 @@
 /* SISTLABUM Design System - Core CSS Tokens & Utilities */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Visual Identity: SMP Laboratorium P2LP Universitas Negeri Malang */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('/css/demo-tailwind.css');
 
 :root {
-  /* Brand Academic Colors */
-  --color-primary: #1E3A8A;
-  --color-primary-hover: #172554;
-  --color-primary-light: #EFF6FF;
-  --color-primary-subtle: #DBEAFE;
+  /* Brand Academic Colors (SMP Laboratorium UM) */
+  --color-navy: #0A3D62;
+  --color-navy-deep: #062940;
+  --color-navy-light: #155B8A;
+  --color-navy-subtle: #EBF3F8;
   
-  --color-dark: #0F172A;
-  --color-dark-surface: #1E293B;
+  --color-primary: #0A3D62;
+  --color-primary-hover: #062940;
+  --color-primary-light: #EBF3F8;
+  --color-primary-subtle: #D0E4F2;
   
-  --color-teal: #0D9488;
-  --color-teal-light: #F0FDFA;
-  --color-teal-border: #99F6E4;
+  --color-gold: #C98A1F;
+  --color-gold-hover: #B27615;
+  --color-gold-soft: #F4E2BD;
+  --color-gold-subtle: #FEF9F0;
   
-  --color-amber: #F59E0B;
-  --color-amber-light: #FEF3C7;
-  --color-amber-border: #FDE68A;
+  --color-school-green: #1E7A46;
+  --color-school-green-soft: #C3E6D0;
   
-  --color-rose: #E11D48;
-  --color-rose-light: #FFE4E6;
-  --color-rose-border: #FECDD3;
+  --color-dark: #062940;
+  --color-dark-surface: #0E3553;
   
-  --color-indigo: #4F46E5;
-  --color-indigo-light: #EEF2FF;
+  --color-teal: #1E7A46;
+  --color-teal-light: #E8F7EE;
+  --color-teal-border: #C3E6D0;
   
-  /* Neutral Slate Palette */
-  --bg-app: #F8FAFC;
+  --color-amber: #C98A1F;
+  --color-amber-light: #FEF9F0;
+  --color-amber-border: #F4E2BD;
+  
+  --color-rose: #DC2626;
+  --color-rose-light: #FEE2E2;
+  --color-rose-border: #FECACA;
+  
+  --color-indigo: #0A3D62;
+  --color-indigo-light: #EBF3F8;
+  
+  /* Neutral Slate / Clean Canvas Palette */
+  --bg-app: #F6F7F9;
   --bg-surface: #FFFFFF;
-  --bg-subtle: #F1F5F9;
+  --bg-subtle: #F1F4F7;
   --bg-input: #FFFFFF;
   
-  --text-main: #0F172A;
-  --text-muted: #64748B;
-  --text-subtle: #94A3B8;
+  --text-main: #1B2430;
+  --text-ink: #1B2430;
+  --text-muted: #4A5563;
+  --text-subtle: #6B7280;
   --text-inverse: #FFFFFF;
   
-  --border-light: #E2E8F0;
-  --border-subtle: #F1F5F9;
-  --border-focus: #3B82F6;
+  --border-light: #DFE3E8;
+  --border-subtle: #EEF1F4;
+  --border-focus: #C98A1F;
   
   /* Typography */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   
   /* Shadows */
-  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+  --shadow-xs: 0 1px 2px 0 rgba(6, 41, 64, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(6, 41, 64, 0.08), 0 1px 2px -1px rgba(6, 41, 64, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(6, 41, 64, 0.09), 0 2px 4px -2px rgba(6, 41, 64, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(6, 41, 64, 0.1), 0 4px 6px -4px rgba(6, 41, 64, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(6, 41, 64, 0.12), 0 8px 10px -6px rgba(6, 41, 64, 0.05);
   
   /* Radius */
   --radius-xs: 4px;
@@ -72,6 +89,11 @@
   padding: 0;
 }
 
+::selection {
+  background-color: var(--color-gold-soft);
+  color: var(--color-navy-deep);
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-app);
@@ -81,11 +103,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.font-heading {
+  font-family: var(--font-heading);
+}
+
 /* Base Headings & Links */
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
   font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
+  color: var(--color-navy);
+  letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
@@ -95,7 +122,7 @@ a {
   transition: color var(--transition-fast);
 }
 a:hover {
-  color: var(--color-teal);
+  color: var(--color-gold);
 }
 
 /* Buttons */
@@ -457,6 +484,7 @@ a:hover {
 }
 
 .role-switcher-btn.active {
-  background: var(--color-teal);
-  color: #fff;
+  background: var(--color-gold);
+  color: var(--color-navy-deep);
+  font-weight: 700;
 }

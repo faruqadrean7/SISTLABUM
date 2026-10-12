@@ -25,13 +25,13 @@ db.prepare(`
     INSERT INTO school_profile (name, npsn, accreditation, address, phone, email, principal_name, active_semester)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `).run(
-    'SMP-SMA Laboratorium Universitas Negeri Malang',
+    'SMP Laboratorium (P2LP Universitas Negeri Malang)',
     '20533812',
     'A (Unggul)',
-    'Jl. Bromo No. 16, Kauman, Kec. Klojen, Kota Malang, Jawa Timur 65119',
-    '(0341) 362612',
-    'info@labschoolum.sch.id',
-    'Drs. H. Mulyani, M.Pd.',
+    'Jl. Simpang Bogor No. T-7, Sumbersari, Kec. Lowokwaru, Kota Malang, Jawa Timur',
+    '(0341) 588550',
+    'info@smplab-um.sch.id',
+    'Bapak Tamyis Suliantoro, M.Pd.',
     '2026/2027 Ganjil'
 );
 
@@ -383,6 +383,66 @@ insertAnnouncement.run(
     'Panitia PPDB',
     'PPDB Online',
     1
+);
+
+// 10. Calon Pendaftar SPMB
+const insertApplicant = db.prepare(`
+    INSERT INTO ppdb_applicants (registration_number, nisn, nama, gender, tempat_lahir, tanggal_lahir, asal_sekolah, program, nama_ayah, nama_ibu, wa, alamat, nilai_rapor, prestasi, catatan, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+insertApplicant.run(
+    'SPMB-2026-0041',
+    '0089123456',
+    'Ahmad Fauzan Maulana',
+    'L',
+    'Malang',
+    '2011-04-12',
+    'SD Laboratorium UM',
+    'Program Reguler (Kurikulum Merdeka)',
+    'H. Suparman, S.E.',
+    'Hj. Siti Aminah',
+    '081234567890',
+    'Jl. Sigura-gura No. 24, Lowokwaru, Malang',
+    92.4,
+    'Juara 1 Lomba OSN IPA Kota Malang',
+    'Pilihan Utama Jalur Prestasi Gelombang 1',
+    'DITERIMA (LOLOS SELEKSI)'
+);
+insertApplicant.run(
+    'SPMB-2026-1024',
+    '0098234567',
+    'Muhammad Bintang Pratama',
+    'L',
+    'Malang',
+    '2012-01-15',
+    'SD Negeri Percobaan 1 Malang',
+    'ICP (International Class Program)',
+    'Ir. Hendra Gunawan',
+    'Dewi Sartika, M.Pd.',
+    '081398765432',
+    'Jl. Ijen No. 45, Klojen, Malang',
+    94.2,
+    'Cambridge Primary Checkpoint Score Perfect',
+    'Memenuhi syarat Native Speaker Session',
+    'DITERIMA (LOLOS SELEKSI)'
+);
+insertApplicant.run(
+    'SPMB-2026-1088',
+    '0087112233',
+    'Nurul Aini Zahra',
+    'P',
+    'Batu',
+    '2011-08-20',
+    'MI Miftahul Huda Malang',
+    'Program Tahfidz',
+    'Ust. M. Ridwan',
+    'Fatimah Azzahra',
+    '085233445566',
+    'Jl. Bendungan Sutami No. 18, Malang',
+    89.0,
+    'Hafalan 3 Juz (Metode Ummi)',
+    'Lulus Munaqosah Uji Publik',
+    'TERVERIFIKASI (LOLOS SELEKSI BERKAS)'
 );
 
 console.log('Semua data dummy berhasil di-seed ke database.sqlite!');
