@@ -61,88 +61,14 @@
 
         <!-- Tab Filter Tugas -->
         <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px;">
-            <button class="btn btn-primary btn-sm" id="tab-active-btn" onclick="filterTasks('all')">Semua Tugas (3)</button>
-            <button class="btn btn-secondary btn-sm" onclick="filterTasks('pending')">Belum Dikumpulkan (2)</button>
-            <button class="btn btn-secondary btn-sm" onclick="filterTasks('done')">Sudah Dinilai (1)</button>
+            <button class="btn btn-primary btn-sm" id="btn-filter-all" onclick="filterTasks('all', this)">Semua Tugas (<span id="count-all-tasks">0</span>)</button>
+            <button class="btn btn-secondary btn-sm" id="btn-filter-pending" onclick="filterTasks('pending', this)">Belum Dikumpulkan (<span id="count-pending-tasks">0</span>)</button>
+            <button class="btn btn-secondary btn-sm" id="btn-filter-done" onclick="filterTasks('done', this)">Sudah Dikumpulkan / Dinilai (<span id="count-done-tasks">0</span>)</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 18px;" id="tasks-container">
-            <!-- Tugas 1: Informatika Python -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <div>
-                        <span class="badge badge-info" style="margin-bottom: 6px;">Informatika & Pemrograman</span>
-                        <h3 style="font-size: 18px; font-weight: 800;">Proyek Analisis Data Algoritma Python</h3>
-                        <p style="color: var(--text-muted); font-size: 13.5px; margin-top: 4px;">Guru: Budi Santoso, S.Kom., M.T. • Bobot Nilai Tugas: 15%</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="badge badge-warning">⏰ Tenggat: 16 Okt 2026 • 23:59 WIB</span>
-                    </div>
-                </div>
-
-                <p style="font-size: 14.5px; line-height: 1.6; color: var(--text-main); margin-bottom: 18px;">
-                    Selesaikan studi kasus pengurutan data siswa menggunakan Python di Google Colab. Kumpulkan file <code>.ipynb</code> atau PDF laporan analisa beserta tautan repositori kode.
-                </p>
-
-                <div style="background: var(--bg-subtle); border-radius: var(--radius-md); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px;">📄</span>
-                        <span style="font-size: 13.5px; font-weight: 600;">modul_praktikum_python_lab_um.pdf (2.4 MB)</span>
-                    </div>
-                    <button class="btn btn-outline btn-sm" onclick="App.toast('Mengunduh materi ajar...', 'info')">Unduh Lampiran</button>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button class="btn btn-primary" onclick="openSubmitModal('Proyek Analisis Data Algoritma Python')">
-                        📤 Kumpulkan Tugas
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tugas 2: Matematika -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <div>
-                        <span class="badge badge-info" style="margin-bottom: 6px;">Matematika</span>
-                        <h3 style="font-size: 18px; font-weight: 800;">Latihan Soal SPLDV & Matriks Transformasi</h3>
-                        <p style="color: var(--text-muted); font-size: 13.5px; margin-top: 4px;">Guru: Ahmad Hidayat, M.Sc.</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="badge badge-danger">⏰ Tenggat: 14 Okt 2026 • 17:00 WIB</span>
-                    </div>
-                </div>
-
-                <p style="font-size: 14.5px; line-height: 1.6; color: var(--text-main); margin-bottom: 18px;">
-                    Kerjakan lembar kerja 4.2 halaman 78-82 di buku modul mandiri. Foto hasil pekerjaan dengan jelas dan satukan dalam 1 file PDF.
-                </p>
-
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button class="btn btn-primary" onclick="openSubmitModal('Latihan Soal SPLDV & Matriks')">
-                        📤 Kumpulkan Tugas
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tugas 3: Bahasa Indonesia (Sudah Dinilai) -->
-            <div class="card" style="background: #FAFAFA;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <div>
-                        <span class="badge badge-info" style="margin-bottom: 6px;">Bahasa Indonesia</span>
-                        <h3 style="font-size: 18px; font-weight: 800;">Menulis Teks Editorial Isu Lingkungan Kota Malang</h3>
-                        <p style="color: var(--text-muted); font-size: 13.5px; margin-top: 4px;">Guru: Dra. Sri Wahyuni, M.Pd.</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="badge badge-success">✓ Telah Dinilai</span>
-                        <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 800; color: var(--color-teal); margin-top: 4px;">92 / 100</div>
-                    </div>
-                </div>
-
-                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px;">
-                    <strong style="color: #166534; font-size: 13px;">Catatan Umpan Balik Guru:</strong>
-                    <p style="font-size: 13.5px; color: #14532D; margin-top: 4px; line-height: 1.5;">
-                        "Struktur tesis dan argumentasi disajikan dengan data pendukung yang kuat. Diksi formal sangat baik. Pertahankan prestasimu!"
-                    </p>
-                </div>
+            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                Memuat penugasan aktif dari server...
             </div>
         </div>
     </main>
@@ -155,13 +81,14 @@
                 <button class="btn btn-outline btn-sm" onclick="App.closeModal('submit-modal')">✕</button>
             </div>
             <div style="margin-bottom: 18px;">
+                <input type="hidden" id="modal-task-id"/>
                 <div style="font-weight: 700; font-size: 15px;" id="modal-task-title">Judul Tugas</div>
                 <div style="font-size: 13px; color: var(--text-muted);">Maksimal ukuran berkas 25 MB (Format: PDF, ZIP, DOCX, IPYNB)</div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Tautan Google Drive / GitHub (Opsional)</label>
-                <input type="url" class="form-control" placeholder="https://colab.research.google.com/drive/...">
+                <input type="url" id="modal-task-link" class="form-control" placeholder="https://colab.research.google.com/drive/...">
             </div>
 
             <div class="form-group">
@@ -177,7 +104,7 @@
 
             <div class="form-group">
                 <label class="form-label">Catatan Tambahan untuk Guru (Opsional)</label>
-                <textarea class="form-control" rows="3" placeholder="Tuliskan catatan pengerjaan jika ada..."></textarea>
+                <textarea class="form-control" id="modal-task-notes" rows="3" placeholder="Tuliskan catatan pengerjaan jika ada..."></textarea>
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -190,10 +117,140 @@
     <script src="/js/api.js"></script>
     <script src="/js/app.js"></script>
     <script>
+        let allAssignments = [];
+        let currentFilter = 'all';
 
-        function openSubmitModal(title) {
+        async function loadAssignments() {
+            try {
+                allAssignments = await API.getAssignments(4);
+                
+                const pending = allAssignments.filter(a => !a.submission_status);
+                const done = allAssignments.filter(a => a.submission_status);
+
+                document.getElementById('count-all-tasks').textContent = allAssignments.length;
+                document.getElementById('count-pending-tasks').textContent = pending.length;
+                document.getElementById('count-done-tasks').textContent = done.length;
+
+                renderAssignments();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tasks-container').innerHTML = '<div style="text-align: center; color: var(--color-rose); padding: 30px;">Gagal memuat tugas dari server.</div>';
+            }
+        }
+
+        function filterTasks(type, btn) {
+            currentFilter = type;
+            document.querySelectorAll('#btn-filter-all, #btn-filter-pending, #btn-filter-done').forEach(b => {
+                b.className = 'btn btn-secondary btn-sm';
+            });
+            btn.className = 'btn btn-primary btn-sm';
+            renderAssignments();
+        }
+
+        function renderAssignments() {
+            const container = document.getElementById('tasks-container');
+            let filtered = allAssignments;
+
+            if (currentFilter === 'pending') {
+                filtered = allAssignments.filter(a => !a.submission_status);
+            } else if (currentFilter === 'done') {
+                filtered = allAssignments.filter(a => a.submission_status);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted); background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-light);">Tidak ada tugas pada kategori ini.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            filtered.forEach(a => {
+                const isSubmitted = !!a.submission_status;
+                const isGraded = a.submission_score !== null && a.submission_score !== undefined;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                if (isGraded) card.style.background = '#FAFAFA';
+
+                let statusBadge = '';
+                let actionArea = '';
+
+                if (isGraded) {
+                    statusBadge = `
+                        <div style="text-align: right;">
+                            <span class="badge badge-success">✓ Telah Dinilai</span>
+                            <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 800; color: var(--color-teal); margin-top: 4px;">${a.submission_score} / 100</div>
+                        </div>
+                    `;
+                } else if (isSubmitted) {
+                    statusBadge = `
+                        <div style="text-align: right;">
+                            <span class="badge badge-teal">✓ Telah Dikumpulkan</span>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Menunggu Penilaian Guru</div>
+                        </div>
+                    `;
+                } else {
+                    statusBadge = `
+                        <div style="text-align: right;">
+                            <span class="badge badge-warning">⏰ Tenggat: ${a.due_date ? a.due_date.substring(0, 10) : '-'}</span>
+                        </div>
+                    `;
+                }
+
+                let feedbackHtml = '';
+                if (a.submission_feedback) {
+                    feedbackHtml = `
+                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 14px;">
+                            <strong style="color: #166534; font-size: 13px;">Catatan Umpan Balik Guru:</strong>
+                            <p style="font-size: 13.5px; color: #14532D; margin-top: 4px; line-height: 1.5;">"${a.submission_feedback}"</p>
+                        </div>
+                    `;
+                }
+
+                if (!isSubmitted) {
+                    actionArea = `
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+                            <button class="btn btn-primary" onclick="openSubmitModal(${a.id}, '${a.title.replace(/'/g, "\\'")}')">
+                                📤 Kumpulkan Tugas
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionArea = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border-light); font-size: 12.5px; color: var(--text-muted);">
+                            <div>Berkas terkirim: <strong style="color: var(--color-navy);">${a.submitted_file || 'jawaban_tugas.pdf'}</strong> (${a.submitted_at ? a.submitted_at.substring(0, 16) : 'Hari ini'})</div>
+                            <button class="btn btn-outline btn-xs" onclick="openSubmitModal(${a.id}, '${a.title.replace(/'/g, "\\'")}')">
+                                Unggah Ulang Berkas
+                            </button>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 14px;">
+                        <div>
+                            <span class="badge badge-info" style="margin-bottom: 6px;">${a.subject_name}</span>
+                            <h3 style="font-size: 17px; font-weight: 800; color: var(--color-navy); line-height: 1.35;">${a.title}</h3>
+                            <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 4px;">Bobot Nilai Formatif: 15%</p>
+                        </div>
+                        ${statusBadge}
+                    </div>
+
+                    <p style="font-size: 14px; line-height: 1.55; color: var(--text-main); margin-bottom: 14px;">
+                        ${a.description}
+                    </p>
+
+                    ${feedbackHtml}
+                    ${actionArea}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openSubmitModal(id, title) {
+            document.getElementById('modal-task-id').value = id;
             document.getElementById('modal-task-title').textContent = title;
             document.getElementById('selected-file-name').textContent = '';
+            document.getElementById('file-input').value = '';
             App.openModal('submit-modal');
         }
 
@@ -203,10 +260,27 @@
             }
         }
 
-        function submitTaskFile() {
-            App.closeModal('submit-modal');
-            App.toast('Tugas berhasil dikumpulkan dan tersimpan di sistem!', 'success');
+        async function submitTaskFile() {
+            const assignmentId = document.getElementById('modal-task-id').value;
+            const fileInput = document.getElementById('file-input');
+            const fileName = (fileInput.files && fileInput.files[0]) ? fileInput.files[0].name : 'jawaban_tugas_siswa.pdf';
+
+            try {
+                const res = await API.submitAssignment({
+                    assignment_id: Number(assignmentId),
+                    student_id: 1,
+                    file_name: fileName
+                });
+
+                App.closeModal('submit-modal');
+                App.toast(res.message || 'Tugas berhasil dikumpulkan!', 'success');
+                await loadAssignments();
+            } catch (err) {
+                App.toast('Gagal mengumpulkan tugas: ' + err.message, 'error');
+            }
         }
+
+        loadAssignments();
     </script>
 </body>
 </html>

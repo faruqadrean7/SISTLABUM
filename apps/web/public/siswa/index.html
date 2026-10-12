@@ -64,24 +64,24 @@
         </div>
 
         <!-- Banner Ujian CBT Aktif Hari Ini -->
-        <div class="card" style="background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; margin-bottom: 28px; border: none; box-shadow: var(--shadow-lg);">
+        <div class="card" id="banner-cbt-box" style="background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; margin-bottom: 28px; border: none; box-shadow: var(--shadow-lg);">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
                 <div>
                     <span class="badge" style="background: #F59E0B; color: #78350F; font-weight: 800; margin-bottom: 10px; display: inline-block;">
                         🚨 ASESMEN CBT AKTIF HARI INI
                     </span>
-                    <h2 style="color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 6px;">
+                    <h2 id="banner-exam-title" style="color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 6px;">
                         Asesmen Sumatif Tengah Semester (ASTS): Informatika & Pemrograman
                     </h2>
-                    <p style="color: #CBD5E1; font-size: 14px;">
-                        Token: <code style="background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono); color: #93C5FD; font-weight: 700;">INF2026</code> • Durasi: 90 Menit • Lokasi: Lab Komputer R.202
+                    <p style="color: #CBD5E1; font-size: 14px;" id="banner-exam-meta">
+                        Token: <code id="banner-exam-token" style="background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono); color: #93C5FD; font-weight: 700;">INF2026</code> • Durasi: 90 Menit • Lokasi: Lab Komputer R.202
                     </p>
                 </div>
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <a href="/siswa/ujian.html" class="btn btn-outline btn-sm" style="color: #fff; border-color: rgba(255,255,255,0.4);">
                         Daftar Semua Ujian
                     </a>
-                    <a href="/siswa/cbt.html?exam_id=6" class="btn btn-teal btn-lg" style="box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);">
+                    <a id="banner-exam-btn" href="/siswa/cbt.html?exam_id=6" class="btn btn-teal btn-lg" style="box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);">
                         Mulai Kerjakan Ujian CBT ➔
                     </a>
                 </div>
@@ -93,7 +93,7 @@
             <div class="stat-card">
                 <div class="stat-data">
                     <span class="stat-label">Persentase Kehadiran</span>
-                    <span class="stat-value" style="color: var(--color-teal);">98.2%</span>
+                    <span class="stat-value" style="color: var(--color-teal);" id="stat-attendance">98.2%</span>
                     <span class="stat-sub">44 Hadir, 1 Sakit, 0 Alpa</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-teal">📅</div>
@@ -101,24 +101,24 @@
             <div class="stat-card">
                 <div class="stat-data">
                     <span class="stat-label">Rata-Rata E-Rapor</span>
-                    <span class="stat-value" style="color: var(--color-primary);">90.33</span>
-                    <span class="stat-sub">Peringkat 2 dari 32 Siswa</span>
+                    <span class="stat-value" style="color: var(--color-primary);" id="stat-gpa">90.33</span>
+                    <span class="stat-sub" id="stat-rank">Peringkat 2 dari 32 Siswa</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-blue">🏆</div>
             </div>
             <div class="stat-card">
                 <div class="stat-data">
                     <span class="stat-label">Poin Prestasi / Reward</span>
-                    <span class="stat-value" style="color: var(--color-amber);">+45</span>
-                    <span class="stat-sub">Juara 1 Robotika & OSIS</span>
+                    <span class="stat-value" style="color: var(--color-amber);" id="stat-reward">+45</span>
+                    <span class="stat-sub" id="stat-reward-sub">Siswa Berprestasi Aktif</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-amber">⭐</div>
             </div>
             <div class="stat-card">
                 <div class="stat-data">
                     <span class="stat-label">Catatan Pelanggaran</span>
-                    <span class="stat-value" style="color: #16A34A;">0</span>
-                    <span class="stat-sub">Disiplin Tertib & Bersih</span>
+                    <span class="stat-value" style="color: #16A34A;" id="stat-violation">0</span>
+                    <span class="stat-sub" id="stat-violation-sub">Disiplin Tertib & Bersih</span>
                 </div>
                 <div class="stat-icon-wrapper" style="background: #DCFCE7; color: #16A34A;">🛡️</div>
             </div>
@@ -322,6 +322,14 @@
                     document.getElementById('bio-email').textContent = s.email || '-';
                     document.getElementById('bio-address').textContent = s.address || '-';
 
+                    // Update Points
+                    if (document.getElementById('stat-reward')) {
+                        document.getElementById('stat-reward').textContent = `+${s.points_reward ?? 45}`;
+                    }
+                    if (document.getElementById('stat-violation')) {
+                        document.getElementById('stat-violation').textContent = `${s.points_violation ?? 0}`;
+                    }
+
                     // Update Guardians
                     if (profileData.guardians && profileData.guardians.length > 0) {
                         const gList = document.getElementById('guardians-list');
@@ -339,7 +347,62 @@
                     }
                 }
 
-                // 2. Load Riwayat Peminjaman Buku Digital Siswa
+                // 2. Load E-Rapor Ringkasan Nilai & Peringkat Siswa
+                try {
+                    const report = await API.getReportCard(1);
+                    if (report && report.summary) {
+                        const gpaEl = document.getElementById('stat-gpa');
+                        const rankEl = document.getElementById('stat-rank');
+                        if (gpaEl) gpaEl.textContent = Number(report.summary.average_score).toFixed(2);
+                        if (rankEl) rankEl.textContent = `Peringkat ${report.summary.class_rank || 2} dari 32 Siswa`;
+                    }
+                } catch (err) {
+                    console.error('Error loading report summary:', err);
+                }
+
+                // 3. Load Banner Asesmen CBT Aktif
+                try {
+                    const exams = await API.getExamsList('', 4);
+                    const activeExam = exams.find(e => e.status === 'Aktif') || exams[0];
+                    if (activeExam) {
+                        const titleEl = document.getElementById('banner-exam-title');
+                        const tokenEl = document.getElementById('banner-exam-token');
+                        const metaEl = document.getElementById('banner-exam-meta');
+                        const btnEl = document.getElementById('banner-exam-btn');
+                        if (titleEl) titleEl.textContent = `${activeExam.exam_type ? '[' + activeExam.exam_type + '] ' : ''}${activeExam.title}`;
+                        if (tokenEl) tokenEl.textContent = activeExam.token || 'AKTIF';
+                        if (metaEl) {
+                            metaEl.innerHTML = `Token: <code style="background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono); color: #93C5FD; font-weight: 700;">${activeExam.token || 'AKTIF'}</code> • Durasi: ${activeExam.duration_minutes || 90} Menit • Tanggal: ${activeExam.scheduled_date || 'Hari ini'}`;
+                        }
+                        if (btnEl) btnEl.href = `/siswa/cbt.html?exam_id=${activeExam.id}`;
+                    }
+                } catch (err) {
+                    console.error('Error loading exams banner:', err);
+                }
+
+                // 4. Load Jadwal Piket Hari Ini
+                try {
+                    const classInfo = await API.getClassInfo(4);
+                    if (classInfo && classInfo.duty_schedules) {
+                        const todayDuty = classInfo.duty_schedules.find(d => d.day_name === 'Senin') || classInfo.duty_schedules[0];
+                        const dutyMembersEl = document.getElementById('today-duty-members');
+                        if (todayDuty && dutyMembersEl) {
+                            dutyMembersEl.innerHTML = '';
+                            (todayDuty.members || []).forEach(name => {
+                                const isMe = name.includes('Fauzan');
+                                const span = document.createElement('span');
+                                span.className = 'badge';
+                                span.style.cssText = `background: ${isMe ? '#EFF6FF' : '#fff'}; border: 1px solid ${isMe ? 'var(--color-primary)' : 'var(--border-light)'}; color: ${isMe ? 'var(--color-primary)' : 'inherit'}; font-weight: ${isMe ? '700' : 'normal'};`;
+                                span.textContent = `${isMe ? '★ ' : ''}${name}`;
+                                dutyMembersEl.appendChild(span);
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error loading duty info:', err);
+                }
+
+                // 5. Load Riwayat Peminjaman Buku Digital Siswa
                 const loans = await API.getLibraryLoans(1);
                 const activeLoans = loans.filter(l => l.status === 'Dipinjam');
                 const loansContainer = document.getElementById('active-loans-list');
@@ -370,7 +433,7 @@
                     });
                 }
 
-                // 3. Load Tugas LMS
+                // 6. Load Tugas LMS
                 const assignments = await API.getAssignments(4);
                 const container = document.getElementById('assignments-list');
                 container.innerHTML = '';

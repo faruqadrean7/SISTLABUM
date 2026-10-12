@@ -100,7 +100,9 @@ const API = {
     updateClassOrganization: (data) => API.post('/class-organization/update', data),
     updateClassDuty: (data) => API.post('/class-duty/update', data),
     updateStudentPoints: (data) => API.post('/students/points', data),
-    createAssignment: (data) => API.post('/assignments', data)
+    createAssignment: (data) => API.post('/assignments', data),
+    saveClassGrades: (data) => API.post('/grades/save', data),
+    submitAssignment: (data) => API.post('/assignments/submit', data)
 };
 
 window.API = API;

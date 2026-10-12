@@ -300,16 +300,17 @@
 
             org.forEach(item => {
                 const tr = document.createElement('tr');
+                const role = item.role_name || item.role_title || 'Jabatan';
                 tr.innerHTML = `
                     <td style="font-weight: 700; color: var(--color-navy); font-size: 14px;">
-                        ${item.role_title}
+                        ${role}
                     </td>
                     <td style="font-size: 14px;">
                         <strong>${item.student_name}</strong>
                     </td>
                     <td style="font-family: var(--font-mono); font-size: 13px;">${item.student_nis || '-'}</td>
                     <td style="text-align: right;">
-                        <button class="btn btn-outline btn-xs" onclick="openEditOrgModal(${item.id}, '${item.role_title.replace(/'/g, "\\'")}', '${item.student_name.replace(/'/g, "\\'")}', '${item.student_nis || ''}')">
+                        <button class="btn btn-outline btn-xs" onclick="openEditOrgModal(${item.id}, '${role.replace(/'/g, "\\'")}', '${item.student_name.replace(/'/g, "\\'")}', '${item.student_nis || ''}')">
                             ✏️ Ganti Siswa
                         </button>
                     </td>

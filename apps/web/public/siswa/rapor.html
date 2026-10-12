@@ -140,7 +140,7 @@
             <div class="stat-card">
                 <div class="stat-data">
                     <span class="stat-label">Rata-Rata Nilai Akhir</span>
-                    <span class="stat-value" style="color: var(--color-primary);">90.33</span>
+                    <span class="stat-value" style="color: var(--color-primary);" id="rapor-avg-score">90.33</span>
                     <span class="stat-sub">Semua Mapel di Atas KKTP</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-blue">📈</div>
@@ -148,7 +148,7 @@
             <div class="stat-card">
                 <div class="stat-data">
                     <span class="stat-label">Peringkat Kelas IX-A</span>
-                    <span class="stat-value" style="color: var(--color-amber);">Ke-2</span>
+                    <span class="stat-value" style="color: var(--color-amber);" id="rapor-rank">Ke-2</span>
                     <span class="stat-sub">Dari Total 32 Siswa</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-amber">🥈</div>
@@ -312,23 +312,34 @@
                 });
 
                 // Ekstrakurikuler
-                if (data.summary && data.summary.extracurriculars) {
-                    const ekskulContainer = document.getElementById('ekskul-list');
-                    ekskulContainer.innerHTML = '';
-                    data.summary.extracurriculars.forEach(ek => {
-                        const item = document.createElement('div');
-                        item.style.cssText = 'padding: 12px 14px; background: var(--bg-subtle); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-light);';
-                        item.innerHTML = `
-                            <div>
-                                <strong style="color: var(--color-navy); font-size: 13.5px;">${ek.name}</strong>
-                                <div style="font-size: 12px; color: var(--text-muted);">${ek.notes}</div>
-                            </div>
-                            <div>
-                                <span class="badge badge-success" style="font-weight: 800;">Nilai: ${ek.predicate} (${ek.score})</span>
-                            </div>
-                        `;
-                        ekskulContainer.appendChild(item);
-                    });
+                if (data.summary) {
+                    const avgEl = document.getElementById('rapor-avg-score');
+                    if (avgEl && data.summary.average_score) {
+                        avgEl.textContent = Number(data.summary.average_score).toFixed(2);
+                    }
+                    const rankEl = document.getElementById('rapor-rank');
+                    if (rankEl && data.summary.class_rank) {
+                        rankEl.textContent = `Ke-${data.summary.class_rank}`;
+                    }
+
+                    if (data.summary.extracurriculars) {
+                        const ekskulContainer = document.getElementById('ekskul-list');
+                        ekskulContainer.innerHTML = '';
+                        data.summary.extracurriculars.forEach(ek => {
+                            const item = document.createElement('div');
+                            item.style.cssText = 'padding: 12px 14px; background: var(--bg-subtle); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-light);';
+                            item.innerHTML = `
+                                <div>
+                                    <strong style="color: var(--color-navy); font-size: 13.5px;">${ek.name}</strong>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${ek.notes}</div>
+                                </div>
+                                <div>
+                                    <span class="badge badge-success" style="font-weight: 800;">Nilai: ${ek.predicate} (${ek.score})</span>
+                                </div>
+                            `;
+                            ekskulContainer.appendChild(item);
+                        });
+                    }
                 }
             } catch (err) {
                 console.error('Error loading report card:', err);

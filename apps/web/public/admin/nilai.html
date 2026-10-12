@@ -127,22 +127,29 @@
                     <div style="display: flex; align-items: center; gap: 14px;">
                         <div>
                             <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Pilih Kelas</label>
-                            <select class="form-control" style="font-weight: 700; width: 160px;">
+                            <select id="select-class" class="form-control" style="font-weight: 700; width: 160px;" onchange="loadSpreadsheetGrades()">
                                 <option value="4" selected>Kelas IX-A</option>
+                                <option value="5">Kelas IX-B</option>
                                 <option value="1">Kelas VII-A</option>
-                                <option value="2">Kelas VII-B</option>
                             </select>
                         </div>
                         <div>
                             <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Mata Pelajaran</label>
-                            <select class="form-control" style="font-weight: 700; width: 280px;">
-                                <option value="2" selected>Informatika & Pemrograman</option>
-                                <option value="1">Matematika Tingkat Lanjut</option>
+                            <select id="select-subject" class="form-control" style="font-weight: 700; width: 300px;" onchange="loadSpreadsheetGrades()">
+                                <option value="2" selected>Informatika & Pemrograman (KKTP 78)</option>
+                                <option value="1">Matematika Tingkat Lanjut (KKTP 75)</option>
+                                <option value="3">Bahasa Indonesia (KKTP 78)</option>
+                                <option value="4">IPA Terpadu (KKTP 76)</option>
+                                <option value="5">Bahasa Inggris Academic (KKTP 75)</option>
+                                <option value="6">Pendidikan Pancasila (KKTP 80)</option>
+                                <option value="7">Pendidikan Agama Islam (KKTP 80)</option>
                             </select>
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <span style="font-size: 12.5px; color: var(--text-muted);">KKTP Target: <b style="color: var(--color-primary);">78 Poin</b></span>
+                        <button class="btn btn-primary" onclick="saveAllGrades()">
+                            💾 Simpan Lembar Nilai ke Server
+                        </button>
                     </div>
                 </div>
             </div>
@@ -150,7 +157,7 @@
             <!-- Spreadsheet Grade Table -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📋 Lembar Nilai Siswa: Kelas IX-A (Informatika)</h3>
+                    <h3 class="card-title" id="table-subject-title">📋 Lembar Nilai Siswa: Kelas IX-A (Informatika)</h3>
                     <span class="badge badge-success badge-dot" id="save-status-badge">Semua nilai tersinkronisasi</span>
                 </div>
 
@@ -182,19 +189,27 @@
     <script src="/js/api.js"></script>
     <script src="/js/app.js"></script>
     <script>
+        let currentStudentsGrades = [];
 
         async function loadSpreadsheetGrades() {
             try {
-                const students = await API.getClassGrades(4, 2);
+                const classId = document.getElementById('select-class').value;
+                const subjectId = document.getElementById('select-subject').value;
+                const subjectSelect = document.getElementById('select-subject');
+                const subjectText = subjectSelect.options[subjectSelect.selectedIndex].text.split('(')[0].trim();
+                
+                document.getElementById('table-subject-title').textContent = `📋 Lembar Nilai Siswa: Kelas IX-A (${subjectText})`;
+
+                currentStudentsGrades = await API.getClassGrades(classId, subjectId);
                 const tbody = document.getElementById('grade-spreadsheet-body');
                 tbody.innerHTML = '';
 
-                students.forEach((s, idx) => {
+                currentStudentsGrades.forEach((s, idx) => {
                     const tr = document.createElement('tr');
                     tr.id = `row-${s.student_id}`;
                     tr.innerHTML = `
                         <td style="font-family: var(--font-mono); color: var(--text-subtle);">${idx + 1}</td>
-                        <td style="font-weight: 700; color: var(--color-primary);">${s.student_name}</td>
+                        <td style="font-weight: 700; color: var(--color-navy);">${s.student_name}</td>
                         <td style="font-family: var(--font-mono); font-size: 13px;">${s.nis}</td>
                         <td style="text-align: center;">
                             <input type="number" class="grade-input" id="tugas-${s.student_id}" value="${s.score_tasks}" oninput="recalculate(${s.student_id})">
@@ -215,14 +230,22 @@
                             <span class="badge ${s.predicate === 'A' ? 'badge-success' : 'badge-info'}">${s.predicate}</span>
                         </td>
                         <td>
-                            <input type="text" class="form-control" style="font-size: 13px; padding: 6px 10px;" value="${s.character_notes}">
+                            <input type="text" class="form-control" id="note-${s.student_id}" style="font-size: 13px; padding: 6px 10px;" value="${s.character_notes || 'Capaian kompetensi tuntas.'}" oninput="markUnsaved()">
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
+
+                document.getElementById('save-status-badge').className = 'badge badge-success badge-dot';
+                document.getElementById('save-status-badge').textContent = 'Semua nilai tersinkronisasi';
             } catch (err) {
                 console.error(err);
             }
+        }
+
+        function markUnsaved() {
+            document.getElementById('save-status-badge').className = 'badge badge-warning badge-dot';
+            document.getElementById('save-status-badge').textContent = 'Perubahan belum disimpan';
         }
 
         function recalculate(studentId) {
@@ -243,14 +266,47 @@
                 <span class="badge ${pred === 'A' ? 'badge-success' : 'badge-info'}">${pred}</span>
             `;
 
-            document.getElementById('save-status-badge').className = 'badge badge-warning badge-dot';
-            document.getElementById('save-status-badge').textContent = 'Perubahan belum disimpan';
+            markUnsaved();
         }
 
-        function saveAllGrades() {
-            document.getElementById('save-status-badge').className = 'badge badge-success badge-dot';
-            document.getElementById('save-status-badge').textContent = 'Semua nilai tersinkronisasi ke server';
-            App.toast('Semua nilai kelas IX-A berhasil disimpan ke basis data SQLite!', 'success');
+        async function saveAllGrades() {
+            const subjectId = Number(document.getElementById('select-subject').value);
+            const gradesPayload = [];
+
+            currentStudentsGrades.forEach(s => {
+                const tugas = Number(document.getElementById(`tugas-${s.student_id}`).value) || 0;
+                const uh = Number(document.getElementById(`uh-${s.student_id}`).value) || 0;
+                const pts = Number(document.getElementById(`pts-${s.student_id}`).value) || 0;
+                const pas = Number(document.getElementById(`pas-${s.student_id}`).value) || 0;
+                const finalScore = Number(document.getElementById(`final-${s.student_id}`).textContent) || 0;
+                const predEl = document.getElementById(`pred-${s.student_id}`).querySelector('.badge');
+                const predicate = predEl ? predEl.textContent.trim() : 'B';
+                const notes = document.getElementById(`note-${s.student_id}`).value;
+
+                gradesPayload.push({
+                    student_id: s.student_id,
+                    score_tasks: tugas,
+                    score_uh: uh,
+                    score_pts: pts,
+                    score_pas: pas,
+                    final_score: finalScore,
+                    predicate,
+                    character_notes: notes
+                });
+            });
+
+            try {
+                const res = await API.saveClassGrades({
+                    subject_id: subjectId,
+                    grades: gradesPayload
+                });
+
+                document.getElementById('save-status-badge').className = 'badge badge-success badge-dot';
+                document.getElementById('save-status-badge').textContent = 'Semua nilai tersinkronisasi ke server';
+                App.toast(res.message || 'Semua nilai berhasil disimpan ke server SQLite!', 'success');
+            } catch (err) {
+                App.toast('Gagal menyimpan nilai: ' + err.message, 'error');
+            }
         }
 
         loadSpreadsheetGrades();

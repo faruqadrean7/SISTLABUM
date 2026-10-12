@@ -396,17 +396,103 @@ const server = http.createServer(async (req, res) => {
                 return sendJson(res, 200, rows);
             }
 
+            // 15.2 Simpan Lembar Nilai Spreadsheet Guru ke SQLite
+            if (pathname === '/api/grades/save' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { subject_id, grades } = body;
+                if (!subject_id || !Array.isArray(grades)) {
+                    return sendJson(res, 400, { error: 'Subject ID dan daftar nilai wajib diisi' });
+                }
+
+                for (const g of grades) {
+                    const existing = db.prepare('SELECT id FROM grades WHERE student_id = ? AND subject_id = ?').get(g.student_id, subject_id);
+                    if (existing) {
+                        db.prepare(`
+                            UPDATE grades SET
+                                score_tasks = ?,
+                                score_uh = ?,
+                                score_pts = ?,
+                                score_pas = ?,
+                                final_score = ?,
+                                predicate = ?,
+                                character_notes = ?
+                            WHERE id = ?
+                        `).run(
+                            Number(g.score_tasks) || 0,
+                            Number(g.score_uh) || 0,
+                            Number(g.score_pts) || 0,
+                            Number(g.score_pas) || 0,
+                            Number(g.final_score) || 0,
+                            g.predicate || 'B',
+                            g.character_notes || 'Capaian kompetensi tuntas.',
+                            existing.id
+                        );
+                    } else {
+                        db.prepare(`
+                            INSERT INTO grades (student_id, subject_id, semester, score_tasks, score_uh, score_pts, score_pas, final_score, predicate, character_notes)
+                            VALUES (?, ?, 'Ganjil', ?, ?, ?, ?, ?, ?, ?)
+                        `).run(
+                            g.student_id,
+                            subject_id,
+                            Number(g.score_tasks) || 0,
+                            Number(g.score_uh) || 0,
+                            Number(g.score_pts) || 0,
+                            Number(g.score_pas) || 0,
+                            Number(g.final_score) || 0,
+                            g.predicate || 'B',
+                            g.character_notes || 'Capaian kompetensi tuntas.'
+                        );
+                    }
+
+                    // Recalculate average_score in report_card_summaries
+                    const avg = db.prepare('SELECT ROUND(AVG(final_score), 2) as avg_score FROM grades WHERE student_id = ?').get(g.student_id);
+                    if (avg && avg.avg_score) {
+                        db.prepare('UPDATE report_card_summaries SET average_score = ? WHERE student_id = ?').run(avg.avg_score, g.student_id);
+                    }
+                }
+
+                return sendJson(res, 200, {
+                    success: true,
+                    message: `Berhasil menyimpan nilai ${grades.length} siswa ke basis data sekolah.`
+                });
+            }
+
             // 16. Tugas LMS
             if (pathname === '/api/assignments' && req.method === 'GET') {
                 const classId = parsedUrl.searchParams.get('class_id') || 4;
+                const studentId = parsedUrl.searchParams.get('student_id') || 1;
                 const rows = db.prepare(`
-                    SELECT a.*, s.name as subject_name
+                    SELECT a.*, s.name as subject_name,
+                           subm.submitted_at, subm.file_name as submitted_file, subm.score as submission_score,
+                           subm.feedback as submission_feedback, subm.status as submission_status
                     FROM assignments a
                     JOIN subjects s ON a.subject_id = s.id
+                    LEFT JOIN assignment_submissions subm ON a.id = subm.assignment_id AND subm.student_id = ?
                     WHERE a.class_id = ?
                     ORDER BY a.due_date ASC
-                `).all(classId);
+                `).all(studentId, classId);
                 return sendJson(res, 200, rows);
+            }
+
+            // 16.2 Siswa: Kirimkan Berkas Tugas
+            if (pathname === '/api/assignments/submit' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { assignment_id, student_id = 1, file_name = 'jawaban_tugas.pdf' } = body;
+                if (!assignment_id) {
+                    return sendJson(res, 400, { error: 'Assignment ID wajib diisi' });
+                }
+
+                const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+                const existing = db.prepare('SELECT id FROM assignment_submissions WHERE assignment_id = ? AND student_id = ?').get(assignment_id, student_id);
+                if (existing) {
+                    db.prepare('UPDATE assignment_submissions SET file_name = ?, submitted_at = ?, status = ? WHERE id = ?')
+                        .run(file_name, now, 'Telah Dikumpulkan', existing.id);
+                } else {
+                    db.prepare('INSERT INTO assignment_submissions (assignment_id, student_id, file_name, submitted_at, status) VALUES (?, ?, ?, ?, ?)')
+                        .run(assignment_id, student_id, file_name, now, 'Telah Dikumpulkan');
+                }
+
+                return sendJson(res, 200, { success: true, message: 'Tugas berhasil dikumpulkan dan tersimpan di server!' });
             }
 
             // 17. Otentikasi Login SSO
@@ -618,6 +704,7 @@ const server = http.createServer(async (req, res) => {
                 const dutySchedules = db.prepare(`SELECT * FROM class_duty_schedules WHERE class_id = ? ORDER BY id ASC`).all(classId);
                 const dutyParsed = dutySchedules.map(d => ({
                     ...d,
+                    tasks_description: d.task_notes,
                     members: JSON.parse(d.member_names_json || '[]')
                 }));
 
@@ -689,19 +776,19 @@ const server = http.createServer(async (req, res) => {
                     subject_id = 2,
                     teacher_id = 1,
                     title,
+                    chapter = 'Bab 1',
                     description = 'Modul ajar resmi untuk siswa.',
                     file_name = 'modul_ajar.pdf',
-                    file_size = '3.5 MB',
-                    file_path = '/documents/modules/modul_ajar.pdf'
+                    file_size = '3.5 MB'
                 } = body;
 
                 if (!title) return sendJson(res, 400, { error: 'Judul modul wajib diisi' });
 
                 const now = new Date().toISOString().split('T')[0];
                 const ins = db.prepare(`
-                    INSERT INTO learning_modules (class_id, subject_id, teacher_id, title, description, file_name, file_size, file_path, upload_date)
+                    INSERT INTO learning_modules (class_id, subject_id, teacher_id, title, chapter, description, file_name, file_size, upload_date)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `).run(class_id, subject_id, teacher_id, title, description, file_name, file_size, file_path, now);
+                `).run(class_id, subject_id, teacher_id, title, chapter || 'Bab 1', description, file_name, file_size, now);
 
                 return sendJson(res, 201, {
                     success: true,
@@ -730,15 +817,17 @@ const server = http.createServer(async (req, res) => {
                     teacher_name = 'Budi Santoso, S.Kom.',
                     scheduled_date = new Date().toISOString().split('T')[0],
                     scheduled_time = '08:00 - 09:30',
+                    question_count = 25,
+                    code = 'EXAM-' + Date.now(),
                     status = 'Terjadwal'
                 } = body;
 
                 if (!title) return sendJson(res, 400, { error: 'Judul ujian wajib diisi' });
 
                 const ins = db.prepare(`
-                    INSERT INTO exams (title, subject_id, class_id, duration_minutes, status, token, exam_type, teacher_name, scheduled_date, scheduled_time, score_achieved)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-                `).run(title, subject_id, class_id, duration_minutes, status, token, exam_type, teacher_name, scheduled_date, scheduled_time);
+                    INSERT INTO exams (code, title, subject_id, class_id, duration_minutes, question_count, status, token, exam_type, teacher_name, scheduled_date, scheduled_time, score_achieved)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+                `).run(code, title, subject_id, class_id, duration_minutes, question_count, status, token, exam_type, teacher_name, scheduled_date, scheduled_time);
 
                 return sendJson(res, 201, {
                     success: true,
@@ -778,12 +867,13 @@ const server = http.createServer(async (req, res) => {
             // 32. Wali Kelas: Update Jadwal Piket Harian
             if (pathname === '/api/class-duty/update' && req.method === 'POST') {
                 const body = await parseJsonBody(req);
-                const { id, members, tasks_description } = body;
+                const { id, members, task_notes, tasks_description } = body;
                 if (!id || !members) return sendJson(res, 400, { error: 'ID dan daftar anggota piket wajib diisi' });
 
                 const membersJson = JSON.stringify(members);
-                db.prepare('UPDATE class_duty_schedules SET member_names_json = ?, tasks_description = ? WHERE id = ?')
-                    .run(membersJson, tasks_description || 'Piket kebersihan rutin ruang kelas', id);
+                const notes = task_notes || tasks_description || 'Piket kebersihan rutin ruang kelas';
+                db.prepare('UPDATE class_duty_schedules SET member_names_json = ?, task_notes = ? WHERE id = ?')
+                    .run(membersJson, notes, id);
 
                 return sendJson(res, 200, { success: true, message: 'Jadwal piket berhasil diperbarui.' });
             }
