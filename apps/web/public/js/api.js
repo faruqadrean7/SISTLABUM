@@ -102,7 +102,16 @@ const API = {
     updateStudentPoints: (data) => API.post('/students/points', data),
     createAssignment: (data) => API.post('/assignments', data),
     saveClassGrades: (data) => API.post('/grades/save', data),
-    submitAssignment: (data) => API.post('/assignments/submit', data)
+    submitAssignment: (data) => API.post('/assignments/submit', data),
+
+    // 13. Manajemen Guru Lengkap (Kelas yang Diajar, Jadwal, Slip Gaji, Presensi, Nilai Siswa)
+    getTeacherClasses: (teacherId = 2) => API.get(`/teacher/classes?teacher_id=${teacherId}`),
+    getTeacherSchedule: (teacherId = 2) => API.get(`/teacher/schedule?teacher_id=${teacherId}`),
+    getTeacherPayrolls: (teacherId = 2) => API.get(`/teacher/payroll?teacher_id=${teacherId}`),
+    getTeacherPayrollSlip: (id) => API.get(`/teacher/payroll/${id}`),
+    getTeacherAttendance: (teacherId = 2) => API.get(`/teacher/attendance?teacher_id=${teacherId}`),
+    getTeacherStudentGrades: (classId = 4, subjectId = 2) => API.get(`/teacher/student-grades?class_id=${classId}&subject_id=${subjectId}`),
+    saveSingleStudentGrade: (data) => API.post('/teacher/student-grades/save-single', data)
 };
 
 window.API = API;

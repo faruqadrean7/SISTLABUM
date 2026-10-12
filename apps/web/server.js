@@ -921,6 +921,269 @@ const server = http.createServer(async (req, res) => {
                 });
             }
 
+            // 35. Guru: Daftar Kelas yang Diajar & Progres Nilai Rapor
+            if (pathname === '/api/teacher/classes' && req.method === 'GET') {
+                const teacherId = parsedUrl.searchParams.get('teacher_id') || 2;
+                const rows = db.prepare(`
+                    SELECT ts.class_id, ts.subject_id,
+                           c.name as class_name, c.level, c.room_number, c.homeroom_teacher, c.student_count,
+                           sub.name as subject_name, sub.code as subject_code, sub.kkm,
+                           SUM(ts.jp_count) as total_jp
+                    FROM teaching_schedules ts
+                    JOIN classes c ON ts.class_id = c.id
+                    JOIN subjects sub ON ts.subject_id = sub.id
+                    WHERE ts.teacher_id = ?
+                    GROUP BY ts.class_id, ts.subject_id
+                    ORDER BY c.level DESC, c.name ASC
+                `).all(teacherId);
+
+                const classesWithProgress = rows.map(r => {
+                    const graded = db.prepare(`
+                        SELECT COUNT(*) as cnt,
+                               ROUND(AVG(final_score), 1) as avg_class_score,
+                               SUM(CASE WHEN final_score >= ? THEN 1 ELSE 0 END) as passed_count
+                        FROM grades g
+                        JOIN students s ON g.student_id = s.id
+                        WHERE s.class_id = ? AND g.subject_id = ?
+                    `).get(r.kkm || 75, r.class_id, r.subject_id);
+
+                    const totalStudents = r.student_count || 32;
+                    const evaluatedCount = graded ? graded.cnt : 0;
+                    const completionPct = Math.round((evaluatedCount / totalStudents) * 100);
+
+                    return {
+                        ...r,
+                        evaluated_count: evaluatedCount,
+                        passed_count: graded ? graded.passed_count || 0 : 0,
+                        avg_class_score: graded && graded.avg_class_score ? graded.avg_class_score : 0,
+                        completion_percentage: Math.min(100, completionPct),
+                        status_rapor: completionPct >= 100 ? 'Siap Cetak Rapor' : 'Penginputan Berlangsung'
+                    };
+                });
+
+                return sendJson(res, 200, classesWithProgress);
+            }
+
+            // 36. Guru: Jadwal Mengajar Mingguan
+            if (pathname === '/api/teacher/schedule' && req.method === 'GET') {
+                const teacherId = parsedUrl.searchParams.get('teacher_id') || 2;
+                const schedules = db.prepare(`
+                    SELECT ts.*, c.name as class_name, c.room_number, sub.name as subject_name, sub.code as subject_code
+                    FROM teaching_schedules ts
+                    JOIN classes c ON ts.class_id = c.id
+                    JOIN subjects sub ON ts.subject_id = sub.id
+                    WHERE ts.teacher_id = ?
+                    ORDER BY 
+                        CASE ts.day_name 
+                            WHEN 'Senin' THEN 1 
+                            WHEN 'Selasa' THEN 2 
+                            WHEN 'Rabu' THEN 3 
+                            WHEN 'Kamis' THEN 4 
+                            WHEN 'Jumat' THEN 5 
+                            WHEN 'Sabtu' THEN 6 
+                            ELSE 7 
+                        END, ts.start_time ASC
+                `).all(teacherId);
+                return sendJson(res, 200, schedules);
+            }
+
+            // 37. Guru: Riwayat & Dokumen Slip Gaji (Payroll P2LP UM)
+            if (pathname === '/api/teacher/payroll' && req.method === 'GET') {
+                const teacherId = parsedUrl.searchParams.get('teacher_id') || 2;
+                const payrolls = db.prepare(`
+                    SELECT p.*, t.name as teacher_name, t.nip, t.title as teacher_title, t.subject
+                    FROM teacher_payrolls p
+                    JOIN teachers t ON p.teacher_id = t.id
+                    WHERE p.teacher_id = ?
+                    ORDER BY p.id DESC
+                `).all(teacherId);
+                return sendJson(res, 200, payrolls);
+            }
+
+            if (pathname.startsWith('/api/teacher/payroll/') && req.method === 'GET') {
+                const payrollId = pathname.split('/')[4];
+                const slip = db.prepare(`
+                    SELECT p.*, t.name as teacher_name, t.nip, t.title as teacher_title, t.subject, t.email, t.phone
+                    FROM teacher_payrolls p
+                    JOIN teachers t ON p.teacher_id = t.id
+                    WHERE p.id = ?
+                `).get(payrollId);
+                if (!slip) return sendJson(res, 404, { error: 'Slip gaji tidak ditemukan' });
+                return sendJson(res, 200, slip);
+            }
+
+            // 38. Guru: Rekap Absensi Mengajar & Kehadiran Guru
+            if (pathname === '/api/teacher/attendance' && req.method === 'GET') {
+                const teacherId = parsedUrl.searchParams.get('teacher_id') || 2;
+                const logs = db.prepare(`
+                    SELECT * FROM teacher_attendance_logs
+                    WHERE teacher_id = ?
+                    ORDER BY date DESC
+                    LIMIT 30
+                `).all(teacherId);
+
+                // Rekap statistik kehadiran guru
+                const totalDays = logs.length || 22;
+                const onTimeCount = logs.filter(l => l.status.includes('Tepat Waktu')).length;
+
+                return sendJson(res, 200, {
+                    logs,
+                    summary: {
+                        total_working_days: totalDays,
+                        present_days: logs.length,
+                        on_time_percentage: logs.length > 0 ? Math.round((onTimeCount / logs.length) * 100) : 100,
+                        leave_days: 0,
+                        status: 'Disiplin Sangat Baik'
+                    }
+                });
+            }
+
+            // 39. Guru: Detail Manajemen Nilai Tiap Siswa (Per-Siswa Mode)
+            if (pathname === '/api/teacher/student-grades' && req.method === 'GET') {
+                const classId = parsedUrl.searchParams.get('class_id') || 4;
+                const subjectId = parsedUrl.searchParams.get('subject_id') || 2;
+
+                const subject = db.prepare('SELECT * FROM subjects WHERE id = ?').get(subjectId);
+                const kkm = subject ? subject.kkm : 75;
+
+                const students = db.prepare(`
+                    SELECT s.id as student_id, s.name as student_name, s.nis, s.nisn, s.gender, s.avatar_color,
+                           g.id as grade_id,
+                           g.score_tasks, g.score_uh, g.score_pts, g.score_pas, g.final_score,
+                           g.predicate, g.character_notes
+                    FROM students s
+                    LEFT JOIN grades g ON s.id = g.student_id AND g.subject_id = ?
+                    WHERE s.class_id = ?
+                    ORDER BY s.nis ASC
+                `).all(subjectId, classId);
+
+                const formatted = students.map(st => {
+                    const hasFinal = st.final_score !== null && st.final_score !== undefined;
+                    const finalVal = hasFinal ? Number(st.final_score) : 80;
+                    const isComplete = hasFinal && Boolean(st.character_notes);
+                    const isPassed = finalVal >= kkm;
+
+                    let statusRapor = 'Belum Lengkap';
+                    if (isComplete && isPassed) {
+                        statusRapor = 'Siap Cetak Rapor';
+                    } else if (hasFinal && !isPassed) {
+                        statusRapor = 'Perlu Bimbingan / Remedial';
+                    } else if (hasFinal && !st.character_notes) {
+                        statusRapor = 'Catatan Rapor Belum Diisi';
+                    }
+
+                    return {
+                        student_id: st.student_id,
+                        student_name: st.student_name,
+                        nis: st.nis,
+                        nisn: st.nisn,
+                        gender: st.gender,
+                        avatar_color: st.avatar_color || '#1E3A8A',
+                        grade_id: st.grade_id,
+                        score_tasks: st.score_tasks !== null ? Number(st.score_tasks) : 80,
+                        score_uh: st.score_uh !== null ? Number(st.score_uh) : 80,
+                        score_pts: st.score_pts !== null ? Number(st.score_pts) : 80,
+                        score_pas: st.score_pas !== null ? Number(st.score_pas) : 80,
+                        final_score: finalVal,
+                        predicate: st.predicate || (finalVal >= 90 ? 'A' : (finalVal >= 80 ? 'B' : 'C')),
+                        character_notes: st.character_notes || 'Menunjukkan penguasaan capaian kompetensi dengan baik dan aktif berpartisipasi.',
+                        kkm: kkm,
+                        is_passed: isPassed,
+                        status_rapor: statusRapor
+                    };
+                });
+
+                return sendJson(res, 200, {
+                    subject,
+                    kkm,
+                    students: formatted
+                });
+            }
+
+            // 40. Guru: Simpan Nilai & Catatan Rapor Satu Siswa (Single Student)
+            if (pathname === '/api/teacher/student-grades/save-single' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const {
+                    student_id,
+                    subject_id = 2,
+                    score_tasks = 80,
+                    score_uh = 80,
+                    score_pts = 80,
+                    score_pas = 80,
+                    final_score,
+                    predicate,
+                    character_notes = 'Capaian kompetensi tuntas.'
+                } = body;
+
+                if (!student_id) return sendJson(res, 400, { error: 'Student ID wajib diisi' });
+
+                // Hitung otomatis final_score jika tidak dikirim: 30% tugas + 20% uh + 25% pts + 25% pas
+                const calcFinal = final_score !== undefined
+                    ? Number(final_score)
+                    : Math.round(Number(score_tasks) * 0.3 + Number(score_uh) * 0.2 + Number(score_pts) * 0.25 + Number(score_pas) * 0.25);
+
+                const calcPred = predicate || (calcFinal >= 90 ? 'A' : (calcFinal >= 80 ? 'B' : (calcFinal >= 75 ? 'C' : 'D')));
+
+                const existing = db.prepare('SELECT id FROM grades WHERE student_id = ? AND subject_id = ?').get(student_id, subject_id);
+                if (existing) {
+                    db.prepare(`
+                        UPDATE grades SET
+                            score_tasks = ?,
+                            score_uh = ?,
+                            score_pts = ?,
+                            score_pas = ?,
+                            final_score = ?,
+                            predicate = ?,
+                            character_notes = ?
+                        WHERE id = ?
+                    `).run(
+                        Number(score_tasks),
+                        Number(score_uh),
+                        Number(score_pts),
+                        Number(score_pas),
+                        calcFinal,
+                        calcPred,
+                        character_notes,
+                        existing.id
+                    );
+                } else {
+                    db.prepare(`
+                        INSERT INTO grades (student_id, subject_id, semester, score_tasks, score_uh, score_pts, score_pas, final_score, predicate, character_notes)
+                        VALUES (?, ?, 'Ganjil', ?, ?, ?, ?, ?, ?, ?)
+                    `).run(
+                        student_id,
+                        subject_id,
+                        Number(score_tasks),
+                        Number(score_uh),
+                        Number(score_pts),
+                        Number(score_pas),
+                        calcFinal,
+                        calcPred,
+                        character_notes
+                    );
+                }
+
+                // Recalculate average_score in report_card_summaries
+                const avg = db.prepare('SELECT ROUND(AVG(final_score), 2) as avg_score FROM grades WHERE student_id = ?').get(student_id);
+                if (avg && avg.avg_score) {
+                    db.prepare('UPDATE report_card_summaries SET average_score = ? WHERE student_id = ?').run(avg.avg_score, student_id);
+                }
+
+                const student = db.prepare('SELECT name, nis FROM students WHERE id = ?').get(student_id);
+
+                return sendJson(res, 200, {
+                    success: true,
+                    message: `Nilai rapor untuk ${student ? student.name : 'Siswa'} berhasil disimpan dan disinkronkan ke E-Rapor.`,
+                    data: {
+                        student_id,
+                        final_score: calcFinal,
+                        predicate: calcPred,
+                        character_notes,
+                        new_gpa: avg ? avg.avg_score : calcFinal
+                    }
+                });
+            }
+
             return sendJson(res, 404, { error: 'Endpoint API tidak ditemukan' });
         } catch (err) {
             console.error('API Error:', err);
