@@ -317,13 +317,24 @@
             }
         }
 
-        function renderStudentAttendance(students) {
+        async function renderStudentAttendance(students) {
             const tbody = document.getElementById('student-att-tbody');
             tbody.innerHTML = '';
 
+            const date = document.getElementById('sel-date').value || '2026-10-12';
+            let existingLogs = [];
+            try {
+                const logsRes = await fetch(`/api/attendance/today?date=${date}`).then(r => r.json());
+                if (Array.isArray(logsRes)) existingLogs = logsRes;
+            } catch (e) {}
+
             students.forEach((s, idx) => {
                 const tr = document.createElement('tr');
-                const defaultStatus = s.student_id === 5 ? 'Sakit' : 'Hadir'; // Contoh 1 siswa sakit
+                tr.dataset.studentId = s.student_id;
+
+                const log = existingLogs.find(l => l.student_id === s.student_id);
+                const defaultStatus = log ? log.classroom_status : (s.student_id === 5 ? 'Sakit' : 'Hadir');
+                const defaultNotes = log ? (log.notes || '') : (defaultStatus === 'Sakit' ? 'Surat dokter terverifikasi' : 'Mengikuti KBM tertib');
 
                 tr.innerHTML = `
                     <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
@@ -336,16 +347,17 @@
                         <div style="display: inline-flex; gap: 4px; background: var(--bg-subtle); padding: 3px; border-radius: var(--radius-md);">
                             <button type="button" class="btn btn-xs ${defaultStatus === 'Hadir' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Hadir')">Hadir</button>
                             <button type="button" class="btn btn-xs ${defaultStatus === 'Sakit' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Sakit')">Sakit</button>
-                            <button type="button" class="btn btn-xs btn-outline" style="padding: 3px 8px;" onclick="setStatus(this, 'Izin')">Izin</button>
-                            <button type="button" class="btn btn-xs btn-outline" style="padding: 3px 8px;" onclick="setStatus(this, 'Alpa')">Alpa</button>
+                            <button type="button" class="btn btn-xs ${defaultStatus === 'Izin' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Izin')">Izin</button>
+                            <button type="button" class="btn btn-xs ${defaultStatus === 'Alpa' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Alpa')">Alpa</button>
                         </div>
                     </td>
                     <td>
-                        <input type="text" class="form-control" style="font-size: 12px; padding: 4px 8px;" placeholder="${defaultStatus === 'Sakit' ? 'Surat dokter terverifikasi' : 'Mengikuti KBM tertib'}" value="${defaultStatus === 'Sakit' ? 'Surat dokter terverifikasi' : ''}"/>
+                        <input type="text" class="form-control" style="font-size: 12px; padding: 4px 8px;" placeholder="Keterangan..." value="${defaultNotes}"/>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+            updateStatsSummary();
         }
 
         function setStatus(btn, status) {
@@ -354,7 +366,7 @@
                 b.className = 'btn btn-xs btn-outline';
             });
             btn.className = 'btn btn-xs btn-teal';
-            App.toast(`Status diubah menjadi: ${status}`, 'info');
+            updateStatsSummary();
         }
 
         function setAllPresent() {
@@ -363,11 +375,53 @@
                 btns.forEach(b => b.className = 'btn btn-xs btn-outline');
                 if (btns[0]) btns[0].className = 'btn btn-xs btn-teal';
             });
+            updateStatsSummary();
             App.toast('Semua siswa ditandai Hadir.', 'success');
         }
 
-        function saveClassAttendance() {
-            App.toast('Rekap presensi pertemuan KBM berhasil disimpan dan disahkan!', 'success');
+        function updateStatsSummary() {
+            let hadir = 0, sakit = 0, izin = 0, alpa = 0;
+            const rows = document.querySelectorAll('#student-att-tbody tr');
+            rows.forEach(tr => {
+                const activeBtn = tr.querySelector('button.btn-teal');
+                const st = activeBtn ? activeBtn.textContent.trim() : 'Hadir';
+                if (st === 'Hadir') hadir++;
+                else if (st === 'Sakit') sakit++;
+                else if (st === 'Izin') izin++;
+                else if (st === 'Alpa') alpa++;
+            });
+
+            const total = rows.length || 32;
+            const pct = Math.round((hadir / total) * 1000) / 10;
+            if (document.getElementById('st-class-pct')) document.getElementById('st-class-pct').textContent = `${pct}%`;
+            if (document.getElementById('st-class-hadir')) document.getElementById('st-class-hadir').textContent = `${hadir} Siswa`;
+            if (document.getElementById('st-class-izin')) document.getElementById('st-class-izin').textContent = `${sakit + izin} Siswa`;
+            if (document.getElementById('st-class-alpa')) document.getElementById('st-class-alpa').textContent = `${alpa} Siswa`;
+        }
+
+        async function saveClassAttendance() {
+            const classId = document.getElementById('sel-class').value;
+            const date = document.getElementById('sel-date').value || '2026-10-12';
+            const attendances = [];
+
+            document.querySelectorAll('#student-att-tbody tr').forEach(tr => {
+                const studentId = Number(tr.dataset.studentId);
+                const activeBtn = tr.querySelector('button.btn-teal');
+                const status = activeBtn ? activeBtn.textContent.trim() : 'Hadir';
+                const notes = tr.querySelector('input').value || '';
+                attendances.push({ student_id: studentId, status, notes });
+            });
+
+            try {
+                const res = await API.saveStudentAttendance({
+                    class_id: Number(classId),
+                    date: date,
+                    attendances: attendances
+                });
+                App.toast(res.message || 'Rekap presensi pertemuan KBM berhasil disimpan dan disahkan!', 'success');
+            } catch (err) {
+                App.toast('Gagal menyimpan presensi: ' + err.message, 'error');
+            }
         }
 
         async function loadTeacherAttendanceLogs() {

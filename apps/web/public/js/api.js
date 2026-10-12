@@ -111,7 +111,9 @@ const API = {
     getTeacherPayrollSlip: (id) => API.get(`/teacher/payroll/${id}`),
     getTeacherAttendance: (teacherId = 2) => API.get(`/teacher/attendance?teacher_id=${teacherId}`),
     getTeacherStudentGrades: (classId = 4, subjectId = 2) => API.get(`/teacher/student-grades?class_id=${classId}&subject_id=${subjectId}`),
-    saveSingleStudentGrade: (data) => API.post('/teacher/student-grades/save-single', data)
+    saveSingleStudentGrade: (data) => API.post('/teacher/student-grades/save-single', data),
+    saveStudentAttendance: (data) => API.post('/teacher/attendance/save-students', data),
+    getClassSchedule: (classId = 4, day = '') => API.get(`/class-schedule?class_id=${classId}${day ? '&day=' + encodeURIComponent(day) : ''}`)
 };
 
 window.API = API;

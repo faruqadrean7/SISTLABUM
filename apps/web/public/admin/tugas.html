@@ -230,7 +230,8 @@
 
             items.forEach((a, idx) => {
                 const tr = document.createElement('tr');
-                const collected = idx === 0 ? 30 : (idx === 1 ? 31 : 28);
+                const collected = a.submission_count !== undefined ? a.submission_count : (idx === 0 ? 30 : 28);
+                const totalStudents = a.total_students || 32;
 
                 tr.innerHTML = `
                     <td>
@@ -244,7 +245,7 @@
                         ${a.due_date ? a.due_date.substring(0, 10) : '-'}
                     </td>
                     <td style="text-align: center;">
-                        <span class="badge badge-teal" style="font-weight: 700;">${collected} / 32 Siswa</span>
+                        <span class="badge badge-teal" style="font-weight: 700;">${collected} / ${totalStudents} Siswa</span>
                     </td>
                     <td style="text-align: center;">
                         <span class="badge badge-success">Aktif</span>

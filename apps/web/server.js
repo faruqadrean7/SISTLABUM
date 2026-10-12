@@ -161,14 +161,15 @@ const server = http.createServer(async (req, res) => {
 
             // 6. Presensi Harian & Riwayat Siswa
             if (pathname === '/api/attendance/today' && req.method === 'GET') {
+                const targetDate = parsedUrl.searchParams.get('date') || '2026-10-12';
                 const rows = db.prepare(`
                     SELECT a.*, s.name as student_name, s.nis, c.name as class_name
                     FROM attendance_logs a
                     JOIN students s ON a.student_id = s.id
                     JOIN classes c ON s.class_id = c.id
-                    WHERE a.date = '2026-10-12'
+                    WHERE a.date = ?
                     ORDER BY a.gate_in_time DESC
-                `).all();
+                `).all(targetDate);
                 return sendJson(res, 200, rows);
             }
 
@@ -464,7 +465,9 @@ const server = http.createServer(async (req, res) => {
                 const rows = db.prepare(`
                     SELECT a.*, s.name as subject_name,
                            subm.submitted_at, subm.file_name as submitted_file, subm.score as submission_score,
-                           subm.feedback as submission_feedback, subm.status as submission_status
+                           subm.feedback as submission_feedback, subm.status as submission_status,
+                           (SELECT COUNT(*) FROM assignment_submissions WHERE assignment_id = a.id) as submission_count,
+                           (SELECT COUNT(*) FROM students WHERE class_id = a.class_id) as total_students
                     FROM assignments a
                     JOIN subjects s ON a.subject_id = s.id
                     LEFT JOIN assignment_submissions subm ON a.id = subm.assignment_id AND subm.student_id = ?
@@ -731,6 +734,30 @@ const server = http.createServer(async (req, res) => {
                     classmates,
                     teachers
                 });
+            }
+
+            // 25.2 Jadwal Pelajaran Kelas untuk Siswa
+            if (pathname === '/api/class-schedule' && req.method === 'GET') {
+                const classId = parsedUrl.searchParams.get('class_id') || 4;
+                const dayName = parsedUrl.searchParams.get('day');
+                let query = `
+                    SELECT ts.*, c.name as class_name, c.room_number,
+                           sub.name as subject_name, sub.code as subject_code,
+                           t.name as teacher_name, t.title as teacher_title
+                    FROM teaching_schedules ts
+                    JOIN classes c ON ts.class_id = c.id
+                    JOIN subjects sub ON ts.subject_id = sub.id
+                    JOIN teachers t ON ts.teacher_id = t.id
+                    WHERE ts.class_id = ?
+                `;
+                const params = [classId];
+                if (dayName) {
+                    query += ` AND ts.day_name = ?`;
+                    params.push(dayName);
+                }
+                query += ` ORDER BY ts.start_time ASC`;
+                const schedules = db.prepare(query).all(...params);
+                return sendJson(res, 200, schedules);
             }
 
             // 26. E-Rapor Komprehensif
@@ -1038,6 +1065,61 @@ const server = http.createServer(async (req, res) => {
                 });
             }
 
+            // 38.2 Guru: Simpan Rekap Presensi KBM Siswa ke SQLite & Sinkronkan ke Rapor
+            if (pathname === '/api/teacher/attendance/save-students' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { class_id = 4, date = new Date().toISOString().split('T')[0], attendances = [] } = body;
+
+                if (!Array.isArray(attendances) || attendances.length === 0) {
+                    return sendJson(res, 400, { error: 'Daftar presensi siswa wajib diisi' });
+                }
+
+                for (const att of attendances) {
+                    const studentId = att.student_id;
+                    const status = att.status || 'Hadir';
+                    const notes = att.notes || (status === 'Hadir' ? 'Mengikuti KBM tertib' : `Keterangan: ${status}`);
+
+                    const existing = db.prepare('SELECT id FROM attendance_logs WHERE student_id = ? AND date = ?').get(studentId, date);
+                    if (existing) {
+                        db.prepare(`
+                            UPDATE attendance_logs 
+                            SET classroom_status = ?, notes = ?
+                            WHERE id = ?
+                        `).run(status, notes, existing.id);
+                    } else {
+                        const inTime = status === 'Hadir' ? '06:45:00' : null;
+                        db.prepare(`
+                            INSERT INTO attendance_logs (student_id, date, gate_in_time, classroom_status, notes)
+                            VALUES (?, ?, ?, ?, ?)
+                        `).run(studentId, date, inTime, status, notes);
+                    }
+
+                    // Sinkronkan ke report_card_summaries
+                    const counts = db.prepare(`
+                        SELECT 
+                            SUM(CASE WHEN classroom_status = 'Sakit' THEN 1 ELSE 0 END) as sakit_count,
+                            SUM(CASE WHEN classroom_status = 'Izin' THEN 1 ELSE 0 END) as izin_count,
+                            SUM(CASE WHEN classroom_status = 'Alpa' THEN 1 ELSE 0 END) as alpa_count
+                        FROM attendance_logs
+                        WHERE student_id = ?
+                    `).get(studentId);
+
+                    if (counts) {
+                        db.prepare(`
+                            UPDATE report_card_summaries
+                            SET attendance_sakit = ?, attendance_izin = ?, attendance_alpa = ?
+                            WHERE student_id = ?
+                        `).run(counts.sakit_count || 0, counts.izin_count || 0, counts.alpa_count || 0, studentId);
+                    }
+                }
+
+                return sendJson(res, 200, {
+                    success: true,
+                    count: attendances.length,
+                    message: `Berhasil menyimpan presensi ${attendances.length} siswa untuk tanggal ${date}. Data telah disinkronkan ke E-Rapor.`
+                });
+            }
+
             // 39. Guru: Detail Manajemen Nilai Tiap Siswa (Per-Siswa Mode)
             if (pathname === '/api/teacher/student-grades' && req.method === 'GET') {
                 const classId = parsedUrl.searchParams.get('class_id') || 4;
@@ -1163,10 +1245,10 @@ const server = http.createServer(async (req, res) => {
                     );
                 }
 
-                // Recalculate average_score in report_card_summaries
-                const avg = db.prepare('SELECT ROUND(AVG(final_score), 2) as avg_score FROM grades WHERE student_id = ?').get(student_id);
+                // Recalculate average_score & total_score in report_card_summaries
+                const avg = db.prepare('SELECT ROUND(AVG(final_score), 2) as avg_score, ROUND(SUM(final_score), 2) as sum_score FROM grades WHERE student_id = ?').get(student_id);
                 if (avg && avg.avg_score) {
-                    db.prepare('UPDATE report_card_summaries SET average_score = ? WHERE student_id = ?').run(avg.avg_score, student_id);
+                    db.prepare('UPDATE report_card_summaries SET average_score = ?, total_score = ? WHERE student_id = ?').run(avg.avg_score, avg.sum_score || 0, student_id);
                 }
 
                 const student = db.prepare('SELECT name, nis FROM students WHERE id = ?').get(student_id);

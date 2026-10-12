@@ -94,7 +94,7 @@
                 <div class="stat-data">
                     <span class="stat-label">Persentase Kehadiran</span>
                     <span class="stat-value" style="color: var(--color-teal);" id="stat-attendance">98.2%</span>
-                    <span class="stat-sub">44 Hadir, 1 Sakit, 0 Alpa</span>
+                    <span class="stat-sub" id="stat-attendance-sub">44 Hadir, 1 Sakit, 0 Alpa</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-teal">📅</div>
             </div>
@@ -264,7 +264,7 @@
                     <h3 class="card-title">📅 Jadwal Pelajaran Hari Ini (Senin)</h3>
                     <span class="badge badge-info">Kelas IX-A • R.301</span>
                 </div>
-                <div class="timeline-list">
+                <div class="timeline-list" id="today-schedule-list">
                     <div class="timeline-item">
                         <div class="timeline-time">07:00 - 08:30</div>
                         <div class="timeline-subject">Upacara Bendera & Pembiasaan Karakter</div>
@@ -347,6 +347,25 @@
                     }
                 }
 
+                // 1.5 Load Presensi Kehadiran Siswa
+                try {
+                    const attLogs = await API.getStudentAttendance(1);
+                    if (attLogs && attLogs.length > 0) {
+                        const total = attLogs.length;
+                        const hadir = attLogs.filter(a => a.classroom_status === 'Hadir').length;
+                        const sakit = attLogs.filter(a => a.classroom_status === 'Sakit').length;
+                        const izin = attLogs.filter(a => a.classroom_status === 'Izin').length;
+                        const alpa = attLogs.filter(a => a.classroom_status === 'Alpa').length;
+                        const pct = Math.round((hadir / total) * 1000) / 10;
+                        const attEl = document.getElementById('stat-attendance');
+                        const subEl = document.getElementById('stat-attendance-sub');
+                        if (attEl) attEl.textContent = `${pct}%`;
+                        if (subEl) subEl.textContent = `${hadir} Hadir, ${sakit} Sakit, ${alpa} Alpa`;
+                    }
+                } catch (err) {
+                    console.error('Error loading attendance logs:', err);
+                }
+
                 // 2. Load E-Rapor Ringkasan Nilai & Peringkat Siswa
                 try {
                     const report = await API.getReportCard(1);
@@ -400,6 +419,41 @@
                     }
                 } catch (err) {
                     console.error('Error loading duty info:', err);
+                }
+
+                // 4.5 Load Jadwal Pelajaran Hari Ini (Senin) dari Database
+                try {
+                    const scheduleList = await API.getClassSchedule(4, 'Senin');
+                    const schedContainer = document.getElementById('today-schedule-list');
+                    if (schedContainer && scheduleList && scheduleList.length > 0) {
+                        schedContainer.innerHTML = '';
+                        // Entry 1: Upacara Bendera Rutin
+                        const upacara = document.createElement('div');
+                        upacara.className = 'timeline-item';
+                        upacara.innerHTML = `
+                            <div class="timeline-time">07:00 - 08:30</div>
+                            <div class="timeline-subject">Upacara Bendera & Pembiasaan Karakter</div>
+                            <div class="timeline-room">Lapangan Utama • Seluruh Civitas Akademika</div>
+                        `;
+                        schedContainer.appendChild(upacara);
+
+                        scheduleList.forEach(item => {
+                            const div = document.createElement('div');
+                            const isInf = item.subject_code === 'INF';
+                            div.className = 'timeline-item';
+                            if (isInf) {
+                                div.style.cssText = 'border-left-color: var(--color-teal); background: #F0FDFA;';
+                            }
+                            div.innerHTML = `
+                                <div class="timeline-time">${item.start_time} - ${item.end_time}</div>
+                                <div class="timeline-subject">${item.subject_name}${isInf ? ' (ASTS CBT)' : ''}</div>
+                                <div class="timeline-room">${item.room || 'R.301'} • ${item.teacher_name}</div>
+                            `;
+                            schedContainer.appendChild(div);
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error loading today schedule:', err);
                 }
 
                 // 5. Load Riwayat Peminjaman Buku Digital Siswa

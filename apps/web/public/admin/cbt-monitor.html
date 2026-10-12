@@ -178,9 +178,12 @@
     <script src="/js/app.js"></script>
     <script>
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const examId = urlParams.get('exam_id') || 6;
+
         async function loadCbtLiveMonitor() {
             try {
-                const rows = await API.getCbtMonitor(1);
+                const rows = await API.getCbtMonitor(examId);
                 const tbody = document.getElementById('cbt-monitor-tbody');
                 tbody.innerHTML = '';
 
