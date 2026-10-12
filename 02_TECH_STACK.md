@@ -15,15 +15,16 @@ Keputusan di bawah **mengikat** untuk AI agent dan developer. Mengubahnya harus 
 | Sistem Admin | **Next.js (App Router, CSR dominan)** atau Vite + React | Dashboard kaya interaksi |
 | UI Web | **Tailwind CSS + shadcn/ui** | Konsisten, cepat |
 | State/data web | **TanStack Query + Zod + React Hook Form** | Cache, validasi |
-| Mobile | **Flutter 3.x (Dart)** | Satu kode Android/iOS |
-| State mobile | **Riverpod** | Testable |
-| HTTP mobile | **Dio** + interceptor token | Refresh token otomatis |
+| Mobile | **Android Native (Kotlin 2.x)** | Performa optimal, keamanan CBT native |
+| UI Mobile | **Jetpack Compose + Material 3** | Deklaratif, modern |
+| State/data mobile | **ViewModel + StateFlow + Hilt** | Testable, lifecycle-aware |
+| HTTP mobile | **Retrofit + OkHttp** + Interceptor token | Refresh token otomatis |
 | Push | **Firebase Cloud Messaging** | Standar |
 | WhatsApp/Email | Provider via **adapter interface** | Mudah ganti vendor |
 | PDF | **Playwright/Puppeteer (HTML→PDF)** di worker | Layout rapor fleksibel |
 | QR | `qrcode` lib; verifikasi via URL bertanda tangan | Tanda tangan e-progress report |
 | Excel | `exceljs` | Import/export |
-| Testing | Jest + Supertest (BE), Vitest + Playwright (Web), flutter_test + integration_test (Mobile) | |
+| Testing | Jest + Supertest (BE), Vitest + Playwright (Web), JUnit + Compose Test (Mobile) | |
 | CI/CD | **GitHub Actions** | Lint, test, build, deploy |
 | Kontainer | **Docker + docker-compose** (dev), Docker/K8s atau VPS (prod) | |
 | Reverse proxy | **Nginx / Caddy** + HTTPS (Let's Encrypt) | |
@@ -90,20 +91,25 @@ src/
 └─ styles/
 ```
 
-## 5. Struktur Mobile (Flutter)
+## 5. Struktur Mobile (Android Kotlin)
 ```
-lib/
-├─ main.dart
-├─ core/                  # config, theme, router, network, storage, errors
-├─ shared/                # widget umum, util
+app/src/main/java/id/sch/labschool/sistlabum/
+├─ SistLabUmApp.kt           # Application class & Hilt setup
+├─ MainActivity.kt           # Single activity entry point
+├─ core/
+│  ├─ network/               # Retrofit, OkHttp, AuthInterceptor, TokenAuthenticator, ErrorParser
+│  ├─ database/              # Room DB, Entity, DAO (offline cache & pending actions queue)
+│  ├─ security/              # TokenManager (EncryptedSharedPreferences / Android Keystore)
+│  ├─ navigation/            # Navigation Compose, NavGraph, Route definitions, RoleGuard
+│  ├─ theme/                 # Color, Type, Shape, Theme (Material 3 Labschool brand)
+│  └─ common/                # UIState (Loading/Empty/Error), Result wrapper, Extension
 └─ features/
-   ├─ auth/ home/ notification/
-   ├─ guardian/ teacher/ student/
-   ├─ cbt/ ...
-   └─ <fitur>/
-       ├─ data/           # model, repository, datasource
-       ├─ domain/         # entity, usecase (opsional)
-       └─ presentation/   # screen, widget, controller (Riverpod)
+   ├─ auth/                  # Login, ChangePassword, ForgotPassword, Profile
+   ├─ notification/          # Inbox, FCM Service, DeepLinkHandler
+   ├─ guardian/              # Shell Ortu, ChildSelector, Attendance, Grades, Report PDF
+   ├─ teacher/               # Shell Guru, Schedule, QuickJournalAttendance, GradeEntry, LeaveApproval
+   ├─ student/               # Shell Siswa, Schedule, DigitalCard, Assignments
+   └─ cbt/                   # TokenEntry, ExamWorkspace, AntiCheat (FLAG_SECURE, lifecycle), ReviewSubmit
 ```
 
 ## 6. Environment & Konfigurasi
