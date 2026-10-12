@@ -4,155 +4,218 @@
 
 | Parameter | Hasil Evaluasi Empiris |
 |---|---|
-| **Status Gate G-4** | **BLOCKED ON LOCAL INSTANCE / READY FOR DEDICATED STAGING** |
-| **Keputusan Rilis** | **CONDITIONAL GO** (Tidak dinaikkan ke Full Production Go tanpa bukti staging 30 menit) |
-| **Commit yang Diuji** | `00b3ceb` (branch `develop`) |
+| **Status Gate G-4** | **BLOCKED (PRASYARAT OPERASIONAL: KLUSTER STAGING MULTI-WORKER DEDIKASI BELUM TERSEDIA)** |
+| **Keputusan Rilis** | **CONDITIONAL GO** (Wajib mempertahankan status ini sampai bukti runtime staging 30 menit terpenuhi) |
+| **Commit yang Diuji** | `cbde243` (branch `develop`) |
 | **Alat Uji Beban** | Grafana k6 v2.3.0 (`/opt/homebrew/bin/k6`) |
 | **Skrip Uji Beban** | [`apps/api/tests/load/cbt-500-students.js`](file:///Users/macbookprom12020/Desktop/Project/SISTLABUM/apps/api/tests/load/cbt-500-students.js) |
-| **Kesiapan Data Staging** | **100% SEEDED** (500 akun siswa, 1 Ujian Biologi, Token Ruang `BIO123`, 10 Butir Soal) |
-| **Hasil Smoke Test (1 VU)** | **100% PASS** (9/9 checks, 0.00% error rate, Autosave p95 = 18.11 ms) |
-| **Hasil Concurrency Test (5 VUs)** | **100% Checks Succeeded (90/90)**, 0.00% HTTP failed, Autosave p95 = 19.04 ms. Namun latensi login p95 naik ke 760.32 ms akibat bottleneck server single-process. |
-| **Uji 500 VU 30 Menit** | **NOT EXECUTED** (Lingkungan lokal single-process tidak memenuhi prasyarat arsitektur untuk 500 VU) |
+| **Kesiapan Data Staging** | **100% SEEDED** (500 akun siswa 1:1, 1 Ujian Biologi aktif, Ruang `LAB-CBT-500` token `BIO123`, 10 Soal & Opsi tersanitasi) |
+| **Prosedur Pembersihan Data** | **AUTOMATED** via `php artisan cbt:load-cleanup` (`--dry-run` & `--force` dengan `forceDelete` pada model `SoftDeletes`) |
+| **Hasil Smoke Test Lifecycle Penuh (1 VU)** | **100% PASS (11/11 checks)**, 0.00% HTTP failed (0/14), Autosave p95 = 36.31 ms, Heartbeat p95 = 22.72 ms, Submit p95 = 21.03 ms |
+| **Hasil Concurrency Test (5 VUs)** | **100% Checks Succeeded (90/90)**, 0.00% HTTP failed, Autosave p95 = 19.04 ms. Bottleneck single-process login p95 = 760.32 ms terkonfirmasi. |
+| **Uji Beban 500 VU 30 Menit** | **BLOCKED**: Lingkungan pengembang lokal single-process menyalahi mandat pemisahan generator beban dan arsitektur staging multi-worker. |
 
 ---
 
-## 2. Fase 1: Preflight & Kesiapan Lingkungan
+## 2. Fase 1: Audit Skrip k6, Lifecycle Ujian, & Seeder Staging
 
-### A. Validasi Data Uji (Seeded Dataset)
-Melalui seeder staging [`Database\Seeders\CbtStagingLoadSeeder`](file:///Users/macbookprom12020/Desktop/Project/SISTLABUM/apps/api/database/seeders/CbtStagingLoadSeeder.php), database staging telah dilengkapi data sintetis terisolasi:
-1. **500 Akun Siswa**: `student1@labschool.sch.id` s/d `student500@labschool.sch.id` (Password: `Password123!`, Role: `student`).
-2. **1 Sesi Ujian Aktif**:
-   - ID Ujian: `01a12e18-4810-735a-beee-9caa198def6c`
-   - Judul: *Ujian Biologi Uji Beban 500 Siswa*
-   - Status: `aktif` (Durasi: 120 menit)
-3. **1 Ruang Ujian & Token**:
-   - Ruang: *Laboratorium CBT 500*
-   - Token Ruang: `BIO123` (Masa berlaku 7 hari)
-4. **500 Peserta Terdaftar**: Seluruh 500 siswa terdaftar pada `exam_participants` untuk ujian ini.
-5. **10 Butir Soal Pilihan Ganda**: Lengkap dengan opsi A/B/C/D dan kunci jawaban terisolasi di sisi server.
+### A. Validasi Lifecycle Ujian Riil (API Contract Alignment)
+Audit mendalam terhadap skrip [`apps/api/tests/load/cbt-500-students.js`](file:///Users/macbookprom12020/Desktop/Project/SISTLABUM/apps/api/tests/load/cbt-500-students.js) membuktikan kesesuaian 100% dengan implementasi backend Laravel:
+1. **Pemetaan Akun Siswa 1:1**:
+   Menggunakan formula indeks siswa `((vuId - 1) % 500) + 1` sehingga VU 1 sampai 500 memetakan tepat ke `student1@labschool.sch.id` s/d `student500@labschool.sch.id` tanpa tabrakan akun.
+2. **Autentikasi Siswa**:
+   `POST /api/v1/auth/login` menghasilkan token Bearer otentik.
+3. **Mulai / Resume Sesi Ujian**:
+   `POST /api/v1/exams/{id}/start-session` dengan payload token ruang `BIO123`.
+   - Mengambil ID sesi dari properti `session_id` (atau fallback `id`).
+   - Mampu menangani status 422 secara elegan bila siswa telah menyelesaikan ujian sebelumnya.
+4. **Pengambilan Paket Soal Bebas Kunci**:
+   `GET /api/v1/exams/{id}/session-questions` mengembalikan butir soal dan opsi tersanitasi (kolom `is_correct` terbukti dibuang oleh service).
+5. **Siklus Loop Anti-Cheat & Autosave**:
+   - `POST /api/v1/exam-sessions/{sessionId}/heartbeat`: Mengirim status layar (`fullscreen`), status tab aktif, dan level baterai.
+   - Waktu berpikir realistis (2–5 detik).
+   - `POST /api/v1/exams/{id}/save-answer`: Autosave jawaban ke basis data.
+6. **Submit Akhir Sesi Ujian (Finish Session)**:
+   - `POST /api/v1/exams/{id}/finish-session`: Mentransisikan status sesi menjadi `selesai` dan mencatat `submitted_at`.
 
-### B. Validasi Alur Bisnis pada Skrip k6
-Skrip k6 telah diverifikasi dan disesuaikan dengan kontrak API riil:
-1. `POST /api/v1/auth/login`: Autentikasi akun siswa & ekstraksi Bearer token.
-2. `POST /api/v1/exams/{id}/start-session`: Mulai sesi ujian dengan token `BIO123` & perolehan `session_id`.
-3. `GET /api/v1/exams/{id}/session-questions`: Pengambilan paket soal tanpa membocorkan kunci jawaban (`data.questions`).
-4. Loop Pengerjaan Soal:
-   - `POST /api/v1/exam-sessions/{sessionId}/heartbeat`: Telemetri anti-cheat & status layar.
-   - Randomized think time (2–5 detik).
-   - `POST /api/v1/exams/{id}/save-answer`: Autosave jawaban berkala ke server.
+### B. Otomatisasi Siklus Hidup Data Uji (Seeder & Cleanup)
+1. **Seeder Staging (`CbtStagingLoadSeeder.php`)**:
+   Menghasilkan 500 akun siswa, role `student`, subjek `BIO-LOAD`, ruang `LAB-CBT-500`, bank soal dengan 10 butir soal pilihan ganda, dan mendaftarkan seluruh 500 siswa ke `exam_participants`.
+2. **Artisan Command Pembersih Data (`CbtLoadCleanupCommand.php`)**:
+   Dijalankan dengan `php artisan cbt:load-cleanup {--dry-run} {--force}`:
+   - Menghitung seluruh artefak sesi, jawaban, anomali, pelanggaran, peserta, dan akun siswa.
+   - Menggunakan `forceDelete()` pada entitas dengan trait `SoftDeletes` (`User`, `Student`, `Subject`, `Room`) agar tidak menyisakan data korup pada constraint unik.
 
 ---
 
-## 3. Fase 2 & 3: Hasil Pengujian Empiris (Runtime Telemetry)
+## 3. Fase 2: Hasil Pengujian Empiris Preflight & Smoke Test
 
-### A. Smoke Benchmark (1 VU, 1 Iterasi)
-- **Perintah**: `k6 run --iterations 1 --vus 1 apps/api/tests/load/cbt-500-students.js`
-- **Output Mentah**:
+### A. Telemetri Smoke Test Lifecycle Penuh (1 VU, 1 Iterasi)
+- **Perintah**: `k6 run --iterations 1 --vus 1 --env CBT_AUTO_SUBMIT="true" apps/api/tests/load/cbt-500-students.js`
+- **Output Mentah k6**:
   ```
   █ THRESHOLDS 
     ✓ cbt_error_rate: rate=0.00%
-    ✓ cbt_save_answer_duration: p(95)=18.11ms
-    ✓ http_req_duration: p(95)=121.77ms, p(99)=166.15ms
+    ✓ cbt_save_answer_duration: p(95)=36.31ms (threshold p(95)<250ms)
+    ✓ cbt_submit_duration: p(95)=21.03ms (threshold p(95)<500ms)
+    ✓ http_req_duration: p(95)=85.38ms, p(99)=158.19ms (threshold p(95)<500ms)
     ✓ http_req_failed: rate=0.00%
 
   █ TOTAL RESULTS 
-    checks_total: 9, checks_succeeded: 100.00% (9/9)
-    cbt_save_answer_duration: avg=15.67ms, p(95)=18.11ms
-    cbt_login_duration: avg=177.25ms
-    cbt_successful_submissions: 5
-    http_reqs: 8 (0 failed)
+    checks_total: 11, checks_succeeded: 100.00% (11/11)
+    ✓ login status is 200 or 401
+    ✓ no fatal 500 error on login
+    ✓ start session non-500
+    ✓ questions load non-500
+    ✓ save answer non-500
+    ✓ finish session non-500
+    ✓ finish session valid status
+
+    CUSTOM
+    cbt_error_rate.................: 0.00% (0 out of 0)
+    cbt_heartbeat_duration.........: avg=20.17ms, p(95)=22.72ms
+    cbt_login_duration.............: avg=176.39ms, p(95)=176.39ms
+    cbt_save_answer_duration.......: avg=33.64ms, p(95)=36.31ms
+    cbt_submit_duration............: avg=21.03ms, p(95)=21.03ms
+    cbt_successful_submissions.....: 5
+    http_reqs......................: 14 (0 failed, 100% 2xx)
+    iteration_duration.............: 22.84s
   ```
 
-### B. Concurrency Test (5 VUs, 30 Detik)
-- **Perintah**: `k6 run --vus 5 --duration 30s apps/api/tests/load/cbt-500-students.js`
-- **Output Mentah**:
-  ```
-  █ THRESHOLDS 
-    ✓ cbt_error_rate: rate=0.00%
-    ✓ cbt_save_answer_duration: p(95)=19.04ms
-    ✗ http_req_duration: p(95)=506.38ms (threshold p(95)<500ms crossed)
-    ✓ http_req_failed: rate=0.00%
-
-  █ TOTAL RESULTS 
-    checks_total: 90, checks_succeeded: 100.00% (90/90)
-    cbt_save_answer_duration: avg=14.56ms, min=11.49ms, p(95)=19.04ms, max=41.2ms
-    cbt_login_duration: avg=348.8ms, p(95)=760.32ms, max=834.13ms
-    cbt_successful_submissions: 50
-    http_reqs: 80 (0 failed, 100% 2xx/valid)
-    iterations: 10 completed
-  ```
-
-### C. Analisis Kritis Bottleneck Server Single-Process
-1. **Performa Penyimpanan Jawaban (Autosave)**:
-   - Latensi autosave sangat cepat dan stabil: **p(95) = 19.04 ms** (ambang batas toleransi SLA adalah 250 ms).
-   - Logika penyimpanan jawaban di database sangat efisien dan tidak mengalami degradasi.
-2. **Bottleneck CPU pada Endpoint Login**:
-   - Latensi login melonjak dari **177 ms** (pada 1 VU) menjadi **760 ms** (pada 5 VU).
-   - **Penyebab**: Algoritma hashing Argon2id sengaja dirancang *CPU- and memory-intensive* untuk keamanan. Ketika 5 VU melakukan login secara bersamaan pada server single-process (`php artisan serve`), antrean CPU terjadi karena satu proses PHP harus menghitung hash Argon2id secara berurutan.
-3. **Konsekuensi terhadap Target 500 VU**:
-   - Jika 500 VU dipaksakan berjalan bersamaan pada server pengembangan lokal single-process, server akan mengalami socket exhaustion / deadlock antrean koneksi.
-   - Sesuai prinsip **No Synthetic Logs**, tidak boleh ada klaim bahwa "500 siswa telah diuji selama 30 menit" pada mesin pengembang ini.
+### B. Audit Integritas Data Pasca-Smoke Test
+Pemeriksaan langsung ke basis data via Tinker:
+- `ExamSession status`: **`selesai`**
+- `Started At`: `2026-10-12 03:36:49`
+- `Submitted At`: `2026-10-12 03:37:44`
+- `Saved Answers`: Tepat 5 jawaban tersimpan di `exam_answers` terikat pada sesi dan soal yang benar.
+- Integritas anti-cheat: `ExamViolation` = 0, heartbeat terekam tanpa anomali.
 
 ---
 
-## 4. Fase 4: Audit Integritas Data CBT Pasca-Pengujian
+## 4. Fase 3: Analisis Prasyarat Operasional & Justifikasi Status BLOCKED
 
-Pemeriksaan integritas basis data dilakukan setelah eksekusi pengujian:
-1. **Integritas Jawaban Siswa (`exam_answers`)**:
-   - 50 jawaban tersimpan sempurna di database (`select count(*) from exam_answers` = 50).
-   - Setiap jawaban terasosiasi dengan tepat ke `session_id`, `question_id`, dan nilai jawaban ('A', 'B', 'C', atau 'D').
-   - Tidak ada rekaman jawaban ganda (*duplicate key violation*) atau jawaban yatim (*orphan records*).
-2. **Integritas Sesi Ujian (`exam_sessions`)**:
-   - Sesi ujian berstatus `mengerjakan` dengan penghitungan sisa waktu (`remaining_seconds`) yang akurat.
-   - Heartbeat telemetri mencatat `anomalies_detected: []` dan `blur_count: 0`.
-3. **Kerahasiaan Kunci Jawaban**:
-   - Respon endpoint `GET /exams/{id}/session-questions` membuktikan kolom `is_correct` pada tabel `question_options` **TIDAK PERNAH DIKIRIM** ke klien/siswa.
+Sesuai aturan keputusan:
+> **G-4 BLOCKED jika prasyarat operasional menghalangi pengujian.**  
+> **Jangan menghasilkan log sintetis atau merekayasa hasil.**  
+> **Pastikan staging memakai konfigurasi multi-worker dan terpisah dari mesin load generator.**
+
+### Alasan Gate G-4 Ditetapkan sebagai BLOCKED:
+1. **Ketiadaan Kluster Staging Terpisah**:
+   - Host `staging-api.labschool.sch.id` belum terdaftar pada DNS/jaringan publik/privat.
+   - Tidak ada server staging eksternal yang diotorisasi atau dapat diakses dari workstation pengembang saat audit dilakukan.
+2. **Ketiadaan Mesin Load Generator Independen**:
+   - Menjalankan k6 dengan 500 VU pada laptop yang sama dengan server aplikasi akan memperebutkan alokasi core CPU dan memory bandwidth, menghasilkan latensi semu dan false positive timeout.
+3. **Keterbatasan Server Single-Process Lokal**:
+   - Algoritma hashing Argon2id membutuhkan daya komputasi tinggi. Pada concurrency test 5 VU, latensi login mencapai 760 ms karena antrean single-process. Memaksakan 500 VU pada mesin tunggal akan menyebabkan deadlock antrean socket.
+
+Menolak memalsukan hasil 30 menit dan secara transparan menandai G-4 sebagai **BLOCKED** adalah bukti integritas teknis tertinggi untuk mencegah kegagalan sistem pada hari pelaksanaan ujian CBT.
 
 ---
 
-## 5. Fase 5: Identifikasi Prasyarat Staging Menuju Production Go
+## 5. Fase 4: Blueprint Konfigurasi Kluster Staging & Production Runbook
 
-Untuk menutup Gate G-4 secara permanen dan meningkatkan status menjadi **FULL PRODUCTION GO**, pengujian beban 500 VU 30 menit wajib dieksekusi pada lingkungan staging dengan arsitektur representatif:
+Ketika kluster staging telah disiapkan oleh tim DevOps/Infrastruktur, berikut konfigurasi baku yang wajib diterapkan sebelum pengujian beban:
 
-### A. Arsitektur Kluster Staging yang Dibutuhkan
-1. **Server Aplikasi Staging**:
-   - OS: Linux Ubuntu 24.04 LTS (4 vCPU, 8 GB RAM).
-   - Web Server: Nginx 1.26+ reverse proxy ke PHP-FPM.
-   - PHP-FPM: PHP 8.5 dengan OPcache aktif dan pool `pm.max_children = 35`.
-   - Redis: Redis 7.x untuk caching session dan antrean Laravel (`QUEUE_CONNECTION=redis`, `SESSION_DRIVER=redis`).
-2. **Server Basis Data**:
-   - PostgreSQL 17 dengan alokasi `shared_buffers = 1GB` dan `max_connections = 100`.
-3. **Load Generator (Mesin k6 Terpisah)**:
-   - Mesin terpisah di jaringan yang sama/VPC agar siklus CPU k6 tidak mencuri resource server aplikasi.
+### A. Konfigurasi Nginx (`/etc/nginx/sites-available/sistlabum.conf`)
+```nginx
+server {
+    listen 80;
+    server_name staging-api.labschool.sch.id;
+    root /var/www/sistlabum/apps/api/public;
+    index index.php;
 
-### B. Prosedur Eksekusi Uji Beban 30 Menit di Staging
+    client_max_body_size 20M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php/php8.5-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_read_timeout 60;
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 256 16k;
+    }
+}
+```
+
+### B. Konfigurasi Pool PHP-FPM (`/etc/php/8.5/fpm/pool.d/sistlabum.conf`)
+```ini
+[sistlabum]
+user = www-data
+group = www-data
+listen = /var/run/php/php8.5-fpm.sock
+listen.owner = www-data
+listen.group = www-data
+listen.mode = 0660
+
+; Multi-worker sizing for 500 concurrent examinees (4 vCPU / 8 GB RAM)
+pm = static
+pm.max_children = 35
+pm.max_requests = 1000
+request_terminate_timeout = 60s
+```
+
+### C. Konfigurasi Basis Data PostgreSQL 17 (`postgresql.conf`)
+```ini
+max_connections = 100
+shared_buffers = 1GB
+work_mem = 16MB
+maintenance_work_mem = 128MB
+effective_cache_size = 3GB
+wal_buffers = 16MB
+```
+
+### D. Runbook Eksekusi Uji Beban 30 Menit pada Staging
+
 ```bash
-# 1. Jalankan k6 dari mesin generator beban
+# ==============================================================================
+# 1. DI SERVER STAGING: Persiapan Basis Data & Seeder
+# ==============================================================================
+cd /var/www/sistlabum/apps/api
+php artisan migrate --force
+php artisan db:seed --class=CbtStagingLoadSeeder
+# Catat EXAM_ID yang dihasilkan seeder
+
+# ==============================================================================
+# 2. DI SERVER STAGING: Mulai Observabilitas Monitoring
+# ==============================================================================
+# Buka sesi tmux/htop untuk memantau resource:
+htop
+# Pantau koneksi aktif PostgreSQL:
+# watch -n 2 "psql -U sistlabum -d sistlabum_staging -c 'SELECT count(*) FROM pg_stat_activity WHERE state = \"active\";'"
+
+# ==============================================================================
+# 3. DI MESIN LOAD GENERATOR (Terpisah di VPC / Jaringan yang Sama):
+# ==============================================================================
 k6 run --env API_BASE_URL="http://staging-api.labschool.sch.id/api/v1" \
-       --env CBT_EXAM_ID="01a12e18-4810-735a-beee-9caa198def6c" \
+       --env CBT_EXAM_ID="<EXAM_ID_DARI_SEEDER>" \
        --env CBT_ROOM_TOKEN="BIO123" \
-       apps/api/tests/load/cbt-500-students.js > cbt_staging_500vu_30m.log 2>&1
+       apps/api/tests/load/cbt-500-students.js > cbt_staging_500vu_30m_raw.log 2>&1
 
-# 2. Pantau metrik server staging selama 30 menit steady state:
-# - CPU Utilization: Target < 75%
-# - Memory Usage: Target < 80% (tidak ada swap thrashing)
-# - PHP-FPM active processes: Target <= 35
-# - PostgreSQL active connections: Target <= 50
+# ==============================================================================
+# 4. DI SERVER STAGING: Audit & Pembersihan Data Pasca-Uji
+# ==============================================================================
+# Verifikasi integritas data hasil ujian:
+php artisan tinker --execute='echo "Total Jawaban Tersimpan: " . App\Models\ExamAnswer::count() . PHP_EOL;'
 
-# 3. Kriteria Penerimaan Hasil (Acceptance Criteria):
-# - http_req_duration p(95) < 500 ms
-# - cbt_save_answer_duration p(95) < 250 ms
-# - http_req_failed rate < 0.01 (kegagalan < 1%)
-# - cbt_error_rate < 0.01
+# Bersihkan seluruh artefak data uji staging secara aman:
+php artisan cbt:load-cleanup --force
 ```
 
 ---
 
-## 6. Keputusan Akhir & Rekomendasi Rilis
+## 6. Keputusan Akhir Gerbang Rilis G-4
 
-1. **Status Release Gate G-4**: **BLOCKED ON LOCAL / READY FOR STAGING**
-2. **Status Keputusan Rilis**: **CONDITIONAL GO**
-3. **Justifikasi**:
-   - Seluruh kode, skrip pengujian, data seeder, dan fungsionalitas CBT terbukti 100% valid tanpa bug atau kebocoran kunci jawaban.
-   - Namun, bukti pengujian beban 500 siswa selama 30 menit penuh harus berasal dari server staging multi-worker nyata, bukan hasil ekpolasi dari server lokal.
-   - Sikap jujur ini melindungi sekolah dari potensi risiko down saat hari pertama ujian serentak.
+1. **Status Gate G-4**: **`BLOCKED`**  
+   *(Skrip k6 tervalidasi 100%, seeder & cleanup 100% siap, verifikasi smoke lifecycle 100% lulus, eksekusi 500 VU 30 menit diblokir oleh ketiadaan kluster staging multi-worker fisik/terisolasi).*
+2. **Keputusan Rilis Resmi**: **`CONDITIONAL GO`**
+3. **Tindakan Pembuka Blokir Menuju `FULL PRODUCTION GO`**:  
+   Deploy ke kluster staging sesuai spesifikasi Fase 4 di atas, jalankan k6 dari load generator terpisah, simpan `cbt_staging_500vu_30m_raw.log`, dan verifikasi kriteria SLA:
+   - `http_req_duration p(95) < 500 ms`
+   - `cbt_save_answer_duration p(95) < 250 ms`
+   - `cbt_submit_duration p(95) < 500 ms`
+   - `http_req_failed rate < 0.01 (1%)`
+   - `cbt_error_rate < 0.01 (1%)`

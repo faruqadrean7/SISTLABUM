@@ -6,6 +6,7 @@ import { Counter, Rate, Trend } from 'k6/metrics';
 export const cbtLoginDuration = new Trend('cbt_login_duration', true);
 export const cbtSaveAnswerDuration = new Trend('cbt_save_answer_duration', true);
 export const cbtHeartbeatDuration = new Trend('cbt_heartbeat_duration', true);
+export const cbtSubmitDuration = new Trend('cbt_submit_duration', true);
 export const cbtErrorRate = new Rate('cbt_error_rate');
 export const cbtSuccessfulSubmissions = new Counter('cbt_successful_submissions');
 
@@ -35,19 +36,22 @@ export const options = {
     cbt_error_rate: ['rate<0.01'],
     // 4. Latensi penyimpanan autosave jawaban p95 < 250ms
     cbt_save_answer_duration: ['p(95)<250'],
+    // 5. Latensi penyelesaian submit ujian p95 < 500ms
+    cbt_submit_duration: ['p(95)<500'],
   },
 };
 
 const BASE_URL = __ENV.API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
-const EXAM_ID = __ENV.CBT_EXAM_ID || '01a12e18-4810-735a-beee-9caa198def6c';
+const EXAM_ID = __ENV.CBT_EXAM_ID || '01a12e30-d622-70b9-94dd-2b34c1dc023b';
 const ROOM_TOKEN = __ENV.CBT_ROOM_TOKEN || 'BIO123';
 
 export default function () {
   const vuId = __VU;
   const iteration = __ITER;
   
-  // 1. Autentikasi Siswa Sintetis (Berdasarkan pool akun siswa)
-  const studentEmail = `student${(vuId % 500) + 1}@labschool.sch.id`;
+  // 1. Autentikasi Siswa Sintetis (Berdasarkan pool 500 akun siswa)
+  const studentIndex = ((vuId - 1) % 500) + 1;
+  const studentEmail = `student${studentIndex}@labschool.sch.id`;
   const loginPayload = JSON.stringify({
     identifier: studentEmail,
     password: 'Password123!',
@@ -97,7 +101,14 @@ export default function () {
   let sessionId = null;
   if (startRes.status === 200) {
     const sessionData = startRes.json();
-    sessionId = sessionData && sessionData.data ? sessionData.data.id : null;
+    sessionId = sessionData && sessionData.data ? (sessionData.data.session_id || sessionData.data.id) : null;
+  } else if (startRes.status === 422) {
+    // Penanganan jika ujian telah diselesaikan pada iterasi sebelumnya
+    const errData = startRes.json();
+    if (errData && errData.message && errData.message.includes('selesai')) {
+      sleep(5);
+      return;
+    }
   }
 
   // 3. Ambil Butir Soal Ujian (Load Exam Questions)
@@ -109,6 +120,9 @@ export default function () {
   let questionIds = [];
   if (questionsRes.status === 200) {
     const qData = questionsRes.json();
+    if (!sessionId && qData && qData.data && qData.data.session_id) {
+      sessionId = qData.data.session_id;
+    }
     const qList = (qData && qData.data && Array.isArray(qData.data.questions))
       ? qData.data.questions
       : ((qData && Array.isArray(qData.data)) ? qData.data : []);
@@ -116,7 +130,7 @@ export default function () {
   }
 
   // 4. Simulasi Siklus Pengerjaan Soal (Answering & Heartbeat Loop)
-  // Siswa menjawab 3 - 5 butir soal dengan jeda berpikir realistis (3 - 8 detik)
+  // Siswa menjawab butir soal dengan jeda berpikir realistis (2 - 5 detik)
   const questionsToAnswer = questionIds.length > 0 ? questionIds.slice(0, 5) : [
     '00000000-0000-0000-0000-000000000010',
     '00000000-0000-0000-0000-000000000011',
@@ -155,6 +169,17 @@ export default function () {
     if (saveRes.status === 200 || saveRes.status === 201) {
       cbtSuccessfulSubmissions.add(1);
     }
+  }
+
+  // 5. Submit Sesi Ujian (Finish Session) jika diaktifkan via environment variable CBT_AUTO_SUBMIT
+  if (__ENV.CBT_AUTO_SUBMIT === 'true' && sessionId) {
+    const finishRes = http.post(`${BASE_URL}/exams/${EXAM_ID}/finish-session`, JSON.stringify({}), { headers: authHeaders });
+    cbtSubmitDuration.add(finishRes.timings.duration);
+
+    check(finishRes, {
+      'finish session non-500': (r) => r.status !== 500,
+      'finish session valid status': (r) => r.status === 200 || r.status === 422,
+    });
   }
 
   // Jeda akhir sebelum iterasi berikutnya
