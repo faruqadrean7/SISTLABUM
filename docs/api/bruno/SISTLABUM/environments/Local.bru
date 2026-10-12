@@ -1,9 +1,9 @@
 vars {
   baseUrl: http://127.0.0.1:8000/api/v1
-  adminToken: 21|Ib7bn4Dhs0x4NwYoSzNW6kv54S7QBUvYC2IJd5AVa8e94458
-  studentToken: 23|RWwybBVXRx6dNkRzFgIj5hXuuqBtRHYHxc4oSH1L767446cc
-  parentToken: 24|awmhT4wTvHY40GrKGrjT1rBxgVKsJSOQqYdWYZLYd1b7d394
-  logoutToken: 26|ohRTmCzyQaWqCdIJrXVCNGOtPQ5HLTbSoUuufopX50003621
+  adminToken: {{process.env.BRUNO_ADMIN_TOKEN}}
+  studentToken: {{process.env.BRUNO_STUDENT_TOKEN}}
+  parentToken: {{process.env.BRUNO_PARENT_TOKEN}}
+  logoutToken: {{process.env.BRUNO_LOGOUT_TOKEN}}
   testExamId: 01a12dfd-c9fa-739c-be0d-0390f91ade86
   testQuestionId: 01a12e02-ef90-72fa-9fdd-e59807a40e46
   testFacilityId: 01a12e02-ef93-71c6-b67a-59a0e646b878
