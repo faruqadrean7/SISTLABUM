@@ -1,0 +1,29 @@
+meta {
+  name: P P D B Account - Resend Otp
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/ppdb/resend-otp
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

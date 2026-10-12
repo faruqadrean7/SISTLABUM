@@ -1,0 +1,25 @@
+meta {
+  name: Exam Session - Anomalies
+  type: http
+  seq: 40
+}
+
+get {
+  url: {{baseUrl}}/exams/{id}/anomalies
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

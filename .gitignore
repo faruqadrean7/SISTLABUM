@@ -1,0 +1,13 @@
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+node_modules/
+vendor/
+.phpunit.result.cache
+.phpunit.cache/
+/apps/api/storage/*.key
+/apps/api/storage/logs/*.log
+/apps/api/public/storage
+/apps/api/database/database.sqlite

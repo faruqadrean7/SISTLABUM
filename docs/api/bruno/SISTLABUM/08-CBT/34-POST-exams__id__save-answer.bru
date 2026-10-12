@@ -1,0 +1,34 @@
+meta {
+  name: Exam Session - Save Answer
+  type: http
+  seq: 34
+}
+
+post {
+  url: {{baseUrl}}/exams/{id}/save-answer
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "question_id": "{{testQuestionId}}",
+    "answer": "A",
+    "is_flagged": false
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

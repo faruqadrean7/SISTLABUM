@@ -1,0 +1,33 @@
+meta {
+  name: Student - Import
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/students/import
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

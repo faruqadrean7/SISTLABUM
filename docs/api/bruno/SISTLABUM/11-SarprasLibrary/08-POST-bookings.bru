@@ -1,0 +1,35 @@
+meta {
+  name: Booking - Store
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/bookings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "facility_id": "{{testFacilityId}}",
+    "start_at": "2026-10-15 08:00:00",
+    "end_at": "2026-10-15 11:00:00",
+    "purpose": "Kegiatan Rapat Organisasi"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

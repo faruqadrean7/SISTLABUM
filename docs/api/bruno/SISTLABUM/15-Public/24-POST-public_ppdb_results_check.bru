@@ -1,0 +1,29 @@
+meta {
+  name: P P D B Result - Check
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/public/ppdb/results/check
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

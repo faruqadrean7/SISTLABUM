@@ -1,0 +1,25 @@
+meta {
+  name: Character Note - Index
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/character-notes
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

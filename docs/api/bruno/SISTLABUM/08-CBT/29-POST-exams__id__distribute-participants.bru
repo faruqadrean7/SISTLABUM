@@ -1,0 +1,33 @@
+meta {
+  name: Exam Participant Card - Distribute
+  type: http
+  seq: 29
+}
+
+post {
+  url: {{baseUrl}}/exams/{id}/distribute-participants
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

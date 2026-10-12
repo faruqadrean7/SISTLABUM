@@ -1,0 +1,32 @@
+meta {
+  name: Exam Session - Start
+  type: http
+  seq: 32
+}
+
+post {
+  url: {{baseUrl}}/exams/{id}/start-session
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "token": "TOKEN123"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

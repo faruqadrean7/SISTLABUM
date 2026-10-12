@@ -1,0 +1,25 @@
+meta {
+  name: P P D B Track - Show
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/ppdb/tracks/{id}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

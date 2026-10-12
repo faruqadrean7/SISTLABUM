@@ -1,0 +1,25 @@
+meta {
+  name: Leave Request - Index
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/leave-requests
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

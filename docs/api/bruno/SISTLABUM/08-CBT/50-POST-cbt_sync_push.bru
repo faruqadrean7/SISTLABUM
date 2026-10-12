@@ -1,0 +1,31 @@
+meta {
+  name: Exam Sync - Push
+  type: http
+  seq: 50
+}
+
+post {
+  url: {{baseUrl}}/cbt/sync/push
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "exam_id": "{{testExamId}}",
+    "node_id": "NODE-01",
+    "sync_token": "NODE_TOKEN",
+    "sessions": []
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

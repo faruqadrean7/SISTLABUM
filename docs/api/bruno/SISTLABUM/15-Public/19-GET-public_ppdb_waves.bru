@@ -1,0 +1,21 @@
+meta {
+  name: P P D B Wave - Public Index
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrl}}/public/ppdb/waves
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

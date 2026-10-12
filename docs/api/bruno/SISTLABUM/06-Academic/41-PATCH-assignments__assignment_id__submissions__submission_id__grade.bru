@@ -1,0 +1,33 @@
+meta {
+  name: Assignment - Grade
+  type: http
+  seq: 41
+}
+
+patch {
+  url: {{baseUrl}}/assignments/{assignment_id}/submissions/{submission_id}/grade
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

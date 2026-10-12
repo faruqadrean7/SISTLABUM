@@ -1,0 +1,34 @@
+meta {
+  name: Exam Session - Heartbeat
+  type: http
+  seq: 39
+}
+
+post {
+  url: {{baseUrl}}/exam-sessions/{sessionId}/heartbeat
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "device_fingerprint": "fp_sample",
+    "screen_state": "fullscreen",
+    "active_tab": true
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

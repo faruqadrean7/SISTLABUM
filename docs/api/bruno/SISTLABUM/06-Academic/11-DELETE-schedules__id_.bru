@@ -1,0 +1,25 @@
+meta {
+  name: Schedule - Destroy
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/schedules/{id}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

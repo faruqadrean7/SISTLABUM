@@ -1,0 +1,34 @@
+meta {
+  name: Exam Session - Manage
+  type: http
+  seq: 37
+}
+
+post {
+  url: {{baseUrl}}/exam-sessions/{sessionId}/manage
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "action": "unlock",
+    "extra_minutes": 15,
+    "reason": "Persetujuan proktor"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

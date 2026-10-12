@@ -1,0 +1,21 @@
+meta {
+  name: Post - Public Show
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/public/posts/{slug}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

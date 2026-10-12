@@ -1,0 +1,29 @@
+meta {
+  name: P P D B Account - Check Nik
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/ppdb/check-nik
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

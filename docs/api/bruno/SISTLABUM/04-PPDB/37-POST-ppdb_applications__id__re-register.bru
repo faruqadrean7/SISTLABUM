@@ -1,0 +1,36 @@
+meta {
+  name: P P D B Enrollment - Re Register
+  type: http
+  seq: 37
+}
+
+post {
+  url: {{baseUrl}}/ppdb/applications/{id}/re-register
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "wave_id": "{{testWaveId}}",
+    "track_id": "{{testTrackId}}",
+    "nik": "3578012345670001",
+    "full_name": "Calon Siswa Baru",
+    "birth_date": "2010-05-15"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Student Point - Summary
+  type: http
+  seq: 80
+}
+
+get {
+  url: {{baseUrl}}/students/{id}/points/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

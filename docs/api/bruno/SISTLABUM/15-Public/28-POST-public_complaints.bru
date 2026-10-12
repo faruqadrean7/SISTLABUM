@@ -1,0 +1,29 @@
+meta {
+  name: Complaint - Submit
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/public/complaints
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

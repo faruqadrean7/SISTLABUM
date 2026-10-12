@@ -1,0 +1,25 @@
+meta {
+  name: Guardian - Show
+  type: http
+  seq: 36
+}
+
+get {
+  url: {{baseUrl}}/guardians/{id}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{parentToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

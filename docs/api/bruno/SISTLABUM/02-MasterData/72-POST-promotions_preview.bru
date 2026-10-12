@@ -1,0 +1,33 @@
+meta {
+  name: Promotion - Preview
+  type: http
+  seq: 72
+}
+
+post {
+  url: {{baseUrl}}/promotions/preview
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

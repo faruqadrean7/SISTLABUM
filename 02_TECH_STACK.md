@@ -1,0 +1,154 @@
+# 02. Tech Stack & Keputusan Teknis
+
+Keputusan di bawah **mengikat** untuk AI agent dan developer. Mengubahnya harus lewat ADR (bagian 7).
+
+## 1. Ringkasan Stack
+| Lapisan | Pilihan | Alasan |
+|---|---|---|
+| Backend API | **NestJS (TypeScript)** | Modular, cocok domain besar, validasi & OpenAPI bawaan |
+| Database | **PostgreSQL 16** | Relasional kuat, JSONB, full-text search |
+| ORM | **Prisma** | Migrasi jelas, tipe aman |
+| Cache/Queue | **Redis 7 + BullMQ** | Sesi CBT, antrean PDF/notifikasi |
+| Realtime | **WebSocket (Socket.IO)** untuk monitor CBT, fallback SSE | Live monitor |
+| Storage | **S3-compatible (MinIO/Cloudflare R2)** | Berkas, materi, foto |
+| Website publik + PPDB | **Next.js 14+ (App Router, SSR/ISR)** | SEO, cepat |
+| Sistem Admin | **Next.js (App Router, CSR dominan)** atau Vite + React | Dashboard kaya interaksi |
+| UI Web | **Tailwind CSS + shadcn/ui** | Konsisten, cepat |
+| State/data web | **TanStack Query + Zod + React Hook Form** | Cache, validasi |
+| Mobile | **Flutter 3.x (Dart)** | Satu kode Android/iOS |
+| State mobile | **Riverpod** | Testable |
+| HTTP mobile | **Dio** + interceptor token | Refresh token otomatis |
+| Push | **Firebase Cloud Messaging** | Standar |
+| WhatsApp/Email | Provider via **adapter interface** | Mudah ganti vendor |
+| PDF | **Playwright/Puppeteer (HTML→PDF)** di worker | Layout rapor fleksibel |
+| QR | `qrcode` lib; verifikasi via URL bertanda tangan | Tanda tangan e-progress report |
+| Excel | `exceljs` | Import/export |
+| Testing | Jest + Supertest (BE), Vitest + Playwright (Web), flutter_test + integration_test (Mobile) | |
+| CI/CD | **GitHub Actions** | Lint, test, build, deploy |
+| Kontainer | **Docker + docker-compose** (dev), Docker/K8s atau VPS (prod) | |
+| Reverse proxy | **Nginx / Caddy** + HTTPS (Let's Encrypt) | |
+| Observability | **Pino** log, **Sentry** error, **Prometheus/Grafana** (P1), Uptime check | |
+
+> Alternatif backend: Laravel 11 + MySQL/PostgreSQL bila tim lebih mahir PHP. Jika dipilih, semua konvensi API/ID/dokumen tetap berlaku.
+
+## 2. Struktur Repository
+Dua pendekatan; pilih **A** (rekomendasi).
+
+### A. Monorepo (web + admin + backend) + repo mobile terpisah
+```
+school-portal/                  # monorepo (pnpm + turborepo)
+├─ apps/
+│  ├─ api/                      # NestJS
+│  ├─ web/                      # Next.js website + PPDB
+│  └─ admin/                    # Sistem admin
+├─ packages/
+│  ├─ api-client/               # TS client hasil generate OpenAPI
+│  ├─ ui/                       # komponen UI bersama (web+admin)
+│  ├─ config/                   # eslint, tsconfig, tailwind preset
+│  └─ shared/                   # zod schema, enum, konstanta
+├─ docs/                        # paket PRD ini
+├─ infra/                       # docker, nginx, CI, terraform (opsional)
+└─ AGENTS.md                    # salin dari 11_AI_AGENT_RULES.md
+
+school-portal-mobile/           # Flutter, repo terpisah
+```
+
+### B. Repo terpisah penuh (api, web, admin, mobile)
+Dipakai bila tim berbeda dan rilis tidak boleh saling terkait. Kontrak tetap lewat OpenAPI.
+
+## 3. Struktur Backend (NestJS)
+```
+apps/api/src/
+├─ main.ts
+├─ app.module.ts
+├─ common/                # guards, interceptors, filters, decorators, pipes, utils
+├─ config/                # env schema (zod), konfigurasi
+├─ infra/                 # prisma, redis, storage, queue, mailer, whatsapp, fcm
+└─ modules/
+   ├─ auth/ users/ roles/ audit/
+   ├─ master/ cms/ ppdb/ guest/
+   ├─ academic/ cbt/ student-affairs/ counseling/
+   ├─ facility/ library/ public-relations/
+   ├─ notification/ report/ file/
+   └─ <modul>/
+       ├─ <modul>.controller.ts
+       ├─ <modul>.service.ts
+       ├─ <modul>.repository.ts
+       ├─ dto/            # request/response + validasi
+       ├─ policies/       # aturan akses (permission)
+       └─ tests/
+```
+Aturan: controller tipis, logika di service, akses data di repository, tidak ada query langsung di controller.
+
+## 4. Struktur Frontend (web & admin)
+```
+src/
+├─ app/                   # route (App Router)
+├─ components/            # komponen spesifik app
+├─ features/<modul>/      # komponen, hooks, api, schema per modul
+├─ lib/                   # api client, auth, util
+└─ styles/
+```
+
+## 5. Struktur Mobile (Flutter)
+```
+lib/
+├─ main.dart
+├─ core/                  # config, theme, router, network, storage, errors
+├─ shared/                # widget umum, util
+└─ features/
+   ├─ auth/ home/ notification/
+   ├─ guardian/ teacher/ student/
+   ├─ cbt/ ...
+   └─ <fitur>/
+       ├─ data/           # model, repository, datasource
+       ├─ domain/         # entity, usecase (opsional)
+       └─ presentation/   # screen, widget, controller (Riverpod)
+```
+
+## 6. Environment & Konfigurasi
+| Env | Fungsi | Data |
+|---|---|---|
+| `local` | Developer | Seed dummy |
+| `staging` | UAT sekolah | Data uji, bukan data asli siswa |
+| `production` | Live | Data asli, backup aktif |
+
+Variabel env wajib (contoh, **jangan commit nilai asli**):
+```
+NODE_ENV, PORT, DATABASE_URL, REDIS_URL,
+JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, JWT_ACCESS_TTL=15m, JWT_REFRESH_TTL=14d,
+S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY,
+FCM_SERVICE_ACCOUNT, WA_PROVIDER, WA_API_KEY, SMTP_URL,
+APP_PUBLIC_URL, ADMIN_URL, CORS_ORIGINS, SENTRY_DSN
+```
+Sediakan `.env.example` yang lengkap, tanpa rahasia.
+
+## 7. Standar Kode
+| Aspek | Aturan |
+|---|---|
+| Bahasa kode | Identifier & komentar teknis Bahasa Inggris; teks UI Bahasa Indonesia |
+| Penamaan DB | `snake_case`, tabel jamak (`students`) |
+| Penamaan API | `kebab-case` path, `camelCase` JSON |
+| Format | Prettier + ESLint (TS), `dart format` + `flutter_lints` |
+| Commit | Conventional Commits: `feat(be-ppdb-03): ...` |
+| Branch | `main` (rilis), `develop`, `feat/<ID>-<slug>`, `fix/<slug>` |
+| PR | Wajib review, CI hijau, mencantumkan ID fitur |
+| Versi API | `/api/v1`, perubahan breaking → `/v2` |
+| Migrasi DB | Hanya maju lewat Prisma migrate; jangan edit migrasi yang sudah dirilis |
+| Waktu | Simpan UTC, tampilkan WIB/zona sekolah |
+| ID | UUID v7 (atau ULID) untuk PK entitas utama |
+| Uang | Integer (satuan terkecil), bukan float |
+
+## 8. ADR (Architecture Decision Record)
+Setiap keputusan teknis penting dicatat di `docs/adr/NNNN-judul.md` dengan format: Konteks → Keputusan → Konsekuensi → Status.
+
+| ADR | Keputusan | Status |
+|---|---|---|
+| 0001 | Backend NestJS + PostgreSQL | Diterima |
+| 0002 | API REST + OpenAPI sebagai kontrak | Diterima |
+| 0003 | Monorepo web/admin/api, mobile terpisah | Diterima |
+| 0004 | CBT memakai Redis untuk jawaban sementara | Diterima |
+| 0005 | PDF dibuat di worker (queue) | Diterima |
+
+## Changelog
+- 1.0: Draf awal.

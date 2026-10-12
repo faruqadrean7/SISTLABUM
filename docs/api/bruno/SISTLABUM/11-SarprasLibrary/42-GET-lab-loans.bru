@@ -1,0 +1,25 @@
+meta {
+  name: Lab - Index Loans
+  type: http
+  seq: 42
+}
+
+get {
+  url: {{baseUrl}}/lab-loans
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

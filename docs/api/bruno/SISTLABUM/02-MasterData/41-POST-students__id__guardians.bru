@@ -1,0 +1,33 @@
+meta {
+  name: Guardian - Attach Student Guardian
+  type: http
+  seq: 41
+}
+
+post {
+  url: {{baseUrl}}/students/{id}/guardians
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{parentToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Grade Component - Index
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/grade-components
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

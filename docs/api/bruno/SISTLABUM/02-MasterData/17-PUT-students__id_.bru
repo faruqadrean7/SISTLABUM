@@ -1,0 +1,33 @@
+meta {
+  name: Student - Update
+  type: http
+  seq: 17
+}
+
+put {
+  url: {{baseUrl}}/students/{id}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

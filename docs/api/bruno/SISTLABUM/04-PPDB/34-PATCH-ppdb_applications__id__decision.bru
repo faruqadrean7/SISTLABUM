@@ -1,0 +1,33 @@
+meta {
+  name: P P D B Selection - Override Decision
+  type: http
+  seq: 34
+}
+
+patch {
+  url: {{baseUrl}}/ppdb/applications/{id}/decision
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "disetujui",
+    "decision_notes": "Disetujui untuk peminjaman"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

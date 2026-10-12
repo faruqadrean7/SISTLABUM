@@ -1,0 +1,29 @@
+meta {
+  name: Guest - Upload Signature
+  type: http
+  seq: 27
+}
+
+post {
+  url: {{baseUrl}}/public/guests/{id}/signature
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "active",
+    "notes": "Sample payload data"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 201, 204]).to.include(res.getStatus());
+  });
+}

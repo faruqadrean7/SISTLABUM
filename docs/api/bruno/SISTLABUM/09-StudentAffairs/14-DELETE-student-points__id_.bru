@@ -1,0 +1,25 @@
+meta {
+  name: Student Point - Destroy
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{baseUrl}}/student-points/{id}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

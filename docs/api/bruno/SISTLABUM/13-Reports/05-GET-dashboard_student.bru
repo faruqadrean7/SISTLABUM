@@ -1,0 +1,25 @@
+meta {
+  name: Dashboard - Student
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/dashboard/student
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

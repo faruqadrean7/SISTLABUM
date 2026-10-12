@@ -1,0 +1,25 @@
+meta {
+  name: Student - Show
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/students/{id}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

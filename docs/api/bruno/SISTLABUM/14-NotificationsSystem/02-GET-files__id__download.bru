@@ -1,0 +1,21 @@
+meta {
+  name: File - Download Signed
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/files/{id}/download
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

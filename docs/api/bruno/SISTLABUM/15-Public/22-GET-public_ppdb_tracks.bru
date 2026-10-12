@@ -1,0 +1,21 @@
+meta {
+  name: P P D B Track - Public Index
+  type: http
+  seq: 22
+}
+
+get {
+  url: {{baseUrl}}/public/ppdb/tracks
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

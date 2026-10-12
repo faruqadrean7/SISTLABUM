@@ -1,0 +1,25 @@
+meta {
+  name: Competition - Index Entries
+  type: http
+  seq: 33
+}
+
+get {
+  url: {{baseUrl}}/competitions/{id}/entries
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}

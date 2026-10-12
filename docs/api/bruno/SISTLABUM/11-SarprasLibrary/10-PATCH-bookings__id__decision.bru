@@ -1,0 +1,33 @@
+meta {
+  name: Booking - Decision
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/bookings/{id}/decision
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "disetujui",
+    "decision_notes": "Disetujui untuk peminjaman"
+  }
+}
+
+tests {
+  test("status code is successful", function() {
+    expect([200, 204]).to.include(res.getStatus());
+  });
+}
