@@ -15,6 +15,7 @@ use App\Models\Question;
 use App\Models\Student;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -75,20 +76,26 @@ class ExamSessionService
         $now = Carbon::now();
         $durationMinutes = (int) ($exam->duration_min ?? 90);
 
-        // Cari atau buat sesi ujian siswa
-        $session = ExamSession::firstOrCreate(
-            [
-                'exam_id' => $exam->id,
-                'student_id' => $student->id,
-            ],
-            [
-                'status' => 'mengerjakan',
-                'started_at' => $now,
-                'deadline_at' => $now->copy()->addMinutes($durationMinutes),
-                'seed' => Str::random(16),
-                'extra_minutes' => 0,
-            ]
-        );
+        // Cari atau buat sesi ujian siswa secara aman terhadap konkurensi
+        try {
+            $session = ExamSession::firstOrCreate(
+                [
+                    'exam_id' => $exam->id,
+                    'student_id' => $student->id,
+                ],
+                [
+                    'status' => 'mengerjakan',
+                    'started_at' => $now,
+                    'deadline_at' => $now->copy()->addMinutes($durationMinutes),
+                    'seed' => Str::random(16),
+                    'extra_minutes' => 0,
+                ]
+            );
+        } catch (UniqueConstraintViolationException) {
+            $session = ExamSession::where('exam_id', $exam->id)
+                ->where('student_id', $student->id)
+                ->firstOrFail();
+        }
 
         // Jika sesi sudah pernah dibuat tapi statusnya 'belum'
         if ($session->status === 'belum') {
@@ -272,17 +279,30 @@ class ExamSessionService
 
         $now = Carbon::now();
 
-        $answerRecord = ExamAnswer::updateOrCreate(
-            [
-                'session_id' => $session->id,
-                'question_id' => $questionId,
-            ],
-            [
+        try {
+            $answerRecord = ExamAnswer::updateOrCreate(
+                [
+                    'session_id' => $session->id,
+                    'question_id' => $questionId,
+                ],
+                [
+                    'answer' => $answerData,
+                    'is_flagged' => $isFlagged,
+                    'answered_at' => $now,
+                ]
+            );
+        } catch (UniqueConstraintViolationException) {
+            // Race condition teratasi: baris telah terbuat secara konkuren, lakukan update
+            $answerRecord = ExamAnswer::where('session_id', $session->id)
+                ->where('question_id', $questionId)
+                ->firstOrFail();
+
+            $answerRecord->update([
                 'answer' => $answerData,
                 'is_flagged' => $isFlagged,
                 'answered_at' => $now,
-            ]
-        );
+            ]);
+        }
 
         return [
             'question_id' => $answerRecord->question_id,
@@ -347,49 +367,52 @@ class ExamSessionService
         $user = $request->user();
         $student = $this->resolveStudentForUser($user);
 
-        $session = ExamSession::where('exam_id', $examId)
-            ->where('student_id', $student->id)
-            ->firstOrFail();
+        return DB::transaction(function () use ($examId, $student, $user, $request) {
+            $session = ExamSession::where('exam_id', $examId)
+                ->where('student_id', $student->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($session->status === 'selesai') {
+            if ($session->status === 'selesai') {
+                return [
+                    'session_id' => $session->id,
+                    'status' => 'selesai',
+                    'message' => 'Ujian sudah diselesaikan sebelumnya.',
+                    'submitted_at' => $session->submitted_at?->toIso8601String(),
+                ];
+            }
+
+            if ($session->status === 'terkunci') {
+                throw new HttpException(403, 'Sesi sedang terkunci: '.$session->locked_reason.'. Hubungi pengawas untuk membuka sesi.');
+            }
+
+            $now = Carbon::now();
+            $session->status = 'selesai';
+            $session->submitted_at = $now;
+            $session->save();
+
+            $this->logAudit(
+                $user->id,
+                'exam.finish_session',
+                'exam_sessions',
+                $session->id,
+                ['status' => 'mengerjakan'],
+                ['status' => 'selesai', 'submitted_at' => $now->toIso8601String()],
+                $request
+            );
+
+            $totalAnswers = ExamAnswer::where('session_id', $session->id)
+                ->whereNotNull('answer')
+                ->count();
+
             return [
                 'session_id' => $session->id,
                 'status' => 'selesai',
-                'message' => 'Ujian sudah diselesaikan sebelumnya.',
-                'submitted_at' => $session->submitted_at?->toIso8601String(),
+                'submitted_at' => $now->toIso8601String(),
+                'answered_count' => $totalAnswers,
+                'message' => 'Ujian berhasil diselesaikan.',
             ];
-        }
-
-        if ($session->status === 'terkunci') {
-            throw new HttpException(403, 'Sesi sedang terkunci: '.$session->locked_reason.'. Hubungi pengawas untuk membuka sesi.');
-        }
-
-        $now = Carbon::now();
-        $session->status = 'selesai';
-        $session->submitted_at = $now;
-        $session->save();
-
-        $this->logAudit(
-            $user->id,
-            'exam.finish_session',
-            'exam_sessions',
-            $session->id,
-            ['status' => 'mengerjakan'],
-            ['status' => 'selesai', 'submitted_at' => $now->toIso8601String()],
-            $request
-        );
-
-        $totalAnswers = ExamAnswer::where('session_id', $session->id)
-            ->whereNotNull('answer')
-            ->count();
-
-        return [
-            'session_id' => $session->id,
-            'status' => 'selesai',
-            'submitted_at' => $now->toIso8601String(),
-            'answered_count' => $totalAnswers,
-            'message' => 'Ujian berhasil diselesaikan.',
-        ];
+        });
     }
 
     /**

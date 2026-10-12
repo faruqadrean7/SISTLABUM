@@ -136,4 +136,69 @@ class CbtLoadCleanupTest extends TestCase
             'title' => 'Ujian Akhir Semester Kimia Resmi',
         ]);
     }
+
+    public function test_cleanup_preserves_non_test_students_with_similar_names_or_emails(): void
+    {
+        $roleStudent = Role::firstOrCreate(['code' => 'student'], ['name' => 'Siswa', 'is_system' => true]);
+
+        // Akun non-pengujian dengan pola email mirip
+        $similarUser1 = User::create([
+            'username' => 'student_pres',
+            'email' => 'student.president@labschool.sch.id',
+            'password_hash' => Hash::make('Secret123!'),
+            'status' => 'active',
+        ]);
+        $similarUser1->roles()->attach($roleStudent->id);
+
+        $similarStudent1 = Student::create([
+            'user_id' => $similarUser1->id,
+            'nisn' => '1111222233',
+            'nis' => '9901',
+            'nik_enc' => '3578011111222233',
+            'full_name' => 'Siswa Presiden OSIS Resmi',
+            'gender' => 'L',
+            'birth_place' => 'Malang',
+            'birth_date' => '2008-01-01',
+            'status' => 'aktif',
+            'entry_date' => '2024-07-15',
+        ]);
+
+        $similarUser2 = User::create([
+            'username' => 'student1000',
+            'email' => 'student1000@labschool.sch.id',
+            'password_hash' => Hash::make('Secret123!'),
+            'status' => 'active',
+        ]);
+        $similarUser2->roles()->attach($roleStudent->id);
+
+        $similarStudent2 = Student::create([
+            'user_id' => $similarUser2->id,
+            'nisn' => '4444555566',
+            'nis' => '9902',
+            'nik_enc' => '3578014444555566',
+            'full_name' => 'Siswa Nomor Seribu Resmi',
+            'gender' => 'P',
+            'birth_place' => 'Malang',
+            'birth_date' => '2008-02-02',
+            'status' => 'aktif',
+            'entry_date' => '2024-07-15',
+        ]);
+
+        // Seed staging load test data
+        $this->seed(CbtStagingLoadSeeder::class);
+
+        // Eksekusi pembersihan
+        $this->artisan('cbt:load-cleanup', ['--force' => true])
+            ->assertSuccessful();
+
+        // Pastikan akun siswa resmi yang mirip TIDAK terhapus
+        $this->assertDatabaseHas('users', ['id' => $similarUser1->id, 'email' => 'student.president@labschool.sch.id']);
+        $this->assertDatabaseHas('students', ['id' => $similarStudent1->id, 'full_name' => 'Siswa Presiden OSIS Resmi']);
+        $this->assertDatabaseHas('users', ['id' => $similarUser2->id, 'email' => 'student1000@labschool.sch.id']);
+        $this->assertDatabaseHas('students', ['id' => $similarStudent2->id, 'full_name' => 'Siswa Nomor Seribu Resmi']);
+
+        // Pastikan data load test tetap terhapus
+        $this->assertDatabaseMissing('users', ['username' => 'student1']);
+        $this->assertDatabaseMissing('students', ['full_name' => 'Siswa Uji Beban 1']);
+    }
 }

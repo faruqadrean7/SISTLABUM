@@ -40,8 +40,17 @@ export const options = {
     cbt_save_answer_duration: ['p(95)<250'],
     // 5. Latensi penyelesaian submit ujian p95 < 500ms
     cbt_submit_duration: ['p(95)<500'],
+    // 6. Validasi bahwa autosave benar-benar tereksekusi dan tersimpan (gagal jika 0 jawaban tersimpan)
+    cbt_successful_answers: ['count>0'],
+    // 7. Validasi kelulusan seluruh assertion checks bisnis > 99%
+    checks: ['rate>0.99'],
   },
 };
+
+// Jika mode auto-submit aktif, wajibkan minimal 1 submit sukses terekam
+if (__ENV.CBT_AUTO_SUBMIT === 'true') {
+  options.thresholds['cbt_successful_finishes'] = ['count>0'];
+}
 
 const BASE_URL = __ENV.API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
 const EXAM_ID = __ENV.CBT_EXAM_ID || '01a12e30-d622-70b9-94dd-2b34c1dc023b';
