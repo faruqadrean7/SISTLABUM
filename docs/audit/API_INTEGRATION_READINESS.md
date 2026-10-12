@@ -14,12 +14,12 @@
 | Autentikasi & Token | ✅ Siap | Sanctum, access token 15m, refresh token 14h, reuse detection |
 | RBAC & Otorisasi | ✅ Siap | Permission guard, deny-by-default, scoping per role |
 | IDOR Protection | ✅ Diperkuat | Student/guardian/teacher/admin scoping tersedia |
-| Kontrak API | ⚠️ Partial | 2 format error response (400 BaseApiRequest vs 422 FormRequest) |
-| Integration Tests | ✅ Selesai | 6 flow multi-role end-to-end, semua lulus |
+| Kontrak Error API | ✅ Terunifikasi | Canonical `{ error: { code, message, details, requestId } }` + root compatibility |
+| Integration Tests | ✅ Selesai | 6 flow E2E + 8 error contract tests, semua lulus |
 | Gate G-4 (Load Test) | 🔴 BLOCKED | Membutuhkan staging 500 VU 30 menit terpisah |
 
 **Keputusan:** Backend **CONDITIONAL GO** untuk integrasi web admin dan mobile.  
-Integrasi dapat dimulai pada Gate G-1 sampai G-3. Gate G-4 tetap BLOCKED hingga load drill selesai.
+Integrasi Phase 1 (Auth & Profile) siap dimulai. Gate G-4 tetap BLOCKED hingga load drill selesai di staging.
 
 ---
 
@@ -74,7 +74,7 @@ Integrasi dapat dimulai pada Gate G-1 sampai G-3. Gate G-4 tetap BLOCKED hingga 
 
 > **⚠️ Catatan untuk tim Mobile Flutter:** Token TIDAK boleh disimpan di `SharedPreferences` biasa. Gunakan `flutter_secure_storage`. Access token disimpan di memori (tidak persisten), refresh token saja yang disimpan aman.
 
-> **⚠️ Catatan untuk tim Web Admin (Next.js):** Token TIDAK boleh disimpan di `localStorage`. Gunakan `httpOnly cookie` via `/auth/login` response (jika future) atau `sessionStorage`. Jangan simpan refresh token di browser storage publik.
+> **⚠️ Catatan untuk tim Web Admin (Next.js):** Token TIDAK boleh disimpan di `localStorage`. Gunakan `httpOnly cookie` via `/auth/login` response atau in-memory state management. Jangan simpan refresh token di browser storage publik.
 
 ### 3.2 RBAC & Hak Akses per Role
 
@@ -103,7 +103,7 @@ Integrasi dapat dimulai pada Gate G-1 sampai G-3. Gate G-4 tetap BLOCKED hingga 
 
 ---
 
-## 4. Kontrak API — Standar & Ketidakkonsistenan
+## 4. Kontrak API Terunifikasi (Canonical Error Contract)
 
 ### 4.1 Format Response Standar
 
@@ -117,213 +117,127 @@ Integrasi dapat dimulai pada Gate G-1 sampai G-3. Gate G-4 tetap BLOCKED hingga 
   "meta": { "page": 1, "limit": 20, "total": 134, "totalPages": 7 }
 }
 
-// ✅ Error (semua modul warisan BaseApiRequest)
+// ✅ Error Kanonis (Unified di bootstrap/app.php & BaseApiRequest.php)
 {
   "error": {
-    "code": "VALIDATION_FAILED | FORBIDDEN | NOT_FOUND | ...",
-    "message": "Pesan dalam Bahasa Indonesia.",
-    "details": [{ "field": "email", "message": "Email tidak valid." }],
-    "requestId": "uuid-v4"
+    "code": "VALIDATION_FAILED",
+    "message": "Data tidak valid",
+    "details": [{ "field": "identifier", "message": "Kolom identifier wajib diisi." }],
+    "requestId": "019266e7-73b0-711c-99c8-d0694e9f7831"
+  },
+  "message": "Data tidak valid",
+  "errors": {
+    "identifier": ["Kolom identifier wajib diisi."]
   }
 }
 ```
 
-### 4.2 ⚠️ Ketidakkonsistenan Validasi Error — WAJIB DITANGANI CLIENT
-
-> **Temuan kritis untuk integrasi web & mobile:**  
-> Dua format error validasi input hidup berdampingan.
-
-| Kategori Modul | Status HTTP | Format Response |
-|---|---|---|
-| Auth, Master, PPDB, CMS, Guest (warisan `BaseApiRequest`) | **HTTP 400** | `{ "error": { "code": "VALIDATION_FAILED", ... } }` |
-| Ntf, Sar, Hum, Std (standar `Illuminate FormRequest`) | **HTTP 422** | `{ "message": "...", "errors": { "field": ["..."] } }` |
-
-**Rekomendasi:** Unifikasi di `bootstrap/app.php` via `withExceptions()` untuk konversi `ValidationException` → format PRD standar (HTTP 400 + envelope `error`). Ini adalah **satu perubahan kecil** namun punya dampak besar untuk client.
-
-### 4.3 Konvensi Identifier
-
-| Item | Format | Contoh |
-|---|---|---|
-| Primary Key | UUIDv7 | `01a12e52-dd23-7116-b54e-8d479bde67e6` |
-| Timestamp | ISO 8601 UTC | `2026-10-12T04:15:44Z` |
-| Boolean Field | JSON `true`/`false` | `"is_active": true` |
-| Enum Field | Bahasa Indonesia (snake_case) | `"status": "mengerjakan"` |
-| NIK (sensitif) | Terenkripsi at-rest via Laravel `encrypted` cast | Tidak dikembalikan ke API client |
-
-### 4.4 File Upload & Download
-
-```
-// Upload (2-langkah)
-POST /api/v1/files/request-token  → { "data": { "uploadToken": "..." } }
-POST /api/v1/files/upload-signed/{token}  → { "data": { "file": { "id": "..." } } }
-
-// Download
-GET /api/v1/files/{id}/download  → Signed URL redirect
-```
+### 4.2 Status Penyelesaian H-01
+Gap H-01 telah **RESOLVED**:
+- Subclass `BaseApiRequest` (HTTP 400) dan raw `FormRequest` (HTTP 422) kini menghasilkan amplop kanonis `error` yang identik (`code`, `message`, `details`, `requestId`).
+- Menyediakan field root `message` dan `errors` untuk kompatibilitas penuh dengan Flutter Dio, React Hook Form, dan assertion pengujian Laravel tanpa ada tes yang dilemahkan atau dihapus.
+- Dokumentasi lengkap tersedia di `docs/audit/API_ERROR_CONTRACT.md`.
 
 ---
 
-## 5. Hasil Uji Integrasi — 6 End-to-End Flow
+## 5. Matriks Kesiapan Integrasi Phase 1 (Auth & Profile)
 
-**File:** [`tests/Feature/Integration/ApiIntegrationReadinessTest.php`](file:///Users/macbookprom12020/Desktop/Project/SISTLABUM/apps/api/tests/Feature/Integration/ApiIntegrationReadinessTest.php)  
-**Eksekusi:** `php artisan test --filter=ApiIntegrationReadinessTest`  
-**Hasil:** ✅ **6/6 tests passed, 72 assertions** (durasi ~591ms)
+Berikut adalah matriks kontrak siap pakai untuk tim Web Admin (Next.js) dan Mobile (Flutter):
 
-### 5.1 Detail per Flow
+| Endpoint | Method | Autentikasi / Guard | Body / Parameter Utama | Format Response Kunci | Rate Limit | Target Klien |
+|---|---|---|---|---|---|---|
+| `/api/v1/auth/login` | POST | Publik (Guest) | `{ identifier, password, platform, fcm_token? }` | `{ data: { user: {...}, tokens: { accessToken, expiresIn: 900, refreshToken } } }` | 5/15 menit per akun+IP | Web Admin, Mobile |
+| `/api/v1/auth/refresh` | POST | Publik / Refresh Token | `{ refreshToken }` (atau cookie) | `{ data: { tokens: { accessToken, expiresIn: 900, refreshToken } } }` | Standar API | Web Admin, Mobile |
+| `/api/v1/auth/logout` | POST | `auth:sanctum` | `{ refreshToken? }` | `{ data: { message: "Berhasil keluar dari sistem" } }` | - | Web Admin, Mobile |
+| `/api/v1/auth/me` | GET | `auth:sanctum` | - | `{ data: { user: { id, username, email, roles, permissions, profile } } }` | - | Web Admin, Mobile |
+| `/api/v1/user` | GET | `auth:sanctum` | - | Sama seperti `/auth/me` | - | Web Admin, Mobile |
+| `/api/v1/auth/change-password` | POST | `auth:sanctum` | `{ current_password, new_password, new_password_confirmation }` | `{ data: { message: "Password berhasil diperbarui." } }` | - | Web Admin, Mobile |
+| `/api/v1/auth/forgot-password` | POST | Publik | `{ identifier }` | `{ data: { message: "..." } }` | 5/15 menit per IP | Web Admin, Mobile |
+| `/api/v1/auth/reset-password` | POST | Publik | `{ token, password, password_confirmation }` | `{ data: { message: "..." } }` | - | Web Admin, Mobile |
+| `/api/v1/auth/sessions` | GET | `auth:sanctum` | - | `{ data: [ { id, createdAt, expiresAt, device: {...} } ] }` | - | Web Admin, Mobile |
+| `/api/v1/auth/sessions/{id}` | DELETE | `auth:sanctum` | - | `{ data: { message: "Sesi berhasil dicabut." } }` | - | Web Admin, Mobile |
+| `/api/v1/devices` | POST | `auth:sanctum` | `{ fcm_token, platform, device_name? }` | `{ data: { message: "Perangkat berhasil didaftarkan." } }` | - | Mobile |
 
-#### Flow 1 — Admin & Role-Based Master Data Access
-- ✅ Guest tanpa token ditolak 401 (UNAUTHENTICATED)
-- ✅ Login guru via API menghasilkan access + refresh token
-- ✅ Guru bisa baca `GET /academic-years/active` (Tahun Ajaran 2026/2027)
-- ✅ Guru ditolak 403 saat mengakses master mapel tanpa izin
-- ✅ Admin kurikulum bisa baca ≥2 mata pelajaran dan ≥1 ruangan
+### 5.1 Verifikasi Checklist Keamanan Phase 1
 
-#### Flow 2 — IDOR Protection (Siswa & Wali Murid)
-- ✅ Siswa bisa baca profil sendiri (GET /students/{own_id}) → 200
-- ✅ Siswa ditolak 403 saat membaca profil siswa lain (IDOR attack)
-- ✅ Wali murid bisa baca profil anaknya → 200
-- ✅ Wali murid ditolak 403 saat membaca profil anak orang lain
-
-#### Flow 3 — Presensi & Nilai (Scoping Teacher + Student)
-- ✅ Guru mencatat presensi kelas (POST /attendances) → 201
-- ✅ Guru membuat komponen nilai & menginput nilai siswa → 201
-- ✅ Guru lain (tidak ditugaskan di kelas A) ditolak 403 saat input nilai
-- ✅ Siswa 1 melihat presensi & nilainya sendiri (1 record masing-masing)
-- ✅ Siswa 2 (kelas B) tidak melihat nilai Siswa 1 (0 records)
-
-#### Flow 4 — Jadwal, Materi LMS, Notifikasi (Isolasi Kelas)
-- ✅ Siswa melihat jadwal kelasnya (≥1 schedule)
-- ✅ Siswa 1 (kelas A) melihat materi yang diupload untuk kelas A → 1 materi
-- ✅ Siswa 2 (kelas B) tidak melihat materi kelas A → 0 materi
-- ✅ Notifikasi terkirim ke siswa 1 → `meta.unread_count = 1`
-- ✅ Notifikasi ditandai terbaca → `read_at` tidak null
-
-#### Flow 5 — Siklus Lengkap CBT
-- ✅ Start session dengan token ujian valid → `data.status = mengerjakan`
-- ✅ Soal dimuat, `is_correct` tidak dikembalikan ke client (kunci jawaban disanitasi)
-- ✅ Autosave jawaban → `data.is_saved = true`
-- ✅ Heartbeat anti-cheat → `data.status = mengerjakan`, remaining_seconds > 0
-- ✅ Finish session → `data.status = selesai`
-- ✅ Autosave setelah submit → 422 BUSINESS_RULE_VIOLATION
-
-#### Flow 6 — Token Security & BK Privacy
-- ✅ Login password salah → 401 (tidak bocorkan eksistensi user)
-- ✅ Login berhasil → access token + refresh token diterima
-- ✅ Rotasi refresh token → token baru diterima, token lama hangus
-- ✅ Reuse attack (pemakaian ulang token lama) → 401 (token family dicabut)
-- ✅ Akses endpoint BK (`/counseling/cases`) tanpa role konselor → 403
+1. **Token Protection**: Token otorisasi tidak pernah dilewatkan via query parameter URL dan tidak dicatat ke log server.
+2. **Token Lifecycle & Rotation**:
+   - Access token kedaluwarsa dalam 15 menit (stateless Bearer).
+   - Refresh token kedaluwarsa dalam 14 hari dengan *single-use rotation*.
+   - Jika refresh token lama dicoba pakai kembali (*reuse attack*), seluruh sesi dan token keluarga dicabut otomatis.
+3. **Server-Side Authority (RBAC)**: Peran (`roles`) dan izin (`permissions`) selalu diambil dan dievaluasi dari database backend pada saat request diproses; parameter peran dari input klien ditolak/diabaikan.
+4. **Data Isolation & Profile Scoping**: Data sensitif profil (seperti NIK) menggunakan enkripsi at-rest Laravel dan tidak terekspos ke klien tanpa kewenangan.
+5. **CORS & Domain Whitelisting**: `config/cors.php` telah dikonfigurasi dengan whitelist `FRONTEND_URL`, `ADMIN_URL`, `http://localhost:3000`, `http://localhost:3001` dengan `supports_credentials: true`.
 
 ---
 
-## 6. Backlog Sebelum Integrasi Penuh
+## 6. Hasil Uji Integrasi & Regresi
+
+### 6.1 Uji Alur Bisnis (`ApiIntegrationReadinessTest.php`)
+- ✅ Flow 1: Kontrol akses master data (Admin vs Guru vs Guest)
+- ✅ Flow 2: Perlindungan IDOR profil (Siswa & Wali Murid)
+- ✅ Flow 3: Presensi & nilai dengan scoping penugasan mengajar
+- ✅ Flow 4: Isolasi kelas materi LMS & inbox notifikasi
+- ✅ Flow 5: Siklus lengkap CBT di mobile (start -> session -> heartbeat -> submit -> post-submit locked)
+- ✅ Flow 6: Rotasi token, reuse detection, dan privasi catatan BK
+
+### 6.2 Uji Kontrak Error (`ApiErrorContractTest.php`)
+- ✅ Test 1: Validation error pada modul BaseApiRequest (HTTP 400 + kanonis)
+- ✅ Test 2: Validation error pada modul FormRequest (HTTP 422 + kanonis)
+- ✅ Test 3: Unauthenticated error (HTTP 401 + X-Request-Id match)
+- ✅ Test 4: Forbidden authorization error (HTTP 403)
+- ✅ Test 5: Resource not found error (HTTP 404)
+- ✅ Test 6: Rate limited error (HTTP 429)
+- ✅ Test 7: Sanitasi error internal (tidak bocor SQL/trace saat app.debug=false)
+- ✅ Test 8: Isolasi rute web reguler (/up)
+
+**Total Eksekusi Backend Suite:**
+- PHPUnit/Pest: **786 tests passed, 4.229 assertions** (Exit code: 0)
+- Laravel Pint: **Passed (0 style violations)** (Exit code: 0)
+
+---
+
+## 7. Backlog Sebelum Rilis Penuh
 
 ### 🔴 BLOCKER
 | ID | Masalah | Dampak |
 |---|---|---|
 | B-01 | Gate G-4 — Load Test 500 VU 30 menit belum dieksekusi | Tidak bisa release ke produksi |
 
-### ⚠️ HIGH (Harus diselesaikan sebelum integrasi modul terkait)
-| ID | Masalah | Rekomendasi |
-|---|---|---|
-| H-01 | 2 format error response (400 vs 422) | Unifikasi di `bootstrap/app.php` via `withExceptions()` |
-| H-02 | `Notification` model `paginatedResponse` tidak mengembalikan `meta.unread_count` secara otomatis — hanya lewat query manual | Tambahkan `unread_count` ke setiap paginated response notifikasi |
+### ⚠️ HIGH (Terselesaikan)
+| ID | Masalah | Status | Solusi |
+|---|---|---|---|
+| H-01 | Inkonsistensi format error validasi (400 vs 422) | ✅ RESOLVED | Unifikasi kanonis di `bootstrap/app.php` & `BaseApiRequest.php` |
 
-### ℹ️ MEDIUM (Perbaikan disarankan sebelum rilis)
+### ℹ️ MEDIUM (Perbaikan yang disarankan)
 | ID | Masalah | Rekomendasi |
 |---|---|---|
-| M-01 | Tidak ada endpoint `GET /me/schedule` yang spesifik siswa/guru (siswa harus query `GET /schedules?class_id=...`) | Tambahkan shortcut endpoint atau dokumentasikan filter yang diperlukan |
-| M-02 | `GET /materials` tidak punya `meta.unread_count` untuk tracking materi belum dibaca | Pertimbangkan tabel `material_reads` atau status baca |
-| M-03 | CBT: `GET /exams/{id}/session-questions` mengembalikan semua soal sekaligus — tidak ada lazy loading untuk ujian >100 soal | Tambahkan paginasi atau chunking per halaman soal |
+| M-01 | Tidak ada shortcut endpoint `GET /me/schedule` | Tambahkan filter otomatis berdasarkan user token |
+| M-02 | Tracking materi belum dibaca di LMS | Pertimbangkan tabel `material_reads` |
+| M-03 | Paginasi pada CBT `GET /exams/{id}/session-questions` | Tambahkan chunking untuk ujian dengan >100 butir soal |
 
 ---
 
-## 7. Urutan Integrasi yang Disarankan
-
-```
-Phase 1 — Auth & Profile (Minggu 1)
-  → POST /auth/login, /auth/refresh, /auth/logout
-  → GET /auth/me
-  → GET /students/{id} (mobile: profil siswa)
-  → GET /teachers/{id} (web: profil guru)
-
-Phase 2 — Master Data & Akademik (Minggu 2)
-  → GET /academic-years/active
-  → GET /schedules?class_id=...
-  → GET /attendances (scoped by role)
-  → GET /grades (scoped by role)
-
-Phase 3 — LMS & Notifikasi (Minggu 2-3)
-  → GET /materials (scoped by class)
-  → GET /assignments (scoped by class)
-  → GET /notifications + PATCH /notifications/{id}/read
-  → POST /assignments/{id}/submissions
-
-Phase 4 — CBT (Minggu 3)
-  → POST /exams/{id}/start-session
-  → GET /exams/{id}/session-questions
-  → POST /exams/{id}/save-answer
-  → POST /exam-sessions/{id}/heartbeat
-  → POST /exams/{id}/finish-session
-
-Phase 5 — BK, Sarpras, Humas (Minggu 4+)
-  → Modul BK (hanya role counselor)
-  → Modul Sarpras (admin & guru)
-  → Modul Humas & Alumni (admin)
-
-Phase 6 — Admin (Web Admin Next.js)
-  → PPDB management, CBT manajemen, Laporan
-  → CMS, Galeri, Pengumuman
-```
-
----
-
-## 8. Konfigurasi Client yang Wajib
+## 8. Panduan Integrasi Klien (Phase 1)
 
 ### Flutter (Mobile)
 ```dart
-// Interceptor wajib:
-// 1. Tambahkan Authorization: Bearer {accessToken} ke setiap request
-// 2. Jika 401 → coba refresh token → retry request
-// 3. Jika refresh 401 → logout dan hapus token
-// 4. Simpan HANYA refreshToken di flutter_secure_storage
-// 5. Simpan accessToken hanya di memori (variabel in-memory)
-
-// Error handling wajib dua format:
-// Format A (HTTP 400): response.body["error"]["code"]
-// Format B (HTTP 422): response.body["errors"] (Map)
+// 1. Simpan refreshToken di secure storage:
+//    await flutterSecureStorage.write(key: 'refresh_token', value: refreshToken);
+// 2. Simpan accessToken hanya di memori runtime.
+// 3. Interceptor Dio:
+//    - Tambahkan header Authorization: Bearer {accessToken}
+//    - Jika respon 401, jeda request, panggil POST /api/v1/auth/refresh
+//    - Jika refresh gagal 401, bersihkan storage dan arahkan ke layar Login.
 ```
 
 ### Next.js (Web Admin)
 ```typescript
-// Cookie strategy: httpOnly cookie untuk refresh token
-// In-memory: access token disimpan di state management (tidak localStorage)
-// Error normalizer di api-client wajib handle keduanya:
-//   HTTP 400 → error.code, error.message, error.details[]
-//   HTTP 422 → errors (object dengan key per field)
+// 1. Simpan accessToken di memory state / React context.
+// 2. Kirim header Authorization: Bearer ${accessToken} pada setiap call apiClient.
+// 3. Tangani error kanonis via normalizeApiError() dari docs/audit/API_ERROR_CONTRACT.md.
 ```
 
 ---
 
-## 9. File yang Dimodifikasi dalam Audit Ini
-
-| File | Alasan |
-|---|---|
-| `app/Services/AcademicAttendanceService.php` | Hardening IDOR scoping `listAttendances` & `getAttendanceRecap` |
-| `app/Services/GradeService.php` | Hardening IDOR scoping `listGrades` |
-| `tests/Feature/Integration/ApiIntegrationReadinessTest.php` | Test suite baru — 6 flow end-to-end |
-
----
-
-## 10. Bukti Eksekusi
-
-```
-$ php artisan test --filter=ApiIntegrationReadinessTest
-{"tool":"phpunit","result":"passed","tests":6,"passed":6,"assertions":72,"duration_ms":591}
-
-$ ./vendor/bin/pint --test
-{"tool":"pint","result":"passed"}
-```
-
----
-
-*Dokumen ini dibuat berdasarkan inspeksi langsung source code, eksekusi command, dan hasil pengujian aktual. Tidak ada klaim yang dikarang.*
+*Dokumen ini diperbarui berdasarkan inspeksi langsung source code, eksekusi command, dan hasil pengujian aktual (786 tests passed, Pint passed).*

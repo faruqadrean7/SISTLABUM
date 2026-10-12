@@ -11,6 +11,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -47,6 +48,35 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $e, Request $request) use ($renderError) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return $renderError('Sesi tidak valid atau telah berakhir', 'UNAUTHENTICATED', 401);
+            }
+        });
+
+        // H-01 fix: Unify all FormRequest validation failures to the canonical
+        // 400 VALIDATION_FAILED contract. BaseApiRequest already throws
+        // HttpResponseException before this handler runs, so there is no
+        // double-conversion. Only raw FormRequest subclasses reach here.
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $details = [];
+                $errors = $e->errors();
+                foreach ($errors as $field => $messages) {
+                    foreach ($messages as $message) {
+                        $details[] = ['field' => $field, 'message' => $message];
+                    }
+                }
+
+                $requestId = request()->header('X-Request-Id', (string) Str::uuid());
+
+                return response()->json([
+                    'error' => [
+                        'code' => 'VALIDATION_FAILED',
+                        'message' => 'Data tidak valid',
+                        'details' => $details,
+                        'requestId' => $requestId,
+                    ],
+                    'message' => 'Data tidak valid',
+                    'errors' => $errors,
+                ], 422, ['X-Request-Id' => $requestId]);
             }
         });
 
