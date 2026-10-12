@@ -519,7 +519,7 @@ class CbtPlayer {
 
             App.toast('Ujian berhasil dikumpulkan ke server!', 'success');
             setTimeout(() => {
-                window.location.href = '/siswa/index.html';
+                window.location.href = '/siswa/ujian.html';
             }, 1200);
         } catch (err) {
             App.toast('Gagal menyelesaikan ujian.', 'error');

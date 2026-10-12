@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Siswa | SMP-SMA Laboratorium UM Malang</title>
+    <title>Dashboard Siswa | Portal Terpadu SMP Laboratorium UM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -16,17 +16,19 @@
     <header class="portal-header">
         <div class="brand-section">
             <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
-          <img src="/images/logo.png" width="38" height="38" style="object-fit:contain;" alt="Logo"/>
-          <div class="brand-text">
-              <h2 style="font-family:var(--font-heading);font-weight:700;color:var(--color-navy);font-size:16px;">SMP Laboratorium</h2>
-              <p style="color:var(--color-gold);font-weight:600;font-size:11px;">P2LP Universitas Negeri Malang</p>
-          </div>
-      </a>
+                <img src="/images/logo.png" width="38" height="38" style="object-fit:contain;" alt="Logo"/>
+                <div class="brand-text">
+                    <h2 style="font-family:var(--font-heading);font-weight:700;color:var(--color-navy);font-size:16px;">SMP Laboratorium</h2>
+                    <p style="color:var(--color-gold);font-weight:600;font-size:11px;">P2LP Universitas Negeri Malang</p>
+                </div>
+            </a>
         </div>
         <nav class="header-nav">
             <a href="/siswa/index.html" class="nav-link active">🏠 Beranda</a>
-            <a href="/siswa/cbt.html" class="nav-link">📝 Ujian CBT Lab</a>
-            <a href="/siswa/tugas.html" class="nav-link">📚 Tugas & Modul</a>
+            <a href="/siswa/ujian.html" class="nav-link">📝 Ujian & Asesmen</a>
+            <a href="/siswa/perpus.html" class="nav-link">📚 e-Perpus & Modul</a>
+            <a href="/siswa/kelas.html" class="nav-link">👥 Info Kelas & Piket</a>
+            <a href="/siswa/tugas.html" class="nav-link">📋 Tugas LMS</a>
             <a href="/siswa/rapor.html" class="nav-link">📊 E-Rapor</a>
         </nav>
         <div class="header-actions">
@@ -41,7 +43,7 @@
         </div>
     </header>
 
-    <!-- Content Container -->
+    <!-- Main Content -->
     <main class="content-container">
         <!-- Breadcrumb & Title -->
         <div class="page-header-row">
@@ -52,31 +54,34 @@
                     <span>Dashboard Akademik</span>
                 </div>
                 <h1>Selamat Datang Kembali, Fauzan! 👋</h1>
-                <p>Pantau jadwal belajar harian, batas pengumpulan tugas, dan asesmen digital Anda.</p>
+                <p>Pantau biodata resmi, jadwal belajar harian, ujian asesmen, e-perpus, dan rekap e-rapor Anda.</p>
             </div>
             <div>
-                <span class="badge badge-success badge-dot" style="font-size: 13px; padding: 6px 14px;">
-                    Presensi Hari Ini: Hadir (Tap Gerbang 06:42 WIB)
+                <span class="badge badge-success badge-dot" style="font-size: 13px; padding: 7px 16px;">
+                    Presensi Hari Ini: Hadir (Tap RFID Gerbang 06:42 WIB)
                 </span>
             </div>
         </div>
 
         <!-- Banner Ujian CBT Aktif Hari Ini -->
         <div class="card" style="background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; margin-bottom: 28px; border: none; box-shadow: var(--shadow-lg);">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: gap; gap: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
                 <div>
-                    <span class="badge" style="background: #F59E0B; color: #78350F; font-weight: 800; margin-bottom: 10px;">
+                    <span class="badge" style="background: #F59E0B; color: #78350F; font-weight: 800; margin-bottom: 10px; display: inline-block;">
                         🚨 ASESMEN CBT AKTIF HARI INI
                     </span>
                     <h2 style="color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 6px;">
-                        Asesmen Sumatif Tengah Semester: Informatika & Pemrograman
+                        Asesmen Sumatif Tengah Semester (ASTS): Informatika & Pemrograman
                     </h2>
                     <p style="color: #CBD5E1; font-size: 14px;">
-                        Kode Ujian: <code style="background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); color: #93C5FD;">CBT-2026-INF-01</code> • Durasi: 90 Menit • Lokasi: Lab Komputer R.202
+                        Token: <code style="background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono); color: #93C5FD; font-weight: 700;">INF2026</code> • Durasi: 90 Menit • Lokasi: Lab Komputer R.202
                     </p>
                 </div>
-                <div>
-                    <a href="/siswa/cbt.html" class="btn btn-teal btn-lg" style="box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <a href="/siswa/ujian.html" class="btn btn-outline btn-sm" style="color: #fff; border-color: rgba(255,255,255,0.4);">
+                        Daftar Semua Ujian
+                    </a>
+                    <a href="/siswa/cbt.html?exam_id=6" class="btn btn-teal btn-lg" style="box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);">
                         Mulai Kerjakan Ujian CBT ➔
                     </a>
                 </div>
@@ -87,35 +92,167 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-data">
-                    <span class="stat-label">Persentase Hadir</span>
+                    <span class="stat-label">Persentase Kehadiran</span>
                     <span class="stat-value" style="color: var(--color-teal);">98.2%</span>
-                    <span class="stat-sub">44 dari 45 Pertemuan</span>
+                    <span class="stat-sub">44 Hadir, 1 Sakit, 0 Alpa</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-teal">📅</div>
             </div>
             <div class="stat-card">
                 <div class="stat-data">
-                    <span class="stat-label">Rata-rata Nilai Rapor</span>
-                    <span class="stat-value" style="color: var(--color-primary);">91.3</span>
-                    <span class="stat-sub">Peringkat 2 Kelas IX-A</span>
+                    <span class="stat-label">Rata-Rata E-Rapor</span>
+                    <span class="stat-value" style="color: var(--color-primary);">90.33</span>
+                    <span class="stat-sub">Peringkat 2 dari 32 Siswa</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-blue">🏆</div>
             </div>
             <div class="stat-card">
                 <div class="stat-data">
-                    <span class="stat-label">Poin Karakter / Reward</span>
+                    <span class="stat-label">Poin Prestasi / Reward</span>
                     <span class="stat-value" style="color: var(--color-amber);">+45</span>
-                    <span class="stat-sub">Disiplin & Berprestasi</span>
+                    <span class="stat-sub">Juara 1 Robotika & OSIS</span>
                 </div>
                 <div class="stat-icon-wrapper stat-icon-amber">⭐</div>
             </div>
             <div class="stat-card">
                 <div class="stat-data">
-                    <span class="stat-label">Tugas Tertunda</span>
-                    <span class="stat-value" style="color: var(--color-rose);">2</span>
-                    <span class="stat-sub">Mendekati Tenggat</span>
+                    <span class="stat-label">Catatan Pelanggaran</span>
+                    <span class="stat-value" style="color: #16A34A;">0</span>
+                    <span class="stat-sub">Disiplin Tertib & Bersih</span>
                 </div>
-                <div class="stat-icon-wrapper stat-icon-rose">⏰</div>
+                <div class="stat-icon-wrapper" style="background: #DCFCE7; color: #16A34A;">🛡️</div>
+            </div>
+        </div>
+
+        <!-- Section: Biodata Siswa Lengkap -->
+        <div class="card" style="margin-bottom: 28px;">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">👤 Biodata Lengkap Peserta Didik</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Data induk kesiswaan resmi terdaftar pada P2LP Universitas Negeri Malang</p>
+                </div>
+                <div>
+                    <span class="badge badge-success">Status: Siswa Aktif</span>
+                </div>
+            </div>
+
+            <div id="student-biodata-content">
+                <div class="biodata-grid">
+                    <div class="biodata-item">
+                        <span class="label">Nama Lengkap</span>
+                        <span class="value" id="bio-name">Ahmad Fauzan Maulana</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">NIS / NISN</span>
+                        <span class="value" id="bio-nis-nisn">240901 / 0098765432</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Nomor Induk Kependudukan (NIK)</span>
+                        <span class="value" id="bio-nik">3573011404110001</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Tempat, Tanggal Lahir</span>
+                        <span class="value" id="bio-ttl">Malang, 14 Mei 2011 (15 Tahun)</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Jenis Kelamin / Golongan Darah</span>
+                        <span class="value" id="bio-gender-blood">Laki-laki / Gol. Darah O</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Agama</span>
+                        <span class="value" id="bio-religion">Islam</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Kelas & Rombel</span>
+                        <span class="value" id="bio-class">IX-A (Ruang R.301)</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Tahun Ajaran / Semester</span>
+                        <span class="value" id="bio-academic">2026/2027 • Ganjil</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Nomor Kontak Siswa (WA)</span>
+                        <span class="value" id="bio-phone">0812-3456-7890</span>
+                    </div>
+                    <div class="biodata-item">
+                        <span class="label">Email Resmi Sekolah</span>
+                        <span class="value" id="bio-email">fauzan.student@labum.sch.id</span>
+                    </div>
+                    <div class="biodata-item" style="grid-column: span 2;">
+                        <span class="label">Alamat Domisili Siswa</span>
+                        <span class="value" id="bio-address">Jl. Bendungan Sigura-gura No. 12, Kel. Sumbersari, Kec. Lowokwaru, Kota Malang</span>
+                    </div>
+                </div>
+
+                <!-- Info Wali / Orang Tua -->
+                <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-light);">
+                    <h4 style="font-size: 14px; font-weight: 700; color: var(--color-navy); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>👨‍👩‍👦</span> Data Orang Tua / Wali Siswa
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;" id="guardians-list">
+                        <div style="padding: 12px 16px; background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-md);">
+                            <div style="font-size: 11px; font-weight: 700; color: var(--color-teal); text-transform: uppercase;">Ayah Kandung</div>
+                            <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">Ir. Suparman, M.T.</div>
+                            <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">Pekerjaan: Dosen Teknik • No. HP: 0811-2233-4455</div>
+                        </div>
+                        <div style="padding: 12px 16px; background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-md);">
+                            <div style="font-size: 11px; font-weight: 700; color: var(--color-teal); text-transform: uppercase;">Ibu Kandung</div>
+                            <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">Dra. Siti Aminah, M.Pd.</div>
+                            <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">Pekerjaan: Guru • No. HP: 0811-6677-8899</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 Column Section: Perpustakaan Digital & Piket Kelas -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+            <!-- Riwayat Peminjaman Buku Digital Siswa -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">📖 Peminjaman e-Perpus Aktif</h3>
+                        <p style="font-size: 12.5px; color: var(--text-muted);">Buku digital yang sedang Anda pinjam</p>
+                    </div>
+                    <a href="/siswa/perpus.html" style="font-size: 13px; font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                        Buka e-Perpus ➔
+                    </a>
+                </div>
+                <div id="active-loans-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Diisi dinamis dari SQLite via API -->
+                </div>
+            </div>
+
+            <!-- Tugas Piket Hari Ini -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">🧹 Jadwal Piket Kelas IX-A</h3>
+                        <p style="font-size: 12.5px; color: var(--text-muted);">Regu piket kebersihan kelas hari ini</p>
+                    </div>
+                    <a href="/siswa/kelas.html?tab=piket" style="font-size: 13px; font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                        Semua Hari ➔
+                    </a>
+                </div>
+                <div style="background: #F0FDFA; border: 1px solid var(--color-teal-border); border-radius: var(--radius-md); padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="badge badge-success" style="font-weight: 800;">HARI INI: SENIN</span>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--color-teal);">Regu Piket 1</span>
+                    </div>
+                    <div style="font-size: 13.5px; font-weight: 700; color: var(--color-navy); margin-bottom: 6px;">
+                        Petugas Piket:
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;" id="today-duty-members">
+                        <span class="badge" style="background: #fff; border: 1px solid var(--border-light); color: var(--color-primary); font-weight: 700;">★ Ahmad Fauzan Maulana</span>
+                        <span class="badge" style="background: #fff; border: 1px solid var(--border-light);">Alisha Khansa Nabila</span>
+                        <span class="badge" style="background: #fff; border: 1px solid var(--border-light);">Andhika Pratama Putra</span>
+                        <span class="badge" style="background: #fff; border: 1px solid var(--border-light);">Anindya Putri Kirana</span>
+                        <span class="badge" style="background: #fff; border: 1px solid var(--border-light);">Arya Bagus Wicaksono</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4; border-top: 1px dashed var(--color-teal-border); padding-top: 8px;">
+                        <strong>SOP Tugas:</strong> Bersihkan papan tulis sebelum & sesudah jam belajar, rapikan meja guru & spidol, sapu lantai ruang kelas, pastikan AC & LCD mati setelah KBM.
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -124,8 +261,8 @@
             <!-- Jadwal Pelajaran Hari Ini -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📖 Jadwal Pelajaran Hari Ini (Senin)</h3>
-                    <span class="badge badge-info">Kelas IX-A</span>
+                    <h3 class="card-title">📅 Jadwal Pelajaran Hari Ini (Senin)</h3>
+                    <span class="badge badge-info">Kelas IX-A • R.301</span>
                 </div>
                 <div class="timeline-list">
                     <div class="timeline-item">
@@ -155,7 +292,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">📝 Tugas LMS Aktif</h3>
-                    <a href="/siswa/tugas.html" style="font-size: 13px; font-weight: 700;">Lihat Semua ➔</a>
+                    <a href="/siswa/tugas.html" style="font-size: 13px; font-weight: 700; color: var(--color-primary); text-decoration: none;">Lihat Semua ➔</a>
                 </div>
                 <div id="assignments-list" style="display: flex; flex-direction: column; gap: 14px;">
                     <!-- Diisi dinamis dari SQLite via API -->
@@ -167,23 +304,87 @@
     <script src="/js/api.js"></script>
     <script src="/js/app.js"></script>
     <script>
-
         async function loadStudentDashboard() {
             try {
+                // 1. Load Biodata Siswa Lengkap
+                const profileData = await API.getStudentProfile(1);
+                if (profileData && profileData.student) {
+                    const s = profileData.student;
+                    document.getElementById('bio-name').textContent = s.name || '-';
+                    document.getElementById('bio-nis-nisn').textContent = `${s.nis || '-'} / ${s.nisn || '-'}`;
+                    document.getElementById('bio-nik').textContent = s.nik || '-';
+                    document.getElementById('bio-ttl').textContent = `${s.birth_place || '-'}, ${s.birth_date || '-'} (15 Tahun)`;
+                    document.getElementById('bio-gender-blood').textContent = `${s.gender === 'L' ? 'Laki-laki' : 'Perempuan'} / Gol. Darah ${s.blood_type || '-'}`;
+                    document.getElementById('bio-religion').textContent = s.religion || 'Islam';
+                    document.getElementById('bio-class').textContent = `${s.class_name || 'IX-A'} (${s.room_number || 'R.301'})`;
+                    document.getElementById('bio-academic').textContent = `${s.academic_year || '2026/2027'} • ${s.semester || 'Ganjil'}`;
+                    document.getElementById('bio-phone').textContent = s.phone || '-';
+                    document.getElementById('bio-email').textContent = s.email || '-';
+                    document.getElementById('bio-address').textContent = s.address || '-';
+
+                    // Update Guardians
+                    if (profileData.guardians && profileData.guardians.length > 0) {
+                        const gList = document.getElementById('guardians-list');
+                        gList.innerHTML = '';
+                        profileData.guardians.forEach(g => {
+                            const div = document.createElement('div');
+                            div.style.cssText = 'padding: 12px 16px; background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-md);';
+                            div.innerHTML = `
+                                <div style="font-size: 11px; font-weight: 700; color: var(--color-teal); text-transform: uppercase;">${g.relationship || 'Orang Tua / Wali'}</div>
+                                <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">${g.name}</div>
+                                <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">Pekerjaan: ${g.job || '-'} • No. HP: ${g.phone || '-'}</div>
+                            `;
+                            gList.appendChild(div);
+                        });
+                    }
+                }
+
+                // 2. Load Riwayat Peminjaman Buku Digital Siswa
+                const loans = await API.getLibraryLoans(1);
+                const activeLoans = loans.filter(l => l.status === 'Dipinjam');
+                const loansContainer = document.getElementById('active-loans-list');
+                loansContainer.innerHTML = '';
+
+                if (activeLoans.length === 0) {
+                    loansContainer.innerHTML = '<div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px;">Tidak ada buku yang sedang dipinjam. <a href="/siswa/perpus.html">Pinjam Buku Digital</a></div>';
+                } else {
+                    activeLoans.forEach(loan => {
+                        const item = document.createElement('div');
+                        item.style.cssText = 'padding: 12px 14px; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 12px;';
+                        item.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 26px;">${loan.cover_emoji || '📖'}</div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px; color: var(--color-navy); line-height: 1.3;">${loan.title}</div>
+                                    <div style="font-size: 11.5px; color: var(--text-muted);">Penulis: ${loan.author} • Ukuran: ${loan.file_size}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <span class="badge badge-warning" style="font-size: 11px;">Jatuh Tempo: ${loan.due_date}</span>
+                                <div style="margin-top: 4px;">
+                                    <a href="/siswa/perpus.html" class="btn btn-outline btn-xs">Baca e-Book</a>
+                                </div>
+                            </div>
+                        `;
+                        loansContainer.appendChild(item);
+                    });
+                }
+
+                // 3. Load Tugas LMS
                 const assignments = await API.getAssignments(4);
                 const container = document.getElementById('assignments-list');
                 container.innerHTML = '';
 
-                assignments.forEach(a => {
+                assignments.slice(0, 3).forEach(a => {
                     const item = document.createElement('div');
                     item.style.cssText = 'padding: 14px; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: #fff;';
                     item.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
                             <span class="badge badge-info">${a.subject_name}</span>
-                            <span style="font-size: 11.5px; color: var(--color-rose); font-weight: 700;">⏰ Tenggat: ${a.due_date.substring(0, 10)}</span>
+                            <span style="font-size: 11.5px; color: var(--color-rose); font-weight: 700;">⏰ Tenggat: ${a.due_date ? a.due_date.substring(0, 10) : '-'}</span>
                         </div>
                         <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${a.title}</div>
-                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">${a.description.substring(0, 85)}...</p>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">${a.description ? a.description.substring(0, 85) : ''}...</p>
                         <div style="display: flex; justify-content: flex-end;">
                             <a href="/siswa/tugas.html" class="btn btn-secondary btn-sm">Unggah Jawaban ➔</a>
                         </div>
@@ -191,7 +392,7 @@
                     container.appendChild(item);
                 });
             } catch (err) {
-                console.error(err);
+                console.error('Error loading student dashboard:', err);
             }
         }
 

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informasi Kelas & Direktori Guru | Portal Siswa SMP Laboratorium UM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+    <style>
+        .org-card {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-xs);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .org-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        .teacher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .teacher-card {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .teacher-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--color-primary);
+        }
+    </style>
+</head>
+<body class="portal-layout">
+    <!-- Header Siswa -->
+    <header class="portal-header">
+        <div class="brand-section">
+            <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+                <img src="/images/logo.png" width="38" height="38" style="object-fit:contain;" alt="Logo"/>
+                <div class="brand-text">
+                    <h2 style="font-family:var(--font-heading);font-weight:700;color:var(--color-navy);font-size:16px;">SMP Laboratorium</h2>
+                    <p style="color:var(--color-gold);font-weight:600;font-size:11px;">P2LP Universitas Negeri Malang</p>
+                </div>
+            </a>
+        </div>
+        <nav class="header-nav">
+            <a href="/siswa/index.html" class="nav-link">🏠 Beranda</a>
+            <a href="/siswa/ujian.html" class="nav-link">📝 Ujian & Asesmen</a>
+            <a href="/siswa/perpus.html" class="nav-link">📚 e-Perpus & Modul</a>
+            <a href="/siswa/kelas.html" class="nav-link active">👥 Info Kelas & Piket</a>
+            <a href="/siswa/tugas.html" class="nav-link">📋 Tugas LMS</a>
+            <a href="/siswa/rapor.html" class="nav-link">📊 E-Rapor</a>
+        </nav>
+        <div class="header-actions">
+            <div class="user-profile-chip">
+                <div class="avatar-circle" style="background: var(--color-primary);">AF</div>
+                <div class="user-text-meta">
+                    <div class="user-name">Ahmad Fauzan Maulana</div>
+                    <div class="user-role">Siswa • Kelas IX-A (NIS: 240901)</div>
+                </div>
+            </div>
+            <a href="/masuk.html" class="btn btn-outline btn-sm">Keluar</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content-container">
+        <!-- Page Header -->
+        <div class="page-header-row">
+            <div class="page-title-block">
+                <div class="breadcrumb-trail">
+                    <a href="/siswa/index.html">Siswa</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span>Komunitas Kelas IX-A</span>
+                </div>
+                <h1>Informasi Kelas IX-A & Direktori Guru</h1>
+                <p>Kepengurusan organisasi kelas, jadwal piket kebersihan, roster 32 teman sekelas, dan kontak guru mata pelajaran.</p>
+            </div>
+            <div>
+                <span class="badge badge-info" style="font-size: 13px; padding: 6px 14px;">
+                    Ruang Kelas: Gedung B Lt. 3 (R.301)
+                </span>
+            </div>
+        </div>
+
+        <!-- Tab Navigasi -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" id="tab-btn-org" onclick="switchClassTab('org')">
+                🏛️ Struktur Organisasi Kelas
+            </button>
+            <button class="tab-btn" id="tab-btn-piket" onclick="switchClassTab('piket')">
+                🧹 Jadwal Piket Kebersihan Harian
+            </button>
+            <button class="tab-btn" id="tab-btn-roster" onclick="switchClassTab('roster')">
+                👥 Roster Teman Sekelas (32 Siswa)
+            </button>
+            <button class="tab-btn" id="tab-btn-teachers" onclick="switchClassTab('teachers')">
+                👨‍🏫 Direktori Guru Pengampu Mapel
+            </button>
+        </div>
+
+        <!-- TAB 1: STRUKTUR ORGANISASI KELAS -->
+        <section id="tab-org-content">
+            <!-- Wali Kelas Banner -->
+            <div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: #F59E0B; color: #fff; font-size: 26px; display: flex; align-items: center; justify-content: center; font-weight: 800;">
+                            AH
+                        </div>
+                        <div>
+                            <span class="badge" style="background: rgba(255,255,255,0.2); color: #FDE047; font-weight: 800; font-size: 11px; margin-bottom: 4px;">
+                                WALI KELAS RESMI IX-A
+                            </span>
+                            <h2 style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 2px;">
+                                Ahmad Hidayat, M.Sc.
+                            </h2>
+                            <p style="font-size: 13px; color: #94A3B8;">
+                                NIP: 198503152010011012 • Guru Matematika & Pembina Tim OSN
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="https://wa.me/6281234567801" target="_blank" class="btn btn-teal">
+                            💬 Hubungi Wali Kelas (WA)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hierarki Pimpinan Kelas (Ketua, Wakil, Sekretaris, Bendahara) -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="font-size: 16px; font-weight: 800; color: var(--color-navy); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                    <span>⭐</span> Pimpinan Inti Kelas IX-A (Tahun Ajaran 2026/2027)
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+                    <!-- Ketua Kelas -->
+                    <div class="org-card" style="border-top: 4px solid var(--color-primary);">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--color-primary); text-transform: uppercase;">Ketua Kelas</div>
+                        <div style="font-size: 32px; margin: 8px 0 4px;">👑</div>
+                        <div style="font-weight: 800; font-size: 15px; color: var(--color-navy);">Ahmad Fauzan Maulana</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">NIS: 240901 • Absen 01</div>
+                    </div>
+
+                    <!-- Wakil Ketua Kelas -->
+                    <div class="org-card" style="border-top: 4px solid var(--color-teal);">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--color-teal); text-transform: uppercase;">Wakil Ketua Kelas</div>
+                        <div style="font-size: 32px; margin: 8px 0 4px;">🤝</div>
+                        <div style="font-weight: 800; font-size: 15px; color: var(--color-navy);">Bella Safira Maharani</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">NIS: 240903 • Absen 03</div>
+                    </div>
+
+                    <!-- Sekretaris 1 & 2 -->
+                    <div class="org-card" style="border-top: 4px solid var(--color-amber);">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--color-amber); text-transform: uppercase;">Sekretaris 1 & 2</div>
+                        <div style="font-size: 32px; margin: 8px 0 4px;">📝</div>
+                        <div style="font-weight: 800; font-size: 14px; color: var(--color-navy);">1. Alisha Khansa Nabila</div>
+                        <div style="font-weight: 800; font-size: 14px; color: var(--color-navy); margin-top: 2px;">2. Cantika Aurelia Putri</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Notulensi & Presensi Harian</div>
+                    </div>
+
+                    <!-- Bendahara 1 & 2 -->
+                    <div class="org-card" style="border-top: 4px solid #16A34A;">
+                        <div style="font-size: 11px; font-weight: 800; color: #16A34A; text-transform: uppercase;">Bendahara 1 & 2</div>
+                        <div style="font-size: 32px; margin: 8px 0 4px;">💰</div>
+                        <div style="font-weight: 800; font-size: 14px; color: var(--color-navy);">1. Anindya Putri Kirana</div>
+                        <div style="font-weight: 800; font-size: 14px; color: var(--color-navy); margin-top: 2px;">2. Clarissa Aurelia</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Kas Kelas & Operasional</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seksi-Seksi Organisasi -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📌 Seksi Bidang Organisasi Kelas IX-A</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                    <div style="padding: 14px; background: var(--bg-subtle); border-radius: var(--radius-md); border-left: 3px solid #3B82F6;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Seksi Kebersihan & 7K</div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--color-navy); margin-top: 4px;">Bima Satria Nugraha</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Koordinator piket harian</div>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg-subtle); border-radius: var(--radius-md); border-left: 3px solid #10B981;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Seksi Keagamaan</div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--color-navy); margin-top: 4px;">Dimas Arya Pratama</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Doa pagi & shalat berjamaah</div>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg-subtle); border-radius: var(--radius-md); border-left: 3px solid #F59E0B;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Seksi Keamanan & Disiplin</div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--color-navy); margin-top: 4px;">Andhika Pratama Putra</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Ketertiban saat pergantian jam</div>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg-subtle); border-radius: var(--radius-md); border-left: 3px solid #8B5CF6;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Seksi Peralatan & IT</div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--color-navy); margin-top: 4px;">Daffa Al-Fathir</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">LCD proyektor, audio & kabel</div>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg-subtle); border-radius: var(--radius-md); border-left: 3px solid #EC4899;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Seksi Humas & Mading</div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--color-navy); margin-top: 4px;">Dewi Kartika Sari</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Informasi mading & pengumuman</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: JADWAL PIKET KEBERSIHAN HARIAN -->
+        <section id="tab-piket-content" style="display: none;">
+            <!-- SOP Kebersihan Banner -->
+            <div class="card" style="margin-bottom: 24px; background: #F0FDFA; border: 1px solid var(--color-teal-border);">
+                <div style="display: flex; gap: 14px; align-items: flex-start;">
+                    <div style="font-size: 32px;">🧹</div>
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: var(--color-teal); margin-bottom: 4px;">
+                            SOP Standar Tugas Piket Kebersihan Kelas (Adiwiyata SMP Lab UM)
+                        </h3>
+                        <p style="font-size: 13px; color: var(--text-main); line-height: 1.5;">
+                            Petugas piket hadir maksimal pukul <strong>06:20 WIB</strong>. Tugas meliputi menyapu lantai, membersihkan dan mengisi ulang spidol papan tulis, menata meja guru, mengosongkan tempat sampah kelas ke TPS, serta memastikan AC, lampu, dan LCD proyektor mati sebelum pulang sekolah.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Jadwal Piket Harian (Senin s.d. Sabtu) -->
+            <div id="piket-days-grid" class="duty-day-grid">
+                <!-- Diisi dinamis via JavaScript dari SQLite -->
+            </div>
+        </section>
+
+        <!-- TAB 3: ROSTER TEMAN SEKELAS (32 SISWA) -->
+        <section id="tab-roster-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">👥 Roster Teman Sekelas IX-A (32 Siswa)</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                            Daftar presensi resmi kelas IX-A Semester Ganjil 2026/2027
+                        </p>
+                    </div>
+                    <div style="width: 280px;">
+                        <input type="text" id="roster-search" class="form-control" placeholder="Cari nama atau NIS siswa..." onkeyup="filterRoster()"/>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; text-align: center;">No</th>
+                                <th>Nama Peserta Didik</th>
+                                <th>NIS</th>
+                                <th>NISN</th>
+                                <th style="text-align: center;">L/P</th>
+                                <th style="text-align: center;">Gol. Darah</th>
+                                <th style="text-align: center;">Poin Reward</th>
+                                <th style="text-align: center;">Catatan Disiplin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roster-table-body">
+                            <!-- Diisi dinamis dari SQLite via API -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: DIREKTORI GURU PENGAMPU MATA PELAJARAN -->
+        <section id="tab-teachers-content" style="display: none;">
+            <div class="card" style="margin-bottom: 24px; background: #F8FAFC;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--color-navy); margin-bottom: 2px;">
+                            Direktori Dewan Guru Pengampu Kelas IX-A
+                        </h3>
+                        <p style="font-size: 13px; color: var(--text-muted);">
+                            Bapak/Ibu guru mata pelajaran SMP Laboratorium UM Malang yang mengajar di kelas IX-A.
+                        </p>
+                    </div>
+                    <div>
+                        <span class="badge badge-info">100% Pendidik Berkualifikasi S1/S2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Guru -->
+            <div id="teachers-grid" class="teacher-grid">
+                <!-- Diisi dinamis via JavaScript dari SQLite -->
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let classData = null;
+        let classmatesList = [];
+
+        async function initClassPage() {
+            try {
+                classData = await API.getClassInfo(4);
+                classmatesList = classData.classmates || [];
+
+                renderPiket(classData.duty_schedules || []);
+                renderRoster(classmatesList);
+                renderTeachers(classData.teachers || []);
+
+                // Periksa apakah ada parameter tab di URL (misal: ?tab=piket)
+                const urlParams = new URLSearchParams(window.location.search);
+                const tabParam = urlParams.get('tab');
+                if (tabParam) {
+                    switchClassTab(tabParam);
+                }
+            } catch (err) {
+                console.error('Error loading class info:', err);
+            }
+        }
+
+        function switchClassTab(tab) {
+            document.querySelectorAll('.tabs-nav .tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-org-content').style.display = 'none';
+            document.getElementById('tab-piket-content').style.display = 'none';
+            document.getElementById('tab-roster-content').style.display = 'none';
+            document.getElementById('tab-teachers-content').style.display = 'none';
+
+            if (tab === 'org') {
+                document.getElementById('tab-btn-org').classList.add('active');
+                document.getElementById('tab-org-content').style.display = 'block';
+            } else if (tab === 'piket') {
+                document.getElementById('tab-btn-piket').classList.add('active');
+                document.getElementById('tab-piket-content').style.display = 'block';
+            } else if (tab === 'roster') {
+                document.getElementById('tab-btn-roster').classList.add('active');
+                document.getElementById('tab-roster-content').style.display = 'block';
+            } else if (tab === 'teachers') {
+                document.getElementById('tab-btn-teachers').classList.add('active');
+                document.getElementById('tab-teachers-content').style.display = 'block';
+            }
+        }
+
+        // Render Jadwal Piket Harian (Senin - Sabtu)
+        function renderPiket(schedules) {
+            const container = document.getElementById('piket-days-grid');
+            container.innerHTML = '';
+
+            const todayName = 'Senin'; // Hari aktif di demo
+
+            schedules.forEach(item => {
+                const isToday = item.day_name === todayName;
+                const card = document.createElement('div');
+                card.className = `duty-day-card ${isToday ? 'today' : ''}`;
+
+                let membersHtml = '';
+                (item.members || []).forEach(name => {
+                    const isFauzan = name.includes('Fauzan');
+                    membersHtml += `
+                        <div style="padding: 7px 10px; background: ${isFauzan ? '#EFF6FF' : '#fff'}; border: 1px solid ${isFauzan ? 'var(--color-primary)' : 'var(--border-light)'}; border-radius: var(--radius-sm); font-size: 13px; font-weight: ${isFauzan ? '700' : '500'}; color: ${isFauzan ? 'var(--color-primary)' : 'var(--text-main)'}; display: flex; align-items: center; justify-content: space-between;">
+                            <span>${name}</span>
+                            ${isFauzan ? '<span class="badge badge-primary" style="font-size: 10px; padding: 2px 6px;">Anda</span>' : ''}
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+                        <h4 style="font-size: 16px; font-weight: 800; color: ${isToday ? 'var(--color-teal)' : 'var(--color-navy)'};">
+                            ${item.day_name}
+                        </h4>
+                        ${isToday ? '<span class="badge badge-success">HARI INI</span>' : '<span class="badge badge-secondary">Regu ' + item.day_name + '</span>'}
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+                        ${membersHtml}
+                    </div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.4; background: rgba(0,0,0,0.02); padding: 8px; border-radius: var(--radius-sm);">
+                        <strong>Tugas:</strong> ${item.tasks_description || 'Piket kebersihan rutin kelas'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Render Roster 32 Siswa
+        function renderRoster(students) {
+            const tbody = document.getElementById('roster-table-body');
+            tbody.innerHTML = '';
+
+            students.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                const isMe = s.id === 1;
+                if (isMe) tr.style.background = '#EFF6FF';
+
+                tr.innerHTML = `
+                    <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: ${s.avatar_color || '#1E3A8A'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">
+                                ${s.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                                <strong style="color: ${isMe ? 'var(--color-primary)' : 'var(--text-main)'}; font-size: 13.5px;">${s.name}</strong>
+                                ${isMe ? '<span class="badge badge-primary" style="font-size: 10px; margin-left: 6px;">Akun Anda</span>' : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-family: var(--font-mono); font-size: 13px;">${s.nis}</td>
+                    <td style="font-family: var(--font-mono); font-size: 13px; color: var(--text-muted);">${s.nisn}</td>
+                    <td style="text-align: center; font-weight: 700;">${s.gender}</td>
+                    <td style="text-align: center; font-family: var(--font-mono);">${s.blood_type || '-'}</td>
+                    <td style="text-align: center;">
+                        <span class="badge badge-amber" style="font-weight: 700;">+${s.points_reward}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge ${s.points_violation === 0 ? 'badge-success' : 'badge-warning'}">
+                            ${s.points_violation === 0 ? 'Tertib (0)' : s.points_violation + ' Poin'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterRoster() {
+            const q = document.getElementById('roster-search').value.toLowerCase();
+            const filtered = classmatesList.filter(s => s.name.toLowerCase().includes(q) || s.nis.includes(q));
+            renderRoster(filtered);
+        }
+
+        // Render Direktori Guru Pengampu
+        function renderTeachers(teachers) {
+            const grid = document.getElementById('teachers-grid');
+            grid.innerHTML = '';
+
+            teachers.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'teacher-card';
+                card.innerHTML = `
+                    <div style="width: 52px; height: 52px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary), var(--color-teal)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0;">
+                        ${t.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <span class="badge badge-info" style="font-weight: 700; margin-bottom: 4px; display: inline-block;">
+                            ${t.subject || 'Mata Pelajaran'}
+                        </span>
+                        <h4 style="font-size: 15px; font-weight: 800; color: var(--color-navy); margin-bottom: 2px; line-height: 1.3;">
+                            ${t.name}
+                        </h4>
+                        <div style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 8px;">
+                            NIP: ${t.nip}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">
+                            Jadwal di IX-A: <strong>${t.teaching_day || 'Senin & Kamis'}</strong>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="https://wa.me/62${t.phone ? t.phone.replace(/[^0-9]/g, '').substring(1) : '81234567800'}" target="_blank" class="btn btn-outline btn-xs" style="color: var(--color-teal); border-color: var(--color-teal);">
+                                💬 WA Guru
+                            </a>
+                            <a href="mailto:${t.email || 'guru@labum.sch.id'}" class="btn btn-outline btn-xs">
+                                ✉️ Email
+                            </a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        initClassPage();
+    </script>
+</body>
+</html>

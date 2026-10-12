@@ -54,7 +54,41 @@ const API = {
     // 5. Nilai & Rapor
     getStudentGrades: (studentId) => API.get(`/grades/student/${studentId}`),
     getClassGrades: (classId, subjectId) => API.get(`/grades/class/${classId}/subject/${subjectId}`),
-    getAssignments: (classId) => API.get(`/assignments?class_id=${classId}`)
+    getAssignments: (classId = 4) => API.get(`/assignments?class_id=${classId}`),
+
+    // 6. Profil Siswa Lengkap
+    getStudentProfile: (studentId = 1) => API.get(`/student/profile?id=${studentId}`),
+
+    // 7. Perpustakaan Digital & Peminjaman
+    getLibraryBooks: (category = '', query = '') => {
+        const params = new URLSearchParams();
+        if (category) params.append('category', category);
+        if (query) params.append('q', query);
+        const qStr = params.toString();
+        return API.get(`/library/books${qStr ? '?' + qStr : ''}`);
+    },
+    getLibraryLoans: (studentId = 1) => API.get(`/library/loans?student_id=${studentId}`),
+    borrowBook: (data) => API.post('/library/borrow', data),
+
+    // 8. Ujian Bertingkat (UH, UB, UTS, UAS)
+    getExamsList: (type = '', classId = 4) => {
+        let url = `/exams/list?class_id=${classId}`;
+        if (type) url += `&type=${encodeURIComponent(type)}`;
+        return API.get(url);
+    },
+
+    // 9. Modul Pelajaran Mandiri (PDF)
+    getLearningModules: (classId = 4, subjectId = '') => {
+        let url = `/learning-modules?class_id=${classId}`;
+        if (subjectId) url += `&subject_id=${encodeURIComponent(subjectId)}`;
+        return API.get(url);
+    },
+
+    // 10. Informasi Kelas Lengkap (Struktur, Piket, Teman, Guru)
+    getClassInfo: (classId = 4) => API.get(`/class-info?class_id=${classId}`),
+
+    // 11. E-Rapor Komprehensif
+    getReportCard: (studentId = 1) => API.get(`/report-card?student_id=${studentId}`)
 };
 
 window.API = API;

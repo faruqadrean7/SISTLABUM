@@ -488,6 +488,199 @@ const server = http.createServer(async (req, res) => {
                 return sendJson(res, 200, applicant);
             }
 
+            // 20. Profil Biodata Siswa Lengkap
+            if (pathname === '/api/student/profile' && req.method === 'GET') {
+                const studentId = parsedUrl.searchParams.get('id') || 1;
+                const student = db.prepare(`
+                    SELECT s.*, c.name as class_name, c.room_number, c.homeroom_teacher
+                    FROM students s
+                    JOIN classes c ON s.class_id = c.id
+                    WHERE s.id = ?
+                `).get(studentId);
+
+                if (!student) return sendJson(res, 404, { error: 'Siswa tidak ditemukan' });
+
+                const guardians = db.prepare(`
+                    SELECT g.*, sg.relationship
+                    FROM guardians g
+                    JOIN student_guardians sg ON g.id = sg.guardian_id
+                    WHERE sg.student_id = ?
+                `).all(studentId);
+
+                return sendJson(res, 200, { student, guardians });
+            }
+
+            // 21. Perpustakaan Digital: Buku & e-Book
+            if (pathname === '/api/library/books' && req.method === 'GET') {
+                const q = parsedUrl.searchParams.get('q');
+                const cat = parsedUrl.searchParams.get('category');
+                let query = `SELECT * FROM library_books WHERE 1=1`;
+                const params = [];
+                if (q) {
+                    query += ` AND (title LIKE ? OR author LIKE ? OR isbn LIKE ?)`;
+                    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+                }
+                if (cat) {
+                    query += ` AND category = ?`;
+                    params.push(cat);
+                }
+                query += ` ORDER BY title ASC`;
+                const books = db.prepare(query).all(...params);
+                return sendJson(res, 200, books);
+            }
+
+            // 22. Perpustakaan Digital: Riwayat Peminjaman Buku Siswa
+            if (pathname === '/api/library/loans' && req.method === 'GET') {
+                const studentId = parsedUrl.searchParams.get('student_id') || 1;
+                const loans = db.prepare(`
+                    SELECT l.*, b.title, b.author, b.isbn, b.cover_emoji, b.category, b.file_size
+                    FROM library_loans l
+                    JOIN library_books b ON l.book_id = b.id
+                    WHERE l.student_id = ?
+                    ORDER BY l.borrow_date DESC
+                `).all(studentId);
+                return sendJson(res, 200, loans);
+            }
+
+            if (pathname === '/api/library/borrow' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { book_id, student_id = 1 } = body;
+                const book = db.prepare('SELECT * FROM library_books WHERE id = ?').get(book_id);
+                if (!book) return sendJson(res, 404, { error: 'Buku tidak ditemukan' });
+
+                const now = new Date();
+                const borrowDate = now.toISOString().split('T')[0];
+                const dueDateObj = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+                const dueDate = dueDateObj.toISOString().split('T')[0];
+
+                db.prepare(`
+                    INSERT INTO library_loans (book_id, student_id, borrow_date, due_date, status)
+                    VALUES (?, ?, ?, ?, 'Dipinjam')
+                `).run(book_id, student_id, borrowDate, dueDate);
+
+                return sendJson(res, 201, {
+                    success: true,
+                    message: `Berhasil meminjam buku digital "${book.title}". Berlaku s/d ${dueDate}.`
+                });
+            }
+
+            // 23. Daftar Ujian Bertingkat (UH, UB, UTS, UAS)
+            if (pathname === '/api/exams/list' && req.method === 'GET') {
+                const classId = parsedUrl.searchParams.get('class_id') || 4;
+                const examType = parsedUrl.searchParams.get('type');
+                let query = `
+                    SELECT e.*, s.name as subject_name, s.code as subject_code
+                    FROM exams e
+                    JOIN subjects s ON e.subject_id = s.id
+                    WHERE e.class_id = ?
+                `;
+                const params = [classId];
+                if (examType) {
+                    query += ` AND e.exam_type = ?`;
+                    params.push(examType);
+                }
+                query += ` ORDER BY e.id ASC`;
+                const exams = db.prepare(query).all(...params);
+                return sendJson(res, 200, exams);
+            }
+
+            // 24. Modul Pelajaran Mandiri dari Guru (Unduh PDF)
+            if (pathname === '/api/learning-modules' && req.method === 'GET') {
+                const classId = parsedUrl.searchParams.get('class_id') || 4;
+                const subjectId = parsedUrl.searchParams.get('subject_id');
+                let query = `
+                    SELECT m.*, s.name as subject_name, t.name as teacher_name, t.title as teacher_title
+                    FROM learning_modules m
+                    JOIN subjects s ON m.subject_id = s.id
+                    JOIN teachers t ON m.teacher_id = t.id
+                    WHERE m.class_id = ?
+                `;
+                const params = [classId];
+                if (subjectId) {
+                    query += ` AND m.subject_id = ?`;
+                    params.push(subjectId);
+                }
+                query += ` ORDER BY m.upload_date DESC`;
+                const modules = db.prepare(query).all(...params);
+                return sendJson(res, 200, modules);
+            }
+
+            // 25. Informasi Kelas Lengkap (Struktur Organisasi, Piket, Teman Sekelas & Guru Mapel)
+            if (pathname === '/api/class-info' && req.method === 'GET') {
+                const classId = parsedUrl.searchParams.get('class_id') || 4;
+                const classData = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId);
+                if (!classData) return sendJson(res, 404, { error: 'Kelas tidak ditemukan' });
+
+                // Struktur Organisasi Kelas
+                const organization = db.prepare(`SELECT * FROM class_organization WHERE class_id = ? ORDER BY id ASC`).all(classId);
+
+                // Jadwal Piket Harian
+                const dutySchedules = db.prepare(`SELECT * FROM class_duty_schedules WHERE class_id = ? ORDER BY id ASC`).all(classId);
+                const dutyParsed = dutySchedules.map(d => ({
+                    ...d,
+                    members: JSON.parse(d.member_names_json || '[]')
+                }));
+
+                // Roster Teman Sekelas
+                const classmates = db.prepare(`
+                    SELECT id, nis, nisn, name, gender, birth_place, birth_date, blood_type, points_reward, points_violation, avatar_color
+                    FROM students
+                    WHERE class_id = ?
+                    ORDER BY nis ASC
+                `).all(classId);
+
+                // Direktori Guru Pengampu
+                const teachers = db.prepare(`
+                    SELECT t.*, s.name as subject_name, s.code as subject_code
+                    FROM teachers t
+                    LEFT JOIN subjects s ON t.subject LIKE '%' || s.name || '%' OR s.name LIKE '%' || t.subject || '%'
+                    ORDER BY t.name ASC
+                `).all();
+
+                return sendJson(res, 200, {
+                    class: classData,
+                    organization,
+                    duty_schedules: dutyParsed,
+                    classmates,
+                    teachers
+                });
+            }
+
+            // 26. E-Rapor Komprehensif
+            if (pathname === '/api/report-card' && req.method === 'GET') {
+                const studentId = parsedUrl.searchParams.get('student_id') || 1;
+                const student = db.prepare(`
+                    SELECT s.*, c.name as class_name, c.room_number, c.homeroom_teacher
+                    FROM students s
+                    JOIN classes c ON s.class_id = c.id
+                    WHERE s.id = ?
+                `).get(studentId);
+                if (!student) return sendJson(res, 404, { error: 'Siswa tidak ditemukan' });
+
+                const grades = db.prepare(`
+                    SELECT g.*, sub.name as subject_name, sub.code as subject_code, sub.kkm
+                    FROM grades g
+                    JOIN subjects sub ON g.subject_id = sub.id
+                    WHERE g.student_id = ?
+                    ORDER BY sub.id ASC
+                `).all(studentId);
+
+                const summary = db.prepare(`
+                    SELECT * FROM report_card_summaries
+                    WHERE student_id = ?
+                    LIMIT 1
+                `).get(studentId);
+
+                return sendJson(res, 200, {
+                    student,
+                    grades,
+                    summary: summary ? {
+                        ...summary,
+                        extracurriculars: JSON.parse(summary.extracurricular_json || '[]')
+                    } : null
+                });
+            }
+
             return sendJson(res, 404, { error: 'Endpoint API tidak ditemukan' });
         } catch (err) {
             console.error('API Error:', err);
