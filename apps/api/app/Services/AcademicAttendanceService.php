@@ -406,17 +406,35 @@ class AcademicAttendanceService
     {
         /** @var User $currentUser */
         $currentUser = $request->user();
-        $guardian = Guardian::where('user_id', $currentUser->id)->first();
-        $isAdmin = $currentUser->hasRole('super_admin')
-            || $currentUser->hasPermission('academic.attendance.read')
-            || $currentUser->hasPermission('academic.attendance.write');
+        $isGlobalAdmin = $currentUser->hasRole('super_admin')
+            || $currentUser->hasPermission('academic.schedule.manage')
+            || $currentUser->roles()->where('code', 'like', 'admin%')->exists();
 
         $query = Attendance::with(['student', 'journal.schedule.subject', 'journal.schedule.class', 'recorder']);
 
-        // Data scoping: Jika wali murid, batasi hanya anak perwaliannya
-        if ($guardian && ! $currentUser->hasRole('super_admin') && ! $currentUser->hasPermission('academic.schedule.manage')) {
-            $childIds = $guardian->students()->pluck('students.id');
-            $query->whereIn('student_id', $childIds);
+        // Data scoping: Siswa hanya miliknya, wali murid hanya anaknya, guru hanya kelas binaan/ajarannya
+        if (! $isGlobalAdmin) {
+            $student = Student::where('user_id', $currentUser->id)->first();
+            $guardian = Guardian::where('user_id', $currentUser->id)->first();
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+
+            if ($student) {
+                $query->where('student_id', $student->id);
+            } elseif ($guardian) {
+                $childIds = $guardian->students()->pluck('students.id');
+                $query->whereIn('student_id', $childIds);
+            } elseif ($teacher) {
+                $assignedClassIds = $teacher->teachingAssignments()->pluck('class_id');
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+                $allClassIds = $assignedClassIds->merge($homeroomClassIds)->unique();
+
+                $query->where(function ($q) use ($allClassIds) {
+                    $q->whereHas('student.classes', fn ($sub) => $sub->whereIn('classes.id', $allClassIds))
+                        ->orWhereHas('journal.schedule', fn ($sub) => $sub->whereIn('class_id', $allClassIds));
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if (! empty($filters['student_id'])) {
@@ -454,16 +472,30 @@ class AcademicAttendanceService
     {
         /** @var User $currentUser */
         $currentUser = $request->user();
-        $guardian = Guardian::where('user_id', $currentUser->id)->first();
-        $isAdmin = $currentUser->hasRole('super_admin')
-            || $currentUser->hasPermission('academic.attendance.read')
-            || $currentUser->hasPermission('academic.attendance.write');
+        $isGlobalAdmin = $currentUser->hasRole('super_admin')
+            || $currentUser->hasPermission('academic.schedule.manage')
+            || $currentUser->roles()->where('code', 'like', 'admin%')->exists();
 
         $query = Attendance::query();
 
-        if ($guardian && ! $currentUser->hasRole('super_admin') && ! $currentUser->hasPermission('academic.schedule.manage')) {
-            $childIds = $guardian->students()->pluck('students.id');
-            $query->whereIn('student_id', $childIds);
+        if (! $isGlobalAdmin) {
+            $student = Student::where('user_id', $currentUser->id)->first();
+            $guardian = Guardian::where('user_id', $currentUser->id)->first();
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+
+            if ($student) {
+                $query->where('student_id', $student->id);
+            } elseif ($guardian) {
+                $childIds = $guardian->students()->pluck('students.id');
+                $query->whereIn('student_id', $childIds);
+            } elseif ($teacher) {
+                $assignedClassIds = $teacher->teachingAssignments()->pluck('class_id');
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+                $allClassIds = $assignedClassIds->merge($homeroomClassIds)->unique();
+                $query->whereHas('student.classes', fn ($sub) => $sub->whereIn('classes.id', $allClassIds));
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if (! empty($filters['student_id'])) {

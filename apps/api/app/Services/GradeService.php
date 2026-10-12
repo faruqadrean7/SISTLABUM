@@ -8,6 +8,7 @@ use App\Models\Grade;
 use App\Models\GradeComponent;
 use App\Models\GradePeriod;
 use App\Models\Guardian;
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\User;
@@ -164,6 +165,7 @@ class GradeService
         $currentUser = $request->user();
         $student = Student::where('user_id', $currentUser->id)->first();
         $guardian = Guardian::where('user_id', $currentUser->id)->first();
+        $teacher = Teacher::where('user_id', $currentUser->id)->first();
         $isAdmin = $this->checkIsAdmin($currentUser);
 
         $query = Grade::with(['student', 'component.subject', 'period', 'enterer'])
@@ -177,6 +179,24 @@ class GradeService
                 // Wali murid melihat milik anak-anaknya
                 $childIds = $guardian->students()->pluck('students.id');
                 $query->whereIn('student_id', $childIds);
+            } elseif ($teacher) {
+                // Guru melihat nilai kelas binaannya atau mapel yang diajarnya
+                $assignedClassIds = $teacher->teachingAssignments()->pluck('class_id');
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+                $allClassIds = $assignedClassIds->merge($homeroomClassIds)->unique();
+                $assignedSubjectIds = $teacher->teachingAssignments()->pluck('subject_id')->unique();
+
+                $query->where(function ($q) use ($allClassIds, $assignedSubjectIds) {
+                    $q->whereHas('component', function ($sub) use ($assignedSubjectIds, $allClassIds) {
+                        $sub->whereIn('subject_id', $assignedSubjectIds)
+                            ->orWhereIn('class_id', $allClassIds);
+                    })->orWhereHas('student.classes', function ($sub) use ($allClassIds) {
+                        $sub->whereIn('classes.id', $allClassIds);
+                    });
+                });
+            } else {
+                // Deny-by-default untuk peran lain yang tidak memiliki otorisasi data nilai
+                $query->whereRaw('1 = 0');
             }
         }
 
