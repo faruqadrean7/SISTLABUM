@@ -39,7 +39,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
-const EXAM_ID = __ENV.CBT_EXAM_ID || '00000000-0000-0000-0000-000000000001';
+const EXAM_ID = __ENV.CBT_EXAM_ID || '01a12e18-4810-735a-beee-9caa198def6c';
 const ROOM_TOKEN = __ENV.CBT_ROOM_TOKEN || 'BIO123';
 
 export default function () {
@@ -109,9 +109,10 @@ export default function () {
   let questionIds = [];
   if (questionsRes.status === 200) {
     const qData = questionsRes.json();
-    if (qData && qData.data && Array.isArray(qData.data)) {
-      questionIds = qData.data.map(q => q.id);
-    }
+    const qList = (qData && qData.data && Array.isArray(qData.data.questions))
+      ? qData.data.questions
+      : ((qData && Array.isArray(qData.data)) ? qData.data : []);
+    questionIds = qList.map(q => q.id);
   }
 
   // 4. Simulasi Siklus Pengerjaan Soal (Answering & Heartbeat Loop)
