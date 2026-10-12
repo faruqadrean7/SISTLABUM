@@ -134,19 +134,26 @@ class User extends Authenticatable
     public function getProfileSummary(): ?array
     {
         if ($this->relationLoaded('student') && $this->student) {
+            $this->student->loadMissing('classes');
+            $activeClass = $this->student->classes->first();
+
             return [
                 'type' => 'student',
+                'id' => $this->student->id,
                 'name' => $this->student->full_name,
                 'nis' => $this->student->nis,
                 'nisn' => $this->student->nisn,
                 'gender' => $this->student->gender,
                 'status' => $this->student->status,
+                'className' => $activeClass?->name,
+                'classId' => $activeClass?->id,
             ];
         }
 
         if ($this->relationLoaded('teacher') && $this->teacher) {
             return [
                 'type' => 'teacher',
+                'id' => $this->teacher->id,
                 'name' => $this->teacher->full_name,
                 'nip' => $this->teacher->nip,
                 'nuptk' => $this->teacher->nuptk,
@@ -156,10 +163,27 @@ class User extends Authenticatable
         }
 
         if ($this->relationLoaded('guardian') && $this->guardian) {
+            $this->guardian->loadMissing('students.classes');
+            $children = $this->guardian->students ? $this->guardian->students->map(function ($s) {
+                $activeClass = $s->classes->first();
+
+                return [
+                    'id' => $s->id,
+                    'name' => $s->full_name,
+                    'nis' => $s->nis,
+                    'nisn' => $s->nisn,
+                    'gender' => $s->gender,
+                    'className' => $activeClass?->name,
+                    'classId' => $activeClass?->id,
+                ];
+            })->all() : [];
+
             return [
                 'type' => 'guardian',
+                'id' => $this->guardian->id,
                 'name' => $this->guardian->full_name,
                 'phone' => $this->guardian->phone,
+                'children' => $children,
             ];
         }
 
