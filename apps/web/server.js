@@ -681,6 +681,156 @@ const server = http.createServer(async (req, res) => {
                 });
             }
 
+            // 27. Guru: Tambah Modul Pembelajaran PDF Baru
+            if (pathname === '/api/learning-modules' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const {
+                    class_id = 4,
+                    subject_id = 2,
+                    teacher_id = 1,
+                    title,
+                    description = 'Modul ajar resmi untuk siswa.',
+                    file_name = 'modul_ajar.pdf',
+                    file_size = '3.5 MB',
+                    file_path = '/documents/modules/modul_ajar.pdf'
+                } = body;
+
+                if (!title) return sendJson(res, 400, { error: 'Judul modul wajib diisi' });
+
+                const now = new Date().toISOString().split('T')[0];
+                const ins = db.prepare(`
+                    INSERT INTO learning_modules (class_id, subject_id, teacher_id, title, description, file_name, file_size, file_path, upload_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `).run(class_id, subject_id, teacher_id, title, description, file_name, file_size, file_path, now);
+
+                return sendJson(res, 201, {
+                    success: true,
+                    id: Number(ins.lastInsertRowid),
+                    message: `Modul "${title}" berhasil diunggah dan dirilis ke kelas.`
+                });
+            }
+
+            // 28. Guru: Hapus Modul Pembelajaran
+            if (pathname.startsWith('/api/learning-modules/') && req.method === 'DELETE') {
+                const moduleId = pathname.split('/')[3];
+                db.prepare('DELETE FROM learning_modules WHERE id = ?').run(moduleId);
+                return sendJson(res, 200, { success: true, message: 'Modul berhasil dihapus.' });
+            }
+
+            // 29. Guru: Buat Jadwal Ujian Baru
+            if (pathname === '/api/exams/create' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const {
+                    title,
+                    subject_id = 2,
+                    class_id = 4,
+                    duration_minutes = 60,
+                    exam_type = 'UH',
+                    token = 'TOKEN' + Math.floor(100 + Math.random() * 900),
+                    teacher_name = 'Budi Santoso, S.Kom.',
+                    scheduled_date = new Date().toISOString().split('T')[0],
+                    scheduled_time = '08:00 - 09:30',
+                    status = 'Terjadwal'
+                } = body;
+
+                if (!title) return sendJson(res, 400, { error: 'Judul ujian wajib diisi' });
+
+                const ins = db.prepare(`
+                    INSERT INTO exams (title, subject_id, class_id, duration_minutes, status, token, exam_type, teacher_name, scheduled_date, scheduled_time, score_achieved)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+                `).run(title, subject_id, class_id, duration_minutes, status, token, exam_type, teacher_name, scheduled_date, scheduled_time);
+
+                return sendJson(res, 201, {
+                    success: true,
+                    id: Number(ins.lastInsertRowid),
+                    message: `Ujian "${title}" berhasil dijadwalkan dengan Token: ${token}`
+                });
+            }
+
+            // 30. Guru: Update Status Ujian (Aktifkan / Selesaikan / Ganti Token)
+            if (pathname === '/api/exams/update-status' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { id, status, token } = body;
+                if (!id || !status) return sendJson(res, 400, { error: 'ID dan status ujian wajib diisi' });
+
+                if (token) {
+                    db.prepare('UPDATE exams SET status = ?, token = ? WHERE id = ?').run(status, token, id);
+                } else {
+                    db.prepare('UPDATE exams SET status = ? WHERE id = ?').run(status, id);
+                }
+
+                return sendJson(res, 200, {
+                    success: true,
+                    message: `Status ujian ID ${id} diperbarui menjadi: ${status}`
+                });
+            }
+
+            // 31. Wali Kelas: Update Struktur Organisasi Kelas
+            if (pathname === '/api/class-organization/update' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { id, student_name, student_nis } = body;
+                if (!id || !student_name) return sendJson(res, 400, { error: 'ID dan nama siswa wajib diisi' });
+
+                db.prepare('UPDATE class_organization SET student_name = ?, student_nis = ? WHERE id = ?').run(student_name, student_nis || '', id);
+                return sendJson(res, 200, { success: true, message: 'Jabatan kepengurusan berhasil diperbarui.' });
+            }
+
+            // 32. Wali Kelas: Update Jadwal Piket Harian
+            if (pathname === '/api/class-duty/update' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { id, members, tasks_description } = body;
+                if (!id || !members) return sendJson(res, 400, { error: 'ID dan daftar anggota piket wajib diisi' });
+
+                const membersJson = JSON.stringify(members);
+                db.prepare('UPDATE class_duty_schedules SET member_names_json = ?, tasks_description = ? WHERE id = ?')
+                    .run(membersJson, tasks_description || 'Piket kebersihan rutin ruang kelas', id);
+
+                return sendJson(res, 200, { success: true, message: 'Jadwal piket berhasil diperbarui.' });
+            }
+
+            // 33. Wali Kelas / Guru BK: Update Poin Reward & Pelanggaran Siswa
+            if (pathname === '/api/students/points' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { student_id, reward_delta = 0, violation_delta = 0, note = '' } = body;
+                if (!student_id) return sendJson(res, 400, { error: 'ID siswa wajib diisi' });
+
+                const current = db.prepare('SELECT points_reward, points_violation, name FROM students WHERE id = ?').get(student_id);
+                if (!current) return sendJson(res, 404, { error: 'Siswa tidak ditemukan' });
+
+                const newReward = Math.max(0, current.points_reward + Number(reward_delta));
+                const newViolation = Math.max(0, current.points_violation + Number(violation_delta));
+
+                db.prepare('UPDATE students SET points_reward = ?, points_violation = ? WHERE id = ?')
+                    .run(newReward, newViolation, student_id);
+
+                return sendJson(res, 200, {
+                    success: true,
+                    student_id,
+                    student_name: current.name,
+                    points_reward: newReward,
+                    points_violation: newViolation,
+                    message: `Poin untuk ${current.name} berhasil diperbarui (Reward: ${newReward}, Pelanggaran: ${newViolation}).`
+                });
+            }
+
+            // 34. Guru: Buat Tugas LMS Baru
+            if (pathname === '/api/assignments' && req.method === 'POST') {
+                const body = await parseJsonBody(req);
+                const { class_id = 4, subject_id = 2, title, description, due_date } = body;
+                if (!title || !due_date) return sendJson(res, 400, { error: 'Judul dan tenggat waktu wajib diisi' });
+
+                const ins = db.prepare(`
+                    INSERT INTO assignments (class_id, subject_id, title, description, due_date)
+                    VALUES (?, ?, ?, ?, ?)
+                `).run(class_id, subject_id, title, description || '', due_date);
+
+                return sendJson(res, 201, {
+                    success: true,
+                    id: Number(ins.lastInsertRowid),
+                    message: `Tugas "${title}" berhasil diterbitkan ke kelas.`
+                });
+            }
+
             return sendJson(res, 404, { error: 'Endpoint API tidak ditemukan' });
         } catch (err) {
             console.error('API Error:', err);

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pusat Kendali Wali Kelas IX-A | Guru SISTLABUM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="admin-shell">
+    <!-- Sidebar Admin & Guru -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="brand-logo-icon">UM</div>
+            <div>
+                <h2 style="font-size: 15px; font-weight: 800; color: #fff;">SISTLABUM</h2>
+                <p style="font-size: 11px; color: #64748B;">Admin & Guru Dashboard</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav-group">
+            <div class="nav-group-title">Menu Utama</div>
+            <a href="/admin/index.html" class="sidebar-link">
+                <span class="icon">📊</span> Dashboard Eksekutif
+            </a>
+
+            <div class="nav-group-title">Akademik & Pengajaran</div>
+            <a href="/admin/materi.html" class="sidebar-link">
+                <span class="icon">📚</span> Modul Ajar (Upload PDF)
+            </a>
+            <a href="/admin/ujian.html" class="sidebar-link">
+                <span class="icon">📝</span> Jadwal Ujian & Token
+            </a>
+            <a href="/admin/cbt-monitor.html" class="sidebar-link">
+                <span class="icon">🖥️</span> CBT Live Monitor Lab
+            </a>
+            <a href="/admin/tugas.html" class="sidebar-link">
+                <span class="icon">📋</span> Penugasan LMS Siswa
+            </a>
+            <a href="/admin/nilai.html" class="sidebar-link">
+                <span class="icon">📈</span> Entri Nilai & E-Rapor
+            </a>
+
+            <div class="nav-group-title">Kesiswaan & Rombel</div>
+            <a href="/admin/kelas.html" class="sidebar-link active">
+                <span class="icon">🏛️</span> Wali Kelas & Piket
+            </a>
+            <a href="/admin/siswa.html" class="sidebar-link">
+                <span class="icon">👥</span> Data Siswa & Wali
+            </a>
+
+            <div class="nav-group-title">Penerimaan Siswa Baru</div>
+            <a href="/ppdb.html" class="sidebar-link">
+                <span class="icon">📄</span> Verifikasi Berkas PPDB
+            </a>
+        </nav>
+
+        <div style="padding: 16px; border-top: 1px solid #1E293B;">
+            <a href="/masuk.html" class="sidebar-link" style="color: #F87171;">
+                <span class="icon">🚪</span> Keluar Sistem
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+        <header class="portal-header" style="position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="badge badge-success" style="font-size: 12.5px;">
+                    Peran Aktif: Wali Kelas IX-A (Rombel Binaan)
+                </span>
+            </div>
+
+            <div class="header-actions">
+                <div class="user-profile-chip">
+                    <div class="avatar-circle" style="background: var(--color-primary);">AH</div>
+                    <div class="user-text-meta">
+                        <div class="user-name">Ahmad Hidayat, M.Sc.</div>
+                        <div class="user-role">Wali Kelas IX-A & Guru Matematika</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-container">
+            <div class="page-header-row">
+                <div class="page-title-block">
+                    <div class="breadcrumb-trail">
+                        <a href="/admin/index.html">Admin & Guru</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span>Manajemen Rombel</span>
+                    </div>
+                    <h1>Pusat Kendali Administrasi Kelas IX-A 🏛️</h1>
+                    <p>Atur struktur pengurus kelas, jadwal piket kebersihan harian, serta pembinaan poin disiplin & karakter siswa.</p>
+                </div>
+                <div>
+                    <span class="badge badge-info" style="font-size: 13px; padding: 6px 14px;">
+                        Ruang Belajar: Gedung B Lt. 3 (R.301) • 32 Siswa
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tab Navigasi Wali Kelas -->
+            <div class="tabs-nav">
+                <button class="tab-btn active" id="btn-tab-org" onclick="switchWalasTab('org')">
+                    👑 Struktur Organisasi Pengurus Kelas
+                </button>
+                <button class="tab-btn" id="btn-tab-duty" onclick="switchWalasTab('duty')">
+                    🧹 Jadwal Piket Kebersihan Harian (Senin - Sabtu)
+                </button>
+                <button class="tab-btn" id="btn-tab-points" onclick="switchWalasTab('points')">
+                    ⭐ Pembinaan Poin Karakter (Reward & Disiplin)
+                </button>
+            </div>
+
+            <!-- TAB 1: STRUKTUR ORGANISASI KELAS -->
+            <section id="tab-walas-org">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Penetapan Susunan Pengurus Kelas IX-A</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                                Perubahan pengurus yang Anda simpan di sini akan langsung tampil pada portal siswa di halaman informasi kelas.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Jabatan Organisasi</th>
+                                    <th>Nama Siswa Terpilih</th>
+                                    <th>NIS</th>
+                                    <th style="text-align: right;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="org-table-body">
+                                <!-- Diisi dinamis -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: JADWAL PIKET KEBERSIHAN HARIAN -->
+            <section id="tab-walas-duty" style="display: none;">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Pengaturan Jadwal Piket Harian & SOP Kelas</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                                Siswa akan melihat giliran piket ini setiap hari di dashboard beranda mereka.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="duty-schedule-list" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Diisi dinamis -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: POIN REWARD & PELANGGARAN SISWA -->
+            <section id="tab-walas-points" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Buku Catatan Disiplin & Poin Karakter (32 Siswa IX-A)</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                                Berikan apresiasi reward atas prestasi/inisiatif atau catat poin pelanggaran tata tertib sekolah.
+                            </p>
+                        </div>
+                        <div style="width: 260px;">
+                            <input type="text" id="student-search-input" class="form-control" placeholder="Cari nama siswa..." onkeyup="filterStudents()"/>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px; text-align: center;">No</th>
+                                    <th>Nama Peserta Didik</th>
+                                    <th>NIS</th>
+                                    <th style="text-align: center;">Poin Reward (Prestasi)</th>
+                                    <th style="text-align: center;">Poin Pelanggaran</th>
+                                    <th style="text-align: right;">Aksi Pemberian Poin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="points-table-body">
+                                <!-- Diisi dinamis -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal Edit Jabatan Organisasi -->
+    <div id="edit-org-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #fff; width: 100%; max-width: 480px; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); overflow: hidden;">
+            <div style="padding: 16px 20px; background: var(--color-navy); color: #fff; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="org-modal-title" style="font-size: 16px; font-weight: 700; color: #fff;">Pilih Siswa untuk Jabatan</h3>
+                <button onclick="closeEditOrgModal()" style="background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer;">&times;</button>
+            </div>
+            <form onsubmit="handleSaveOrg(event)" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <input type="hidden" id="org-item-id"/>
+                <div>
+                    <label class="form-label">Pilih Siswa dari Kelas IX-A *</label>
+                    <select id="org-student-select" class="form-control" required onchange="onOrgStudentSelect(this)">
+                        <!-- Diisi daftar siswa -->
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">NIS Siswa</label>
+                    <input type="text" id="org-student-nis" class="form-control" readonly style="background: #F8FAFC;"/>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditOrgModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Jabatan ➔</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Kurang Poin Siswa -->
+    <div id="point-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #fff; width: 100%; max-width: 460px; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); overflow: hidden;">
+            <div style="padding: 16px 20px; background: var(--color-navy); color: #fff; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="point-modal-title" style="font-size: 16px; font-weight: 700; color: #fff;">Pemberian Poin Karakter</h3>
+                <button onclick="closePointModal()" style="background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer;">&times;</button>
+            </div>
+            <form onsubmit="handleSavePoint(event)" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <input type="hidden" id="point-student-id"/>
+                <input type="hidden" id="point-type"/>
+                <div id="point-student-name" style="font-weight: 800; font-size: 15px; color: var(--color-navy);"></div>
+                <div>
+                    <label class="form-label" id="point-delta-label">Jumlah Poin Tambahan</label>
+                    <input type="number" id="point-delta" class="form-control" required min="1" max="50" value="5"/>
+                </div>
+                <div>
+                    <label class="form-label">Keterangan / Alasan Catatan</label>
+                    <input type="text" id="point-note" class="form-control" placeholder="Contoh: Juara 2 Lomba Karya Ilmiah / Terlambat upacara"/>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closePointModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="point-submit-btn">Simpan Poin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let classData = null;
+        let classmatesList = [];
+
+        async function initPage() {
+            try {
+                classData = await API.getClassInfo(4);
+                classmatesList = classData.classmates || [];
+
+                renderOrg(classData.organization || []);
+                renderDuty(classData.duty_schedules || []);
+                renderPoints(classmatesList);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function switchWalasTab(tab) {
+            document.querySelectorAll('.tabs-nav .tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-walas-org').style.display = 'none';
+            document.getElementById('tab-walas-duty').style.display = 'none';
+            document.getElementById('tab-walas-points').style.display = 'none';
+
+            if (tab === 'org') {
+                document.getElementById('btn-tab-org').classList.add('active');
+                document.getElementById('tab-walas-org').style.display = 'block';
+            } else if (tab === 'duty') {
+                document.getElementById('btn-tab-duty').classList.add('active');
+                document.getElementById('tab-walas-duty').style.display = 'block';
+            } else if (tab === 'points') {
+                document.getElementById('btn-tab-points').classList.add('active');
+                document.getElementById('tab-walas-points').style.display = 'block';
+            }
+        }
+
+        // 1. Organisasi Kelas
+        function renderOrg(org) {
+            const tbody = document.getElementById('org-table-body');
+            tbody.innerHTML = '';
+
+            org.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 700; color: var(--color-navy); font-size: 14px;">
+                        ${item.role_title}
+                    </td>
+                    <td style="font-size: 14px;">
+                        <strong>${item.student_name}</strong>
+                    </td>
+                    <td style="font-family: var(--font-mono); font-size: 13px;">${item.student_nis || '-'}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-outline btn-xs" onclick="openEditOrgModal(${item.id}, '${item.role_title.replace(/'/g, "\\'")}', '${item.student_name.replace(/'/g, "\\'")}', '${item.student_nis || ''}')">
+                            ✏️ Ganti Siswa
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openEditOrgModal(id, roleTitle, currentName, currentNis) {
+            document.getElementById('org-item-id').value = id;
+            document.getElementById('org-modal-title').textContent = `Pilih Pengurus: ${roleTitle}`;
+            
+            const select = document.getElementById('org-student-select');
+            select.innerHTML = '<option value="">-- Pilih Salah Satu Siswa --</option>';
+            classmatesList.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.dataset.nis = s.nis;
+                opt.textContent = `${s.name} (${s.nis})`;
+                if (s.name === currentName) opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('org-student-nis').value = currentNis;
+            document.getElementById('edit-org-modal').style.display = 'flex';
+        }
+
+        function onOrgStudentSelect(el) {
+            const opt = el.options[el.selectedIndex];
+            document.getElementById('org-student-nis').value = opt.dataset.nis || '';
+        }
+
+        function closeEditOrgModal() {
+            document.getElementById('edit-org-modal').style.display = 'none';
+        }
+
+        async function handleSaveOrg(e) {
+            e.preventDefault();
+            const id = Number(document.getElementById('org-item-id').value);
+            const student_name = document.getElementById('org-student-select').value;
+            const student_nis = document.getElementById('org-student-nis').value;
+
+            try {
+                const res = await API.updateClassOrganization({ id, student_name, student_nis });
+                App.toast(res.message || 'Jabatan berhasil diperbarui!', 'success');
+                closeEditOrgModal();
+                classData = await API.getClassInfo(4);
+                renderOrg(classData.organization || []);
+            } catch (err) {
+                App.toast('Gagal memperbarui jabatan: ' + err.message, 'error');
+            }
+        }
+
+        // 2. Jadwal Piket Harian
+        function renderDuty(duties) {
+            const list = document.getElementById('duty-schedule-list');
+            list.innerHTML = '';
+
+            duties.forEach(d => {
+                const card = document.createElement('div');
+                card.style.cssText = 'padding: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: #fff;';
+                
+                const membersStr = (d.members || []).join(', ');
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <h4 style="font-size: 16px; font-weight: 800; color: var(--color-navy); margin: 0;">
+                            Regu Piket: ${d.day_name}
+                        </h4>
+                        <span class="badge badge-teal">${(d.members || []).length} Petugas</span>
+                    </div>
+                    <div style="font-size: 13.5px; margin-bottom: 6px;">
+                        <strong>Anggota Piket:</strong> <span style="color: var(--text-main);">${membersStr}</span>
+                    </div>
+                    <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">
+                        <strong>SOP Tugas:</strong> ${d.tasks_description}
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="btn btn-outline btn-xs" onclick="promptEditDuty(${d.id}, '${d.day_name}', '${membersStr.replace(/'/g, "\\'")}', '${d.tasks_description.replace(/'/g, "\\'")}')">
+                            ✏️ Atur Anggota & Tugas
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        async function promptEditDuty(id, dayName, currentMembers, currentDesc) {
+            const newMembersStr = prompt(`Masukkan nama-nama siswa piket hari ${dayName} (pisahkan dengan koma):`, currentMembers);
+            if (!newMembersStr) return;
+
+            const membersArr = newMembersStr.split(',').map(s => s.trim()).filter(Boolean);
+            try {
+                const res = await API.updateClassDuty({ id, members: membersArr, tasks_description: currentDesc });
+                App.toast(res.message || 'Jadwal piket berhasil diperbarui', 'success');
+                classData = await API.getClassInfo(4);
+                renderDuty(classData.duty_schedules || []);
+            } catch (err) {
+                App.toast('Gagal memperbarui jadwal piket: ' + err.message, 'error');
+            }
+        }
+
+        // 3. Poin Karakter Siswa
+        function renderPoints(students) {
+            const tbody = document.getElementById('points-table-body');
+            tbody.innerHTML = '';
+
+            students.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                    <td>
+                        <strong style="color: var(--color-navy);">${s.name}</strong>
+                    </td>
+                    <td style="font-family: var(--font-mono); font-size: 13px;">${s.nis}</td>
+                    <td style="text-align: center;">
+                        <span class="badge badge-amber" style="font-weight: 800; font-size: 13px;">+${s.points_reward}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge ${s.points_violation === 0 ? 'badge-success' : 'badge-rose'}" style="font-weight: 700;">
+                            ${s.points_violation}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                            <button class="btn btn-teal btn-xs" onclick="openPointModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', 'reward')">
+                                + Reward
+                            </button>
+                            <button class="btn btn-outline btn-xs" style="color: var(--color-rose); border-color: var(--color-rose);" onclick="openPointModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', 'violation')">
+                                - Pelanggaran
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterStudents() {
+            const q = document.getElementById('student-search-input').value.toLowerCase();
+            const filtered = classmatesList.filter(s => s.name.toLowerCase().includes(q) || s.nis.includes(q));
+            renderPoints(filtered);
+        }
+
+        function openPointModal(studentId, name, type) {
+            document.getElementById('point-student-id').value = studentId;
+            document.getElementById('point-type').value = type;
+            document.getElementById('point-student-name').textContent = `Siswa: ${name}`;
+
+            if (type === 'reward') {
+                document.getElementById('point-modal-title').textContent = '⭐ Tambah Poin Reward / Prestasi';
+                document.getElementById('point-delta-label').textContent = 'Jumlah Poin Reward (+)';
+                document.getElementById('point-note').placeholder = 'Contoh: Juara 1 Robotika / Aktif Diskusi Kelas';
+            } else {
+                document.getElementById('point-modal-title').textContent = '⚠️ Catat Poin Pelanggaran Disiplin';
+                document.getElementById('point-delta-label').textContent = 'Jumlah Poin Pelanggaran (+)';
+                document.getElementById('point-note').placeholder = 'Contoh: Terlambat masuk kelas / Tidak memakai dasi';
+            }
+
+            document.getElementById('point-modal').style.display = 'flex';
+        }
+
+        function closePointModal() {
+            document.getElementById('point-modal').style.display = 'none';
+        }
+
+        async function handleSavePoint(e) {
+            e.preventDefault();
+            const student_id = Number(document.getElementById('point-student-id').value);
+            const type = document.getElementById('point-type').value;
+            const delta = Number(document.getElementById('point-delta').value);
+            const note = document.getElementById('point-note').value;
+
+            try {
+                const res = await API.updateStudentPoints({
+                    student_id,
+                    reward_delta: type === 'reward' ? delta : 0,
+                    violation_delta: type === 'violation' ? delta : 0,
+                    note
+                });
+
+                App.toast(res.message || 'Poin berhasil disimpan!', 'success');
+                closePointModal();
+                
+                // Refresh data
+                classData = await API.getClassInfo(4);
+                classmatesList = classData.classmates || [];
+                renderPoints(classmatesList);
+            } catch (err) {
+                App.toast('Gagal memperbarui poin: ' + err.message, 'error');
+            }
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

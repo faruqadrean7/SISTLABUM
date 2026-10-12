@@ -88,7 +88,19 @@ const API = {
     getClassInfo: (classId = 4) => API.get(`/class-info?class_id=${classId}`),
 
     // 11. E-Rapor Komprehensif
-    getReportCard: (studentId = 1) => API.get(`/report-card?student_id=${studentId}`)
+    getReportCard: (studentId = 1) => API.get(`/report-card?student_id=${studentId}`),
+
+    // 12. Guru & Wali Kelas Control Methods
+    createLearningModule: (data) => API.post('/learning-modules', data),
+    deleteLearningModule: (id) => {
+        return fetch(`/api/learning-modules/${id}`, { method: 'DELETE' }).then(res => res.json());
+    },
+    createExam: (data) => API.post('/exams/create', data),
+    updateExamStatus: (data) => API.post('/exams/update-status', data),
+    updateClassOrganization: (data) => API.post('/class-organization/update', data),
+    updateClassDuty: (data) => API.post('/class-duty/update', data),
+    updateStudentPoints: (data) => API.post('/students/points', data),
+    createAssignment: (data) => API.post('/assignments', data)
 };
 
 window.API = API;
