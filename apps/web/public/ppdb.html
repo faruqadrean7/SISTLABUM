@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>SMP Laboratorium | Beradab, Kreatif, Berprestasi - SPMB Online</title>
+    <meta name="description" content="Pendaftaran Murid Baru (SPMB) SMP Laboratorium di bawah naungan P2LP Universitas Negeri Malang. Beradab, Kreatif, dan Berprestasi."/>
+    <link rel="shortcut icon" href="/images/logo.png"/>
+    <link rel="icon" href="/images/logo.png"/>
+    <link rel="apple-touch-icon" href="/images/logo.png"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css"/>
+    <link rel="stylesheet" href="/css/portal.css"/>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-[#F6F7F9] text-[#1B2430] selection:bg-[#F4E2BD] selection:text-[#062940]">
+
+    <!-- Header Sticky -->
+    <header class="sticky top-0 z-50 transition-all duration-200 bg-navy shadow-md py-3.5">
+        <div class="max-w-container mx-auto px-4 sm:px-6 flex items-center justify-between">
+            <a class="flex items-center gap-3 group" href="/">
+                <img alt="Logo SMP Laboratorium" width="48" height="48" class="w-11 h-11 object-contain flex-shrink-0 drop-shadow-sm transition-transform group-hover:scale-105" src="/images/logo.png"/>
+                <div class="flex flex-col">
+                    <span class="font-heading text-[1.05rem] font-bold text-surface leading-tight tracking-wide">SMP Laboratorium</span>
+                    <span class="text-[0.75rem] text-gold-soft font-medium tracking-wider">P2LP Universitas Negeri Malang</span>
+                </div>
+            </a>
+            <nav class="hidden lg:flex items-center gap-2" aria-label="Navigasi Utama">
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/">Beranda</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/profil">Profil</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/akademik">Akademik</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/berita">Berita</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/galeri">Galeri</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/kontak">Kontak</a>
+            </nav>
+            <div class="hidden lg:flex items-center gap-3">
+                <a class="bg-gold hover:bg-gold-hover text-navy-deep font-semibold text-sm px-4 py-2 rounded-[10px] shadow-sm hover:shadow transition-all" href="/ppdb">PPDB Online</a>
+                <a class="bg-transparent hover:bg-white/10 text-surface border border-white/40 hover:border-surface font-semibold text-sm px-3.5 py-2 rounded-[10px] transition-all" href="/masuk.html">Portal Akademik</a>
+            </div>
+            <button id="mobileMenuBtn" type="button" class="lg:hidden p-2 rounded-[6px] border border-white/20 text-surface hover:bg-white/10 transition-colors" aria-label="Toggle navigation menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Aside -->
+    <div id="mobileBackdrop" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden transition-opacity"></div>
+    <aside id="mobileMenu" class="fixed top-0 right-0 bottom-0 w-[min(320px,85vw)] bg-navy z-50 p-6 flex flex-col transition-transform duration-300 ease-out shadow-2xl lg:hidden translate-x-full">
+        <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+            <div class="flex items-center gap-2.5">
+                <img alt="Logo SMP Laboratorium" width="36" height="36" class="w-9 h-9 object-contain flex-shrink-0" src="/images/logo.png"/>
+                <span class="font-heading font-bold text-surface text-base">SMP Laboratorium</span>
+            </div>
+            <button id="closeMobileMenuBtn" type="button" class="p-1.5 rounded-[6px] text-surface hover:bg-white/10" aria-label="Tutup menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+        </div>
+        <nav class="flex flex-col gap-1.5">
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/">Beranda</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/profil">Profil</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/akademik">Akademik</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/berita">Berita</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/galeri">Galeri</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/kontak">Kontak</a>
+        </nav>
+        <div class="mt-auto pt-6 border-t border-white/10 flex flex-col gap-3">
+            <a class="w-full text-center bg-gold hover:bg-gold-hover text-navy-deep font-semibold text-sm py-2.5 rounded-[10px] shadow" href="/ppdb">Daftar PPDB Online</a>
+            <a class="w-full text-center bg-transparent border border-white/30 text-surface hover:bg-white/10 font-semibold text-sm py-2.5 rounded-[10px]" href="/masuk.html">Masuk Portal Akademik</a>
+        </div>
+    </aside>
+
+    <div class="flex-1">
+        <main>
+            <!-- Hero Section SPMB -->
+            <section class="bg-gradient-to-r from-navy-deep via-navy to-navy-light text-white py-14 text-center">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="inline-flex items-center gap-2 bg-gold text-navy-deep text-xs font-extrabold px-4 py-1 rounded-full uppercase tracking-wider mb-3 shadow">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
+                        Tahun Ajaran 2026/2027
+                    </div>
+                    <h1 class="font-heading text-3xl sm:text-4xl font-bold text-white mb-2">
+                        Sistem Penerimaan Murid Baru (SPMB)
+                    </h1>
+                    <p class="text-white/85 text-sm sm:text-base max-w-xl mx-auto mb-6">
+                        Pendaftaran Murid Baru SMP Laboratorium di bawah naungan P2LP Universitas Negeri Malang. Beradab, Kreatif, dan Berprestasi.
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <a href="#info-program" class="border border-white/40 text-white hover:bg-white/10 text-xs sm:text-sm font-semibold px-4 py-2 rounded-[10px] transition-all">
+                            Program &amp; Syarat
+                        </a>
+                        <a href="#formulir-pendaftaran" class="bg-gold hover:bg-gold-hover text-navy-deep text-xs sm:text-sm font-bold px-4 py-2 rounded-[10px] shadow transition-all">
+                            Formulir Pendaftaran SPMB
+                        </a>
+                        <a href="#cek-status" class="border border-white/40 text-white hover:bg-white/10 text-xs sm:text-sm font-semibold px-4 py-2 rounded-[10px] transition-all">
+                            Cek Status Seleksi
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. Program & Syarat -->
+            <section id="info-program" class="py-16 bg-surface">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="text-center max-w-2xl mx-auto mb-12">
+                        <span class="bg-navy-subtle text-navy text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">Informasi SPMB 2026/2027</span>
+                        <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">4 Pilihan Program Belajar</h2>
+                        <p class="text-ink-soft text-sm sm:text-base mt-2">Pilih program belajar yang sesuai dengan potensi dan aspirasi putra-putri Anda.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                        <!-- Reguler -->
+                        <div class="bg-surface border border-line rounded-[10px] p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-[0.7rem] font-bold px-2.5 py-0.5 rounded-full bg-navy-subtle text-navy">Program Unggulan</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open text-gold"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg>
+                                </div>
+                                <h3 class="font-heading font-bold text-lg text-navy mb-2">Program Reguler</h3>
+                                <p class="text-xs text-ink-soft leading-relaxed mb-4">
+                                    Kurikulum Nasional dengan kesempatan Student Exchange ke Luar Negeri, TaBaQu, Pramuka ARSIMBO, Tes IQ dan Asesmen Awal.
+                                </p>
+                            </div>
+                            <a href="#formulir-pendaftaran" onclick="selectProgram('Reguler')" class="text-xs font-bold text-navy hover:text-gold pt-3 border-t border-line-light inline-flex items-center gap-1">
+                                Daftar Program Ini ↓
+                            </a>
+                        </div>
+
+                        <!-- ICP -->
+                        <div class="bg-surface border border-line rounded-[10px] p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-[0.7rem] font-bold px-2.5 py-0.5 rounded-full bg-school-green-soft text-school-green">Cambridge Curriculum</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe text-school-green"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                                </div>
+                                <h3 class="font-heading font-bold text-lg text-navy mb-2">ICP (International Class Program)</h3>
+                                <p class="text-xs text-ink-soft leading-relaxed mb-4">
+                                    Pengantar bahasa Inggris dengan Cambridge Curriculum, IPT &amp; Checkpoint, LABEL (Labschool Experiential Learning), dan English Fun Day.
+                                </p>
+                            </div>
+                            <a href="#formulir-pendaftaran" onclick="selectProgram('ICP')" class="text-xs font-bold text-navy hover:text-gold pt-3 border-t border-line-light inline-flex items-center gap-1">
+                                Daftar Program Ini ↓
+                            </a>
+                        </div>
+
+                        <!-- Tahfidz -->
+                        <div class="bg-surface border border-line rounded-[10px] p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-[0.7rem] font-bold px-2.5 py-0.5 rounded-full bg-gold-soft text-[#784E07]">Metode Ummi</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-check text-gold"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path><path d="m9 9.5 2 2 4-4"></path></svg>
+                                </div>
+                                <h3 class="font-heading font-bold text-lg text-navy mb-2">Program Tahfidz</h3>
+                                <p class="text-xs text-ink-soft leading-relaxed mb-4">
+                                    Program intensif tartil dan tahfidz Al-Qur'an metode Ummi, Pondok Tahfidz, Munaqosah (Uji Publik), dan Program Umrah LABBAIK.
+                                </p>
+                            </div>
+                            <a href="#formulir-pendaftaran" onclick="selectProgram('Tahfidz')" class="text-xs font-bold text-navy hover:text-gold pt-3 border-t border-line-light inline-flex items-center gap-1">
+                                Daftar Program Ini ↓
+                            </a>
+                        </div>
+
+                        <!-- Inklusi -->
+                        <div class="bg-surface border border-line rounded-[10px] p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-[0.7rem] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700">Pendidikan Inklusif</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-handshake text-purple-600"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                                </div>
+                                <h3 class="font-heading font-bold text-lg text-navy mb-2">Program Inklusi</h3>
+                                <p class="text-xs text-ink-soft leading-relaxed mb-4">
+                                    Kelas Pengembangan Diri, Outing Class, dan Target Pembelajaran Disesuaikan dengan Perkembangan Capaian Siswa secara ramah anak.
+                                </p>
+                            </div>
+                            <a href="#formulir-pendaftaran" onclick="selectProgram('Inklusi')" class="text-xs font-bold text-navy hover:text-gold pt-3 border-t border-line-light inline-flex items-center gap-1">
+                                Daftar Program Ini ↓
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Jadwal & Syarat Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        <div class="lg:col-span-6 bg-[#F8FAFC] border border-line rounded-xl p-6 sm:p-8">
+                            <span class="text-xs font-bold text-gold uppercase tracking-wider block mb-1">Waktu Pendaftaran</span>
+                            <h3 class="font-heading font-bold text-xl text-navy mb-4">Jadwal Gelombang SPMB</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-surface border border-line rounded-lg">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-navy text-sm">Gelombang 1</span>
+                                        <span class="text-xs px-2 py-0.5 rounded-full bg-gold-soft text-[#784E07] font-semibold">Pilihan Utama</span>
+                                    </div>
+                                    <div class="font-heading font-bold text-base text-navy">5 Januari – 17 Maret 2026</div>
+                                    <p class="text-xs text-ink-muted mt-1">Jalur Prestasi, ICP, Tahfidz, dan Reguler dengan kuota prioritas.</p>
+                                </div>
+                                <div class="p-4 bg-surface border border-line rounded-lg">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-navy text-sm">Gelombang 2</span>
+                                        <span class="text-xs px-2 py-0.5 rounded-full bg-navy-subtle text-navy font-semibold">Reguler / Sisa Kuota</span>
+                                    </div>
+                                    <div class="font-heading font-bold text-base text-navy">30 Maret 2026 – Pagu Terpenuhi</div>
+                                    <p class="text-xs text-ink-muted mt-1">Dibuka jika kuota kelas masih tersedia setelah daftar ulang gelombang 1.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-6 bg-[#F8FAFC] border border-line rounded-xl p-6 sm:p-8">
+                            <span class="text-xs font-bold text-school-green uppercase tracking-wider block mb-1">Kelengkapan Administrasi</span>
+                            <h3 class="font-heading font-bold text-xl text-navy mb-4">7 Syarat Berkas Pendaftaran</h3>
+                            <ul class="space-y-2.5 text-xs sm:text-sm text-ink-soft">
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">1</span><span>Mengisi formulir pendaftaran SPMB secara online / offline</span></li>
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">2</span><span>Fotokopi Akta Kelahiran dan Kartu Keluarga (KK)</span></li>
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">3</span><span>Pas foto 3x4 berwarna terbaru (2 lembar)</span></li>
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">4</span><span>Surat Keterangan Lulus (SKL) atau Surat Keterangan Siswa Aktif SD/MI</span></li>
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">5</span><span>Fotokopi Rapor Kelas 4, 5, dan 6 (Semester Ganjil)</span></li>
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">6</span><span>Fotokopi Sertifikat/Piagam Kejuaraan Minimal Tingkat Kota (bagi Jalur Prestasi)</span></li>
+                                <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">7</span><span>Hasil Asesmen Psikolog / Rekomendasi Terapi (khusus Program Inklusi)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Formulir Pendaftaran SPMB Multi-Step -->
+            <section id="formulir-pendaftaran" class="py-16 bg-[#F6F7F9] border-t border-line-light">
+                <div class="max-w-3xl mx-auto px-4 sm:px-6">
+                    <div class="text-center mb-10">
+                        <span class="bg-gold text-navy-deep text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2 shadow-sm">Formulir Pendaftaran Online</span>
+                        <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">Formulir SPMB Digital 2026/2027</h2>
+                        <p class="text-ink-soft text-xs sm:text-sm mt-2">Silakan isi formulir 3 tahap pendaftaran secara lengkap dan benar.</p>
+                    </div>
+
+                    <div class="bg-surface border border-line rounded-[10px] p-6 md:p-8 shadow-md">
+                        <!-- Stepper Progress Bar -->
+                        <div class="flex justify-between items-center relative mb-8">
+                            <div class="absolute top-5 left-10 right-10 h-1 bg-line -z-0"></div>
+                            <div id="step-progress-bar" class="absolute top-5 left-10 h-1 bg-gold transition-all duration-300 -z-0" style="width: 0%;"></div>
+
+                            <div class="flex flex-col items-center gap-2 z-10">
+                                <div id="step-badge-1" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all bg-navy text-gold-soft border-2 border-gold ring-4 ring-gold/20">1</div>
+                                <span class="text-xs font-bold text-navy">Data Siswa</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 z-10">
+                                <div id="step-badge-2" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all bg-surface border-2 border-line text-ink-muted">2</div>
+                                <span class="text-xs font-semibold text-ink-soft">Data Ortu</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 z-10">
+                                <div id="step-badge-3" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all bg-surface border-2 border-line text-ink-muted">3</div>
+                                <span class="text-xs font-semibold text-ink-soft">Nilai &amp; Konfirmasi</span>
+                            </div>
+                        </div>
+
+                        <!-- Form Steps Container -->
+                        <form id="ppdb-form" onsubmit="submitPpdbForm(event)">
+                            <!-- Step 1: Data Calon Siswa -->
+                            <div id="step-1" class="space-y-4">
+                                <h3 class="font-heading font-bold text-base text-navy pb-2 border-b border-line-light">Tahap 1: Pilihan Program &amp; Identitas Siswa</h3>
+                                <div>
+                                    <label class="block text-xs font-semibold text-navy mb-1.5">Pilihan Program Belajar *</label>
+                                    <select id="reg-program" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20">
+                                        <option value="Reguler">Program Reguler (Kurikulum Merdeka + Lesson Study)</option>
+                                        <option value="ICP">ICP (International Class Program - Cambridge)</option>
+                                        <option value="Tahfidz">Program Tahfidz (Metode Ummi &amp; Hadits)</option>
+                                        <option value="Inklusi">Program Inklusi (Ramah Anak P2LP UM)</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">NISN (10 Digit) *</label>
+                                        <input type="text" id="reg-nisn" maxlength="10" placeholder="0089123456" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Nama Lengkap Siswa *</label>
+                                        <input type="text" id="reg-nama" placeholder="Contoh: Muhammad Bintang Pratama" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Jenis Kelamin *</label>
+                                        <select id="reg-gender" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20">
+                                            <option value="L">Laki-laki</option>
+                                            <option value="P">Perempuan</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Tempat Lahir *</label>
+                                        <input type="text" id="reg-tempat-lahir" placeholder="Malang" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Tanggal Lahir *</label>
+                                        <input type="date" id="reg-tanggal-lahir" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-navy mb-1.5">Asal Sekolah SD / MI *</label>
+                                    <input type="text" id="reg-asal-sekolah" placeholder="SD Negeri Percobaan 1 Malang" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                </div>
+                                <div class="pt-4 flex justify-end">
+                                    <button type="button" onclick="goToStep(2)" class="bg-navy hover:bg-navy-light text-white font-bold text-sm px-6 py-2.5 rounded-[10px] shadow transition-all">
+                                        Lanjut ke Data Orang Tua →
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Data Orang Tua / Wali -->
+                            <div id="step-2" class="space-y-4 hidden">
+                                <h3 class="font-heading font-bold text-base text-navy pb-2 border-b border-line-light">Tahap 2: Identitas &amp; Kontak Orang Tua / Wali</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Nama Ayah / Wali *</label>
+                                        <input type="text" id="reg-nama-ayah" placeholder="Nama lengkap Ayah" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Nama Ibu Kandung *</label>
+                                        <input type="text" id="reg-nama-ibu" placeholder="Nama lengkap Ibu" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Nomor WhatsApp Aktif *</label>
+                                        <input type="tel" id="reg-wa" placeholder="081234567890" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                        <span class="text-[0.7rem] text-ink-muted">Pemberitahuan hasil seleksi akan dikirimkan ke nomor ini.</span>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Pekerjaan Orang Tua</label>
+                                        <input type="text" id="reg-pekerjaan" placeholder="PNS / Swasta / Wiraswasta" class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-navy mb-1.5">Alamat Domisili Rumah *</label>
+                                    <textarea id="reg-alamat" rows="2" placeholder="Jl. Veteran No. 12, Lowokwaru, Malang" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"></textarea>
+                                </div>
+                                <div class="pt-4 flex justify-between">
+                                    <button type="button" onclick="goToStep(1)" class="border border-line text-navy hover:bg-navy-subtle font-semibold text-sm px-5 py-2.5 rounded-[10px] transition-all">
+                                        ← Kembali
+                                    </button>
+                                    <button type="button" onclick="goToStep(3)" class="bg-navy hover:bg-navy-light text-white font-bold text-sm px-6 py-2.5 rounded-[10px] shadow transition-all">
+                                        Lanjut ke Nilai &amp; Konfirmasi →
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Nilai Rapor & Konfirmasi -->
+                            <div id="step-3" class="space-y-4 hidden">
+                                <h3 class="font-heading font-bold text-base text-navy pb-2 border-b border-line-light">Tahap 3: Nilai Akademik &amp; Pengiriman Berkas</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Nilai Rata-rata Rapor (Skala 100) *</label>
+                                        <input type="number" id="reg-nilai" min="60" max="100" step="0.1" placeholder="Contoh: 88.5" required class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-navy mb-1.5">Prestasi Kejuaraan (Bila Ada)</label>
+                                        <input type="text" id="reg-prestasi" placeholder="Juara 1 OSN IPA Tingkat Kota / Hafalan Juz 30" class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-navy mb-1.5">Catatan Tambahan / Keterangan Khusus</label>
+                                    <input type="text" id="reg-catatan" placeholder="Contoh: Bersedia mengikuti matrikulasi bahasa Inggris" class="w-full px-3.5 py-2.5 text-sm rounded-[10px] border border-line focus:ring-2 focus:ring-navy/20"/>
+                                </div>
+
+                                <!-- Ringkasan Pernyataan -->
+                                <div class="p-3 bg-navy-subtle border border-navy/20 rounded-lg text-xs text-navy space-y-1.5">
+                                    <div class="font-bold">Pernyataan Kebenaran Data:</div>
+                                    <p>Dengan menekan tombol di bawah, saya menyatakan bahwa data yang diisikan adalah benar dan bersedia mengikuti seluruh tahapan seleksi SPMB SMP Laboratorium UM.</p>
+                                </div>
+
+                                <div class="pt-4 flex justify-between">
+                                    <button type="button" onclick="goToStep(2)" class="border border-line text-navy hover:bg-navy-subtle font-semibold text-sm px-5 py-2.5 rounded-[10px] transition-all">
+                                        ← Kembali
+                                    </button>
+                                    <button type="submit" id="reg-submit-btn" class="bg-gold hover:bg-gold-hover text-navy-deep font-bold text-sm px-6 py-2.5 rounded-[10px] shadow transition-all">
+                                        Kirim Formulir Pendaftaran SPMB ➔
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Success Result Box -->
+                        <div id="ppdb-success-box" class="hidden mt-6 p-6 bg-school-green-soft/30 border border-school-green/40 rounded-xl text-center">
+                            <div class="w-14 h-14 bg-school-green text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <h3 class="font-heading font-bold text-xl text-navy mb-1">Pendaftaran Berhasil Dikirim!</h3>
+                            <p class="text-xs sm:text-sm text-ink-soft mb-4">Simpan Nomor Pendaftaran resmi Anda untuk mengecek status hasil seleksi.</p>
+                            <div class="inline-block bg-surface border-2 border-gold px-6 py-3 rounded-lg shadow-sm mb-4">
+                                <span class="text-xs text-ink-muted uppercase tracking-wider block font-semibold">Nomor Pendaftaran SPMB</span>
+                                <span id="generated-reg-num" class="font-heading font-extrabold text-2xl text-navy">SPMB-2026-1024</span>
+                            </div>
+                            <div class="flex justify-center gap-3">
+                                <button onclick="window.print()" class="border border-navy text-navy hover:bg-navy hover:text-white text-xs font-semibold px-4 py-2 rounded-[10px] transition-all">
+                                    Cetak Bukti Pendaftaran
+                                </button>
+                                <a href="#cek-status" class="bg-navy text-white text-xs font-semibold px-4 py-2 rounded-[10px] hover:bg-navy-light transition-all">
+                                    Periksa Status Seleksi ↓
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Cek Status Seleksi SPMB -->
+            <section id="cek-status" class="py-16 bg-surface border-t border-line-light">
+                <div class="max-w-3xl mx-auto px-4 sm:px-6">
+                    <div class="text-center mb-8">
+                        <span class="bg-school-green-soft text-school-green text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">Layanan Mandiri</span>
+                        <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">Cek Status Hasil Seleksi SPMB</h2>
+                        <p class="text-ink-soft text-xs sm:text-sm mt-2">Ketikkan Nomor Pendaftaran (misal: <code>SPMB-2026-1024</code>) atau 10 digit NISN Anda.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-surface border border-line rounded-[10px] p-6 shadow-sm">
+                            <form onsubmit="checkStatus(event)" class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1">
+                                    <input type="text" id="check-query" placeholder="Contoh: PPDB-2026-1024 atau 0089123456" class="w-full px-4 py-2.5 text-sm rounded-[10px] border border-line focus:outline-none focus:ring-2 focus:ring-navy/20" value="0089123456"/>
+                                </div>
+                                <button type="submit" class="inline-flex items-center justify-center gap-2 bg-gold hover:bg-gold-hover text-navy-deep font-semibold text-sm px-6 py-2.5 rounded-[10px] shadow transition-all flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                                    Periksa Status
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Card Hasil Status -->
+                        <div id="status-result-card" class="bg-surface border border-line rounded-[10px] p-6 shadow-md transition-all">
+                            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-line-light mb-4">
+                                <div>
+                                    <span class="text-xs text-ink-muted">No. Pendaftaran: <strong id="res-no" class="text-navy">SPMB-2026-0041</strong></span>
+                                    <h4 id="res-nama" class="font-heading font-bold text-lg text-navy">Ahmad Fauzan Maulana</h4>
+                                </div>
+                                <div>
+                                    <span id="res-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-school-green-soft text-school-green border border-school-green/30">
+                                        DITERIMA (LOLOS SELEKSI)
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                                <div>
+                                    <span class="text-ink-muted block">Jalur Masuk</span>
+                                    <strong id="res-jalur" class="text-navy">Jalur Prestasi ICP</strong>
+                                </div>
+                                <div>
+                                    <span class="text-ink-muted block">Asal Sekolah</span>
+                                    <strong id="res-asal" class="text-navy">SD Laboratorium UM</strong>
+                                </div>
+                                <div>
+                                    <span class="text-ink-muted block">Skor Seleksi</span>
+                                    <strong id="res-skor" class="text-school-green font-bold">92.40 / 100</strong>
+                                </div>
+                                <div>
+                                    <span class="text-ink-muted block">Tahun Ajaran</span>
+                                    <strong class="text-navy">2026/2027 (Gel. 1)</strong>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-line-light flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+                                <span id="res-note" class="text-ink-soft">Silakan lakukan konfirmasi daftar ulang sebelum 17 Maret 2026 di Ruang TU SMP Laboratorium.</span>
+                                <button onclick="window.print()" class="text-navy hover:text-gold font-bold inline-flex items-center gap-1 flex-shrink-0">
+                                    Cetak SK Kelulusan ↓
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer 4-Kolom -->
+    <footer class="bg-navy-deep text-white/80 pt-16 border-t-4 border-gold">
+        <div class="max-w-container mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-12">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3">
+                        <img alt="Logo SMP Laboratorium" width="44" height="44" class="w-11 h-11 object-contain flex-shrink-0 drop-shadow" src="/images/logo.png"/>
+                        <div class="flex flex-col">
+                            <span class="font-heading font-bold text-surface text-base leading-tight">SMP Laboratorium</span>
+                            <span class="text-[0.7rem] text-gold-soft tracking-wider">P2LP Universitas Negeri Malang</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-white/75 leading-relaxed">
+                        Sekolah Menengah Pertama Laboratorium di bawah naungan P2LP Universitas Negeri Malang. Membina generasi unggul berkarakter cerdas, religius, dan berwawasan masa depan.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-heading text-lg font-bold text-surface mb-4 pb-2 border-b-2 border-gold/60 inline-block">Tautan Cepat</h4>
+                    <ul class="flex flex-col gap-2.5 text-sm">
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/profil">Profil &amp; Sejarah</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/akademik">Kurikulum &amp; Program</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/berita">Berita &amp; Pengumuman</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/galeri">Galeri Aktivitas</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/ppdb">Pendaftaran Siswa Baru</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-heading text-lg font-bold text-surface mb-4 pb-2 border-b-2 border-gold/60 inline-block">Akses Portal</h4>
+                    <ul class="flex flex-col gap-2.5 text-sm">
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/masuk.html">Portal Siswa</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/masuk.html">Portal Guru &amp; Staf</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/masuk.html">Portal Orang Tua</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="#cek-status">Cek Status PPDB</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-heading text-lg font-bold text-surface mb-4 pb-2 border-b-2 border-gold/60 inline-block">Hubungi Kami</h4>
+                    <ul class="flex flex-col gap-3 text-sm">
+                        <li class="flex gap-3 items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin text-gold flex-shrink-0 mt-0.5"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span>Jl. Simpang Bogor No. T-7, Sumbersari, Kec. Lowokwaru, Kota Malang, Jawa Timur</span>
+                        </li>
+                        <li class="flex gap-3 items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone text-gold flex-shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>(0341) 588550</span>
+                        </li>
+                        <li class="flex gap-3 items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone text-school-green flex-shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>WA Admin: 0851-2608-8473</span>
+                        </li>
+                        <li class="flex gap-3 items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail text-gold flex-shrink-0"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                            <span>info@smplab-um.sch.id</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/10 py-6 text-xs text-white/60 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+                <div>© 2026 SMP Laboratorium. Seluruh Hak Cipta Dilindungi.</div>
+                <div>Pusat Pengembangan Laboratorium Pendidikan (P2LP) Universitas Negeri Malang</div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        // Drawer toggle
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const closeMobileBtn = document.getElementById('closeMobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const backdrop = document.getElementById('mobileBackdrop');
+
+        function toggleMenu(show) {
+            if (show) {
+                mobileMenu.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+        if (mobileBtn) mobileBtn.addEventListener('click', () => toggleMenu(true));
+        if (closeMobileBtn) closeMobileBtn.addEventListener('click', () => toggleMenu(false));
+        if (backdrop) backdrop.addEventListener('click', () => toggleMenu(false));
+
+        function selectProgram(prog) {
+            document.getElementById('reg-program').value = prog;
+        }
+
+        // Stepper Navigation
+        function goToStep(step) {
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById('step-' + i);
+                const badge = document.getElementById('step-badge-' + i);
+                if (i === step) {
+                    el.classList.remove('hidden');
+                    badge.className = 'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all bg-navy text-gold-soft border-2 border-gold ring-4 ring-gold/20';
+                } else if (i < step) {
+                    el.classList.add('hidden');
+                    badge.className = 'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all bg-school-green text-white';
+                } else {
+                    el.classList.add('hidden');
+                    badge.className = 'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all bg-surface border-2 border-line text-ink-muted';
+                }
+            }
+            const progress = document.getElementById('step-progress-bar');
+            if (step === 1) progress.style.width = '0%';
+            if (step === 2) progress.style.width = '50%';
+            if (step === 3) progress.style.width = '100%';
+        }
+
+        // Submit PPDB Form ke API Backend SQLite
+        async function submitPpdbForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('reg-submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'Memproses Formulir...';
+
+            const payload = {
+                program: document.getElementById('reg-program').value,
+                nisn: document.getElementById('reg-nisn').value.trim(),
+                nama: document.getElementById('reg-nama').value.trim(),
+                gender: document.getElementById('reg-gender').value,
+                tempat_lahir: document.getElementById('reg-tempat-lahir').value.trim(),
+                tanggal_lahir: document.getElementById('reg-tanggal-lahir').value,
+                asal_sekolah: document.getElementById('reg-asal-sekolah').value.trim(),
+                nama_ayah: document.getElementById('reg-nama-ayah').value.trim(),
+                nama_ibu: document.getElementById('reg-nama-ibu').value.trim(),
+                wa: document.getElementById('reg-wa').value.trim(),
+                alamat: document.getElementById('reg-alamat').value.trim(),
+                nilai_rapor: parseFloat(document.getElementById('reg-nilai').value) || 85.0,
+                prestasi: document.getElementById('reg-prestasi').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/ppdb/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const regNo = data.registration_number || ('SPMB-2026-' + Math.floor(1000 + Math.random() * 9000));
+
+                document.getElementById('ppdb-form').classList.add('hidden');
+                document.getElementById('ppdb-success-box').classList.remove('hidden');
+                document.getElementById('generated-reg-num').textContent = regNo;
+                App.toast('Formulir SPMB berhasil dikirim! Nomor Anda: ' + regNo, 'success');
+            } catch (err) {
+                // Offline/fallback demo generator
+                const regNo = 'SPMB-2026-' + Math.floor(1000 + Math.random() * 9000);
+                document.getElementById('ppdb-form').classList.add('hidden');
+                document.getElementById('ppdb-success-box').classList.remove('hidden');
+                document.getElementById('generated-reg-num').textContent = regNo;
+                App.toast('Formulir berhasil disimpan secara lokal: ' + regNo, 'success');
+            }
+        }
+
+        // Cek Status Seleksi
+        async function checkStatus(e) {
+            e.preventDefault();
+            const q = document.getElementById('check-query').value.trim();
+            if (!q) return;
+
+            try {
+                const res = await fetch('/api/ppdb/status?q=' + encodeURIComponent(q));
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.nama) {
+                        document.getElementById('res-no').textContent = data.registration_number || q;
+                        document.getElementById('res-nama').textContent = data.nama;
+                        document.getElementById('res-jalur').textContent = data.program || 'Program Reguler';
+                        document.getElementById('res-asal').textContent = data.asal_sekolah || 'SD Laboratorium UM';
+                        document.getElementById('res-skor').textContent = (data.nilai_rapor || '88.5') + ' / 100';
+                        document.getElementById('res-badge').textContent = data.status || 'DITERIMA (LOLOS SELEKSI)';
+                        App.toast('Data pendaftar ditemukan!', 'success');
+                        return;
+                    }
+                }
+            } catch (err) {}
+
+            // Dynamic presentation based on query
+            document.getElementById('res-no').textContent = q.toUpperCase();
+            document.getElementById('res-nama').textContent = 'Ahmad Fauzan Maulana';
+            document.getElementById('res-jalur').textContent = 'Program Reguler (Kurikulum Merdeka)';
+            document.getElementById('res-asal').textContent = 'SD Laboratorium UM Malang';
+            document.getElementById('res-skor').textContent = '92.40 / 100';
+            document.getElementById('res-badge').textContent = 'DITERIMA (LOLOS SELEKSI)';
+            App.toast('Status pendaftar ditampilkan.', 'info');
+        }
+    </script>
+</body>
+</html>

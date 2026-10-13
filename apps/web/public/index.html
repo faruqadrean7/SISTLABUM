@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>SMP Laboratorium | Beradab, Kreatif, Berprestasi</title>
+    <meta name="description" content="Website Resmi SMP Laboratorium - Sekolah Unggulan Berkarakter, Berprestasi, dan Berwawasan Global di bawah naungan P2LP Universitas Negeri Malang."/>
+    <link rel="shortcut icon" href="/images/logo.png"/>
+    <link rel="icon" href="/images/logo.png"/>
+    <link rel="apple-touch-icon" href="/images/logo.png"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css"/>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-[#F6F7F9] text-[#1B2430] selection:bg-[#F4E2BD] selection:text-[#062940]">
+
+    <!-- Header Sticky -->
+    <header class="sticky top-0 z-50 transition-all duration-200 bg-navy shadow-md py-3.5">
+        <div class="max-w-container mx-auto px-4 sm:px-6 flex items-center justify-between">
+            <a class="flex items-center gap-3 group" href="/">
+                <img alt="Logo SMP Laboratorium" fetchpriority="high" width="48" height="48" class="w-11 h-11 object-contain flex-shrink-0 drop-shadow-sm transition-transform group-hover:scale-105" src="/images/logo.png"/>
+                <div class="flex flex-col">
+                    <span class="font-heading text-[1.05rem] font-bold text-surface leading-tight tracking-wide">SMP Laboratorium</span>
+                    <span class="text-[0.75rem] text-gold-soft font-medium tracking-wider">P2LP Universitas Negeri Malang</span>
+                </div>
+            </a>
+            <nav class="hidden lg:flex items-center gap-2" aria-label="Navigasi Utama">
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-gold-soft font-semibold after:content-[''] after:absolute after:bottom-0 after:left-3.5 after:right-3.5 after:h-[2px] after:bg-gold after:rounded-full" href="/">Beranda</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/profil">Profil</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/akademik">Akademik</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/berita">Berita</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/galeri">Galeri</a>
+                <a class="px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative text-white/90 hover:text-surface hover:bg-white/10" href="/kontak">Kontak</a>
+            </nav>
+            <div class="hidden lg:flex items-center gap-3">
+                <a class="bg-gold hover:bg-gold-hover text-navy-deep font-semibold text-sm px-4 py-2 rounded-[10px] shadow-sm hover:shadow transition-all" href="/ppdb">PPDB Online</a>
+                <a class="bg-transparent hover:bg-white/10 text-surface border border-white/40 hover:border-surface font-semibold text-sm px-3.5 py-2 rounded-[10px] transition-all" href="/masuk.html">Portal Akademik</a>
+            </div>
+            <button id="mobileMenuBtn" type="button" class="lg:hidden p-2 rounded-[6px] border border-white/20 text-surface hover:bg-white/10 transition-colors" aria-label="Toggle navigation menu" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Aside -->
+    <div id="mobileBackdrop" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden transition-opacity"></div>
+    <aside id="mobileMenu" class="fixed top-0 right-0 bottom-0 w-[min(320px,85vw)] bg-navy z-50 p-6 flex flex-col transition-transform duration-300 ease-out shadow-2xl lg:hidden translate-x-full">
+        <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+            <div class="flex items-center gap-2.5">
+                <img alt="Logo SMP Laboratorium" width="36" height="36" class="w-9 h-9 object-contain flex-shrink-0" src="/images/logo.png"/>
+                <span class="font-heading font-bold text-surface text-base">SMP Laboratorium</span>
+            </div>
+            <button id="closeMobileMenuBtn" type="button" class="p-1.5 rounded-[6px] text-surface hover:bg-white/10" aria-label="Tutup menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+        </div>
+        <nav class="flex flex-col gap-1.5">
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors bg-white/15 text-gold-soft font-semibold" href="/">Beranda</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/profil">Profil</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/akademik">Akademik</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/berita">Berita</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/galeri">Galeri</a>
+            <a class="px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors text-white/90 hover:bg-white/10" href="/kontak">Kontak</a>
+        </nav>
+        <div class="mt-auto pt-6 border-t border-white/10 flex flex-col gap-3">
+            <a class="w-full text-center bg-gold hover:bg-gold-hover text-navy-deep font-semibold text-sm py-2.5 rounded-[10px] shadow" href="/ppdb">Daftar PPDB Online</a>
+            <a class="w-full text-center bg-transparent border border-white/30 text-surface hover:bg-white/10 font-semibold text-sm py-2.5 rounded-[10px]" href="/masuk.html">Masuk Portal Akademik</a>
+        </div>
+    </aside>
+
+    <div class="flex-1">
+        <main>
+            <!-- Hero Section dengan Video YouTube Embed -->
+            <section class="relative min-h-[600px] lg:min-h-[660px] flex items-center py-20 overflow-hidden bg-navy-deep text-white">
+                <div class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-navy-deep">
+                    <div class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000" style="background-image:url('https://img.youtube.com/vi/BxQztnwi_74/maxresdefault.jpg')"></div>
+                    <iframe class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-screen min-w-[177.77vh] pointer-events-none border-0 opacity-100" src="https://www.youtube-nocookie.com/embed/BxQztnwi_74?autoplay=1&mute=1&loop=1&playlist=BxQztnwi_74&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1" title="Video Profil SMP Laboratorium" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="no-referrer-when-downgrade" loading="eager"></iframe>
+                    <div class="absolute inset-0 z-10 bg-gradient-to-r from-navy-deep/85 via-navy-deep/50 to-black/30 pointer-events-none"></div>
+                    <div class="absolute inset-0 z-10 bg-black/15 pointer-events-none"></div>
+                </div>
+                <div class="max-w-container mx-auto px-4 sm:px-6 relative z-20">
+                    <div class="max-w-3xl">
+                        <div class="flex flex-wrap items-center gap-2 mb-4">
+                            <span class="inline-flex items-center gap-1.5 bg-gold text-navy-deep font-extrabold text-xs px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
+                                Beradab, Kreatif, Berprestasi
+                            </span>
+                            <span class="bg-white/15 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full">P2LP Universitas Negeri Malang</span>
+                        </div>
+                        <h1 class="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-white mb-5 drop-shadow-md">
+                            Mewujudkan Generasi <span class="text-gold">Beriman, Berkarakter</span>, Berprestasi, dan Berbudaya
+                        </h1>
+                        <p class="text-base sm:text-lg text-white/90 leading-relaxed mb-8 max-w-2xl drop-shadow">
+                            SMP Laboratorium menyelenggarakan modul pembelajaran inovatif, Lesson Study, dan wawasan global di bawah naungan P2LP Universitas Negeri Malang untuk melahirkan lulusan unggul.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <a class="bg-gold hover:bg-gold-hover text-navy-deep font-bold text-sm sm:text-base px-6 py-3.5 rounded-[10px] shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2" href="/ppdb">
+                                Pendaftaran SPMB 2026/2027
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                            <a class="bg-transparent hover:bg-white/15 text-white border border-white/50 hover:border-white font-semibold text-sm sm:text-base px-6 py-3.5 rounded-[10px] transition-all backdrop-blur-sm" href="/profil">
+                                Kenali Sekolah Kami
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sambutan Pimpinan -->
+            <section class="py-16 md:py-20 bg-surface">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                        <div class="lg:col-span-5">
+                            <div class="aspect-[4/3] bg-gradient-to-br from-navy via-navy-light to-school-green rounded-2xl p-6 flex flex-col items-center justify-center text-center text-white border border-line shadow-md relative overflow-hidden">
+                                <div class="w-20 h-20 flex items-center justify-center mb-3">
+                                    <img alt="Logo SMP Laboratorium" width="80" height="80" class="w-20 h-20 object-contain drop-shadow-lg" src="/images/logo.png"/>
+                                </div>
+                                <div class="font-heading font-bold text-lg sm:text-xl text-white">Bapak Tamyis Suliantoro, M.Pd.</div>
+                                <div class="text-xs sm:text-sm text-gold-soft mt-1 font-medium">Kepala Sekolah SMP Laboratorium</div>
+                                <div class="absolute bottom-2 text-[0.65rem] text-white/60 uppercase tracking-widest">SMP LABORATORIUM</div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-7">
+                            <div class="mb-4">
+                                <span class="bg-school-green-soft text-school-green text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">Sambutan Pimpinan</span>
+                                <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">Mendidik dengan Hati, Menginspirasi dengan Prestasi</h2>
+                            </div>
+                            <p class="text-ink-soft text-sm sm:text-base leading-relaxed mb-4">
+                                Selamat datang di Website Resmi SMP Laboratorium. Sebagai sekolah laboratorium di bawah naungan Pusat Pengembangan Laboratorium Pendidikan (P2LP) Universitas Negeri Malang, kami berkomitmen menghadirkan ekosistem pembelajaran yang adaptif, ramah anak, dan berorientasi pada pengembangan potensi holistik setiap peserta didik.
+                            </p>
+                            <p class="text-ink-soft text-sm sm:text-base leading-relaxed mb-6">
+                                Dengan mengusung motto <strong>"Beradab, Kreatif, Berprestasi"</strong>, kami membimbing siswa melalui 4 program unggulan (Reguler, ICP, Tahfidz, dan Inklusi), 24 ekstrakurikuler pilihan, 2 program wajib karakter (PKH & TaBaQu), serta fasilitas lengkap representatif.
+                            </p>
+                            <a class="inline-flex items-center gap-2 border border-navy text-navy hover:bg-navy hover:text-white font-semibold text-sm px-5 py-2.5 rounded-[10px] transition-all" href="/profil">
+                                Baca Selengkapnya Profil Sekolah
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4 Program Akademik Unggulan -->
+            <section class="py-16 bg-[#F8FAFC] border-y border-line-light">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="text-center max-w-2xl mx-auto mb-12">
+                        <span class="bg-navy-subtle text-navy text-xs font-bold px-3.5 py-1 rounded-full uppercase tracking-wider inline-block mb-2">Pilihan Program Belajar</span>
+                        <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">4 Program Akademik Unggulan</h2>
+                        <p class="text-ink-soft text-sm sm:text-base mt-3">Dirancang khusus untuk mengakomodasi minat, bakat, potensi religius, dan cita-cita masa depan setiap siswa.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Program Reguler -->
+                        <div class="bg-surface border p-6 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between border-navy/20 hover:border-navy text-navy">
+                            <div>
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-navy-subtle text-navy">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg>
+                                </div>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-wider text-ink-muted">Kurikulum Merdeka</span>
+                                <h3 class="font-heading font-bold text-lg text-navy mt-1 mb-2">Program Reguler</h3>
+                                <p class="text-ink-soft text-xs sm:text-sm leading-relaxed mb-4">Kurikulum nasional SNP berorientasi Belajar Tuntas dan Maju Berkelanjutan dengan pendekatan model Lesson Study.</p>
+                            </div>
+                            <a class="inline-flex items-center gap-1.5 text-xs font-bold text-navy hover:text-gold transition-colors pt-3 border-t border-line-light" href="/akademik#reguler">
+                                Detail Program <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+
+                        <!-- ICP -->
+                        <div class="bg-surface border p-6 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between border-school-green/20 hover:border-school-green text-school-green">
+                            <div>
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-school-green-soft text-school-green">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                                </div>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-wider text-ink-muted">Cambridge Integration</span>
+                                <h3 class="font-heading font-bold text-lg text-navy mt-1 mb-2">ICP (International Class)</h3>
+                                <p class="text-ink-soft text-xs sm:text-sm leading-relaxed mb-4">Kurikulum Merdeka terintegrasi Cambridge International Examination, Native Speaker session, and global competency.</p>
+                            </div>
+                            <a class="inline-flex items-center gap-1.5 text-xs font-bold text-navy hover:text-gold transition-colors pt-3 border-t border-line-light" href="/akademik#icp">
+                                Detail Program <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+
+                        <!-- Program Tahfidz -->
+                        <div class="bg-surface border p-6 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between border-gold/30 hover:border-gold text-[#92600E]">
+                            <div>
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-gold-soft text-[#784E07]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-check"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path><path d="m9 9.5 2 2 4-4"></path></svg>
+                                </div>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-wider text-ink-muted">Metode Ummi &amp; Hadits</span>
+                                <h3 class="font-heading font-bold text-lg text-navy mt-1 mb-2">Program Tahfidz</h3>
+                                <p class="text-ink-soft text-xs sm:text-sm leading-relaxed mb-4">Bimbingan intensif Al-Qur’an metode Ummi, pembinaan adab &amp; hadits harian, serta reward Umrah Program LABBAIK.</p>
+                            </div>
+                            <a class="inline-flex items-center gap-1.5 text-xs font-bold text-navy hover:text-gold transition-colors pt-3 border-t border-line-light" href="/akademik#tahfidz">
+                                Detail Program <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+
+                        <!-- Program Inklusi -->
+                        <div class="bg-surface border p-6 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between border-purple-200 hover:border-purple-600 text-purple-700">
+                            <div>
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-purple-50 text-purple-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-handshake"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"></path><path d="m18 15-2-2"></path><path d="m15 18-2-2"></path></svg>
+                                </div>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-wider text-ink-muted">Ramah Anak P2LP UM</span>
+                                <h3 class="font-heading font-bold text-lg text-navy mt-1 mb-2">Program Inklusi</h3>
+                                <p class="text-ink-soft text-xs sm:text-sm leading-relaxed mb-4">Pendidikan adaptif bagi anak berkebutuhan khusus dengan bimbingan Guru Pendamping Khusus (GPK) &amp; psikolog P2LP UM.</p>
+                            </div>
+                            <a class="inline-flex items-center gap-1.5 text-xs font-bold text-navy hover:text-gold transition-colors pt-3 border-t border-line-light" href="/akademik#inklusi">
+                                Detail Program <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Banner SPMB 2026/2027 Resmi Dibuka -->
+            <section class="py-16 md:py-20 bg-surface">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="bg-gradient-to-br from-navy-deep via-navy to-[#062940] rounded-2xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden border border-gold/30">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+                            <div class="lg:col-span-7">
+                                <span class="bg-gold text-navy-deep font-extrabold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider inline-block mb-3">SPMB 2026/2027 Resmi Dibuka</span>
+                                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">Daftarkan Putra-Putri Anda di SMP Laboratorium</h2>
+                                <p class="text-white/85 text-sm sm:text-base leading-relaxed mb-6">Penerimaan Murid Baru dilaksanakan dalam 2 gelombang resmi. Dapatkan lingkungan belajar terbaik dengan bimbingan pakar pendidikan Universitas Negeri Malang.</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                    <div class="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-xl">
+                                        <div class="text-gold font-bold text-sm mb-1">GELOMBANG 1</div>
+                                        <div class="text-white font-heading font-bold text-base">5 Jan – 17 Mar 2026</div>
+                                        <div class="text-xs text-white/70 mt-1">Jalur Prestasi, ICP, Tahfidz &amp; Reguler</div>
+                                    </div>
+                                    <div class="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-xl">
+                                        <div class="text-gold font-bold text-sm mb-1">GELOMBANG 2</div>
+                                        <div class="text-white font-heading font-bold text-base">30 Mar 2026 – Pagu Terpenuhi</div>
+                                        <div class="text-xs text-white/70 mt-1">Dibuka jika kuota kelas masih tersedia</div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-4">
+                                    <a class="bg-gold hover:bg-gold-hover text-navy-deep font-bold text-sm sm:text-base px-6 py-3 rounded-[10px] shadow-lg transition-all inline-flex items-center gap-2" href="/ppdb">
+                                        Buka Formulir SPMB Online
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    </a>
+                                    <a href="https://wa.me/6285126088473" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm sm:text-base px-5 py-3 rounded-[10px] transition-all inline-flex items-center gap-2 shadow">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+                                        WA Admin (0851-2608-8473)
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-5 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-xl">
+                                <h3 class="font-heading font-bold text-lg text-gold mb-3 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big text-gold"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                                    7 Syarat Berkas SPMB:
+                                </h3>
+                                <ul class="space-y-2.5 text-xs sm:text-sm text-white/90">
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">1</span><span>Mengisi Formulir Pendaftaran SPMB</span></li>
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">2</span><span>FC Akta Kelahiran &amp; FC Kartu Keluarga</span></li>
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">3</span><span>Pas Foto 3x4 berwarna (2 lembar)</span></li>
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">4</span><span>Surat Keterangan Lulus / Siswa Aktif SD/MI</span></li>
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">5</span><span>FC Rapor Kelas 4, 5, dan 6 (Semester Ganjil)</span></li>
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">6</span><span>FC Piagam / Sertifikat Kejuaraan (bagi jalur prestasi)</span></li>
+                                    <li class="flex items-start gap-2"><span class="w-5 h-5 rounded-full bg-gold/20 text-gold flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">7</span><span>Hasil Asesmen Psikolog (khusus Program Inklusi)</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SMP Laboratorium Dalam Angka -->
+            <section class="py-16 bg-[#F6F7F9] border-y border-line-light">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="text-center max-w-2xl mx-auto mb-12">
+                        <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">SMP Laboratorium Dalam Angka</h2>
+                        <p class="text-ink-soft text-sm sm:text-base mt-3">Dedikasi nyata dalam menghadirkan layanan pendidikan berkualitas tinggi di bawah naungan P2LP UM di Kota Malang.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-surface border border-line p-6 rounded-[10px] text-center shadow-sm hover:shadow-md transition-shadow">
+                            <div class="font-heading font-bold text-4xl text-navy">4 Program</div>
+                            <div class="text-xs sm:text-sm text-ink-soft font-medium mt-2">Reguler, ICP Cambridge, Tahfidz &amp; Inklusi</div>
+                        </div>
+                        <div class="bg-surface border border-line p-6 rounded-[10px] text-center shadow-sm hover:shadow-md transition-shadow">
+                            <div class="font-heading font-bold text-4xl text-navy">24 Ekskul</div>
+                            <div class="text-xs sm:text-sm text-ink-soft font-medium mt-2">Pilihan Minat, Bakat, Seni, Bahasa &amp; Sains</div>
+                        </div>
+                        <div class="bg-surface border border-line p-6 rounded-[10px] text-center shadow-sm hover:shadow-md transition-shadow">
+                            <div class="font-heading font-bold text-4xl text-navy">12 Sarana</div>
+                            <div class="text-xs sm:text-sm text-ink-soft font-medium mt-2">Fasilitas Representatif (Arena &amp; Aula Arsimbo)</div>
+                        </div>
+                        <div class="bg-surface border border-line p-6 rounded-[10px] text-center shadow-sm hover:shadow-md transition-shadow">
+                            <div class="font-heading font-bold text-4xl text-navy">100+</div>
+                            <div class="text-xs sm:text-sm text-ink-soft font-medium mt-2">Prestasi Kejuaraan Tingkat Kota hingga Nasional</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Kabar & Agenda Sekolah -->
+            <section class="py-16 md:py-20 bg-surface">
+                <div class="max-w-container mx-auto px-4 sm:px-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-10">
+                        <div>
+                            <h2 class="section-title font-heading text-2xl sm:text-3xl font-bold text-navy">Kabar &amp; Agenda Sekolah</h2>
+                            <p class="text-ink-soft text-sm sm:text-base mt-2">Informasi terkini seputar kegiatan akademik, prestasi, dan pengumuman sekolah.</p>
+                        </div>
+                        <a class="inline-flex items-center gap-2 border border-navy text-navy hover:bg-navy hover:text-white font-semibold text-sm px-4 py-2 rounded-[10px] transition-all flex-shrink-0" href="/berita">
+                            Lihat Semua Berita
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                        </a>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Card 1 OSN -->
+                        <article class="bg-surface border border-line rounded-[10px] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all group">
+                            <div class="aspect-[16/10] bg-navy-subtle overflow-hidden relative">
+                                <img src="https://images.unsplash.com/photo-1589487391730-58f20eb2c308?auto=format&fit=crop&w=800&q=80" alt="Siswa SMP Laboratorium Raih Medali Emas Olimpiade Sains Nasional 2026" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"/>
+                            </div>
+                            <div class="p-6 flex-1 flex flex-col">
+                                <div class="flex items-center gap-3 text-xs mb-3">
+                                    <span class="font-semibold px-2.5 py-0.5 rounded-full bg-school-green-soft text-school-green">Prestasi</span>
+                                    <span class="text-ink-muted">18 September 2026</span>
+                                </div>
+                                <h3 class="font-heading font-bold text-base text-navy group-hover:text-gold transition-colors leading-snug mb-2">
+                                    <a href="/berita">Siswa SMP Laboratorium Raih Medali Emas Olimpiade Sains Nasional 2026</a>
+                                </h3>
+                                <p class="text-ink-soft text-xs sm:text-sm line-clamp-3 mb-4 flex-1">
+                                    Tim olimpiade IPA SMP Laboratorium berhasil menorehkan prestasi gemilang di tingkat nasional dengan menyabet medali emas dalam ajang OSN 2026.
+                                </p>
+                                <div class="pt-3 border-t border-line-light mt-auto">
+                                    <a class="text-xs font-semibold text-navy hover:text-gold inline-flex items-center gap-1" href="/berita">Baca Selengkapnya →</a>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Card 2 Workshop KIR -->
+                        <article class="bg-surface border border-line rounded-[10px] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all group">
+                            <div class="aspect-[16/10] bg-navy-subtle overflow-hidden relative">
+                                <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80" alt="Workshop Karya Ilmiah Remaja Bersama Dosen Universitas Negeri Malang" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"/>
+                            </div>
+                            <div class="p-6 flex-1 flex flex-col">
+                                <div class="flex items-center gap-3 text-xs mb-3">
+                                    <span class="font-semibold px-2.5 py-0.5 rounded-full bg-navy-subtle text-navy">Akademik</span>
+                                    <span class="text-ink-muted">10 September 2026</span>
+                                </div>
+                                <h3 class="font-heading font-bold text-base text-navy group-hover:text-gold transition-colors leading-snug mb-2">
+                                    <a href="/berita">Workshop Karya Ilmiah Remaja Bersama Dosen Universitas Negeri Malang</a>
+                                </h3>
+                                <p class="text-ink-soft text-xs sm:text-sm line-clamp-3 mb-4 flex-1">
+                                    Program kolaborasi tahunan bersama Fakultas MIPA UM guna menumbuhkan daya nalar kritis dan budaya riset sejak dini bagi siswa.
+                                </p>
+                                <div class="pt-3 border-t border-line-light mt-auto">
+                                    <a class="text-xs font-semibold text-navy hover:text-gold inline-flex items-center gap-1" href="/berita">Baca Selengkapnya →</a>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Card 3 Sosialisasi SPMB -->
+                        <article class="bg-surface border border-line rounded-[10px] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all group">
+                            <div class="aspect-[16/10] bg-navy-subtle overflow-hidden relative">
+                                <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80" alt="Sosialisasi Pembukaan SPMB 2026/2027 Gelombang 1 &amp; 2" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"/>
+                            </div>
+                            <div class="p-6 flex-1 flex flex-col">
+                                <div class="flex items-center gap-3 text-xs mb-3">
+                                    <span class="font-semibold px-2.5 py-0.5 rounded-full bg-gold-soft text-[#784E07]">Pengumuman</span>
+                                    <span class="text-ink-muted">01 September 2026</span>
+                                </div>
+                                <h3 class="font-heading font-bold text-base text-navy group-hover:text-gold transition-colors leading-snug mb-2">
+                                    <a href="/berita">Sosialisasi Pembukaan SPMB 2026/2027 Gelombang 1 &amp; 2</a>
+                                </h3>
+                                <p class="text-ink-soft text-xs sm:text-sm line-clamp-3 mb-4 flex-1">
+                                    Pendaftaran SPMB tahun ajaran 2026/2027 resmi dibuka dengan 4 pilihan program: Reguler, ICP, Tahfidz, dan Inklusi.
+                                </p>
+                                <div class="pt-3 border-t border-line-light mt-auto">
+                                    <a class="text-xs font-semibold text-navy hover:text-gold inline-flex items-center gap-1" href="/berita">Baca Selengkapnya →</a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer 4-Kolom -->
+    <footer class="bg-navy-deep text-white/80 pt-16 border-t-4 border-gold">
+        <div class="max-w-container mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-12">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3">
+                        <img alt="Logo SMP Laboratorium" width="44" height="44" class="w-11 h-11 object-contain flex-shrink-0 drop-shadow" src="/images/logo.png"/>
+                        <div class="flex flex-col">
+                            <span class="font-heading font-bold text-surface text-base leading-tight">SMP Laboratorium</span>
+                            <span class="text-[0.7rem] text-gold-soft tracking-wider">P2LP Universitas Negeri Malang</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-white/75 leading-relaxed">
+                        Sekolah Menengah Pertama Laboratorium di bawah naungan P2LP Universitas Negeri Malang. Membina generasi unggul berkarakter cerdas, religius, dan berwawasan masa depan.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-heading text-lg font-bold text-surface mb-4 pb-2 border-b-2 border-gold/60 inline-block">Tautan Cepat</h4>
+                    <ul class="flex flex-col gap-2.5 text-sm">
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/profil">Profil &amp; Sejarah</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/akademik">Kurikulum &amp; Program</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/berita">Berita &amp; Pengumuman</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/galeri">Galeri Aktivitas</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/ppdb">Pendaftaran Siswa Baru</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-heading text-lg font-bold text-surface mb-4 pb-2 border-b-2 border-gold/60 inline-block">Akses Portal</h4>
+                    <ul class="flex flex-col gap-2.5 text-sm">
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/masuk.html">Portal Siswa</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/masuk.html">Portal Guru &amp; Staf</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/masuk.html">Portal Orang Tua</a></li>
+                        <li><a class="hover:text-gold transition-colors text-white/80" href="/ppdb#cek-status">Cek Status PPDB</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-heading text-lg font-bold text-surface mb-4 pb-2 border-b-2 border-gold/60 inline-block">Hubungi Kami</h4>
+                    <ul class="flex flex-col gap-3 text-sm">
+                        <li class="flex gap-3 items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin text-gold flex-shrink-0 mt-0.5"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span>Jl. Simpang Bogor No. T-7, Sumbersari, Kec. Lowokwaru, Kota Malang, Jawa Timur</span>
+                        </li>
+                        <li class="flex gap-3 items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone text-gold flex-shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>(0341) 588550</span>
+                        </li>
+                        <li class="flex gap-3 items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone text-school-green flex-shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>WA Admin: 0851-2608-8473</span>
+                        </li>
+                        <li class="flex gap-3 items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail text-gold flex-shrink-0"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                            <span>info@smplab-um.sch.id</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/10 py-6 text-xs text-white/60 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+                <div>© 2026 SMP Laboratorium. Seluruh Hak Cipta Dilindungi.</div>
+                <div>Pusat Pengembangan Laboratorium Pendidikan (P2LP) Universitas Negeri Malang</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script Drawer Interaktif -->
+    <script>
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const closeMobileBtn = document.getElementById('closeMobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const backdrop = document.getElementById('mobileBackdrop');
+
+        function toggleMenu(show) {
+            if (show) {
+                mobileMenu.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                mobileMenu.classList.add('translate-x-full');
+                backdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (mobileBtn) mobileBtn.addEventListener('click', () => toggleMenu(true));
+        if (closeMobileBtn) closeMobileBtn.addEventListener('click', () => toggleMenu(false));
+        if (backdrop) backdrop.addEventListener('click', () => toggleMenu(false));
+    </script>
+</body>
+</html>

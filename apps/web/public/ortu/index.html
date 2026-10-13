@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Orang Tua | SMP-SMA Laboratorium UM Malang</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+    <style>
+        .child-switcher-bar {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+        .child-tab-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 18px;
+            border-radius: var(--radius-full);
+            border: 1.5px solid var(--border-light);
+            background: #fff;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .child-tab-pill:hover {
+            border-color: var(--color-teal);
+            background: #F0FDFA;
+        }
+        .child-tab-pill.active {
+            border-color: var(--color-teal);
+            background: #F0FDFA;
+            box-shadow: 0 0 0 2px var(--color-teal);
+        }
+    </style>
+</head>
+<body class="portal-layout">
+    <!-- Header Orang Tua -->
+    <header class="portal-header">
+        <div class="brand-section">
+            <div class="brand-logo-icon" style="background: linear-gradient(135deg, var(--color-teal), var(--color-primary));">ORT</div>
+            <div class="brand-text">
+                <h2>PORTAL ORANG TUA / WALI</h2>
+                <p>SMP-SMA Laboratorium UM Malang</p>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <a href="/ortu/index.html" class="nav-link active">🏠 Beranda</a>
+            <a href="/ortu/kehadiran.html" class="nav-link">📅 Presensi & Gerbang</a>
+            <a href="/ortu/izin.html" class="nav-link">📝 Surat Izin/Sakit</a>
+            <a href="/ortu/rapor.html" class="nav-link">📊 E-Rapor Anak</a>
+        </nav>
+        <div class="header-actions">
+            <!-- User Profile -->
+            <div class="user-profile-chip">
+                <div class="avatar-circle" style="background: var(--color-teal);">HS</div>
+                <div class="user-text-meta">
+                    <div class="user-name">H. Suparman, S.E.</div>
+                    <div class="user-role">Wali Murid (2 Anak Terdaftar)</div>
+                </div>
+            </div>
+            <a href="/masuk.html" class="btn btn-outline btn-sm">Keluar</a>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <!-- 1. MULTI-ANAK SWITCHER BAR (Fitur Kunci Ortu) -->
+        <div class="child-switcher-bar">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                    PILIH PROFIL SISWA:
+                </span>
+                <div style="display: flex; gap: 10px;" id="children-tabs-container">
+                    <div class="child-tab-pill active" onclick="switchChild(1)">
+                        <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 13px; background: var(--color-primary);">AF</div>
+                        <div style="line-height: 1.2;">
+                            <div style="font-size: 13.5px; font-weight: 700;">Ahmad Fauzan Maulana</div>
+                            <div style="font-size: 11px; color: var(--color-primary); font-weight: 600;">Kelas IX-A • NIS: 240901</div>
+                        </div>
+                    </div>
+                    <div class="child-tab-pill" onclick="switchChild(2)">
+                        <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 13px; background: var(--color-teal);">NP</div>
+                        <div style="line-height: 1.2;">
+                            <div style="font-size: 13.5px; font-weight: 700;">Nabila Putri Cantika</div>
+                            <div style="font-size: 11px; color: var(--color-teal); font-weight: 600;">Kelas VII-B • NIS: 260702</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="/ortu/izin.html" class="btn btn-teal btn-sm">+ Ajukan Izin / Sakit</a>
+            </div>
+        </div>
+
+        <!-- Title & Status Anak Terpilih -->
+        <div class="page-header-row">
+            <div class="page-title-block">
+                <div class="breadcrumb-trail">
+                    <a href="/ortu/index.html">Orang Tua</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span id="active-child-breadcrumb">Ahmad Fauzan Maulana</span>
+                </div>
+                <h1 id="active-child-greeting">Ringkasan Aktivitas: Ahmad Fauzan Maulana</h1>
+                <p id="active-child-subtitle">Kelas IX-A • Wali Kelas: Ahmad Hidayat, M.Sc. • Ruang R.301</p>
+            </div>
+            <div>
+                <div style="background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: var(--radius-md); padding: 10px 16px; text-align: right;">
+                    <div style="font-size: 12px; color: #166534; font-weight: 700;">STATUS HARI INI:</div>
+                    <div style="font-size: 15px; font-weight: 800; color: #15803D;" id="active-child-gate-status">
+                        ✓ Hadir • Tap Gerbang Masuk 06:42 WIB
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat Grid Ortu -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Kehadiran Bulan Ini</span>
+                    <span class="stat-value" style="color: var(--color-teal);" id="stat-attendance">98.2%</span>
+                    <span class="stat-sub">1 Hari Izin Sakit Disetujui</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-teal">📅</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Rata-Rata Capaian Nilai</span>
+                    <span class="stat-value" style="color: var(--color-primary);" id="stat-gpa">91.3</span>
+                    <span class="stat-sub">Semester Ganjil 2026/2027</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-blue">📊</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Poin Karakter / Sikap</span>
+                    <span class="stat-value" style="color: var(--color-amber);" id="stat-points">+45</span>
+                    <span class="stat-sub">0 Catatan Pelanggaran</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-amber">⭐</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-data">
+                    <span class="stat-label">Status Administrasi SPP</span>
+                    <span class="stat-value" style="color: #16A34A; font-size: 22px;">LUNAS</span>
+                    <span class="stat-sub">Oktober 2026 Terverifikasi</span>
+                </div>
+                <div class="stat-icon-wrapper stat-icon-teal">💳</div>
+            </div>
+        </div>
+
+        <!-- 2 Column Section -->
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px;">
+            <!-- Log Kedatangan Gerbang & Pembiasaan -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🚪 Log Tap Gerbang Sekolah 5 Hari Terakhir</h3>
+                    <a href="/ortu/kehadiran.html" style="font-size: 13px; font-weight: 700;">Kalender Penuh ➔</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Jam Masuk Gerbang</th>
+                                <th>Jam Kepulangan</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-recent-tbody">
+                            <tr>
+                                <td style="font-weight: 600;">12 Okt 2026 (Hari Ini)</td>
+                                <td style="font-family: var(--font-mono); color: var(--color-teal); font-weight: 700;">06:42:15 WIB</td>
+                                <td style="color: var(--text-muted); font-size: 13px;">Sedang Berlangsung</td>
+                                <td><span class="badge badge-success badge-dot">Hadir Tepat Waktu</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">11 Okt 2026</td>
+                                <td style="font-family: var(--font-mono);">06:44:00 WIB</td>
+                                <td style="font-family: var(--font-mono);">15:30:10 WIB</td>
+                                <td><span class="badge badge-success badge-dot">Hadir Tepat Waktu</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">10 Okt 2026</td>
+                                <td style="font-family: var(--font-mono);">06:40:12 WIB</td>
+                                <td style="font-family: var(--font-mono);">15:35:00 WIB</td>
+                                <td><span class="badge badge-success badge-dot">Hadir Tepat Waktu</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">09 Okt 2026</td>
+                                <td style="font-family: var(--font-mono);">06:45:00 WIB</td>
+                                <td style="font-family: var(--font-mono);">14:15:30 WIB</td>
+                                <td><span class="badge badge-success badge-dot">Hadir Tepat Waktu</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Kontak Guru & Pengumuman Khusus Orang Tua -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">👨‍🏫 Wali Kelas & Bimbingan Konseling</h3>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-md);">
+                            <div>
+                                <div style="font-weight: 700;" id="homeroom-name">Ahmad Hidayat, M.Sc.</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Wali Kelas IX-A</div>
+                            </div>
+                            <button class="btn btn-teal btn-sm" onclick="App.toast('Membuka kontak WhatsApp resmi wali kelas...', 'info')">
+                                Hubungi Walas
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-md);">
+                            <div>
+                                <div style="font-weight: 700;">Dr. Nurul Hidayati, M.Pd.</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Koordinator Bimbingan Konseling (BK)</div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="App.toast('Formulir janji temu BK siap.', 'info')">
+                                Konseling Privat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="background: #FFFBEB; border-color: #FDE68A;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">📢</span>
+                        <strong style="color: #92400E; font-size: 14.5px;">Pengingat Asesmen Sumatif (ASTS)</strong>
+                    </div>
+                    <p style="color: #78350F; font-size: 13.5px; line-height: 1.5;">
+                        Pekan ini ananda mengikuti asesmen CBT di laboratorium sekolah. Pastikan ananda sarapan sehat dan hadir di sekolah sebelum pukul 06.45 WIB.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+
+        let currentChildId = 1;
+
+        function switchChild(childId) {
+            currentChildId = childId;
+            const pills = document.querySelectorAll('.child-tab-pill');
+            pills[0].classList.toggle('active', childId === 1);
+            pills[1].classList.toggle('active', childId === 2);
+
+            if (childId === 1) {
+                // Ahmad Fauzan
+                document.getElementById('active-child-breadcrumb').textContent = 'Ahmad Fauzan Maulana';
+                document.getElementById('active-child-greeting').textContent = 'Ringkasan Aktivitas: Ahmad Fauzan Maulana';
+                document.getElementById('active-child-subtitle').textContent = 'Kelas IX-A • Wali Kelas: Ahmad Hidayat, M.Sc. • Ruang R.301';
+                document.getElementById('active-child-gate-status').textContent = '✓ Hadir • Tap Gerbang Masuk 06:42 WIB';
+                document.getElementById('stat-attendance').textContent = '98.2%';
+                document.getElementById('stat-gpa').textContent = '91.3';
+                document.getElementById('stat-points').textContent = '+45';
+                document.getElementById('homeroom-name').textContent = 'Ahmad Hidayat, M.Sc.';
+                App.toast('Beralih ke profil ananda: Ahmad Fauzan Maulana (Kelas IX-A)', 'success');
+            } else {
+                // Nabila Putri
+                document.getElementById('active-child-breadcrumb').textContent = 'Nabila Putri Cantika';
+                document.getElementById('active-child-greeting').textContent = 'Ringkasan Aktivitas: Nabila Putri Cantika';
+                document.getElementById('active-child-subtitle').textContent = 'Kelas VII-B • Wali Kelas: Budi Santoso, S.Kom., M.T. • Ruang R.202';
+                document.getElementById('active-child-gate-status').textContent = '✓ Hadir • Tap Gerbang Masuk 06:45 WIB';
+                document.getElementById('stat-attendance').textContent = '100%';
+                document.getElementById('stat-gpa').textContent = '94.0';
+                document.getElementById('stat-points').textContent = '+60';
+                document.getElementById('homeroom-name').textContent = 'Budi Santoso, S.Kom., M.T.';
+                App.toast('Beralih ke profil ananda: Nabila Putri Cantika (Kelas VII-B)', 'success');
+            }
+        }
+    </script>
+</body>
+</html>

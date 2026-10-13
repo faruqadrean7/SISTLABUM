@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slip Gaji & Payroll Resmi Guru | SISTLABUM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+    <style>
+        @media print {
+            .admin-sidebar, .portal-header, .page-header-row, .tabs-nav, .no-print {
+                display: none !important;
+            }
+            .admin-shell {
+                display: block !important;
+                background: #fff !important;
+            }
+            .admin-main {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .content-container {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            .slip-card {
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+                padding: 20px !important;
+            }
+        }
+    </style>
+</head>
+<body class="admin-shell">
+    <!-- Sidebar Admin & Guru -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="brand-logo-icon">UM</div>
+            <div>
+                <h2 style="font-size: 15px; font-weight: 800; color: #fff;">SISTLABUM</h2>
+                <p style="font-size: 11px; color: #64748B;">Portal Guru & Staf Akademik</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav-group">
+            <div class="nav-group-title">Menu Utama</div>
+            <a href="/admin/index.html" class="sidebar-link">
+                <span class="icon">📊</span> Dashboard Eksekutif
+            </a>
+
+            <div class="nav-group-title">Tugas Mengajar Guru</div>
+            <a href="/admin/jadwal.html" class="sidebar-link">
+                <span class="icon">🎓</span> Kelas & Jadwal Mengajar
+            </a>
+            <a href="/admin/nilai.html" class="sidebar-link">
+                <span class="icon">📈</span> Manajemen Nilai Siswa
+            </a>
+            <a href="/admin/presensi.html" class="sidebar-link">
+                <span class="icon">📅</span> Rekap Presensi KBM
+            </a>
+            <a href="/admin/materi.html" class="sidebar-link">
+                <span class="icon">📚</span> Modul Ajar (Upload PDF)
+            </a>
+            <a href="/admin/tugas.html" class="sidebar-link">
+                <span class="icon">📋</span> Penugasan LMS Siswa
+            </a>
+            <a href="/admin/ujian.html" class="sidebar-link">
+                <span class="icon">📝</span> Jadwal Ujian & Token
+            </a>
+            <a href="/admin/cbt-monitor.html" class="sidebar-link">
+                <span class="icon">🖥️</span> CBT Live Monitor Lab
+            </a>
+
+            <div class="nav-group-title">Wali Kelas & Kesiswaan</div>
+            <a href="/admin/kelas.html" class="sidebar-link">
+                <span class="icon">🏛️</span> Wali Kelas & Piket
+            </a>
+            <a href="/admin/siswa.html" class="sidebar-link">
+                <span class="icon">👥</span> Data Siswa & Wali
+            </a>
+
+            <div class="nav-group-title">Kepegawaian Guru</div>
+            <a href="/admin/slip-gaji.html" class="sidebar-link active">
+                <span class="icon">💵</span> Slip Gaji & Payroll
+            </a>
+        </nav>
+
+        <div style="padding: 16px; border-top: 1px solid #1E293B;">
+            <a href="/masuk.html" class="sidebar-link" style="color: #F87171;">
+                <span class="icon">🚪</span> Keluar Sistem
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+        <header class="portal-header" style="position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="badge badge-info" style="font-size: 12.5px;">Tahun Ajaran: 2026/2027 Ganjil</span>
+            </div>
+            <div class="header-actions">
+                <div class="user-profile-chip">
+                    <div class="avatar-circle" style="background: var(--color-indigo);">BS</div>
+                    <div class="user-text-meta">
+                        <div class="user-name">Budi Santoso, S.Kom., M.T.</div>
+                        <div class="user-role">Guru Pengampu Informatika</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-container">
+            <div class="page-header-row no-print">
+                <div class="page-title-block">
+                    <div class="breadcrumb-trail">
+                        <a href="/admin/index.html">Guru</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span>Kepegawaian & Finansial</span>
+                    </div>
+                    <h1>Slip Gaji & Bukti Penerimaan Payroll 💵</h1>
+                    <p>Dokumen rincian penghasilan resmi pendidik P2LP Universitas Negeri Malang - SMP Laboratorium UM.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary btn-sm" onclick="window.print()">
+                        🖨️ Cetak / Unduh Slip Gaji (PDF)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Periode Selector -->
+            <div class="card no-print" style="padding: 16px 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <label class="form-label" style="font-size: 13px; margin-bottom: 0;">Pilih Periode Penggajian:</label>
+                        <select id="select-payroll-period" class="form-control" style="font-weight: 700; width: 220px;" onchange="changePeriod(this.value)">
+                            <option value="1" selected>Oktober 2026 (Lunas)</option>
+                            <option value="2">September 2026 (Lunas)</option>
+                            <option value="3">Agustus 2026 (Lunas)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span class="badge badge-success" style="font-size: 13px; padding: 6px 14px;">
+                            ✓ Status: Lunas Ditransfer via Bank Jatim Syariah
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOKUMEN SLIP GAJI RESMI (PRINTABLE) -->
+            <div class="card slip-card" id="slip-document-area" style="background: #fff; padding: 36px 40px; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); margin-bottom: 30px;">
+                <!-- KOP SURAT RESMI P2LP UM -->
+                <div style="display: flex; align-items: center; gap: 20px; border-bottom: 3px double #1E3A8A; padding-bottom: 18px; margin-bottom: 24px;">
+                    <img src="/images/logo.png" width="70" height="70" alt="Logo SMP Lab UM" style="object-fit: contain;"/>
+                    <div style="flex-grow: 1;">
+                        <h2 style="font-size: 16px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
+                            PUSAT PENGEMBANGAN LABORATORIUM PENDIDIKAN (P2LP)
+                        </h2>
+                        <h1 style="font-size: 19px; font-weight: 800; color: #0F172A; margin: 2px 0;">
+                            SMP LABORATORIUM UNIVERSITAS NEGERI MALANG
+                        </h1>
+                        <p style="font-size: 12px; color: #475569; margin: 0; line-height: 1.4;">
+                            Jl. Simpang Bogor No. 7 Kota Malang • Telp: (0341) 551312 • Laman: smplabum.sch.id • Email: p2lp@um.ac.id
+                        </p>
+                    </div>
+                    <div style="text-align: right; border-left: 2px solid #CBD5E1; padding-left: 16px;">
+                        <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Nomor Slip</div>
+                        <div style="font-family: var(--font-mono); font-weight: 800; font-size: 13px; color: #1E3A8A;" id="slip-no">
+                            PAY-2026/X/0024
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JUDUL SLIP -->
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h3 style="font-size: 17px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 1px; text-decoration: underline;">
+                        SLIP GAJI & RINCIAN HONORARIUM PENDIDIK
+                    </h3>
+                    <p style="font-size: 13px; color: #475569; margin-top: 4px;">
+                        Periode Bulan: <strong id="slip-period-text">Oktober 2026</strong> • Tanggal Transfer: <strong id="slip-date-text">10 Oktober 2026</strong>
+                    </p>
+                </div>
+
+                <!-- BIODATA GURU -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 24px; font-size: 13px;">
+                    <div>
+                        <table style="width: 100%; line-height: 1.8;">
+                            <tr>
+                                <td style="width: 120px; color: #64748B;">Nama Guru</td>
+                                <td style="width: 10px;">:</td>
+                                <td style="font-weight: 700; color: #0F172A;" id="slip-teacher-name">Budi Santoso, S.Kom., M.T.</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #64748B;">NIP</td>
+                                <td>:</td>
+                                <td style="font-family: var(--font-mono); font-weight: 700;" id="slip-nip">198503152009041001</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #64748B;">Jabatan Fungsional</td>
+                                <td>:</td>
+                                <td>Guru Madya & Kepala Lab Komputer</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div>
+                        <table style="width: 100%; line-height: 1.8;">
+                            <tr>
+                                <td style="width: 120px; color: #64748B;">Mata Pelajaran</td>
+                                <td style="width: 10px;">:</td>
+                                <td style="font-weight: 700;">Informatika & Pemrograman</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #64748B;">Beban Jam (JP)</td>
+                                <td>:</td>
+                                <td>14 JP / Minggu (4 Rombel)</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #64748B;">Rekening Bank</td>
+                                <td>:</td>
+                                <td style="font-family: var(--font-mono); font-weight: 700;" id="slip-bank">Bank Jatim Syariah (012-4455-6677)</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2 KOLOM: PENERIMAAN VS POTONGAN -->
+                <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- KOLOM 1: PENGHASILAN (PENERIMAAN) -->
+                    <div style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); overflow: hidden;">
+                        <div style="background: #1E3A8A; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13.5px;">
+                            A. KOMPONEN PENGHASILAN (PENERIMAAN)
+                        </div>
+                        <table style="width: 100%; font-size: 13px; line-height: 2;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">1. Gaji Pokok Yayasan P2LP</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;" id="slip-basic">Rp 4.250.000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">2. Tunjangan Fungsional Pendidik</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;" id="slip-func">Rp 1.200.000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">3. Tunjangan Profesi / Sertifikasi Guru</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;" id="slip-cert">Rp 3.500.000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">4. Honor Beban Mengajar (14 JP)</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;" id="slip-jp">Rp 840.000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">5. Tunjangan Tugas Tambahan (Ka. Lab Komputer)</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;" id="slip-pos">Rp 750.000</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 16px;">6. Tunjangan Transport & Konsumsi Efektif</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600;" id="slip-trans">Rp 660.000</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background: #F8FAFC; border-top: 2px solid #CBD5E1; font-weight: 800;">
+                                    <td style="padding: 10px 16px; color: #1E3A8A;">TOTAL PENGHASILAN KOTOR (A)</td>
+                                    <td style="padding: 10px 16px; text-align: right; font-family: var(--font-mono); color: #1E3A8A; font-size: 14.5px;" id="slip-gross">Rp 11.200.000</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- KOLOM 2: POTONGAN RESMI -->
+                    <div style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); overflow: hidden;">
+                        <div style="background: #991B1B; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13.5px;">
+                            B. KOMPONEN POTONGAN RESMI
+                        </div>
+                        <table style="width: 100%; font-size: 13px; line-height: 2;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">1. BPJS Kesehatan (1%)</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600; color: #991B1B;" id="slip-bpjs-kes">Rp 117.000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">2. BPJS Ketenagakerjaan (2%)</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600; color: #991B1B;" id="slip-bpjs-tk">Rp 234.000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 6px 16px;">3. Iuran Wajib Koperasi Guru UM</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600; color: #991B1B;" id="slip-kop">Rp 150.000</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 16px;">4. PPh 21 (Pajak Penghasilan)</td>
+                                    <td style="padding: 6px 16px; text-align: right; font-family: var(--font-mono); font-weight: 600; color: #991B1B;" id="slip-pph">Rp 245.000</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 16px; color: transparent;">-</td>
+                                    <td style="padding: 6px 16px; color: transparent;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 16px; color: transparent;">-</td>
+                                    <td style="padding: 6px 16px; color: transparent;">-</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background: #FEF2F2; border-top: 2px solid #FCA5A5; font-weight: 800;">
+                                    <td style="padding: 10px 16px; color: #991B1B;">TOTAL POTONGAN (B)</td>
+                                    <td style="padding: 10px 16px; text-align: right; font-family: var(--font-mono); color: #991B1B; font-size: 14.5px;" id="slip-deduct">Rp 746.000</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TOTAL GAJI BERSIH (TAKE HOME PAY) BANNER -->
+                <div style="background: #F0FDFA; border: 2px solid var(--color-teal); border-radius: var(--radius-md); padding: 18px 24px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 12px; font-weight: 700; color: var(--color-teal); text-transform: uppercase; letter-spacing: 0.5px;">
+                            PENGHASILAN BERSIH YANG DITERIMA (TAKE HOME PAY = A - B)
+                        </div>
+                        <div style="font-size: 26px; font-weight: 900; color: #0F172A; margin-top: 4px; font-family: var(--font-mono);" id="slip-net">
+                            Rp 10.454.000
+                        </div>
+                        <div style="font-size: 12px; color: #475569; font-style: italic; margin-top: 2px;">
+                            Terbilang: <strong>Sepuluh Juta Empat Ratus Lima Puluh Empat Ribu Rupiah</strong>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="badge badge-success" style="font-size: 13px; font-weight: 800; padding: 6px 14px;">
+                            STATUS: LUNAS DITRANSFER
+                        </span>
+                        <div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">
+                            Otorisasi Bank Jatim Syariah • Ref: TRX-99281741
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LEMBAR TANDA TANGAN DIGITAL PENGESAHAN -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 36px; padding-top: 20px; font-size: 13px; text-align: center;">
+                    <div>
+                        <div style="color: #64748B; margin-bottom: 60px;">
+                            Mengetahui,<br/>
+                            <strong>Kepala SMP Laboratorium UM</strong>
+                        </div>
+                        <div style="font-weight: 800; color: #0F172A; text-decoration: underline;">
+                            Dr. Hj. Nurul Hasanah, M.Pd.
+                        </div>
+                        <div style="font-size: 11.5px; color: #64748B; font-family: var(--font-mono);">
+                            NIP. 197204151998032001
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #64748B; margin-bottom: 60px;">
+                            Malang, 10 Oktober 2026<br/>
+                            <strong>Bendahara Pengeluaran P2LP UM</strong>
+                        </div>
+                        <div style="font-weight: 800; color: #0F172A; text-decoration: underline;">
+                            Hj. Siti Rahmawati, S.E., M.Ak.
+                        </div>
+                        <div style="font-size: 11.5px; color: #64748B; font-family: var(--font-mono);">
+                            NIP. 198006122005012003
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let payrollList = [];
+
+        async function loadPayrolls() {
+            try {
+                payrollList = await API.getTeacherPayrolls(2);
+                if (payrollList && payrollList.length > 0) {
+                    renderSlip(payrollList[0]);
+                }
+            } catch (err) {
+                console.error('Error loading payrolls:', err);
+            }
+        }
+
+        function changePeriod(val) {
+            const idx = Number(val) - 1;
+            if (payrollList[idx]) {
+                renderSlip(payrollList[idx]);
+                App.toast(`Memuat slip gaji periode ${payrollList[idx].period_month}`, 'info');
+            }
+        }
+
+        function renderSlip(p) {
+            const formatRupiah = (num) => 'Rp ' + Number(num).toLocaleString('id-ID');
+
+            document.getElementById('slip-period-text').textContent = p.period_month;
+            document.getElementById('slip-date-text').textContent = p.period_date;
+            document.getElementById('slip-teacher-name').textContent = p.teacher_name;
+            document.getElementById('slip-nip').textContent = p.nip;
+            document.getElementById('slip-bank').textContent = `${p.bank_name} (${p.bank_account})`;
+
+            document.getElementById('slip-basic').textContent = formatRupiah(p.basic_salary);
+            document.getElementById('slip-func').textContent = formatRupiah(p.allowance_functional);
+            document.getElementById('slip-cert').textContent = formatRupiah(p.allowance_certification);
+            document.getElementById('slip-jp').textContent = formatRupiah(p.allowance_teaching_hours);
+            document.getElementById('slip-pos').textContent = formatRupiah(p.allowance_position);
+            document.getElementById('slip-trans').textContent = formatRupiah(p.allowance_transport);
+
+            const gross = p.basic_salary + p.allowance_functional + p.allowance_certification + p.allowance_teaching_hours + p.allowance_position + p.allowance_transport;
+            document.getElementById('slip-gross').textContent = formatRupiah(gross);
+
+            document.getElementById('slip-bpjs-kes').textContent = formatRupiah(p.deduction_bpjs_health);
+            document.getElementById('slip-bpjs-tk').textContent = formatRupiah(p.deduction_bpjs_tk);
+            document.getElementById('slip-kop').textContent = formatRupiah(p.deduction_koperasi);
+            document.getElementById('slip-pph').textContent = formatRupiah(p.deduction_pph21);
+
+            const deduct = p.deduction_bpjs_health + p.deduction_bpjs_tk + p.deduction_koperasi + p.deduction_pph21;
+            document.getElementById('slip-deduct').textContent = formatRupiah(deduct);
+
+            document.getElementById('slip-net').textContent = formatRupiah(p.net_salary);
+        }
+
+        loadPayrolls();
+    </script>
+</body>
+</html>

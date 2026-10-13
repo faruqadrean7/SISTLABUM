@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian & Asesmen Digital | Portal Siswa SMP Laboratorium UM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="portal-layout">
+    <!-- Header Siswa -->
+    <header class="portal-header">
+        <div class="brand-section">
+            <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+                <img src="/images/logo.png" width="38" height="38" style="object-fit:contain;" alt="Logo"/>
+                <div class="brand-text">
+                    <h2 style="font-family:var(--font-heading);font-weight:700;color:var(--color-navy);font-size:16px;">SMP Laboratorium</h2>
+                    <p style="color:var(--color-gold);font-weight:600;font-size:11px;">P2LP Universitas Negeri Malang</p>
+                </div>
+            </a>
+        </div>
+        <nav class="header-nav">
+            <a href="/siswa/index.html" class="nav-link">🏠 Beranda</a>
+            <a href="/siswa/ujian.html" class="nav-link active">📝 Ujian & Asesmen</a>
+            <a href="/siswa/perpus.html" class="nav-link">📚 e-Perpus & Modul</a>
+            <a href="/siswa/kelas.html" class="nav-link">👥 Info Kelas & Piket</a>
+            <a href="/siswa/tugas.html" class="nav-link">📋 Tugas LMS</a>
+            <a href="/siswa/rapor.html" class="nav-link">📊 E-Rapor</a>
+        </nav>
+        <div class="header-actions">
+            <div class="user-profile-chip">
+                <div class="avatar-circle" style="background: var(--color-primary);">AF</div>
+                <div class="user-text-meta">
+                    <div class="user-name">Ahmad Fauzan Maulana</div>
+                    <div class="user-role">Siswa • Kelas IX-A (NIS: 240901)</div>
+                </div>
+            </div>
+            <a href="/masuk.html" class="btn btn-outline btn-sm">Keluar</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content-container">
+        <!-- Page Header -->
+        <div class="page-header-row">
+            <div class="page-title-block">
+                <div class="breadcrumb-trail">
+                    <a href="/siswa/index.html">Siswa</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span>Asesmen Akademik</span>
+                </div>
+                <h1>Ujian & Asesmen Digital (CBT Lab)</h1>
+                <p>Katalog asesmen terstruktur: Ulangan Harian, Ulangan Bulanan, UTS (ASTS), dan UAS (ASAS).</p>
+            </div>
+            <div>
+                <a href="/siswa/cbt.html?exam_id=6" class="btn btn-teal">
+                    ⚡ Buka CBT Player Langsung
+                </a>
+            </div>
+        </div>
+
+        <!-- Banner Ujian Aktif Hari Ini -->
+        <div class="card" style="background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; margin-bottom: 28px; border: none; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+                <div>
+                    <span class="badge" style="background: #F59E0B; color: #78350F; font-weight: 800; margin-bottom: 10px; display: inline-block;">
+                        🚨 SEDANG BERLANGSUNG HARI INI
+                    </span>
+                    <h2 style="color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 6px;">
+                        ASTS Ganjil: Informatika & Pemrograman Komputer
+                    </h2>
+                    <p style="color: #CBD5E1; font-size: 14px; margin-bottom: 4px;">
+                        Guru Pengampu: Budi Santoso, S.Kom. • Lab Komputer R.202 • Durasi: 90 Menit
+                    </p>
+                    <div style="font-size: 13.5px; color: #93C5FD; display: flex; align-items: center; gap: 8px;">
+                        <span>Token Masuk:</span>
+                        <code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-weight: 800; color: #FDE047; font-family: var(--font-mono); font-size: 14px;">INF2026</code>
+                        <span style="color: #94A3B8; font-size: 12px;">(Mintalah konfirmasi token ke pengawas bila belum aktif)</span>
+                    </div>
+                </div>
+                <div>
+                    <a href="/siswa/cbt.html?exam_id=6" class="btn btn-teal btn-lg" style="box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4); font-weight: 800;">
+                        Mulai Kerjakan Ujian CBT ➔
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Filters Kategori Ujian -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchExamTab('ALL', this)">
+                📑 Semua Ujian (<span id="count-all">0</span>)
+            </button>
+            <button class="tab-btn" onclick="switchExamTab('UH', this)">
+                📝 Ulangan Harian (UH) (<span id="count-uh">0</span>)
+            </button>
+            <button class="tab-btn" onclick="switchExamTab('UB', this)">
+                📊 Ulangan Bulanan / Formatif (<span id="count-ub">0</span>)
+            </button>
+            <button class="tab-btn" onclick="switchExamTab('UTS', this)">
+                🎯 UTS / ASTS Ganjil (<span id="count-uts">0</span>)
+            </button>
+            <button class="tab-btn" onclick="switchExamTab('UAS', this)">
+                🏆 UAS / ASAS Ganjil (<span id="count-uas">0</span>)
+            </button>
+        </div>
+
+        <!-- Daftar Kartu Ujian -->
+        <div id="exams-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 32px;">
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                Memuat daftar ujian...
+            </div>
+        </div>
+
+        <!-- Petunjuk SOP Ujian CBT Lab Sekolah -->
+        <div class="card" style="background: #F8FAFC; border: 1px solid var(--border-light);">
+            <div class="card-header">
+                <h3 class="card-title">🛡️ Tata Tertib & SOP Ujian CBT SMP Laboratorium UM</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; font-size: 13px; line-height: 1.5; color: var(--text-main);">
+                <div style="display: flex; gap: 10px;">
+                    <span style="font-size: 20px;">1️⃣</span>
+                    <div>
+                        <strong>Token Ujian Terpusat:</strong>
+                        <p style="color: var(--text-muted); margin-top: 2px;">Token dibagikan oleh guru pengawas ruang 5 menit sebelum asesmen dimulai dan diperbarui secara berkala.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <span style="font-size: 20px;">2️⃣</span>
+                    <div>
+                        <strong>Anti-Kecurangan Terpadu:</strong>
+                        <p style="color: var(--text-muted); margin-top: 2px;">Sistem mencatat otomatis perpindahan tab, keluar dari jendela layar penuh, atau split-screen sebagai pelanggaran integritas.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <span style="font-size: 20px;">3️⃣</span>
+                    <div>
+                        <strong>Penyimpanan Real-Time:</strong>
+                        <p style="color: var(--text-muted); margin-top: 2px;">Setiap butir jawaban yang Anda klik langsung disinkronkan ke server sekolah. Jika jaringan terputus, jawaban tetap aman.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let allExams = [];
+        let currentFilter = 'ALL';
+
+        async function loadExams() {
+            try {
+                allExams = await API.getExamsList('', 4);
+                
+                // Update badge counts
+                document.getElementById('count-all').textContent = allExams.length;
+                document.getElementById('count-uh').textContent = allExams.filter(e => e.exam_type === 'UH').length;
+                document.getElementById('count-ub').textContent = allExams.filter(e => e.exam_type === 'UB').length;
+                document.getElementById('count-uts').textContent = allExams.filter(e => e.exam_type === 'UTS').length;
+                document.getElementById('count-uas').textContent = allExams.filter(e => e.exam_type === 'UAS').length;
+
+                renderExams();
+            } catch (err) {
+                console.error('Error loading exams:', err);
+                document.getElementById('exams-container').innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--color-rose);">
+                        Gagal memuat data ujian. Silakan segarkan halaman.
+                    </div>
+                `;
+            }
+        }
+
+        function switchExamTab(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.tabs-nav .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderExams();
+        }
+
+        function getCategoryBadge(type) {
+            switch(type) {
+                case 'UH': return '<span class="badge badge-info" style="font-weight: 700;">Ulangan Harian (UH)</span>';
+                case 'UB': return '<span class="badge badge-teal" style="font-weight: 700;">Ulangan Bulanan (Formatif)</span>';
+                case 'UTS': return '<span class="badge" style="background: #FEF3C7; color: #92400E; font-weight: 700; border: 1px solid #FDE68A;">ASTS / UTS Ganjil</span>';
+                case 'UAS': return '<span class="badge" style="background: #EDE9FE; color: #5B21B6; font-weight: 700; border: 1px solid #DDD6FE;">ASAS / UAS Ganjil</span>';
+                default: return '<span class="badge badge-secondary">Ujian</span>';
+            }
+        }
+
+        function renderExams() {
+            const container = document.getElementById('exams-container');
+            const filtered = currentFilter === 'ALL' 
+                ? allExams 
+                : allExams.filter(e => e.exam_type === currentFilter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-lg);">
+                        <div style="font-size: 36px; margin-bottom: 10px;">📋</div>
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main);">Tidak Ada Ujian pada Kategori Ini</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Belum ada jadwal asesmen yang aktif untuk kategori yang dipilih.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            filtered.forEach(exam => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.cssText = 'display: flex; flex-direction: column; justify-content: space-between; border-radius: var(--radius-lg); transition: all 0.2s;';
+
+                let statusBadge = '';
+                let actionButton = '';
+
+                if (exam.status === 'Aktif') {
+                    statusBadge = '<span class="badge badge-success badge-dot" style="font-weight: 700;">AKTIF BERLANGSUNG</span>';
+                    actionButton = `
+                        <a href="/siswa/cbt.html?exam_id=${exam.id}" class="btn btn-teal btn-block" style="font-weight: 700; text-align: center;">
+                            Mulai Kerjakan Ujian CBT ➔
+                        </a>
+                    `;
+                } else if (exam.status === 'Selesai') {
+                    statusBadge = '<span class="badge badge-secondary">Telah Selesai</span>';
+                    actionButton = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="font-size: 12.5px;">
+                                Nilai: <strong style="font-size: 16px; color: var(--color-teal);">${exam.score_achieved || 90}</strong> / 100
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="App.toast('Membuka rekap evaluasi butir soal...', 'info')">
+                                Lihat Rekap
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    statusBadge = '<span class="badge badge-warning">Terjadwal</span>';
+                    actionButton = `
+                        <button class="btn btn-secondary btn-block" disabled style="opacity: 0.7; cursor: not-allowed; text-align: center;">
+                            Belum Dimulai (Sesuai Jadwal)
+                        </button>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
+                            ${getCategoryBadge(exam.exam_type)}
+                            ${statusBadge}
+                        </div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: var(--color-navy); margin-bottom: 6px; line-height: 1.35;">
+                            ${exam.title}
+                        </h3>
+                        <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">
+                            Mata Pelajaran: <strong>${exam.subject_name}</strong> • Guru: ${exam.teacher_name || 'Guru Mapel'}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-md); margin-bottom: 16px; font-size: 12px;">
+                            <div>
+                                <span style="color: var(--text-muted);">Jadwal:</span><br/>
+                                <strong style="color: var(--text-main);">${exam.scheduled_date || '-'}</strong>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-muted);">Waktu:</span><br/>
+                                <strong style="color: var(--text-main);">${exam.scheduled_time || '-'} (${exam.duration_minutes} Mnt)</strong>
+                            </div>
+                            <div style="grid-column: span 2; display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px dashed var(--border-light);">
+                                <span style="color: var(--text-muted);">Token Ujian:</span>
+                                <code style="font-family: var(--font-mono); font-weight: 800; color: var(--color-primary); background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-light);">${exam.token || 'TIDAK ADA'}</code>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        ${actionButton}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        loadExams();
+    </script>
+</body>
+</html>

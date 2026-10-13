@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Tugas LMS Siswa | Guru SISTLABUM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="admin-shell">
+    <!-- Sidebar Admin & Guru -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="brand-logo-icon">UM</div>
+            <div>
+                <h2 style="font-size: 15px; font-weight: 800; color: #fff;">SISTLABUM</h2>
+                <p style="font-size: 11px; color: #64748B;">Admin & Guru Dashboard</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav-group">
+            <div class="nav-group-title">Menu Utama</div>
+            <a href="/admin/index.html" class="sidebar-link">
+                <span class="icon">📊</span> Dashboard Eksekutif
+            </a>
+
+            <div class="nav-group-title">Tugas Mengajar Guru</div>
+            <a href="/admin/jadwal.html" class="sidebar-link">
+                <span class="icon">🎓</span> Kelas & Jadwal Mengajar
+            </a>
+            <a href="/admin/nilai.html" class="sidebar-link">
+                <span class="icon">📈</span> Manajemen Nilai Siswa
+            </a>
+            <a href="/admin/presensi.html" class="sidebar-link">
+                <span class="icon">📅</span> Rekap Presensi KBM
+            </a>
+            <a href="/admin/materi.html" class="sidebar-link">
+                <span class="icon">📚</span> Modul Ajar (Upload PDF)
+            </a>
+            <a href="/admin/tugas.html" class="sidebar-link active">
+                <span class="icon">📋</span> Penugasan LMS Siswa
+            </a>
+            <a href="/admin/ujian.html" class="sidebar-link">
+                <span class="icon">📝</span> Jadwal Ujian & Token
+            </a>
+            <a href="/admin/cbt-monitor.html" class="sidebar-link">
+                <span class="icon">🖥️</span> CBT Live Monitor Lab
+            </a>
+
+            <div class="nav-group-title">Wali Kelas & Kesiswaan</div>
+            <a href="/admin/kelas.html" class="sidebar-link">
+                <span class="icon">🏛️</span> Wali Kelas & Piket
+            </a>
+            <a href="/admin/siswa.html" class="sidebar-link">
+                <span class="icon">👥</span> Data Siswa & Wali
+            </a>
+
+            <div class="nav-group-title">Kepegawaian Guru</div>
+            <a href="/admin/slip-gaji.html" class="sidebar-link">
+                <span class="icon">💵</span> Slip Gaji & Payroll
+            </a>
+        </nav>
+
+        <div style="padding: 16px; border-top: 1px solid #1E293B;">
+            <a href="/masuk.html" class="sidebar-link" style="color: #F87171;">
+                <span class="icon">🚪</span> Keluar Sistem
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+        <header class="portal-header" style="position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="badge badge-info" style="font-size: 12.5px;">
+                    Portal Pengajaran Aktif • Kelas IX-A
+                </span>
+            </div>
+
+            <div class="header-actions">
+                <div class="user-profile-chip">
+                    <div class="avatar-circle" style="background: var(--color-indigo);">BS</div>
+                    <div class="user-text-meta">
+                        <div class="user-name">Budi Santoso, S.Kom., M.T.</div>
+                        <div class="user-role">Guru Pengampu Mata Pelajaran</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-container">
+            <div class="page-header-row">
+                <div class="page-title-block">
+                    <div class="breadcrumb-trail">
+                        <a href="/admin/index.html">Admin & Guru</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span>Penugasan Siswa</span>
+                    </div>
+                    <h1>Manajemen Tugas & Proyek LMS Siswa 📋</h1>
+                    <p>Terbitkan tugas belajar baru, pantau progres pengumpulan siswa kelas IX-A, dan berikan penilaian formatif.</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="openCreateAssignmentModal()">
+                        + Terbitkan Tugas Baru
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Ringkas Tugas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Total Penugasan Aktif</span>
+                        <span class="stat-value" id="stat-active-tasks" style="color: var(--color-primary);">4</span>
+                        <span class="stat-sub">Semester Ganjil 2026/2027</span>
+                    </div>
+                    <div class="stat-icon-wrapper stat-icon-blue">📝</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Rata-Rata Kepatuhan Kumpul</span>
+                        <span class="stat-value" style="color: var(--color-teal);">93.8%</span>
+                        <span class="stat-sub">30 dari 32 Siswa Tepat Waktu</span>
+                    </div>
+                    <div class="stat-icon-wrapper stat-icon-teal">✓</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Tugas Belum Dikoreksi</span>
+                        <span class="stat-value" style="color: var(--color-amber);">2</span>
+                        <span class="stat-sub">Menunggu Umpan Balik Guru</span>
+                    </div>
+                    <div class="stat-icon-wrapper stat-icon-amber">⏰</div>
+                </div>
+            </div>
+
+            <!-- Tabel Daftar Penugasan -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Daftar Penugasan Kelas IX-A</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Judul Tugas & Petunjuk</th>
+                                <th>Mata Pelajaran</th>
+                                <th style="text-align: center;">Tenggat Pengumpulan</th>
+                                <th style="text-align: center;">Progres Pengumpulan</th>
+                                <th style="text-align: center;">Status</th>
+                                <th style="text-align: right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignments-table-body">
+                            <!-- Diisi dinamis -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Buat Tugas Baru -->
+    <div id="create-assignment-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #fff; width: 100%; max-width: 580px; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); overflow: hidden;">
+            <div style="padding: 18px 24px; background: var(--color-navy); color: #fff; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #fff;">Terbitkan Tugas LMS Baru</h3>
+                <button onclick="closeCreateAssignmentModal()" style="background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer;">&times;</button>
+            </div>
+            <form onsubmit="handleCreateAssignment(event)" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label class="form-label">Judul Tugas / Proyek *</label>
+                    <input type="text" id="as-title" class="form-control" required placeholder="Contoh: Tugas Mandiri 03: Desain Web Responsif HTML & CSS"/>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div>
+                        <label class="form-label">Mata Pelajaran *</label>
+                        <select id="as-subject" class="form-control" required>
+                            <option value="2">Informatika & Pemrograman</option>
+                            <option value="1">Matematika Tingkat Lanjut</option>
+                            <option value="3">Bahasa Indonesia</option>
+                            <option value="4">IPA Terpadu</option>
+                            <option value="5">Bahasa Inggris</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Tenggat Waktu (Due Date) *</label>
+                        <input type="date" id="as-due" class="form-control" required value="2026-10-20"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Instruksi & Petunjuk Pengerjaan *</label>
+                    <textarea id="as-desc" class="form-control" rows="3" required placeholder="Tuliskan petunjuk pengerjaan dan format berkas yang harus diunggah siswa..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateAssignmentModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary">Terbitkan Tugas ke Siswa ➔</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let assignmentsList = [];
+
+        async function loadAssignments() {
+            try {
+                assignmentsList = await API.getAssignments(4);
+                document.getElementById('stat-active-tasks').textContent = assignmentsList.length;
+                renderAssignments(assignmentsList);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderAssignments(items) {
+            const tbody = document.getElementById('assignments-table-body');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">Belum ada penugasan yang diterbitkan.</td></tr>';
+                return;
+            }
+
+            items.forEach((a, idx) => {
+                const tr = document.createElement('tr');
+                const collected = a.submission_count !== undefined ? a.submission_count : (idx === 0 ? 30 : 28);
+                const totalStudents = a.total_students || 32;
+
+                tr.innerHTML = `
+                    <td>
+                        <strong style="color: var(--color-navy); font-size: 14px;">${a.title}</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">${a.description ? a.description.substring(0, 75) + '...' : '-'}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-info">${a.subject_name}</span>
+                    </td>
+                    <td style="text-align: center; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--color-rose);">
+                        ${a.due_date ? a.due_date.substring(0, 10) : '-'}
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge badge-teal" style="font-weight: 700;">${collected} / ${totalStudents} Siswa</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge badge-success">Aktif</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-outline btn-xs" onclick="App.toast('Membuka lembar koreksi pengumpulan tugas 32 siswa...', 'info')">
+                            🔍 Periksa Jawaban
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openCreateAssignmentModal() {
+            document.getElementById('create-assignment-modal').style.display = 'flex';
+        }
+
+        function closeCreateAssignmentModal() {
+            document.getElementById('create-assignment-modal').style.display = 'none';
+        }
+
+        async function handleCreateAssignment(e) {
+            e.preventDefault();
+            const title = document.getElementById('as-title').value;
+            const subject_id = Number(document.getElementById('as-subject').value);
+            const due_date = document.getElementById('as-due').value;
+            const description = document.getElementById('as-desc').value;
+
+            try {
+                const res = await API.createAssignment({
+                    class_id: 4,
+                    subject_id,
+                    title,
+                    description,
+                    due_date
+                });
+
+                App.toast(res.message || 'Tugas berhasil diterbitkan!', 'success');
+                closeCreateAssignmentModal();
+                await loadAssignments();
+            } catch (err) {
+                App.toast('Gagal menerbitkan tugas: ' + err.message, 'error');
+            }
+        }
+
+        loadAssignments();
+    </script>
+</body>
+</html>

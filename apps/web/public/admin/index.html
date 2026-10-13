@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Manajemen & Guru | SISTLABUM Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="admin-shell">
+    <!-- Sidebar Admin & Guru -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="brand-logo-icon">UM</div>
+            <div>
+                <h2 style="font-size: 15px; font-weight: 800; color: #fff;">SISTLABUM</h2>
+                <p style="font-size: 11px; color: #64748B;">Admin & Guru Dashboard</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav-group">
+            <div class="nav-group-title">Menu Utama</div>
+            <a href="/admin/index.html" class="sidebar-link active">
+                <span class="icon">📊</span> Dashboard Eksekutif
+            </a>
+
+            <div class="nav-group-title">Tugas Mengajar Guru</div>
+            <a href="/admin/jadwal.html" class="sidebar-link">
+                <span class="icon">🎓</span> Kelas & Jadwal Mengajar
+            </a>
+            <a href="/admin/nilai.html" class="sidebar-link">
+                <span class="icon">📈</span> Manajemen Nilai Siswa
+            </a>
+            <a href="/admin/presensi.html" class="sidebar-link">
+                <span class="icon">📅</span> Rekap Presensi KBM
+            </a>
+            <a href="/admin/materi.html" class="sidebar-link">
+                <span class="icon">📚</span> Modul Ajar (Upload PDF)
+            </a>
+            <a href="/admin/tugas.html" class="sidebar-link">
+                <span class="icon">📋</span> Penugasan LMS Siswa
+            </a>
+            <a href="/admin/ujian.html" class="sidebar-link">
+                <span class="icon">📝</span> Jadwal Ujian & Token
+            </a>
+            <a href="/admin/cbt-monitor.html" class="sidebar-link">
+                <span class="icon">🖥️</span> CBT Live Monitor Lab
+            </a>
+
+            <div class="nav-group-title">Wali Kelas & Kesiswaan</div>
+            <a href="/admin/kelas.html" class="sidebar-link">
+                <span class="icon">🏛️</span> Wali Kelas & Piket
+            </a>
+            <a href="/admin/siswa.html" class="sidebar-link">
+                <span class="icon">👥</span> Data Siswa & Wali
+            </a>
+
+            <div class="nav-group-title">Kepegawaian Guru</div>
+            <a href="/admin/slip-gaji.html" class="sidebar-link">
+                <span class="icon">💵</span> Slip Gaji & Payroll
+            </a>
+        </nav>
+
+        <div style="padding: 16px; border-top: 1px solid #1E293B;">
+            <a href="/masuk.html" class="sidebar-link" style="color: #F87171;">
+                <span class="icon">🚪</span> Keluar Sistem
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+        <!-- Topbar Admin -->
+        <header class="portal-header" style="position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="badge badge-info" style="font-size: 12.5px;">
+                    Tahun Ajaran: 2026/2027 Ganjil (Aktif)
+                </span>
+            </div>
+
+            <div class="header-actions">
+                <div class="user-profile-chip">
+                    <div class="avatar-circle" style="background: var(--color-indigo);">BS</div>
+                    <div class="user-text-meta">
+                        <div class="user-name">Budi Santoso, S.Kom., M.T.</div>
+                        <div class="user-role">Guru Informatika & Admin Lab</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-container">
+            <div class="page-header-row">
+                <div class="page-title-block">
+                    <div class="breadcrumb-trail">
+                        <span>Admin</span>
+                        <span class="breadcrumb-separator">/</span>
+                        <span>Dashboard Eksekutif</span>
+                    </div>
+                    <h1>Pusat Kendali Manajemen Sekolah & Pendidik 🏛️</h1>
+                    <p>Ringkasan jadwal mengajar hari ini, progres penginputan rapor siswa, presensi gerbang, dan status penggajian resmi.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <a href="/admin/jadwal.html" class="btn btn-secondary btn-sm">🎓 Kelas & Jadwal</a>
+                    <a href="/admin/nilai.html" class="btn btn-primary btn-sm">📝 Input Nilai Siswa ➔</a>
+                </div>
+            </div>
+
+            <!-- Stats Grid Admin -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Beban Mengajar Aktif</span>
+                        <span class="stat-value" style="color: var(--color-primary);">4 Rombel</span>
+                        <span class="stat-sub">12 JP / Minggu (126 Siswa)</span>
+                    </div>
+                    <div class="stat-icon-wrapper stat-icon-blue">🎓</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Kehadiran Guru Hari Ini</span>
+                        <span class="stat-value" style="color: var(--color-teal);">100%</span>
+                        <span class="stat-sub">Fingerprint: 06:45 WIB</span>
+                    </div>
+                    <div class="stat-icon-wrapper stat-icon-teal">👨‍🏫</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Siswa Siap Cetak Rapor</span>
+                        <span class="stat-value" style="color: var(--color-amber);">96.8%</span>
+                        <span class="stat-sub">Nilai & Deskripsi Lengkap</span>
+                    </div>
+                    <div class="stat-icon-wrapper stat-icon-amber">📈</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-data">
+                        <span class="stat-label">Gaji Bulan Ini (Oktober)</span>
+                        <span class="stat-value" style="color: #16A34A; font-size: 20px;">LUNAS</span>
+                        <span class="stat-sub">Bank Jatim: Rp 10.454.000</span>
+                    </div>
+                    <div class="stat-icon-wrapper" style="background: #DCFCE7; color: #16A34A;">💵</div>
+                </div>
+            </div>
+
+            <!-- Banner Jadwal Mengajar Guru Hari Ini -->
+            <div class="card" style="background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; margin-bottom: 24px; padding: 20px 24px; border: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <span class="badge" style="background: #F59E0B; color: #78350F; font-weight: 800; margin-bottom: 6px;">
+                            ⏰ JADWAL KBM HARI INI (SENIN)
+                        </span>
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin: 4px 0;">
+                            Informatika & Pemrograman — Kelas IX-A (08:30 - 10:00 WIB)
+                        </h3>
+                        <p style="color: #CBD5E1; font-size: 13px; margin: 0;">
+                            Lokasi: <strong>Lab Komputer R.202</strong> • Materi: Praktikum Pemrograman Web & ASTS CBT • 32 Siswa
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="/admin/presensi.html?class_id=4" class="btn btn-outline btn-sm" style="color: #fff; border-color: rgba(255,255,255,0.4);">
+                            📋 Presensi Kelas
+                        </a>
+                        <a href="/admin/cbt-monitor.html" class="btn btn-teal btn-sm">
+                            🖥️ Pantau Ujian CBT Lab ➔
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2 Kolom Section: Presensi Gerbang & Progres Rapor Siswa -->
+            <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px; margin-bottom: 24px;">
+                <!-- Presensi Gerbang Terkini -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📡 Log Presensi RFID Gerbang Hari Ini (12 Okt 2026)</h3>
+                        <a href="/admin/siswa.html" style="font-size: 13px; font-weight: 700; color: var(--color-primary); text-decoration: none;">Lihat Semua Siswa ➔</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Siswa</th>
+                                    <th>Kelas</th>
+                                    <th>Jam Tap Masuk</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-gate-tbody">
+                                <!-- Diisi dinamis dari SQLite via API -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Progres Entri Nilai Rapor Siswa Per-Kelas -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">📊 Progres Nilai Rapor Kelas yang Diajar</h3>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Kelengkapan nilai & deskripsi capaian rapor</p>
+                        </div>
+                        <a href="/admin/nilai.html" style="font-size: 12.5px; font-weight: 700; color: var(--color-primary); text-decoration: none;">Kelola Nilai ➔</a>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-weight: 600;">
+                                <span>Informatika (Kelas IX-A)</span>
+                                <span style="color: var(--color-teal); font-weight: 700;">32/32 Siswa (100% Siap)</span>
+                            </div>
+                            <div style="height: 8px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden;">
+                                <div style="width: 100%; height: 100%; background: var(--color-teal);"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-weight: 600;">
+                                <span>Informatika (Kelas IX-B)</span>
+                                <span style="color: var(--color-primary); font-weight: 700;">30/32 Siswa (94%)</span>
+                            </div>
+                            <div style="height: 8px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden;">
+                                <div style="width: 94%; height: 100%; background: var(--color-primary);"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-weight: 600;">
+                                <span>Informatika Dasar (Kelas VII-A)</span>
+                                <span style="color: var(--color-teal); font-weight: 700;">32/32 Siswa (100% Siap)</span>
+                            </div>
+                            <div style="height: 8px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden;">
+                                <div style="width: 100%; height: 100%; background: var(--color-teal);"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 8px; padding: 12px; background: #F0FDFA; border: 1px solid var(--color-teal-border); border-radius: var(--radius-md);">
+                            <div style="font-size: 12.5px; color: var(--color-navy); line-height: 1.4;">
+                                💡 <strong>Manajemen Nilai Siap Rapor:</strong> Nilai yang telah diisi langsung tersinkron ke E-Rapor Siswa dan memudahkan admin saat mencetak rapor resmi.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget Slip Gaji & Akses Cepat Kepegawaian -->
+            <div class="card" style="background: #F8FAFC; border: 1px solid var(--border-light); padding: 18px 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="font-size: 32px;">💵</div>
+                        <div>
+                            <h4 style="font-size: 15px; font-weight: 800; color: var(--color-navy); margin: 0;">
+                                Slip Gaji Periode Terakhir: Oktober 2026
+                            </h4>
+                            <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                                Total Take Home Pay: <strong style="color: #16A34A; font-family: var(--font-mono);">Rp 10.454.000</strong> • Status: Lunas Ditransfer via Bank Jatim Syariah
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/admin/slip-gaji.html" class="btn btn-outline btn-sm" style="color: var(--color-primary); border-color: var(--color-primary); font-weight: 700;">
+                            Lihat Rincian & Cetak Slip Gaji ➔
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        async function loadAdminDashboard() {
+            try {
+                const logs = await API.getTodayAttendance();
+                const tbody = document.getElementById('admin-gate-tbody');
+                tbody.innerHTML = '';
+
+                logs.slice(0, 5).forEach(l => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 700; color: var(--color-primary);">
+                            ${l.student_name}
+                            <div style="font-size: 11px; color: var(--text-subtle); font-weight: normal;">NIS: ${l.nis}</div>
+                        </td>
+                        <td>${l.class_name}</td>
+                        <td style="font-family: var(--font-mono); font-weight: 600;">${l.gate_in_time} WIB</td>
+                        <td>
+                            <span class="badge ${l.classroom_status === 'Hadir' ? 'badge-success' : 'badge-warning'} badge-dot">
+                                ${l.classroom_status}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadAdminDashboard();
+    </script>
+</body>
+</html>

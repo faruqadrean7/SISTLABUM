@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Presensi KBM & Kehadiran Guru | SISTLABUM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/demo-tailwind.css"/>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="admin-shell">
+    <!-- Sidebar Admin & Guru -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="brand-logo-icon">UM</div>
+            <div>
+                <h2 style="font-size: 15px; font-weight: 800; color: #fff;">SISTLABUM</h2>
+                <p style="font-size: 11px; color: #64748B;">Portal Guru & Staf Akademik</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav-group">
+            <div class="nav-group-title">Menu Utama</div>
+            <a href="/admin/index.html" class="sidebar-link">
+                <span class="icon">📊</span> Dashboard Eksekutif
+            </a>
+
+            <div class="nav-group-title">Tugas Mengajar Guru</div>
+            <a href="/admin/jadwal.html" class="sidebar-link">
+                <span class="icon">🎓</span> Kelas & Jadwal Mengajar
+            </a>
+            <a href="/admin/nilai.html" class="sidebar-link">
+                <span class="icon">📈</span> Manajemen Nilai Siswa
+            </a>
+            <a href="/admin/presensi.html" class="sidebar-link active">
+                <span class="icon">📅</span> Rekap Presensi KBM
+            </a>
+            <a href="/admin/materi.html" class="sidebar-link">
+                <span class="icon">📚</span> Modul Ajar (Upload PDF)
+            </a>
+            <a href="/admin/tugas.html" class="sidebar-link">
+                <span class="icon">📋</span> Penugasan LMS Siswa
+            </a>
+            <a href="/admin/ujian.html" class="sidebar-link">
+                <span class="icon">📝</span> Jadwal Ujian & Token
+            </a>
+            <a href="/admin/cbt-monitor.html" class="sidebar-link">
+                <span class="icon">🖥️</span> CBT Live Monitor Lab
+            </a>
+
+            <div class="nav-group-title">Wali Kelas & Kesiswaan</div>
+            <a href="/admin/kelas.html" class="sidebar-link">
+                <span class="icon">🏛️</span> Wali Kelas & Piket
+            </a>
+            <a href="/admin/siswa.html" class="sidebar-link">
+                <span class="icon">👥</span> Data Siswa & Wali
+            </a>
+
+            <div class="nav-group-title">Kepegawaian Guru</div>
+            <a href="/admin/slip-gaji.html" class="sidebar-link">
+                <span class="icon">💵</span> Slip Gaji & Payroll
+            </a>
+        </nav>
+
+        <div style="padding: 16px; border-top: 1px solid #1E293B;">
+            <a href="/masuk.html" class="sidebar-link" style="color: #F87171;">
+                <span class="icon">🚪</span> Keluar Sistem
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+        <header class="portal-header" style="position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="badge badge-info" style="font-size: 12.5px;">Tahun Ajaran: 2026/2027 Ganjil</span>
+            </div>
+            <div class="header-actions">
+                <div class="user-profile-chip">
+                    <div class="avatar-circle" style="background: var(--color-indigo);">BS</div>
+                    <div class="user-text-meta">
+                        <div class="user-name">Budi Santoso, S.Kom., M.T.</div>
+                        <div class="user-role">Guru Pengampu Informatika</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-container">
+            <div class="page-header-row">
+                <div class="page-title-block">
+                    <div class="breadcrumb-trail">
+                        <a href="/admin/index.html">Guru</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span>Presensi & Kehadiran</span>
+                    </div>
+                    <h1>Rekapitulasi Presensi KBM & Kehadiran Guru 📅</h1>
+                    <p>Catat absensi pertemuan kelas yang diajar dan pantau rekap log kehadiran pribadi di sekolah.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-teal btn-sm" onclick="handleTeacherCheckIn()">
+                        📍 Presensi Datang Hari Ini
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Navigasi -->
+            <div class="tabs-nav">
+                <button class="tab-btn active" id="tab-btn-students" onclick="switchPresensiTab('students')">
+                    👥 Presensi Siswa di Kelas Mengajar
+                </button>
+                <button class="tab-btn" id="tab-btn-teacher" onclick="switchPresensiTab('teacher')">
+                    👨‍🏫 Rekap Kehadiran Guru Pribadi
+                </button>
+            </div>
+
+            <!-- TAB 1: PRESENSI SISWA DI KELAS -->
+            <section id="tab-students-content">
+                <!-- Filter Bar -->
+                <div class="card" style="padding: 16px 20px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div>
+                                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Pilih Kelas Mengajar</label>
+                                <select id="sel-class" class="form-control" style="font-weight: 700; width: 180px;" onchange="loadStudentAttendance()">
+                                    <option value="4" selected>Kelas IX-A (Lab 202)</option>
+                                    <option value="5">Kelas IX-B (Lab 202)</option>
+                                    <option value="1">Kelas VII-A (Lab 201)</option>
+                                    <option value="2">Kelas VII-B (Lab 201)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Tanggal Pertemuan KBM</label>
+                                <input type="date" id="sel-date" class="form-control" value="2026-10-12" style="font-weight: 700; width: 170px;" onchange="loadStudentAttendance()"/>
+                            </div>
+                            <div>
+                                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Pertemuan Ke</label>
+                                <select id="sel-session" class="form-control" style="width: 140px;">
+                                    <option value="10" selected>Pertemuan 10</option>
+                                    <option value="9">Pertemuan 9</option>
+                                    <option value="8">Pertemuan 8</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="setAllPresent()">
+                                ✓ Hadirkan Semua
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="saveClassAttendance()">
+                                💾 Simpan Rekap Presensi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Kehadiran Kelas -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Persentase Kehadiran</span>
+                            <span class="stat-value" style="color: var(--color-teal);" id="st-class-pct">96.9%</span>
+                            <span class="stat-sub">Sangat Baik & Tertib</span>
+                        </div>
+                        <div class="stat-icon-wrapper stat-icon-teal">📊</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Jumlah Siswa Hadir</span>
+                            <span class="stat-value" style="color: #16A34A;" id="st-class-hadir">31 Siswa</span>
+                            <span class="stat-sub">Dari 32 Siswa Terdaftar</span>
+                        </div>
+                        <div class="stat-icon-wrapper" style="background: #DCFCE7; color: #16A34A;">✓</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Izin / Sakit Resmi</span>
+                            <span class="stat-value" style="color: var(--color-amber);" id="st-class-izin">1 Siswa</span>
+                            <span class="stat-sub">Surat Keterangan Dokter</span>
+                        </div>
+                        <div class="stat-icon-wrapper stat-icon-amber">🏥</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Tanpa Keterangan (Alpa)</span>
+                            <span class="stat-value" style="color: var(--color-rose);" id="st-class-alpa">0 Siswa</span>
+                            <span class="stat-sub">Nol Pelanggaran</span>
+                        </div>
+                        <div class="stat-icon-wrapper stat-icon-rose">⚠️</div>
+                    </div>
+                </div>
+
+                <!-- Tabel Siswa -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="students-table-title">Daftar Presensi Siswa: Kelas IX-A (Informatika)</h3>
+                        <span class="badge badge-info">32 Siswa</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px; text-align: center;">No</th>
+                                    <th>Nama Siswa</th>
+                                    <th style="width: 120px;">NIS</th>
+                                    <th style="width: 100px; text-align: center;">Gender</th>
+                                    <th style="width: 280px; text-align: center;">Status Kehadiran Hari Ini</th>
+                                    <th>Keterangan / Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-att-tbody">
+                                <!-- Diisi dinamis -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: REKAP KEHADIRAN GURU PRIBADI -->
+            <section id="tab-teacher-content" style="display: none;">
+                <!-- Stats Ringkasan Guru -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Total Hari Masuk</span>
+                            <span class="stat-value" style="color: var(--color-primary);" id="t-present-days">22 Hari</span>
+                            <span class="stat-sub">Bulan Oktober 2026</span>
+                        </div>
+                        <div class="stat-icon-wrapper stat-icon-blue">📅</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Ketepatan Waktu</span>
+                            <span class="stat-value" style="color: #16A34A;" id="t-ontime-pct">100%</span>
+                            <span class="stat-sub">Disiplin Apel Pagi</span>
+                        </div>
+                        <div class="stat-icon-wrapper" style="background: #DCFCE7; color: #16A34A;">⏱️</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Jam Pulang Terpenuhi</span>
+                            <span class="stat-value" style="color: var(--color-teal);">37.5 Jam / Mgg</span>
+                            <span class="stat-sub">Sesuai Permendikbud</span>
+                        </div>
+                        <div class="stat-icon-wrapper stat-icon-teal">🏢</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-data">
+                            <span class="stat-label">Status Verifikasi</span>
+                            <span class="stat-value" style="color: #16A34A; font-size: 20px;">TERVALIDASI</span>
+                            <span class="stat-sub">Mesin Fingerprint P2LP</span>
+                        </div>
+                        <div class="stat-icon-wrapper" style="background: #DCFCE7; color: #16A34A;">🛡️</div>
+                    </div>
+                </div>
+
+                <!-- Log Kehadiran Guru -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📋 Log Presensi Kehadiran Guru: Budi Santoso, S.Kom., M.T. (NIP: 198503152009041001)</h3>
+                        <span class="badge badge-success">Fingerprint & Geolocation</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 140px;">Tanggal</th>
+                                    <th style="width: 140px; text-align: center;">Jam Datang</th>
+                                    <th style="width: 140px; text-align: center;">Jam Pulang</th>
+                                    <th style="width: 180px; text-align: center;">Status Kehadiran</th>
+                                    <th>Metode Verifikasi / Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacher-att-tbody">
+                                <!-- Diisi dinamis via API.getTeacherAttendance -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let studentAttendanceList = [];
+
+        function switchPresensiTab(tab) {
+            document.querySelectorAll('.tabs-nav .tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-students-content').style.display = 'none';
+            document.getElementById('tab-teacher-content').style.display = 'none';
+
+            if (tab === 'students') {
+                document.getElementById('tab-btn-students').classList.add('active');
+                document.getElementById('tab-students-content').style.display = 'block';
+            } else if (tab === 'teacher') {
+                document.getElementById('tab-btn-teacher').classList.add('active');
+                document.getElementById('tab-teacher-content').style.display = 'block';
+                loadTeacherAttendanceLogs();
+            }
+        }
+
+        async function loadStudentAttendance() {
+            const classId = document.getElementById('sel-class').value;
+            try {
+                const res = await API.getTeacherStudentGrades(classId, 2);
+                studentAttendanceList = res.students || [];
+                renderStudentAttendance(studentAttendanceList);
+            } catch (err) {
+                console.error('Error loading students:', err);
+            }
+        }
+
+        async function renderStudentAttendance(students) {
+            const tbody = document.getElementById('student-att-tbody');
+            tbody.innerHTML = '';
+
+            const date = document.getElementById('sel-date').value || '2026-10-12';
+            let existingLogs = [];
+            try {
+                const logsRes = await fetch(`/api/attendance/today?date=${date}`).then(r => r.json());
+                if (Array.isArray(logsRes)) existingLogs = logsRes;
+            } catch (e) {}
+
+            students.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                tr.dataset.studentId = s.student_id;
+
+                const log = existingLogs.find(l => l.student_id === s.student_id);
+                const defaultStatus = log ? log.classroom_status : (s.student_id === 5 ? 'Sakit' : 'Hadir');
+                const defaultNotes = log ? (log.notes || '') : (defaultStatus === 'Sakit' ? 'Surat dokter terverifikasi' : 'Mengikuti KBM tertib');
+
+                tr.innerHTML = `
+                    <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                    <td>
+                        <strong style="color: var(--color-navy); font-size: 13.5px;">${s.student_name}</strong>
+                    </td>
+                    <td style="font-family: var(--font-mono); font-size: 13px;">${s.nis}</td>
+                    <td style="text-align: center; font-weight: 700;">${s.gender}</td>
+                    <td style="text-align: center;">
+                        <div style="display: inline-flex; gap: 4px; background: var(--bg-subtle); padding: 3px; border-radius: var(--radius-md);">
+                            <button type="button" class="btn btn-xs ${defaultStatus === 'Hadir' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Hadir')">Hadir</button>
+                            <button type="button" class="btn btn-xs ${defaultStatus === 'Sakit' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Sakit')">Sakit</button>
+                            <button type="button" class="btn btn-xs ${defaultStatus === 'Izin' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Izin')">Izin</button>
+                            <button type="button" class="btn btn-xs ${defaultStatus === 'Alpa' ? 'btn-teal' : 'btn-outline'}" style="padding: 3px 8px;" onclick="setStatus(this, 'Alpa')">Alpa</button>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" style="font-size: 12px; padding: 4px 8px;" placeholder="Keterangan..." value="${defaultNotes}"/>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            updateStatsSummary();
+        }
+
+        function setStatus(btn, status) {
+            const container = btn.parentElement;
+            container.querySelectorAll('button').forEach(b => {
+                b.className = 'btn btn-xs btn-outline';
+            });
+            btn.className = 'btn btn-xs btn-teal';
+            updateStatsSummary();
+        }
+
+        function setAllPresent() {
+            document.querySelectorAll('#student-att-tbody tr').forEach(tr => {
+                const btns = tr.querySelectorAll('button');
+                btns.forEach(b => b.className = 'btn btn-xs btn-outline');
+                if (btns[0]) btns[0].className = 'btn btn-xs btn-teal';
+            });
+            updateStatsSummary();
+            App.toast('Semua siswa ditandai Hadir.', 'success');
+        }
+
+        function updateStatsSummary() {
+            let hadir = 0, sakit = 0, izin = 0, alpa = 0;
+            const rows = document.querySelectorAll('#student-att-tbody tr');
+            rows.forEach(tr => {
+                const activeBtn = tr.querySelector('button.btn-teal');
+                const st = activeBtn ? activeBtn.textContent.trim() : 'Hadir';
+                if (st === 'Hadir') hadir++;
+                else if (st === 'Sakit') sakit++;
+                else if (st === 'Izin') izin++;
+                else if (st === 'Alpa') alpa++;
+            });
+
+            const total = rows.length || 32;
+            const pct = Math.round((hadir / total) * 1000) / 10;
+            if (document.getElementById('st-class-pct')) document.getElementById('st-class-pct').textContent = `${pct}%`;
+            if (document.getElementById('st-class-hadir')) document.getElementById('st-class-hadir').textContent = `${hadir} Siswa`;
+            if (document.getElementById('st-class-izin')) document.getElementById('st-class-izin').textContent = `${sakit + izin} Siswa`;
+            if (document.getElementById('st-class-alpa')) document.getElementById('st-class-alpa').textContent = `${alpa} Siswa`;
+        }
+
+        async function saveClassAttendance() {
+            const classId = document.getElementById('sel-class').value;
+            const date = document.getElementById('sel-date').value || '2026-10-12';
+            const attendances = [];
+
+            document.querySelectorAll('#student-att-tbody tr').forEach(tr => {
+                const studentId = Number(tr.dataset.studentId);
+                const activeBtn = tr.querySelector('button.btn-teal');
+                const status = activeBtn ? activeBtn.textContent.trim() : 'Hadir';
+                const notes = tr.querySelector('input').value || '';
+                attendances.push({ student_id: studentId, status, notes });
+            });
+
+            try {
+                const res = await API.saveStudentAttendance({
+                    class_id: Number(classId),
+                    date: date,
+                    attendances: attendances
+                });
+                App.toast(res.message || 'Rekap presensi pertemuan KBM berhasil disimpan dan disahkan!', 'success');
+            } catch (err) {
+                App.toast('Gagal menyimpan presensi: ' + err.message, 'error');
+            }
+        }
+
+        async function loadTeacherAttendanceLogs() {
+            try {
+                const res = await API.getTeacherAttendance(2);
+                const tbody = document.getElementById('teacher-att-tbody');
+                tbody.innerHTML = '';
+
+                (res.logs || []).forEach(log => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 700; color: var(--color-navy);">${log.date}</td>
+                        <td style="text-align: center; font-family: var(--font-mono); font-weight: 700; color: var(--color-teal);">${log.check_in_time} WIB</td>
+                        <td style="text-align: center; font-family: var(--font-mono); font-weight: 700; color: var(--color-navy);">${log.check_out_time || '16:00:00'} WIB</td>
+                        <td style="text-align: center;">
+                            <span class="badge badge-success">${log.status}</span>
+                        </td>
+                        <td style="font-size: 12.5px; color: var(--text-muted);">${log.notes || 'Fingerprint & Geolocation Valid'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Error loading teacher attendance:', err);
+            }
+        }
+
+        function handleTeacherCheckIn() {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            App.toast(`Presensi Datang berhasil dicatat pada ${timeStr} WIB. Status: Tepat Waktu!`, 'success');
+        }
+
+        loadStudentAttendance();
+    </script>
+</body>
+</html>
