@@ -195,6 +195,8 @@ Route::prefix('v1')->group(function () {
 
         // Portal Siswa
         Route::prefix('me')->group(function () {
+            Route::get('/notification-preferences', [NotificationPreferenceController::class, 'index']);
+            Route::put('/notification-preferences', [NotificationPreferenceController::class, 'update']);
             Route::get('/student-dashboard', [MeStudentController::class, 'dashboard']);
             Route::get('/schedule', [MeStudentController::class, 'schedule']);
             Route::get('/grades', [MeStudentController::class, 'grades']);

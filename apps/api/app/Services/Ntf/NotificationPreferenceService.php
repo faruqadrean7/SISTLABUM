@@ -16,20 +16,33 @@ class NotificationPreferenceService
      */
     public function getUserPreferences(User $user): array
     {
+        $user->loadMissing('roles');
+        $userRoleCodes = $user->roles->pluck('code')->all();
+        $isSuperAdmin = in_array('super_admin', $userRoleCodes, true);
+
         $existingRecords = NotificationPreference::where('user_id', $user->id)
             ->get()
             ->keyBy('notif_type');
 
         $result = [];
         foreach (NotificationPreference::NOTIFICATION_TYPES as $type => $meta) {
+            $allowedRoles = $meta['allowed_roles'] ?? [];
+            if (! $isSuperAdmin && ! empty($allowedRoles) && empty(array_intersect($userRoleCodes, $allowedRoles))) {
+                // Sembunyikan topik yang tidak berhak diakses oleh peran pengguna (GAP-11)
+                continue;
+            }
+
             $pref = $existingRecords->get($type);
+            $isEnabled = $pref ? (bool) $pref->is_enabled : true;
 
             $result[] = [
                 'notif_type' => $type,
+                'topic' => $type,
                 'label' => $meta['label'],
                 'description' => $meta['description'],
                 'supported_channels' => $meta['supported_channels'],
-                'is_enabled' => $pref ? (bool) $pref->is_enabled : true,
+                'is_enabled' => $isEnabled,
+                'enabled' => $isEnabled,
                 'channel_push' => $pref ? (bool) $pref->channel_push : true,
                 'channel_wa' => $pref ? (bool) $pref->channel_wa : true,
                 'channel_email' => $pref ? (bool) $pref->channel_email : true,
@@ -40,7 +53,7 @@ class NotificationPreferenceService
     }
 
     /**
-     * BE-NTF-04: Perbarui preferensi notifikasi user (single atau batch).
+     * BE-NTF-04 / GAP-11: Perbarui preferensi notifikasi user dengan validasi scoping peran.
      */
     public function updateUserPreferences(User $user, array $data, Request $request): array
     {
@@ -48,7 +61,7 @@ class NotificationPreferenceService
 
         if (! empty($data['preferences']) && is_array($data['preferences'])) {
             $itemsToUpdate = $data['preferences'];
-        } elseif (! empty($data['notif_type'])) {
+        } elseif (! empty($data['notif_type']) || ! empty($data['topic'])) {
             $itemsToUpdate = [$data];
         }
 
@@ -56,13 +69,41 @@ class NotificationPreferenceService
             throw new HttpException(422, 'Tidak ada data preferensi notifikasi yang dikirimkan.');
         }
 
+        $user->loadMissing('roles');
+        $userRoleCodes = $user->roles->pluck('code')->all();
+        $isSuperAdmin = in_array('super_admin', $userRoleCodes, true);
+
+        // Validasi scoping role untuk setiap item sebelum melakukan pembaruan
         foreach ($itemsToUpdate as $item) {
-            $type = $item['notif_type'];
+            $type = $item['topic'] ?? $item['notif_type'] ?? null;
+            if (! $type) {
+                continue;
+            }
+
+            $meta = NotificationPreference::NOTIFICATION_TYPES[$type] ?? null;
+            if (! $meta) {
+                throw new HttpException(422, "Jenis notifikasi '{$type}' tidak valid.");
+            }
+
+            $allowedRoles = $meta['allowed_roles'] ?? [];
+            if (! $isSuperAdmin && ! empty($allowedRoles) && empty(array_intersect($userRoleCodes, $allowedRoles))) {
+                throw new HttpException(403, "Akses ditolak: Peran Anda tidak memiliki wewenang untuk mengatur preferensi topik '{$type}'.");
+            }
+        }
+
+        foreach ($itemsToUpdate as $item) {
+            $type = $item['topic'] ?? $item['notif_type'] ?? null;
+            if (! $type) {
+                continue;
+            }
 
             $updatePayload = [];
             if (array_key_exists('is_enabled', $item)) {
                 $updatePayload['is_enabled'] = (bool) $item['is_enabled'];
+            } elseif (array_key_exists('enabled', $item)) {
+                $updatePayload['is_enabled'] = (bool) $item['enabled'];
             }
+
             if (array_key_exists('channel_push', $item)) {
                 $updatePayload['channel_push'] = (bool) $item['channel_push'];
             }
@@ -80,7 +121,7 @@ class NotificationPreferenceService
         }
 
         $this->logAudit($user->id, 'notification_preference.update', 'notification_preferences', null, null, [
-            'updated_types' => collect($itemsToUpdate)->pluck('notif_type')->toArray(),
+            'updated_types' => collect($itemsToUpdate)->map(fn ($i) => $i['topic'] ?? $i['notif_type'])->values()->toArray(),
         ], $request);
 
         return $this->getUserPreferences($user);
