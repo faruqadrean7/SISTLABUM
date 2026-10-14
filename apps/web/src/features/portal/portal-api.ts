@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/api-client';
+import { executeWithMockFallback } from '@/lib/api/mock-mode';
 import {
   PortalChildSummary,
   ChildAttendanceSummary,
@@ -9,16 +10,6 @@ import {
   StudentScheduleItem,
   StudentExamItem,
 } from './types';
-import {
-  MOCK_CHILDREN,
-  MOCK_CHILD_ATTENDANCE,
-  MOCK_CHILD_REPORT_CARD,
-  MOCK_CHILD_CHARACTER,
-  MOCK_CHILD_PROGRESS,
-  MOCK_STUDENT_DASHBOARD,
-  MOCK_STUDENT_SCHEDULES,
-  MOCK_STUDENT_EXAMS,
-} from './portal-mock-data';
 
 export class PortalSecurityError extends Error {
   statusCode: number;
@@ -31,6 +22,7 @@ export class PortalSecurityError extends Error {
 
 /**
  * Validasi apakah anak tertentu sah berada di bawah perwalian user yang sedang aktif.
+ * Mengembalikan false secara ketat jika userChildrenList kosong/undefined.
  */
 export function verifyGuardianChildAccess(
   childId: string,
@@ -42,6 +34,11 @@ export function verifyGuardianChildAccess(
   return userChildrenList.some((c) => c.id === childId);
 }
 
+const loadPortalMock =
+  process.env.NODE_ENV !== 'production'
+    ? () => import('./portal-mock-data')
+    : null;
+
 export const portalApi = {
   // === ORANG TUA / WALI MURID ===
 
@@ -49,19 +46,17 @@ export const portalApi = {
    * Mengambil daftar anak yang berada di bawah perwalian wali yang login
    */
   async getChildren(userChildrenProfile?: PortalChildSummary[]): Promise<PortalChildSummary[]> {
-    try {
-      const res = await apiClient.get<PortalChildSummary[]>('/me/children');
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        return res.data;
-      }
-    } catch {
-      // Backend /me/children sedang dalam pengerjaan (lihat docs/portal-api-requirements.md)
-    }
-
     if (userChildrenProfile && userChildrenProfile.length > 0) {
       return userChildrenProfile;
     }
-    return MOCK_CHILDREN;
+
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<PortalChildSummary[]>('/me/children');
+        return res.data || [];
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_CHILDREN) : undefined
+    );
   },
 
   /**
@@ -72,21 +67,25 @@ export const portalApi = {
     userChildrenList?: Array<{ id: string }>
   ): Promise<PortalChildSummary> {
     if (!verifyGuardianChildAccess(childId, userChildrenList)) {
-      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.');
+      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.', 403);
     }
 
-    try {
-      const res = await apiClient.get<PortalChildSummary>(`/me/children/${childId}`);
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-
-    const found = MOCK_CHILDREN.find((c) => c.id === childId);
-    if (!found) {
-      throw new PortalSecurityError('Data anak tidak ditemukan atau telah dihapus.', 404);
-    }
-    return found;
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<PortalChildSummary>(`/me/children/${childId}`);
+        return res.data;
+      },
+      loadPortalMock
+        ? () =>
+            loadPortalMock().then((m) => {
+              const found = m.MOCK_CHILDREN.find((c) => c.id === childId);
+              if (!found) {
+                throw new PortalSecurityError('Data anak tidak ditemukan atau telah dihapus.', 404);
+              }
+              return found;
+            })
+        : undefined
+    );
   },
 
   /**
@@ -97,26 +96,29 @@ export const portalApi = {
     userChildrenList?: Array<{ id: string }>
   ): Promise<ChildAttendanceSummary> {
     if (!verifyGuardianChildAccess(childId, userChildrenList)) {
-      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.');
+      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.', 403);
     }
 
-    try {
-      const res = await apiClient.get<ChildAttendanceSummary>(`/me/children/${childId}/attendance`);
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-
-    return (
-      MOCK_CHILD_ATTENDANCE[childId] || {
-        presentDays: 0,
-        sickDays: 0,
-        leaveDays: 0,
-        unexcusedDays: 0,
-        totalDays: 0,
-        percentage: 100,
-        history: [],
-      }
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<ChildAttendanceSummary>(`/me/children/${childId}/attendance`);
+        return res.data;
+      },
+      loadPortalMock
+        ? () =>
+            loadPortalMock().then(
+              (m) =>
+                m.MOCK_CHILD_ATTENDANCE[childId] || {
+                  presentDays: 0,
+                  sickDays: 0,
+                  leaveDays: 0,
+                  unexcusedDays: 0,
+                  totalDays: 0,
+                  percentage: 100,
+                  history: [],
+                }
+            )
+        : undefined
     );
   },
 
@@ -128,29 +130,33 @@ export const portalApi = {
     userChildrenList?: Array<{ id: string }>
   ): Promise<ChildReportCardSummary> {
     if (!verifyGuardianChildAccess(childId, userChildrenList)) {
-      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.');
+      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.', 403);
     }
 
-    try {
-      const res = await apiClient.get<ChildReportCardSummary>(`/me/children/${childId}/report-cards`);
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-
-    const report = MOCK_CHILD_REPORT_CARD[childId];
-    if (!report) {
-      return {
-        periodId: 'none',
-        periodName: 'Semester Berjalan',
-        academicYear: '2024/2025',
-        semester: 'Ganjil',
-        totalScore: 0,
-        averageScore: 0,
-        grades: [],
-      };
-    }
-    return report;
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<ChildReportCardSummary>(`/me/children/${childId}/report-cards`);
+        return res.data;
+      },
+      loadPortalMock
+        ? () =>
+            loadPortalMock().then((m) => {
+              const report = m.MOCK_CHILD_REPORT_CARD[childId];
+              if (!report) {
+                return {
+                  periodId: 'none',
+                  periodName: 'Semester Berjalan',
+                  academicYear: '2024/2025',
+                  semester: 'Ganjil',
+                  totalScore: 0,
+                  averageScore: 0,
+                  grades: [],
+                };
+              }
+              return report;
+            })
+        : undefined
+    );
   },
 
   /**
@@ -161,17 +167,16 @@ export const portalApi = {
     userChildrenList?: Array<{ id: string }>
   ): Promise<ChildCharacterNoteSummary | null> {
     if (!verifyGuardianChildAccess(childId, userChildrenList)) {
-      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.');
+      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.', 403);
     }
 
-    try {
-      const res = await apiClient.get<ChildCharacterNoteSummary>(`/me/children/${childId}/character-notes`);
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-
-    return MOCK_CHILD_CHARACTER[childId] || null;
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<ChildCharacterNoteSummary>(`/me/children/${childId}/character-notes`);
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_CHILD_CHARACTER[childId] || null) : undefined
+    );
   },
 
   /**
@@ -182,17 +187,16 @@ export const portalApi = {
     userChildrenList?: Array<{ id: string }>
   ): Promise<ChildProgressReportItem[]> {
     if (!verifyGuardianChildAccess(childId, userChildrenList)) {
-      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.');
+      throw new PortalSecurityError('Akses ditolak: Anda tidak memiliki hak perwalian sah terhadap anak ini.', 403);
     }
 
-    try {
-      const res = await apiClient.get<ChildProgressReportItem[]>(`/me/children/${childId}/progress-reports`);
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-
-    return MOCK_CHILD_PROGRESS[childId] || [];
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<ChildProgressReportItem[]>(`/me/children/${childId}/progress-reports`);
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_CHILD_PROGRESS[childId] || []) : undefined
+    );
   },
 
   // === SISWA ===
@@ -201,38 +205,38 @@ export const portalApi = {
    * Mengambil ringkasan beranda siswa
    */
   async getStudentDashboard(): Promise<StudentDashboardSummary> {
-    try {
-      const res = await apiClient.get<StudentDashboardSummary>('/me/student-dashboard');
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-    return MOCK_STUDENT_DASHBOARD;
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<StudentDashboardSummary>('/me/student-dashboard');
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_DASHBOARD) : undefined
+    );
   },
 
   /**
    * Mengambil jadwal pelajaran siswa
    */
   async getStudentSchedule(): Promise<StudentScheduleItem[]> {
-    try {
-      const res = await apiClient.get<StudentScheduleItem[]>('/me/schedule');
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-    return MOCK_STUDENT_SCHEDULES;
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<StudentScheduleItem[]>('/me/schedule');
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_SCHEDULES) : undefined
+    );
   },
 
   /**
    * Mengambil daftar ujian CBT yang ditugaskan kepada siswa
    */
   async getStudentExams(): Promise<StudentExamItem[]> {
-    try {
-      const res = await apiClient.get<StudentExamItem[]>('/me/exams');
-      if (res.data) return res.data;
-    } catch {
-      // Fallback
-    }
-    return MOCK_STUDENT_EXAMS;
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<StudentExamItem[]>('/me/exams');
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_EXAMS) : undefined
+    );
   },
 };
