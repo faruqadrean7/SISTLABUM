@@ -984,6 +984,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/exams/{id}/session-questions', [ExamSessionController::class, 'questions']);
         Route::post('/exams/{id}/save-answer', [ExamSessionController::class, 'saveAnswer']);
         Route::post('/exams/{id}/log-violation', [ExamSessionController::class, 'logViolation']);
+        Route::post('/exams/{id}/violations', [ExamSessionController::class, 'logViolation']);
         Route::post('/exams/{id}/finish-session', [ExamSessionController::class, 'finish']);
         Route::get('/exams/{id}/review', [ExamSessionController::class, 'review']);
 
