@@ -19,6 +19,17 @@ class LockReportCardRequest extends FormRequest
         ];
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $isLocked = filter_var($this->input('is_locked'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            $reason = $this->input('reason');
+            if ($isLocked === false && empty(trim((string) $reason))) {
+                $validator->errors()->add('reason', 'Alasan wajib diisi saat membuka kunci rapor.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [

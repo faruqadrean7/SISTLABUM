@@ -279,6 +279,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/audit-logs/{id}', [AuditLogController::class, 'show']);
     });
 
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/audit-logs', [AuditLogController::class, 'storeTelemetry']);
+    });
+
     // =========================================================================
     // BE-MST-01: Master Data - Tahun Ajaran & Semester
     // =========================================================================

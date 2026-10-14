@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class RbacService
@@ -190,32 +191,35 @@ class RbacService
      */
     public function assignUserRoles(string $userId, array $rolesData, Request $request): User
     {
-        $user = User::findOrFail($userId);
-        $oldRoles = $user->roles()->pluck('code')->all();
+        return DB::transaction(function () use ($userId, $rolesData, $request) {
+            $user = User::findOrFail($userId);
+            $oldRoles = $user->roles()->pluck('code')->all();
 
-        $syncData = [];
-        foreach ($rolesData as $item) {
-            $syncData[$item['role_id']] = [
-                'scope_class_id' => $item['scope_class_id'] ?? null,
-            ];
-        }
+            $syncData = [];
+            foreach ($rolesData as $item) {
+                $syncData[$item['role_id']] = [
+                    'scope_class_id' => $item['scope_class_id'] ?? null,
+                ];
+            }
 
-        $user->roles()->sync($syncData);
-        $user->load(['roles.permissions']);
+            $user->roles()->sync($syncData);
+            $user->load(['roles.permissions']);
 
-        $newRoles = $user->roles()->pluck('code')->all();
+            $newRoles = $user->roles()->pluck('code')->all();
 
-        $this->logAudit(
-            $request->user()?->id,
-            'user.roles_assigned',
-            'User',
-            $user->id,
-            ['roles' => $oldRoles],
-            ['roles' => $newRoles],
-            $request
-        );
+            app(\App\Services\AuditLogService::class)->record(
+                action: 'user.roles_assigned',
+                entity: 'User',
+                entityId: $user->id,
+                oldValues: ['roles' => $oldRoles],
+                newValues: ['roles' => $newRoles],
+                reason: $request->input('reason'),
+                request: $request,
+                isAuthoritative: true
+            );
 
-        return $user;
+            return $user;
+        });
     }
 
     /**
