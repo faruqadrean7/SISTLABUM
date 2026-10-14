@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  redirect('/guru/tugas');
+  redirect('/guru/dashboard');
 }

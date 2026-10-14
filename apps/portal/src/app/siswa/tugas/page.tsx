@@ -1,0 +1,450 @@
+'use client';
+
+import React, { useState } from 'react';
+import { 
+  CheckSquare, 
+  BookOpen, 
+  Clock, 
+  Upload, 
+  FileText, 
+  Link as LinkIcon, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Download, 
+  ExternalLink,
+  MessageSquare,
+  Award
+} from 'lucide-react';
+import { MOCK_STUDENT_TASKS, StudentTaskItem } from '@/lib/mock-student-data';
+import { MOCK_MATERIALS } from '@/lib/mock-lms-data';
+
+export default function StudentTugasPage() {
+  const [activeTab, setActiveTab] = useState<'tugas' | 'modul'>('tugas');
+  const [statusFilter, setStatusFilter] = useState<'semua' | 'aktif' | 'dikumpulkan' | 'dinilai'>('semua');
+  
+  // Submit modal state
+  const [selectedTask, setSelectedTask] = useState<StudentTaskItem | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string>('');
+  const [driveLink, setDriveLink] = useState<string>('');
+  const [studentNote, setStudentNote] = useState<string>('');
+  const [isSuccessSubmit, setIsSuccessSubmit] = useState(false);
+
+  // Detail feedback modal state
+  const [feedbackTask, setFeedbackTask] = useState<StudentTaskItem | null>(null);
+
+  const filteredTasks = statusFilter === 'semua' 
+    ? MOCK_STUDENT_TASKS 
+    : MOCK_STUDENT_TASKS.filter(t => t.status === statusFilter);
+
+  const handleOpenSubmit = (task: StudentTaskItem) => {
+    setSelectedTask(task);
+    setUploadedFileName('');
+    setDriveLink('');
+    setStudentNote('');
+    setIsSuccessSubmit(false);
+  };
+
+  const handleConfirmSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+
+    selectedTask.status = 'dikumpulkan';
+    selectedTask.submission = {
+      file_name: uploadedFileName || 'Dokumen_Tugas_Siswa.pdf',
+      submitted_at: 'Baru saja',
+      drive_link: driveLink || undefined,
+    };
+
+    setIsSuccessSubmit(true);
+    setTimeout(() => {
+      setSelectedTask(null);
+    }, 1200);
+  };
+
+  return (
+    <div className="space-y-6 text-slate-900">
+      {/* ─── HEADER TITLE ─── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-300">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-900 text-white shadow-xs">
+              LMS Portal Siswa
+            </span>
+            <span className="text-xs text-slate-500 font-semibold">Tugas Mandiri & Modul Ajar</span>
+          </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Penugasan & Repositori Modul Ajar
+          </h1>
+          <p className="text-xs text-slate-600 font-medium mt-1">
+            Kumpulkan tugas sekolah, pantau nilai dan umpan balik guru, serta unduh bahan ajar Kurikulum Merdeka.
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex items-center bg-slate-200 p-1 rounded-lg border border-slate-300 self-start md:self-auto shadow-xs">
+          <button
+            onClick={() => setActiveTab('tugas')}
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              activeTab === 'tugas'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            Tugas & Proyek ({MOCK_STUDENT_TASKS.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('modul')}
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              activeTab === 'modul'
+                ? 'bg-teal-800 text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            Modul Ajar ({MOCK_MATERIALS.length})
+          </button>
+        </div>
+      </div>
+
+      {/* ─── TAB 1: TUGAS & PROYEK ─── */}
+      {activeTab === 'tugas' && (
+        <div className="space-y-4">
+          {/* Status Filters */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setStatusFilter('semua')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
+                statusFilter === 'semua'
+                  ? 'bg-blue-900 text-white'
+                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Semua ({MOCK_STUDENT_TASKS.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('aktif')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
+                statusFilter === 'aktif'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Perlu Dikerjakan ({MOCK_STUDENT_TASKS.filter(t => t.status === 'aktif').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('dikumpulkan')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
+                statusFilter === 'dikumpulkan'
+                  ? 'bg-blue-900 text-white'
+                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Menunggu Penilaian ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dikumpulkan').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('dinilai')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
+                statusFilter === 'dinilai'
+                  ? 'bg-emerald-700 text-white'
+                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Sudah Dinilai ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dinilai').length})
+            </button>
+          </div>
+
+          {/* Task List Cards */}
+          <div className="space-y-3">
+            {filteredTasks.map((task) => (
+              <div
+                key={task.id}
+                className="school-card p-6 bg-white border border-slate-300 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs hover:border-slate-400 transition-colors"
+              >
+                <div className="space-y-2 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-300">
+                      {task.subject_name}
+                    </span>
+
+                    {task.status === 'dinilai' && (
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-700 text-white shadow-xs">
+                        Sudah Dinilai • Skor {task.submission?.score}/100
+                      </span>
+                    )}
+                    {task.status === 'dikumpulkan' && (
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-900 text-white shadow-xs">
+                        Terkumpul • Menunggu Koreksi
+                      </span>
+                    )}
+                    {task.status === 'aktif' && (
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-600 text-white shadow-xs">
+                        Deadline: {task.days_left} Hari Lagi
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="font-extrabold text-base text-slate-900">{task.title}</h3>
+
+                  <p className="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-3">
+                    <span>Guru: <strong className="text-slate-800">{task.teacher_name}</strong></span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-blue-900" />
+                      Tenggat: <strong className="text-slate-800">{task.due_date_str}</strong>
+                    </span>
+                  </p>
+
+                  {/* Submission info snippet */}
+                  {task.submission && (
+                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex flex-wrap items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 font-bold text-slate-700">
+                        <FileText className="w-4 h-4 text-blue-900" />
+                        {task.submission.file_name}
+                      </span>
+                      <span className="text-slate-500 text-[11px]">
+                        Dikirim: {task.submission.submitted_at}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Actions */}
+                <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                  {task.status === 'aktif' && (
+                    <button
+                      onClick={() => handleOpenSubmit(task)}
+                      className="px-4 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4 text-white" />
+                      <span>Kumpulkan Tugas</span>
+                    </button>
+                  )}
+
+                  {task.status === 'dikumpulkan' && (
+                    <button
+                      onClick={() => handleOpenSubmit(task)}
+                      className="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors shadow-xs"
+                    >
+                      Perbarui Berkas
+                    </button>
+                  )}
+
+                  {task.status === 'dinilai' && (
+                    <button
+                      onClick={() => setFeedbackTask(task)}
+                      className="px-4 py-2.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <MessageSquare className="w-4 h-4 text-white" />
+                      <span>Lihat Ulasan Nilai</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: REPOSITORI MODUL AJAR ─── */}
+      {activeTab === 'modul' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {MOCK_MATERIALS.map((mat) => (
+              <div
+                key={mat.id}
+                className="school-card p-5 bg-white border border-slate-300 flex flex-col justify-between space-y-4 shadow-xs"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-teal-800 text-white">
+                      {mat.category}
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                      {mat.version}
+                    </span>
+                  </div>
+
+                  <h3 className="font-extrabold text-sm text-slate-900 leading-snug">{mat.title}</h3>
+                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-medium">
+                    {mat.description}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-semibold truncate max-w-[140px]">
+                    {mat.file?.filename || 'Dokumen PDF'}
+                  </span>
+
+                  <button
+                    onClick={() => alert(`Mengunduh berkas materi resmi: ${mat.file?.filename}`)}
+                    className="px-3 py-1.5 rounded-md bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Unduh PDF</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL PENGUMPULAN TUGAS (SPEEDSUBMIT) ─── */}
+      {selectedTask && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border-2 border-slate-300 max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div>
+                <h3 className="font-extrabold text-base text-slate-900">Form Pengumpulan Tugas</h3>
+                <p className="text-xs text-slate-500 font-medium">{selectedTask.title}</p>
+              </div>
+
+              <button
+                onClick={() => setSelectedTask(null)}
+                className="w-7 h-7 rounded-md border border-slate-300 flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {isSuccessSubmit ? (
+              <div className="p-8 text-center space-y-2">
+                <CheckCircle2 className="w-12 h-12 text-emerald-700 mx-auto" />
+                <h4 className="font-black text-lg text-slate-900">Tugas Berhasil Dikumpulkan!</h4>
+                <p className="text-xs text-slate-600 font-medium">Berkas Anda telah terunggah dan tercatat di buku kerja guru.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                    1. Unggah Berkas Dokumen Tugas:
+                  </label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:bg-slate-50 transition-colors">
+                    <Upload className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
+                    <p className="text-xs font-bold text-slate-800">
+                      {uploadedFileName ? `Berkas terpilih: ${uploadedFileName}` : 'Klik untuk memilih berkas atau seret ke sini'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Format didukung: PDF, DOCX, ZIP, JPG/PNG (Maks 10 MB)</p>
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setUploadedFileName(file.name);
+                      }}
+                      className="mt-2 text-xs text-slate-600 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                    2. Atau Tautan Proyek Online (Google Drive / GitHub / Figma):
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/file/d/..."
+                    value={driveLink}
+                    onChange={(e) => setDriveLink(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-900 shadow-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                    3. Catatan Tambahan untuk Guru (Opsional):
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Tuliskan catatan penjelasan hasil karya atau kendala praktikum..."
+                    value={studentNote}
+                    onChange={(e) => setStudentNote(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-900 shadow-xs leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTask(null)}
+                    className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs"
+                  >
+                    Kirim Tugas Sekarang ➔
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL PENAMPIL ULASAN NILAI & FEEDBACK GURU ─── */}
+      {feedbackTask && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border-2 border-slate-300 max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold">
+                  <Award className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">Ulasan & Nilai Guru</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">{feedbackTask.subject_name}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setFeedbackTask(null)}
+                className="w-7 h-7 rounded-md border border-slate-300 flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-300 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Capaian Skor Akhir</span>
+                  <p className="text-3xl font-black text-emerald-800 mt-1">
+                    {feedbackTask.submission?.score} <span className="text-sm font-semibold text-emerald-600">/ 100</span>
+                  </p>
+                </div>
+                <span className="px-3 py-1 rounded text-xs font-black bg-emerald-700 text-white shadow-xs">
+                  TUNTAS KKTP (75)
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">
+                  Umpan Balik Pedagogis Guru:
+                </span>
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-300 text-xs text-slate-800 font-medium leading-relaxed italic">
+                  "{feedbackTask.submission?.feedback}"
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1 text-slate-600">
+                <p><strong>Pemeriksa:</strong> {feedbackTask.teacher_name}</p>
+                <p><strong>Berkas Dikirim:</strong> {feedbackTask.submission?.file_name}</p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setFeedbackTask(null)}
+                className="w-full py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs"
+              >
+                Tutup Ulasan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

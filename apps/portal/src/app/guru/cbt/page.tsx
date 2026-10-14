@@ -15,26 +15,34 @@ import {
   Search, 
   Filter, 
   Copy, 
-  Sparkles, 
+  BookOpen, 
   Eye, 
   Lock, 
   ChevronDown, 
   ChevronUp,
   Award,
   PenTool,
-  Send
+  Send,
+  BarChart3,
+  RefreshCcw,
+  Check,
+  ArrowRight,
+  FileText,
+  Printer,
+  X
 } from 'lucide-react';
 import { lmsApi } from '@/lib/api-client';
 import { CBTExam, CBTQuestion, CognitiveLevel, QuestionType } from '@/types/lms';
 import { toast } from 'sonner';
 
 export default function CBTGuruPage() {
-  const [activeTab, setActiveTab] = useState<'jadwal' | 'bank_soal' | 'koreksi_uraian'>('jadwal');
+  const [activeTab, setActiveTab] = useState<'jadwal' | 'bank_soal' | 'koreksi_uraian' | 'analisis_remedial'>('jadwal');
   const [selectedExamId, setSelectedExamId] = useState<string>('exm-001');
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
   const [filterCognitive, setFilterCognitive] = useState<string>('ALL');
   const [searchQuestion, setSearchQuestion] = useState<string>('');
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>('qst-001');
+  const [isBeritaAcaraOpen, setIsBeritaAcaraOpen] = useState<boolean>(false);
 
   // Queries
   const { data: exams = [], isLoading: isLoadingExams } = useQuery({
@@ -131,6 +139,20 @@ export default function CBTGuruPage() {
               2 Lembar
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab('analisis_remedial')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'analisis_remedial'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Analisis &amp; Remedial</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-800 text-white font-black">
+              4 Siswa
+            </span>
+          </button>
         </div>
       </div>
 
@@ -224,10 +246,19 @@ export default function CBTGuruPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={() => setIsBeritaAcaraOpen(true)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Berita Acara Ujian</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toast.success('Status monitor lab komputer berhasil diperbarui!')}
                   className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Segarkan Monitor</span>
+                  <span>Segarkan</span>
                 </button>
               </div>
             </div>
@@ -453,7 +484,7 @@ export default function CBTGuruPage() {
                   {isExpanded && q.explanation && (
                     <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
                       <div className="font-black text-slate-900 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <BookOpen className="w-3.5 h-3.5 text-blue-900" />
                         <span>Pembahasan Pedagogik & Rubrik:</span>
                       </div>
                       <p className="text-slate-600 leading-relaxed font-medium">
@@ -580,6 +611,377 @@ export default function CBTGuruPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 4: ANALISIS BUTIR SOAL & REMEDIAL OTOMATIS (BE-CBT-08 & BE-CBT-09) ─── */}
+      {activeTab === 'analisis_remedial' && (
+        <div className="space-y-6">
+          {/* KPI Analytics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-blue-900">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Rerata Skor Ujian</span>
+              <span className="text-2xl font-black text-slate-900 block mt-1">82.5 Poin</span>
+              <span className="text-[10px] font-bold text-emerald-700 mt-0.5 block">&gt; KKTP (75.0)</span>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-emerald-800">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Tingkat Ketuntasan</span>
+              <span className="text-2xl font-black text-emerald-800 block mt-1">87.5%</span>
+              <span className="text-[10px] text-slate-600 mt-0.5 block">28 dari 32 Siswa Tuntas</span>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-purple-900">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Reliabilitas Butir (r)</span>
+              <span className="text-2xl font-black text-purple-900 block mt-1">0.88</span>
+              <span className="text-[10px] font-bold text-emerald-700 mt-0.5 block">Kategori Sangat Tinggi</span>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-rose-800">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Peserta Remedial</span>
+              <span className="text-2xl font-black text-rose-800 block mt-1">4 Siswa</span>
+              <span className="text-[10px] font-bold text-rose-700 mt-0.5 block">Di Bawah KKTP 75</span>
+            </div>
+          </div>
+
+          {/* Section 1: Item Analysis Table (BE-CBT-08) */}
+          <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900">
+                  Analisis Parameter Butir Soal (Tingkat Kesukaran &amp; Daya Pembeda)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Evaluasi statistik psikometri untuk mengidentifikasi butir soal berkualitas tinggi atau distraktor cacat
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => toast.success('Data analisis butir soal berhasil diekspor ke format Excel!')}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 shadow-xs cursor-pointer"
+              >
+                Ekspor Analisis XLSX
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
+                    <th className="py-3 px-3 w-14 text-center">No</th>
+                    <th className="py-3 px-3 min-w-64">Indikator Capaian Pembelajaran (CP)</th>
+                    <th className="py-3 px-3 w-32 text-center">Tingkat Kesukaran</th>
+                    <th className="py-3 px-3 w-32 text-center">Daya Pembeda</th>
+                    <th className="py-3 px-3 w-36 text-center">Efektivitas Pengecoh</th>
+                    <th className="py-3 px-3 w-32 text-center">Rekomendasi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2.5 px-3 text-center font-bold text-slate-700">Soal 01</td>
+                    <td className="py-2.5 px-3 font-medium text-slate-900">
+                      Memahami semantik elemen HTML5 &lt;header&gt;, &lt;nav&gt;, dan &lt;section&gt;
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-800 text-white shadow-xs">
+                        Sedang (p=0.68)
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center font-bold text-emerald-800">
+                      0.42 (Sangat Baik)
+                    </td>
+                    <td className="py-2.5 px-3 text-center text-slate-700 font-medium">
+                      Berfungsi Optimal (4/4)
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-900 text-white shadow-xs">
+                        DITERIMA
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2.5 px-3 text-center font-bold text-slate-700">Soal 02</td>
+                    <td className="py-2.5 px-3 font-medium text-slate-900">
+                      Menganalisis perbedaan property flexbox justify-content dan align-items
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-600 text-white shadow-xs">
+                        Sukar (p=0.34)
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center font-bold text-emerald-800">
+                      0.38 (Baik)
+                    </td>
+                    <td className="py-2.5 px-3 text-center text-slate-700 font-medium">
+                      Opsi C Jarang Dipilih
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-900 text-white shadow-xs">
+                        DITERIMA
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2.5 px-3 text-center font-bold text-slate-700">Soal 03</td>
+                    <td className="py-2.5 px-3 font-medium text-slate-900">
+                      Menghubungkan stylesheet eksternal CSS dengan tag &lt;link&gt;
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-800 text-white shadow-xs">
+                        Mudah (p=0.89)
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center font-bold text-amber-700">
+                      0.22 (Cukup)
+                    </td>
+                    <td className="py-2.5 px-3 text-center text-slate-700 font-medium">
+                      Distraktor Opsi D Lemah
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-600 text-white shadow-xs">
+                        REVISI OPSI
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 2: Remedial Scheduling (BE-CBT-09) */}
+          <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-800 text-white">
+                    PENJADWALAN REMEDIAL OTOMATIS
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">
+                    Siswa dengan Capaian &lt; 75 (Ambang KKTP)
+                  </span>
+                </div>
+                <h3 className="text-base font-black text-slate-900">
+                  Daftar Peserta &amp; Paket Soal Remedial (Kurikulum Merdeka)
+                </h3>
+                <p className="text-xs text-slate-600">
+                  Siswa yang belum mencapai kriteria ketercapaian otomatis terdaftar dalam gelombang remedial dengan set butir soal teracak baru.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.success('Paket Ujian Remedial B berhasil digenerate dengan 20 butir soal setara!');
+                  }}
+                  className="px-3.5 py-2 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-800 shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <RefreshCcw className="w-3.5 h-3.5" />
+                  <span>Generate Paket B</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.success('Sesi Ujian Remedial berhasil dijadwalkan: Jumat, 17 Oktober 2026 di Lab Komputer 1!');
+                  }}
+                  className="px-4 py-2 rounded-lg text-xs font-black bg-rose-800 hover:bg-rose-900 text-white shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Jadwalkan Sesi Remedial</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Remedial Students Table */}
+            <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-200 text-slate-800 font-extrabold uppercase text-[10px]">
+                    <th className="py-2.5 px-3 w-12 text-center">No</th>
+                    <th className="py-2.5 px-3 w-28">NIS</th>
+                    <th className="py-2.5 px-3 min-w-48">Nama Siswa</th>
+                    <th className="py-2.5 px-3 w-28 text-center">Skor Awal</th>
+                    <th className="py-2.5 px-3 w-28 text-center">Selisih KKTP</th>
+                    <th className="py-2.5 px-3 min-w-56">Materi Kompetensi yang Belum Tuntas</th>
+                    <th className="py-2.5 px-3 w-36 text-center">Status Remedial</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2 px-3 text-center font-bold text-slate-500">1</td>
+                    <td className="py-2 px-3 font-mono font-semibold text-slate-700">240903</td>
+                    <td className="py-2 px-3 font-bold text-slate-900">Rizky Pratama Wijaya</td>
+                    <td className="py-2 px-3 text-center font-black text-rose-800">62.0</td>
+                    <td className="py-2 px-3 text-center font-bold text-rose-700">-13.0</td>
+                    <td className="py-2 px-3 text-slate-700">Flexbox alignment &amp; CSS Grid positioning</td>
+                    <td className="py-2 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-600 text-white shadow-xs">
+                        SIAP REMEDIAL
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2 px-3 text-center font-bold text-slate-500">2</td>
+                    <td className="py-2 px-3 font-mono font-semibold text-slate-700">240907</td>
+                    <td className="py-2 px-3 font-bold text-slate-900">Dimas Anggara Putra</td>
+                    <td className="py-2 px-3 text-center font-black text-rose-800">64.5</td>
+                    <td className="py-2 px-3 text-center font-bold text-rose-700">-10.5</td>
+                    <td className="py-2 px-3 text-slate-700">Form validasi &amp; HTTP method GET vs POST</td>
+                    <td className="py-2 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-600 text-white shadow-xs">
+                        SIAP REMEDIAL
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2 px-3 text-center font-bold text-slate-500">3</td>
+                    <td className="py-2 px-3 font-mono font-semibold text-slate-700">240911</td>
+                    <td className="py-2 px-3 font-bold text-slate-900">Hendra Kurniawan</td>
+                    <td className="py-2 px-3 text-center font-black text-rose-800">70.0</td>
+                    <td className="py-2 px-3 text-center font-bold text-rose-700">-5.0</td>
+                    <td className="py-2 px-3 text-slate-700">Struktur semantik HTML5 &amp; image responsive</td>
+                    <td className="py-2 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-600 text-white shadow-xs">
+                        SIAP REMEDIAL
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-2 px-3 text-center font-bold text-slate-500">4</td>
+                    <td className="py-2 px-3 font-mono font-semibold text-slate-700">240919</td>
+                    <td className="py-2 px-3 font-bold text-slate-900">Putra Pratama</td>
+                    <td className="py-2 px-3 text-center font-black text-rose-800">72.0</td>
+                    <td className="py-2 px-3 text-center font-bold text-rose-700">-3.0</td>
+                    <td className="py-2 px-3 text-slate-700">Koreksi sintaks tabel HTML dan link anchor</td>
+                    <td className="py-2 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-600 text-white shadow-xs">
+                        SIAP REMEDIAL
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL BERITA ACARA UJIAN (BE-CBT-10 & ADM-CBT-08) ─── */}
+      {isBeritaAcaraOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-8 shadow-2xl space-y-6 relative border-2 border-slate-300">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsBeritaAcaraOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header Kop Berita Acara */}
+            <div className="border-b-2 border-slate-900 pb-4 text-center space-y-1">
+              <span className="text-[11px] font-black tracking-widest uppercase text-slate-500">
+                BERITA ACARA PELAKSANAAN UJIAN CBT DIGITAL
+              </span>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                SMP LABORATORIUM UNIVERSITAS NEGERI MALANG
+              </h2>
+              <p className="text-xs text-slate-600 font-medium">
+                Tahun Ajaran 2026/2027 • Semester Ganjil
+              </p>
+              <div className="pt-2">
+                <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-black tracking-wider uppercase rounded">
+                  NO. BA: BA-CBT/2026/10/IXA-001
+                </span>
+              </div>
+            </div>
+
+            {/* Exam Meta */}
+            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="space-y-1">
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Mata Pelajaran:</span> <strong className="text-slate-900">Informatika &amp; Desain Web</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Kelas / Rombel:</span> <strong className="text-slate-900">Kelas IX-A</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Ruang Ujian:</span> <strong className="text-blue-900">Lab Komputer 1 (Lantai 2)</strong></p>
+              </div>
+              <div className="space-y-1">
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Hari, Tanggal:</span> <strong className="text-slate-900">Rabu, 14 Oktober 2026</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Waktu Sesi:</span> <strong className="text-slate-900">07:30 - 09:00 WIB (90 Menit)</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Guru Pengawas:</span> <strong className="text-slate-900">Budi Santoso, S.Kom.</strong></p>
+              </div>
+            </div>
+
+            {/* Attendance & Incidents */}
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 bg-slate-100 rounded-lg border border-slate-200">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Peserta Terdaftar</span>
+                  <span className="text-xl font-black text-slate-900 mt-0.5 block">32 Siswa</span>
+                </div>
+                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-300">
+                  <span className="text-[10px] uppercase font-bold text-emerald-800 block">Hadir Mengikuti</span>
+                  <span className="text-xl font-black text-emerald-800 mt-0.5 block">32 Siswa</span>
+                </div>
+                <div className="p-3 bg-slate-100 rounded-lg border border-slate-200">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Tidak Hadir / Alpa</span>
+                  <span className="text-xl font-black text-slate-700 mt-0.5 block">0 Siswa</span>
+                </div>
+              </div>
+
+              {/* Incidents Log */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                <span className="font-bold text-slate-900 uppercase text-[10px] block">Catatan Khusus / Kejadian Ujian:</span>
+                <p className="text-slate-700 text-[11px] leading-relaxed">
+                  1. Workstation PC-07 (Dimas Anggara Putra / NIS 240907) mengalami gangguan koneksi jaringan lokal selama 2 menit. Telah dilakukan reset sesi oleh pengawas dan diberikan kompensasi waktu pengerjaan 2 menit.
+                </p>
+                <p className="text-slate-700 text-[11px] leading-relaxed">
+                  2. Seluruh 32 siswa berhasil menyelesaikan dan melakukan submit jawaban ke server CBT dengan tertib.
+                </p>
+              </div>
+            </div>
+
+            {/* Signatures */}
+            <div className="pt-4 border-t border-slate-300 flex items-center justify-between text-xs">
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 block">SISTLABUM SECURE CBT LOG</span>
+                <span className="text-[10px] font-bold text-emerald-800 block">✓ TERVALIDASI SERVER WAKTU OTENTIK</span>
+              </div>
+              <div className="text-right">
+                <p className="text-slate-500">Malang, 14 Oktober 2026</p>
+                <p className="font-bold text-slate-900 mt-1">Guru Pengawas Ruang</p>
+                <div className="h-8"></div>
+                <p className="font-black text-slate-900 underline">Budi Santoso, S.Kom.</p>
+                <p className="text-[10px] text-slate-500 font-mono">NIP. 198803152015041001</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setIsBeritaAcaraOpen(false)}
+                className="px-4 py-2 text-xs font-bold border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 cursor-pointer"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.print();
+                }}
+                className="px-4 py-2 text-xs font-black bg-blue-900 text-white rounded-lg hover:bg-blue-950 flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak Berita Acara PDF</span>
+              </button>
             </div>
           </div>
         </div>

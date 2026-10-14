@@ -11,7 +11,6 @@ import {
   UploadCloud, 
   X, 
   Layers,
-  Sparkles,
   BookmarkCheck
 } from 'lucide-react';
 import { lmsApi } from '@/lib/api-client';

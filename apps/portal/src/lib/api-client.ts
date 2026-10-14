@@ -62,6 +62,9 @@ export const lmsApi = {
         const subjectId = formData.get('subject_id') as string;
         const file = formData.get('file') as globalThis.File | null;
 
+        const category = (formData.get('category') as any) || 'modul_ajar';
+        const version = (formData.get('version') as string) || 'v1.0';
+
         const newMat: LearningMaterial = {
           id: `mat-${Date.now()}`,
           class_id: classId || 'cls-9a',
@@ -69,6 +72,8 @@ export const lmsApi = {
           teacher_id: 'tch-001',
           title: title || 'Modul Ajar Baru',
           description: description || '',
+          category,
+          version,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           file: file ? {
@@ -153,6 +158,8 @@ export const lmsApi = {
           description: payload.description,
           due_at: payload.due_at,
           max_score: payload.max_score || 100,
+          is_locked: false,
+          allow_late: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           submissions_count: 0,

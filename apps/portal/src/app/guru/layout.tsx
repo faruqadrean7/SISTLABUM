@@ -16,7 +16,9 @@ import {
   MonitorPlay,
   Calendar,
   UserCheck,
-  Users
+  Users,
+  Building2,
+  ArrowLeftRight
 } from 'lucide-react';
 import { CURRENT_TEACHER, MOCK_CLASSES, MOCK_SUBJECTS } from '@/lib/mock-lms-data';
 
@@ -73,6 +75,11 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       name: 'Data Siswa & Poin',
       href: '/guru/siswa',
       icon: Users,
+    },
+    {
+      name: 'Sarpras & Fasilitas',
+      href: '/guru/sarpras',
+      icon: Building2,
     },
     {
       name: 'Ringkasan KBM',
@@ -155,9 +162,26 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/siswa/dashboard"
+              className="flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-bold text-blue-900 hover:text-white rounded-lg hover:bg-blue-900 transition-colors border border-blue-900 w-full shadow-xs text-center"
+            >
+              <ArrowLeftRight className="w-3 h-3 shrink-0" />
+              <span>Portal Siswa</span>
+            </Link>
+            <Link
+              href="/ortu/dashboard"
+              className="flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-bold text-emerald-800 hover:text-white rounded-lg hover:bg-emerald-800 transition-colors border border-emerald-800 w-full shadow-xs text-center"
+            >
+              <ArrowLeftRight className="w-3 h-3 shrink-0" />
+              <span>Portal Ortu</span>
+            </Link>
+          </div>
+
           <a
             href="http://localhost:3000/masuk.html"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-rose-700 hover:text-white rounded-lg hover:bg-rose-700 transition-colors border border-rose-300 hover:border-rose-700 w-full"
+            className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-rose-700 hover:text-white rounded-lg hover:bg-rose-700 transition-colors border border-rose-300 hover:border-rose-700 w-full"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Keluar Sesi Guru</span>

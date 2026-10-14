@@ -12,19 +12,30 @@ import {
   Filter, 
   CheckCircle2, 
   AlertTriangle, 
-  Sparkles, 
+  Award, 
   Calculator,
-  HelpCircle
+  HelpCircle,
+  FileCheck,
+  QrCode,
+  Printer,
+  Eye,
+  Send,
+  Calendar,
+  TrendingUp,
+  X
 } from 'lucide-react';
 import { lmsApi } from '@/lib/api-client';
 import { GradeComponent, StudentGradeRow } from '@/types/lms';
 
 export default function BukuNilaiPage() {
   const queryClient = useQueryClient();
-  const [mainTab, setMainTab] = useState<'akademik' | 'karakter'>('akademik');
+  const [mainTab, setMainTab] = useState<'akademik' | 'karakter' | 'progress_report'>('akademik');
   const [filterStatus, setFilterStatus] = useState<'all' | 'remedial' | 'tuntas'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [reportPeriodMonth, setReportPeriodMonth] = useState<string>('Oktober 2026');
+  const [approvalStatus, setApprovalStatus] = useState<'draft' | 'menunggu_acc' | 'disetujui'>('menunggu_acc');
+  const [previewStudent, setPreviewStudent] = useState<StudentGradeRow | null>(null);
 
   // Character evaluation state
   const [characterScores, setCharacterScores] = useState<Record<string, {
@@ -182,7 +193,7 @@ export default function BukuNilaiPage() {
         </div>
 
         {/* Main Tab Switcher (Solid Buttons) */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-300 shrink-0">
+        <div className="flex flex-wrap items-center bg-slate-100 p-1 rounded-lg border border-slate-300 shrink-0">
           <button
             type="button"
             onClick={() => setMainTab('akademik')}
@@ -204,14 +215,29 @@ export default function BukuNilaiPage() {
                 : 'text-slate-700 hover:text-slate-900'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Award className="w-3.5 h-3.5" />
             <span>Catatan Karakter P5</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMainTab('progress_report')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              mainTab === 'progress_report'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            <FileCheck className="w-3.5 h-3.5" />
+            <span>E-Progress Report</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-600 text-white font-black uppercase">
+              Walas
+            </span>
           </button>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {mainTab === 'akademik' ? (
+          {mainTab === 'akademik' && (
             <>
               <button
                 type="button"
@@ -246,7 +272,9 @@ export default function BukuNilaiPage() {
                 <span>{saveMutation.isPending ? 'Menyimpan...' : 'Simpan Semua Nilai'}</span>
               </button>
             </>
-          ) : (
+          )}
+
+          {mainTab === 'karakter' && (
             <button
               type="button"
               onClick={() => {
@@ -258,6 +286,35 @@ export default function BukuNilaiPage() {
               <Save className="w-3.5 h-3.5" />
               <span>Simpan Catatan Karakter</span>
             </button>
+          )}
+
+          {mainTab === 'progress_report' && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessToast('Dokumen E-Progress Report kelas IX-A dikirim ke antrean cetak massal PDF.');
+                  setTimeout(() => setSuccessToast(null), 3000);
+                }}
+                className="px-3.5 py-2 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak Massal PDF</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setApprovalStatus('menunggu_acc');
+                  setSuccessToast('Permohonan ACC E-Progress Report berhasil diajukan ke Kepala Sekolah!');
+                  setTimeout(() => setSuccessToast(null), 3000);
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-black bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Ajukan ACC Kepala Sekolah</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -331,7 +388,7 @@ export default function BukuNilaiPage() {
             <div className="bg-slate-900 text-white border border-slate-800 rounded-xl p-4 shadow-xs">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Kriteria KKTP</span>
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <Award className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-2xl font-black text-white mt-1">75.0</div>
               <p className="text-[11px] text-slate-300 mt-1 font-medium">SK Kepala Sekolah Labschool UM</p>
@@ -591,6 +648,338 @@ export default function BukuNilaiPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 3: E-PROGRESS REPORT & E-RAPOR BULANAN (BE-GRD-03 & BE-GRD-04) ─── */}
+      {mainTab === 'progress_report' && (
+        <div className="space-y-6">
+          {/* Status & Lifecycle Banner */}
+          <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-800 text-white">
+                    SIAP DITERBITKAN
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">
+                    Kelas IX-A • Wali Kelas: Budi Santoso, S.Kom.
+                  </span>
+                </div>
+                <h2 className="text-lg font-black text-slate-900">
+                  E-Progress Report Bulanan (Bulan {reportPeriodMonth})
+                </h2>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Laporan rekapitulasi 1 halaman memuat nilai kognitif, % presensi, akumulasi poin sikap, dan catatan walas ber-tanda tangan QR terverifikasi.
+                </p>
+              </div>
+
+              {/* Month selector and Lifecycle Pill */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5">
+                  <Calendar className="w-4 h-4 text-slate-500" />
+                  <select
+                    value={reportPeriodMonth}
+                    onChange={(e) => setReportPeriodMonth(e.target.value)}
+                    className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
+                  >
+                    <option value="September 2026">September 2026</option>
+                    <option value="Oktober 2026">Oktober 2026 (Aktif)</option>
+                    <option value="November 2026">November 2026</option>
+                    <option value="Desember 2026 (Semester Ganjil)">Desember 2026 (Rapor Semester)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-900 text-white text-xs font-bold shadow-xs">
+                  <FileCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Status: Menunggu ACC Kepala Sekolah</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lifecycle Steps Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 bg-emerald-800 text-white rounded-lg shadow-xs">
+                <span className="font-extrabold block text-emerald-200 text-[10px] uppercase">Langkah 1</span>
+                <span className="font-bold text-white text-xs mt-0.5 block">1. Rekap Nilai & Sikap</span>
+                <span className="text-[10px] text-emerald-100 mt-1 block">Tuntas 32/32 Siswa</span>
+              </div>
+              <div className="p-3 bg-blue-900 text-white rounded-lg shadow-xs">
+                <span className="font-extrabold block text-blue-200 text-[10px] uppercase">Langkah 2 (Aktif)</span>
+                <span className="font-bold text-white text-xs mt-0.5 block">2. Ajukan ACC Kepsek</span>
+                <span className="text-[10px] text-blue-100 mt-1 block">Dalam Antrean Verifikasi</span>
+              </div>
+              <div className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
+                <span className="font-extrabold block text-slate-400 text-[10px] uppercase">Langkah 3</span>
+                <span className="font-bold text-slate-800 text-xs mt-0.5 block">3. Pengesahan Digital</span>
+                <span className="text-[10px] text-slate-500 mt-1 block">Tanda Tangan QR Resmi</span>
+              </div>
+              <div className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
+                <span className="font-extrabold block text-slate-400 text-[10px] uppercase">Langkah 4</span>
+                <span className="font-bold text-slate-800 text-xs mt-0.5 block">4. Terbit ke Ortu/Siswa</span>
+                <span className="text-[10px] text-slate-500 mt-1 block">Tampil di Portal & Unduh PDF</span>
+              </div>
+            </div>
+          </div>
+
+          {/* KPI Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-blue-900">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Siswa Terdaftar</span>
+              <span className="text-2xl font-black text-slate-900 block mt-1">32 Siswa</span>
+              <span className="text-[10px] font-bold text-emerald-700 mt-0.5 block">100% Data Lengkap</span>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-emerald-800">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Rata-rata Kelas</span>
+              <span className="text-2xl font-black text-emerald-800 block mt-1">{classAverage}</span>
+              <span className="text-[10px] font-bold text-slate-600 mt-0.5 block">Target KKTP: 75.0</span>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-teal-800">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Ketuntasan Belajar</span>
+              <span className="text-2xl font-black text-teal-800 block mt-1">
+                {totalStudents > 0 ? Math.round((tuntasCount / totalStudents) * 100) : 0}%
+              </span>
+              <span className="text-[10px] font-bold text-slate-600 mt-0.5 block">
+                {tuntasCount} Tuntas • {remedialCount} Remedial
+              </span>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-purple-900">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Kehadiran Rata-rata</span>
+              <span className="text-2xl font-black text-purple-900 block mt-1">96.8%</span>
+              <span className="text-[10px] font-bold text-emerald-700 mt-0.5 block">Sangat Baik</span>
+            </div>
+          </div>
+
+          {/* Student Progress Report Table */}
+          <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900">Daftar E-Progress Report Siswa Kelas IX-A</h3>
+                <p className="text-xs text-slate-500">Klik "Pratinjau PDF" untuk memeriksa dokumen sebelum diajukan ke kepala sekolah</p>
+              </div>
+              <span className="text-xs font-bold bg-blue-900 text-white px-3 py-1 rounded-md shadow-xs">
+                32 Berkas Siap
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
+                    <th className="py-3 px-3 w-12 text-center">No</th>
+                    <th className="py-3 px-3 w-28">NIS</th>
+                    <th className="py-3 px-3 min-w-56">Nama Lengkap Siswa</th>
+                    <th className="py-3 px-2 w-16 text-center">L/P</th>
+                    <th className="py-3 px-3 w-28 text-center">Nilai Rerata</th>
+                    <th className="py-3 px-3 w-28 text-center">Presensi</th>
+                    <th className="py-3 px-3 w-32 text-center">Status KKTP</th>
+                    <th className="py-3 px-3 min-w-64">Catatan Wali Kelas</th>
+                    <th className="py-3 px-3 w-32 text-center">Aksi Dokumen</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {localGrades.map((s, idx) => (
+                    <tr key={s.student_id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-bold text-slate-500">{idx + 1}</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-700">{s.nis}</td>
+                      <td className="py-2.5 px-3 font-bold text-slate-900">{s.name}</td>
+                      <td className="py-2.5 px-2 text-center">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-800">
+                          {s.gender}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-black text-slate-900">
+                        {s.final_score}
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-bold text-emerald-800">
+                        {idx === 2 ? '88.5%' : '97.2%'}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        {s.is_tuntas ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-800 text-white shadow-xs">
+                            TUNTAS
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-800 text-white shadow-xs">
+                            REMEDIAL
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-700 font-medium truncate max-w-xs">
+                        {s.notes || (s.is_tuntas ? 'Pertahankan prestasi belajar dan keaktifan di kelas.' : 'Perlu bimbingan intensif pada materi pemrograman.')}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewStudent(s)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-blue-900 text-white hover:bg-blue-950 shadow-xs cursor-pointer"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>Pratinjau PDF</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL PRATINJAU DOKUMEN E-PROGRESS REPORT BER-QR CODE ─── */}
+      {previewStudent && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-8 shadow-2xl space-y-6 relative border-2 border-slate-300">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setPreviewStudent(null)}
+              className="absolute top-5 right-5 p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Official Header Kop Surat */}
+            <div className="border-b-2 border-slate-900 pb-4 text-center space-y-1">
+              <span className="text-[11px] font-black tracking-widest uppercase text-slate-500">
+                KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI
+              </span>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                SMP LABORATORIUM UNIVERSITAS NEGERI MALANG
+              </h2>
+              <p className="text-xs text-slate-600 font-medium">
+                Jl. Simpang Bogor No. T-7 Malang, Jawa Timur • Website: labschool.um.ac.id
+              </p>
+              <div className="pt-2">
+                <span className="inline-block px-3 py-1 bg-blue-900 text-white text-xs font-black tracking-wider uppercase rounded">
+                  LEMBAR E-PROGRESS REPORT AKADEMIK & KARAKTER (BULAN {reportPeriodMonth.toUpperCase()})
+                </span>
+              </div>
+            </div>
+
+            {/* Student Bio Grid */}
+            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="space-y-1.5">
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Nama Siswa:</span> <strong className="text-slate-900 text-sm">{previewStudent.name}</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Nomor Induk (NIS):</span> <span className="font-mono font-bold text-slate-800">{previewStudent.nis}</span></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Kelas / Rombel:</span> <strong className="text-slate-900">Kelas IX-A</strong></p>
+              </div>
+              <div className="space-y-1.5">
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Tahun Ajaran:</span> <strong className="text-slate-900">2026/2027 (Ganjil)</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Wali Kelas:</span> <strong className="text-slate-900">Budi Santoso, S.Kom.</strong></p>
+                <p><span className="text-slate-500 font-bold w-28 inline-block">Kurikulum:</span> <strong className="text-blue-900">Kurikulum Merdeka (KKTP: 75)</strong></p>
+              </div>
+            </div>
+
+            {/* Academic Score Summary Table */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">I. Capaian Nilai Akademik</h4>
+              <table className="w-full text-left text-xs border border-slate-300">
+                <thead className="bg-slate-100 text-slate-800 font-extrabold uppercase text-[10px]">
+                  <tr>
+                    <th className="py-2 px-3 border border-slate-300">Mata Pelajaran</th>
+                    <th className="py-2 px-2 text-center border border-slate-300 w-20">KKTP</th>
+                    <th className="py-2 px-2 text-center border border-slate-300 w-24">Nilai Akhir</th>
+                    <th className="py-2 px-3 text-center border border-slate-300 w-28">Status</th>
+                    <th className="py-2 px-3 border border-slate-300">Deskripsi Capaian Kompetensi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-2 px-3 border border-slate-300 font-bold">Informatika &amp; Pemrograman</td>
+                    <td className="py-2 px-2 text-center border border-slate-300 font-bold">75</td>
+                    <td className="py-2 px-2 text-center border border-slate-300 font-black text-sm text-blue-900">
+                      {previewStudent.final_score}
+                    </td>
+                    <td className="py-2 px-3 text-center border border-slate-300">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black text-white ${previewStudent.is_tuntas ? 'bg-emerald-800' : 'bg-rose-800'}`}>
+                        {previewStudent.is_tuntas ? 'TUNTAS' : 'REMEDIAL'}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 border border-slate-300 text-slate-700">
+                      Menunjukkan penguasaan istimewa dalam struktur logika pemrograman dan desain web responsif.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Presensi & Karakter Box */}
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="p-3 border border-slate-200 rounded-lg space-y-1 bg-slate-50">
+                <h5 className="font-black text-slate-900 uppercase text-[11px]">II. Kehadiran Sesi Belajar</h5>
+                <p className="text-slate-700">Persentase Kehadiran: <strong className="text-emerald-800">97.2% (Sangat Baik)</strong></p>
+                <p className="text-slate-600">Sakit: 1 hari • Izin: 0 hari • Alpa: 0 hari</p>
+              </div>
+
+              <div className="p-3 border border-slate-200 rounded-lg space-y-1 bg-slate-50">
+                <h5 className="font-black text-slate-900 uppercase text-[11px]">III. Karakter Pelajar Pancasila</h5>
+                <p className="text-slate-700">Dimensi Unggul: <strong>Gotong Royong &amp; Bernalar Kritis</strong></p>
+                <p className="text-slate-600">Akumulasi Poin Disiplin: <strong className="text-blue-900">+15 Poin (Prestasi KBM)</strong></p>
+              </div>
+            </div>
+
+            {/* Catatan Walas Box */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs space-y-1">
+              <span className="font-bold text-blue-950 uppercase text-[10px] block">Catatan Pembinaan Wali Kelas:</span>
+              <p className="text-blue-900 font-medium italic">
+                "{previewStudent.notes || 'Ananda menunjukkan kemajuan belajar yang sangat membanggakan dan aktif membantu rekan tim lab. Pertahankan fokus belajar.'}"
+              </p>
+            </div>
+
+            {/* Validation QR Code & Signatures */}
+            <div className="pt-4 border-t border-slate-300 flex items-center justify-between">
+              {/* QR Code Verification Link */}
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 bg-slate-900 text-white rounded-lg flex items-center justify-center p-1.5 shrink-0 shadow-xs">
+                  <QrCode className="w-12 h-12 text-white" />
+                </div>
+                <div className="text-xs">
+                  <span className="text-[10px] font-black uppercase text-slate-500 block">Verifikasi Keaslian Dokumen</span>
+                  <span className="font-mono text-[11px] font-bold text-slate-800 block">TOKEN: PR-IXA-{previewStudent.nis}-2026</span>
+                  <span className="text-[10px] text-blue-900 font-semibold block">sistlabum.ac.id/verifikasi/{previewStudent.nis}</span>
+                </div>
+              </div>
+
+              {/* Signatures */}
+              <div className="text-right text-xs">
+                <p className="text-slate-500">Malang, 14 Oktober 2026</p>
+                <p className="font-bold text-slate-900 mt-1">Kepala Sekolah SMP Labschool UM</p>
+                <div className="h-10 flex items-center justify-end">
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-800 text-white shadow-xs">
+                    ✓ DITANDATANGANI SECARA ELEKTRONIK
+                  </span>
+                </div>
+                <p className="font-black text-slate-900">Prof. Dr. Sujarwo, M.Pd.</p>
+                <p className="text-[10px] text-slate-500 font-mono">NIP. 197405121999031002</p>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setPreviewStudent(null)}
+                className="px-4 py-2 text-xs font-bold border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 cursor-pointer"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.print();
+                }}
+                className="px-4 py-2 text-xs font-black bg-blue-900 text-white rounded-lg hover:bg-blue-950 flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak / Simpan PDF</span>
+              </button>
             </div>
           </div>
         </div>

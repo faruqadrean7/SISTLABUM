@@ -9,7 +9,6 @@ import {
   Printer, 
   GraduationCap, 
   BookOpen, 
-  Sparkles, 
   CheckCircle2, 
   ChevronRight,
   School

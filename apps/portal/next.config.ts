@@ -9,6 +9,22 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: "/portal/siswa/:path*",
+        destination: "/siswa/:path*",
+      },
+      {
+        source: "/portal/guru/:path*",
+        destination: "/guru/:path*",
+      },
+      {
+        source: "/portal/ortu/:path*",
+        destination: "/ortu/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -83,6 +83,12 @@ export default function GuruDashboardPage() {
             >
               Data Siswa & Poin
             </Link>
+            <Link
+              href="/guru/sarpras"
+              className="px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 hover:bg-slate-100 text-xs font-bold transition-colors shadow-xs"
+            >
+              Sarpras & Lab
+            </Link>
           </div>
         </div>
       </div>
