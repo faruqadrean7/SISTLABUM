@@ -93,6 +93,11 @@ use App\Http\Controllers\Api\V1\TeacherController;
 use App\Http\Controllers\Api\V1\TeachingAssignmentController;
 use App\Http\Controllers\Api\V1\TeachingMaterialController;
 use App\Http\Controllers\Api\V1\TimeSlotController;
+use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\MeChildController;
+use App\Http\Controllers\Api\V1\MeStudentController;
+use App\Http\Controllers\Api\V1\MeTeacherController;
+use App\Http\Controllers\Api\V1\MeStaffController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -167,6 +172,75 @@ Route::prefix('v1')->group(function () {
     });
 
     // =========================================================================
+    // GAP-08: Portal Self-Service Endpoints (/me/*) & Aliases
+    // =========================================================================
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::get('/salary-slips', [TeacherController::class, 'mySalarySlips']);
+        Route::get('/salary-slips/{slipId}/download', [TeacherController::class, 'downloadMySalarySlip']);
+        Route::get('/me/notifications', [NotificationController::class, 'index']);
+        Route::match(['post', 'patch'], '/me/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::patch('/me/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+        // Portal Orang Tua
+        Route::prefix('me/children')->group(function () {
+            Route::get('/', [MeChildController::class, 'index']);
+            Route::get('/{child}', [MeChildController::class, 'show']);
+            Route::get('/{child}/attendance', [MeChildController::class, 'attendance']);
+            Route::get('/{child}/grades', [MeChildController::class, 'grades']);
+            Route::get('/{child}/report-cards', [MeChildController::class, 'reportCards']);
+            Route::get('/{child}/character-notes', [MeChildController::class, 'characterNotes']);
+            Route::get('/{child}/progress-reports', [MeChildController::class, 'progressReports']);
+        });
+
+        // Portal Siswa
+        Route::prefix('me')->group(function () {
+            Route::get('/student-dashboard', [MeStudentController::class, 'dashboard']);
+            Route::get('/schedule', [MeStudentController::class, 'schedule']);
+            Route::get('/grades', [MeStudentController::class, 'grades']);
+            Route::get('/exams', [MeStudentController::class, 'exams']);
+            Route::post('/counseling-requests', [MeStudentController::class, 'storeCounselingRequest']);
+        });
+
+        // Portal Guru
+        Route::prefix('me/teacher')->group(function () {
+            Route::get('/dashboard', [MeTeacherController::class, 'dashboard']);
+            Route::get('/classes', [MeTeacherController::class, 'classes']);
+            Route::get('/schedules', [MeTeacherController::class, 'schedules']);
+            Route::get('/classes/{classId}/students', [MeTeacherController::class, 'classStudents']);
+            Route::get('/attendance/sessions', [MeTeacherController::class, 'attendanceSessions']);
+            Route::post('/attendance/sessions', [MeTeacherController::class, 'recordAttendanceSession']);
+            Route::get('/journals', [MeTeacherController::class, 'journals']);
+            Route::post('/journals', [MeTeacherController::class, 'storeJournal']);
+            Route::get('/grade-components', [MeTeacherController::class, 'gradeComponents']);
+            Route::get('/grades', [MeTeacherController::class, 'grades']);
+            Route::post('/grades/bulk', [MeTeacherController::class, 'updateBulkGrades']);
+            Route::get('/materials', [MeTeacherController::class, 'materials']);
+            Route::post('/materials', [MeTeacherController::class, 'storeMaterial']);
+            Route::get('/assignments', [MeTeacherController::class, 'assignments']);
+            Route::post('/assignments', [MeTeacherController::class, 'storeAssignment']);
+            Route::get('/assignments/{id}/submissions', [MeTeacherController::class, 'submissions']);
+            Route::post('/submissions/{id}/grade', [MeTeacherController::class, 'gradeSubmission']);
+            Route::get('/exams', [MeTeacherController::class, 'exams']);
+            Route::get('/leave-requests', [MeTeacherController::class, 'leaveRequests']);
+            Route::post('/leave-requests', [MeTeacherController::class, 'storeLeaveRequest']);
+            Route::get('/self-attendance', [MeTeacherController::class, 'selfAttendance']);
+            Route::post('/self-attendance', [MeTeacherController::class, 'recordSelfAttendance']);
+            Route::get('/homeroom', [MeTeacherController::class, 'homeroom']);
+        });
+
+        // Portal Staf
+        Route::prefix('me/staff')->group(function () {
+            Route::get('/dashboard', [MeStaffController::class, 'dashboard']);
+            Route::get('/self-attendance', [MeStaffController::class, 'selfAttendance']);
+            Route::post('/self-attendance', [MeStaffController::class, 'recordSelfAttendance']);
+            Route::get('/leave-requests', [MeStaffController::class, 'leaveRequests']);
+            Route::post('/leave-requests', [MeStaffController::class, 'storeLeaveRequest']);
+            Route::get('/tickets', [MeStaffController::class, 'tickets']);
+        });
+    });
+
+    // =========================================================================
     // BE-AUTH-03: RBAC (Roles & Permissions)
     // =========================================================================
     Route::middleware(['auth:sanctum', 'permission:auth.role.manage'])->group(function () {
@@ -180,6 +254,21 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/users/{id}/roles', [RbacController::class, 'getUserRoles']);
         Route::put('/users/{id}/roles', [RbacController::class, 'assignUserRoles']);
+    });
+
+    // =========================================================================
+    // BE-AUTH-02: Manajemen Akun Pengguna (ADM-USR-01 s/d ADM-USR-04)
+    // =========================================================================
+    Route::middleware(['auth:sanctum', 'permission:auth.user.read'])->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+    });
+
+    Route::middleware(['auth:sanctum', 'permission:auth.user.write'])->group(function () {
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::patch('/users/{id}/status', [UserController::class, 'changeStatus']);
+        Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
     });
 
     // =========================================================================
@@ -250,6 +339,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/teachers/{id}', [TeacherController::class, 'show']);
         Route::put('/teachers/{id}', [TeacherController::class, 'update']);
         Route::delete('/teachers/{id}', [TeacherController::class, 'destroy']);
+        Route::get('/teachers/{id}/teaching-recap', [TeacherController::class, 'teachingRecap']);
+
+        // Teacher Salary Slips (Admin TU / Keuangan)
+        Route::get('/teachers/{id}/salary-slips', [TeacherController::class, 'listSalarySlips']);
+        Route::post('/teachers/{id}/salary-slips', [TeacherController::class, 'storeSalarySlip']);
+        Route::get('/teachers/{id}/salary-slips/{slipId}', [TeacherController::class, 'showSalarySlip']);
+        Route::get('/teachers/{id}/salary-slips/{slipId}/download', [TeacherController::class, 'downloadSalarySlip']);
+        Route::delete('/teachers/{id}/salary-slips/{slipId}', [TeacherController::class, 'destroySalarySlip']);
 
         // Staff
         Route::post('/staff/import', [StaffController::class, 'import']);
@@ -258,6 +355,15 @@ Route::prefix('v1')->group(function () {
         Route::get('/staff/{id}', [StaffController::class, 'show']);
         Route::put('/staff/{id}', [StaffController::class, 'update']);
         Route::delete('/staff/{id}', [StaffController::class, 'destroy']);
+    });
+
+    // =========================================================================
+    // TCH-PORTAL: Portal Guru Mandiri (Self-Service JJM & Slip Gaji)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('teacher/me')->group(function () {
+        Route::get('/salary-slips', [TeacherController::class, 'mySalarySlips']);
+        Route::get('/salary-slips/{slipId}/download', [TeacherController::class, 'downloadMySalarySlip']);
+        Route::get('/teaching-recap', [TeacherController::class, 'myTeachingRecap']);
     });
 
     // =========================================================================
@@ -527,6 +633,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/ppdb/verify-otp', [PPDBAccountController::class, 'verifyOtp']);
     Route::post('/ppdb/resend-otp', [PPDBAccountController::class, 'resendOtp']);
     Route::post('/ppdb/check-nik', [PPDBAccountController::class, 'checkNik']);
+    Route::post('/ppdb/login', [PPDBAccountController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/ppdb/me', [PPDBAccountController::class, 'me']);
@@ -657,7 +764,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/staff-attendances/check-in', [StaffAttendanceController::class, 'checkIn']);
         Route::post('/staff-attendances/check-out', [StaffAttendanceController::class, 'checkOut']);
         Route::get('/staff-attendances/summary', [StaffAttendanceController::class, 'summary']);
+        Route::get('/staff-attendances/settings', [StaffAttendanceController::class, 'getSettings']);
+        Route::put('/staff-attendances/settings', [StaffAttendanceController::class, 'updateSettings']);
         Route::get('/staff-attendances', [StaffAttendanceController::class, 'index']);
+        Route::post('/staff-attendances', [StaffAttendanceController::class, 'store']);
+        Route::patch('/staff-attendances/{id}', [StaffAttendanceController::class, 'correct']);
 
         // =====================================================================
         // BE-ACD-06: Bank Modul Ajar & Perangkat
@@ -668,6 +779,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/teaching-materials/{id}/versions', [TeachingMaterialController::class, 'createVersion']);
         Route::delete('/teaching-materials/{id}', [TeachingMaterialController::class, 'destroy']);
 
+        // Alias Blueprint ADM-ACD-06 (/learning-modules)
+        Route::get('/learning-modules', [TeachingMaterialController::class, 'index']);
+        Route::post('/learning-modules', [TeachingMaterialController::class, 'store']);
+        Route::get('/learning-modules/{id}', [TeachingMaterialController::class, 'show']);
+        Route::post('/learning-modules/{id}/versions', [TeachingMaterialController::class, 'createVersion']);
+        Route::delete('/learning-modules/{id}', [TeachingMaterialController::class, 'destroy']);
+
         // =====================================================================
         // BE-ACD-07: Tugas & Materi Pembelajaran (LMS Ringan)
         // =====================================================================
@@ -675,12 +793,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/materials', [MaterialController::class, 'index']);
         Route::post('/materials', [MaterialController::class, 'store']);
         Route::get('/materials/{id}', [MaterialController::class, 'show']);
+        Route::put('/materials/{id}', [MaterialController::class, 'update']);
         Route::delete('/materials/{id}', [MaterialController::class, 'destroy']);
 
         // Tugas Pembelajaran
         Route::get('/assignments', [AssignmentController::class, 'index']);
         Route::post('/assignments', [AssignmentController::class, 'store']);
         Route::get('/assignments/{id}', [AssignmentController::class, 'show']);
+        Route::put('/assignments/{id}', [AssignmentController::class, 'update']);
         Route::delete('/assignments/{id}', [AssignmentController::class, 'destroy']);
 
         // Pengumpulan & Penilaian Tugas
@@ -700,23 +820,34 @@ Route::prefix('v1')->group(function () {
         Route::delete('/grade-components/{id}', [GradeComponentController::class, 'destroy'])
             ->middleware('permission:academic.grade.write');
 
-        // Buku Nilai & Input Nilai (Satuan & Massal)
+        // Periode Penilaian
+        Route::get('/grade-periods', [GradePeriodController::class, 'index']);
+        Route::patch('/grade-periods/{id}/lock', [GradePeriodController::class, 'lock']);
+        Route::patch('/grade-periods/{id}/lock-period', [GradePeriodController::class, 'lock']);
+
+        // Buku Nilai & Input Nilai (Satuan, Spreadsheet Matrix & Massal)
         Route::get('/grades', [GradeController::class, 'index']);
+        Route::get('/grades/matrix', [GradeController::class, 'matrix']);
         Route::post('/grades', [GradeController::class, 'store'])
             ->middleware('permission:academic.grade.write');
         Route::post('/grades/bulk', [GradeController::class, 'bulk'])
             ->middleware('permission:academic.grade.write');
-
-        // Kunci Periode Penilaian
-        Route::patch('/grade-periods/{id}/lock', [GradePeriodController::class, 'lock']);
+        Route::post('/grades/batch', [GradeController::class, 'bulk'])
+            ->middleware('permission:academic.grade.write');
+        Route::delete('/grades/{id}', [GradeController::class, 'destroy'])
+            ->middleware('permission:academic.grade.write');
 
         // =====================================================================
         // BE-GRD-02: Catatan Karakter Bulanan
         // =====================================================================
         Route::get('/character-notes', [CharacterNoteController::class, 'index']);
+        Route::get('/character-notes/matrix', [CharacterNoteController::class, 'matrix']);
+        Route::get('/character-notes/class-overview', [CharacterNoteController::class, 'matrix']);
         Route::post('/character-notes', [CharacterNoteController::class, 'store'])
             ->middleware('permission:academic.grade.write');
         Route::post('/character-notes/bulk', [CharacterNoteController::class, 'bulk'])
+            ->middleware('permission:academic.grade.write');
+        Route::post('/character-notes/batch', [CharacterNoteController::class, 'bulk'])
             ->middleware('permission:academic.grade.write');
         Route::get('/character-notes/{id}', [CharacterNoteController::class, 'show']);
         Route::delete('/character-notes/{id}', [CharacterNoteController::class, 'destroy'])
@@ -725,6 +856,10 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-GRD-03: E-Progress Report Bulanan
         // =====================================================================
+        Route::get('/progress-reports/class-status', [ProgressReportController::class, 'classStatus']);
+        Route::get('/progress-reports/preview', [ProgressReportController::class, 'preview']);
+        Route::post('/progress-reports/bulk-approve', [ProgressReportController::class, 'bulkApprove']);
+        Route::patch('/progress-reports/bulk-approve', [ProgressReportController::class, 'bulkApprove']);
         Route::post('/progress-reports/generate', [ProgressReportController::class, 'generate']);
         Route::get('/progress-reports', [ProgressReportController::class, 'index']);
         Route::get('/progress-reports/{id}', [ProgressReportController::class, 'show']);
@@ -740,6 +875,12 @@ Route::prefix('v1')->group(function () {
         Route::delete('/report-description-templates/{id}', [ReportDescriptionTemplateController::class, 'destroy'])
             ->middleware('permission:academic.grade.write');
 
+        Route::get('/report-cards/class-status', [ReportCardController::class, 'classStatus']);
+        Route::get('/report-cards/preview', [ReportCardController::class, 'preview']);
+        Route::post('/report-cards/bulk-approve', [ReportCardController::class, 'bulkApprove']);
+        Route::patch('/report-cards/bulk-approve', [ReportCardController::class, 'bulkApprove']);
+        Route::post('/report-cards/bulk-lock', [ReportCardController::class, 'bulkLock']);
+        Route::patch('/report-cards/bulk-lock', [ReportCardController::class, 'bulkLock']);
         Route::post('/report-cards/generate', [ReportCardController::class, 'generate']);
         Route::get('/report-cards', [ReportCardController::class, 'index']);
         Route::get('/report-cards/{id}', [ReportCardController::class, 'show']);
@@ -868,6 +1009,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/exams/{id}/grade-essay', [ExamGradingController::class, 'gradeEssay']);
         Route::get('/exams/{id}/results', [ExamGradingController::class, 'results']);
         Route::get('/exams/{id}/item-analysis', [ExamGradingController::class, 'itemAnalysis']);
+        Route::post('/exams/{id}/publish-gradebook', [ExamGradingController::class, 'publishGradebook'])
+            ->middleware('permission:cbt.exam.manage');
 
         // =====================================================================
         // BE-CBT-09: Remedial & Pengayaan Otomatis Berbasis KKTP
@@ -940,6 +1083,7 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // Kompetisi & Delegasi Lomba
         Route::get('/competitions', [CompetitionController::class, 'index']);
+        Route::get('/competitions/summary', [CompetitionController::class, 'summary']);
         Route::post('/competitions', [CompetitionController::class, 'store']);
         Route::get('/competitions/{id}', [CompetitionController::class, 'show']);
         Route::put('/competitions/{id}', [CompetitionController::class, 'update']);
@@ -955,6 +1099,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/achievements', [AchievementController::class, 'store']);
         Route::get('/achievements/{id}', [AchievementController::class, 'show']);
         Route::put('/achievements/{id}', [AchievementController::class, 'update']);
+        Route::patch('/achievements/{id}/verify', [AchievementController::class, 'verify']);
         Route::delete('/achievements/{id}', [AchievementController::class, 'destroy']);
 
         // =====================================================================
@@ -997,6 +1142,7 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-BK-02: Deteksi Dini / Early Warning System
         // =====================================================================
+        Route::get('/early-warnings/summary', [EarlyWarningController::class, 'summary']);
         Route::get('/early-warnings', [EarlyWarningController::class, 'index']);
         Route::post('/early-warnings/evaluate', [EarlyWarningController::class, 'evaluate']);
         Route::get('/early-warnings/{id}', [EarlyWarningController::class, 'show']);
@@ -1010,6 +1156,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/counseling/requests/{id}', [CounselingRequestController::class, 'show']);
         Route::patch('/counseling/requests/{id}/schedule', [CounselingRequestController::class, 'schedule']);
         Route::patch('/counseling/requests/{id}/reject', [CounselingRequestController::class, 'reject']);
+        Route::patch('/counseling/requests/{id}/complete', [CounselingRequestController::class, 'complete']);
         Route::delete('/counseling/requests/{id}', [CounselingRequestController::class, 'cancel']);
 
         // =====================================================================
@@ -1024,6 +1171,7 @@ Route::prefix('v1')->group(function () {
 
         // Peminjaman & Cek Ketersediaan
         Route::get('/bookings/availability', [BookingController::class, 'availability']);
+        Route::get('/bookings/summary', [BookingController::class, 'summary']);
         Route::get('/bookings', [BookingController::class, 'index']);
         Route::post('/bookings', [BookingController::class, 'store']);
         Route::get('/bookings/{id}', [BookingController::class, 'show']);
@@ -1034,8 +1182,10 @@ Route::prefix('v1')->group(function () {
         // BE-SAR-02: Sarana & Prasarana - Aset & Inventaris QR
         // =====================================================================
         // Aset & Lookup QR
+        Route::get('/assets/summary', [AssetController::class, 'summary']);
         Route::get('/assets', [AssetController::class, 'index']);
         Route::get('/assets/by-code/{code}', [AssetController::class, 'byCode']);
+        Route::get('/assets/{id}/qr', [AssetController::class, 'qr']);
         Route::get('/assets/{id}', [AssetController::class, 'show']);
         Route::post('/assets', [AssetController::class, 'store']);
         Route::put('/assets/{id}', [AssetController::class, 'update']);
@@ -1050,6 +1200,8 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-SAR-03: Sarana & Prasarana - Helpdesk Perbaikan Sarpras
         // =====================================================================
+        Route::get('/tickets/summary', [TicketController::class, 'summary']);
+        Route::get('/tickets/technicians', [TicketController::class, 'technicians']);
         Route::get('/tickets', [TicketController::class, 'index']);
         Route::post('/tickets', [TicketController::class, 'store']);
         Route::get('/tickets/{id}', [TicketController::class, 'show']);
@@ -1060,7 +1212,8 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-SAR-04: Sarana & Prasarana - Perpustakaan & Alat Lab
         // =====================================================================
-        // Perpustakaan: Buku
+        // Perpustakaan: Buku & Ringkasan
+        Route::get('/library/summary', [LibraryController::class, 'summary']);
         Route::get('/library/books', [LibraryController::class, 'indexBooks']);
         Route::post('/library/books', [LibraryController::class, 'storeBook']);
         Route::get('/library/books/{id}', [LibraryController::class, 'showBook']);
@@ -1073,7 +1226,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/library/loans/{id}', [LibraryController::class, 'showLoan']);
         Route::post('/library/loans/{id}/return', [LibraryController::class, 'returnLoan']);
 
-        // Laboratorium: Alat Lab
+        // Laboratorium: Alat Lab & Ringkasan
+        Route::get('/lab-equipment/summary', [LabController::class, 'summary']);
         Route::get('/lab-equipment', [LabController::class, 'indexEquipment']);
         Route::post('/lab-equipment', [LabController::class, 'storeEquipment']);
         Route::get('/lab-equipment/{id}', [LabController::class, 'showEquipment']);
