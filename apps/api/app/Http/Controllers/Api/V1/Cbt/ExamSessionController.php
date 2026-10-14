@@ -38,7 +38,7 @@ class ExamSessionController extends Controller
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Data ujian tidak ditemukan.', 'NOT_FOUND', 404);
         } catch (HttpException $e) {
-            $code = match ($e->getStatusCode()) {
+            $code = $e->getHeaders()['X-Error-Code'] ?? match ($e->getStatusCode()) {
                 401 => 'UNAUTHENTICATED',
                 403 => 'FORBIDDEN',
                 422 => 'BUSINESS_RULE_VIOLATION',
@@ -66,7 +66,7 @@ class ExamSessionController extends Controller
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Sesi ujian tidak ditemukan.', 'NOT_FOUND', 404);
         } catch (HttpException $e) {
-            $code = match ($e->getStatusCode()) {
+            $code = $e->getHeaders()['X-Error-Code'] ?? match ($e->getStatusCode()) {
                 401 => 'UNAUTHENTICATED',
                 403 => 'FORBIDDEN',
                 422 => 'BUSINESS_RULE_VIOLATION',
@@ -94,7 +94,7 @@ class ExamSessionController extends Controller
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Sesi ujian tidak ditemukan.', 'NOT_FOUND', 404);
         } catch (HttpException $e) {
-            $code = match ($e->getStatusCode()) {
+            $code = $e->getHeaders()['X-Error-Code'] ?? match ($e->getStatusCode()) {
                 401 => 'UNAUTHENTICATED',
                 403 => 'FORBIDDEN',
                 422 => 'BUSINESS_RULE_VIOLATION',
@@ -122,7 +122,8 @@ class ExamSessionController extends Controller
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Sesi ujian tidak ditemukan.', 'NOT_FOUND', 404);
         } catch (HttpException $e) {
-            return $this->errorResponse($e->getMessage(), 'BAD_REQUEST', $e->getStatusCode());
+            $code = $e->getHeaders()['X-Error-Code'] ?? 'BAD_REQUEST';
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -143,7 +144,7 @@ class ExamSessionController extends Controller
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Sesi ujian tidak ditemukan.', 'NOT_FOUND', 404);
         } catch (HttpException $e) {
-            $code = match ($e->getStatusCode()) {
+            $code = $e->getHeaders()['X-Error-Code'] ?? match ($e->getStatusCode()) {
                 401 => 'UNAUTHENTICATED',
                 403 => 'FORBIDDEN',
                 422 => 'BUSINESS_RULE_VIOLATION',

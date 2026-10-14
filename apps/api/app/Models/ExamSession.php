@@ -20,6 +20,7 @@ class ExamSession extends Model
         'student_id',
         'status',
         'started_at',
+        'ends_at',
         'deadline_at',
         'submitted_at',
         'extra_minutes',
@@ -31,18 +32,21 @@ class ExamSession extends Model
         'user_agent',
         'device_fingerprint',
         'blur_count',
+        'violation_count',
     ];
 
     protected function casts(): array
     {
         return [
             'started_at' => 'datetime',
+            'ends_at' => 'datetime',
             'deadline_at' => 'datetime',
             'submitted_at' => 'datetime',
             'last_heartbeat_at' => 'datetime',
             'score' => 'decimal:2',
             'extra_minutes' => 'integer',
             'blur_count' => 'integer',
+            'violation_count' => 'integer',
         ];
     }
 
