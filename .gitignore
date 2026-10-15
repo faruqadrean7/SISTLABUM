@@ -1,13 +1,36 @@
 .DS_Store
+Thumbs.db
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
 .env
 .env.*
 !.env.example
+
+# Dependencies
 node_modules/
 vendor/
+
+# Next.js build outputs & caches (apps/portal & other Next apps)
+.next/
+**/.next/
+out/
+**/out/
+build/
+dist/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# PHP / Laravel artifacts
 .phpunit.result.cache
 .phpunit.cache/
 /apps/api/storage/*.key
 /apps/api/storage/logs/*.log
 /apps/api/public/storage
 /apps/api/database/database.sqlite
+
