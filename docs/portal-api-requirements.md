@@ -188,6 +188,12 @@ Dokumen ini memetakan seluruh kebutuhan endpoint RESTful API *self-service* yang
 | `GET /api/v1/me/teacher/*` | ✅ Terimplementasi (GAP-08) | Terhubung via `guruApi` (`MeTeacherController` Anti-IDOR 403) |
 | `GET /api/v1/me/staff/*` | ✅ Terimplementasi (GAP-08) | Terhubung via `stafApi` / `sharedPortalApi` (`MeStaffController`) |
 | `GET /api/v1/me/notifications` | ✅ Tersedia (`NotificationController`) | Terhubung langsung dengan API Notifikasi |
+| `GET /api/v1/me/notification-preferences` | ✅ Terimplementasi (GAP-11) | Terhubung via `notificationsApi.getPreferences` |
+| `PUT /api/v1/me/notification-preferences` | ✅ Terimplementasi (GAP-11) | Terhubung via `notificationsApi.updatePreferences` |
+| `POST /api/v1/cbt/sessions/{id}/start` | ✅ Terimplementasi (GAP-02) | Terhubung via `cbtApi.startExam` (server-timing & offset) |
+| `POST /api/v1/cbt/sessions/{id}/submit` | ✅ Terimplementasi (GAP-02) | Terhubung via `cbtApi.submitExam` (idempoten & server-close) |
+| `POST /api/v1/cbt/sessions/{id}/violations` | ✅ Terimplementasi (GAP-07) | Terhubung via `cbtApi.reportViolation` (inkremen atomik server) |
+| `POST /api/v1/audit-logs` | ✅ Terimplementasi (GAP-06) | Terhubung via `uiTelemetryLogger` (menolak aksi bisnis 422) |
 
 ---
 
