@@ -1,65 +1,87 @@
-# SISTLABUM — Web Portal Design Prototype
+# SISTLABUM — Web Portal Terpadu (Next.js 14+ App Router)
 
-Prototipe antarmuka terpadu (HTML5, CSS3, Vanilla JS) untuk **SMP-SMA Laboratorium Universitas Negeri Malang (SISTLABUM)**, ditenagai backend ringan native Node.js dengan database relasional **SQLite**.
-
-Prototipe ini dirancang dengan standar enterprise UI/UX non-generik: tipografi akademik (*Plus Jakarta Sans* & *JetBrains Mono*), palet warna institusional (Navy `#1E3A8A` & Academic Teal `#0D9488`), serta alur data realistis untuk memudahkan pengembangan frontend produksi (Next.js / React) selanjutnya.
+Frontend resmi Portal Sekolah Satu Pintu **SMP-SMA Laboratorium Universitas Negeri Malang (SISTLABUM)** yang dibangun menggunakan Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui, dan TanStack Query, terintegrasi langsung dengan Laravel 11 REST API (`apps/api`).
 
 ---
 
-## 🚀 Cara Menjalankan
+## 1. Arsitektur Tiga Shell Navigasi
+Aplikasi web ini mengadopsi tiga shell navigasi terisolasi berdasarkan peran pengguna:
+1. **Gateway SSO (`/masuk`)**: Pintu masuk login tunggal terintegrasi ke endpoint backend `POST /api/v1/auth/login`. Mendeteksi peran otomatis dan mengarahkan pengguna ke shell yang sesuai.
+2. **Shell Manajemen & Guru (`/admin/*`)**: Sidebar navigasi hierarkis responsif, topbar dengan indikator tahun ajaran aktif, menu terproteksi berbasis permission Spatie, dan *Role Switcher* bagi pengguna multi-peran.
+3. **Shell Siswa (`/portal/siswa/*`)**: Antarmuka ringkas, ramah keyboard, dan dioptimalkan untuk monitor komputer lab sekolah.
+4. **Shell Orang Tua (`/portal/ortu/*`)**: Antarmuka pemantauan presensi dan perkembangan anak dengan penyiapan bar *Multi-Child Switcher*.
 
-Cukup jalankan satu perintah menggunakan Node.js (v22+):
+---
 
+## 2. Kebutuhan Lingkungan & Runtime
+- **Node.js**: v20+ (Direkomendasikan v22 atau v26)
+- **Package Manager**: npm v10+ atau pnpm v9+
+- **Backend API**: Laravel 11 REST API berjalan di `http://127.0.0.1:8000/api/v1`
+
+---
+
+## 3. Konfigurasi Environment Variable
+Salin berkas contoh environment:
 ```bash
-# Dari root repositori
-node apps/web/server.js
-
-# Atau masuk ke direktori apps/web
-cd apps/web
-npm start
+cp .env.example .env.local
 ```
 
+Isi variabel:
+```env
+# URL REST API Laravel SISTLABUM
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+NEXT_PUBLIC_APP_NAME="SISTLABUM - Portal Sekolah Satu Pintu"
+```
+
+---
+
+## 4. Instalasi & Menjalankan Aplikasi
+
+### Mode Pengembangan (Development)
+```bash
+cd apps/web
+npm install
+npm run dev
+```
 Buka peramban di: **`http://localhost:3000`**
 
-Untuk me-reset data dummy kapan saja:
+### Menjalankan Backend API (Secara Paralel)
 ```bash
-node apps/web/data/seed.js
+cd apps/api
+php artisan serve
 ```
 
 ---
 
-## 📱 Peta Halaman Prototipe
+## 5. Pemeriksaan Kualitas Kode (QA & Testing)
 
-Di bagian bawah setiap halaman prototipe, terdapat **Floating Prototype Switcher Bar** untuk beralih peran instan dalam 1 klik:
-
-| Peran / Platform | Rute URL | Fitur Utama yang Disimulasikan |
-|---|---|---|
-| **🌐 Website Publik** | `/` | Profil sekolah, Akreditasi A, Berita & pengumuman dinamis dari SQLite, Layanan tamu. |
-| **🔑 Gateway Masuk SSO** | `/masuk.html` | Form login terpadu + **Simulator 1-Klik** (Siswa, Ortu, Guru, Admin) + QR unduh APK Android. |
-| **📋 PPDB Online** | `/ppdb.html` | Informasi 4 gelombang, kuota pendaftaran, alur 4 langkah, dan kalkulator simulasi skor seleksi. |
-| **🎓 Portal Siswa** | `/siswa/index.html` | Dashboard siswa, banner ujian CBT aktif hari ini, jadwal kelas IX-A, presensi tap gerbang. |
-| **📝 Web CBT Lab Komputer** | `/siswa/cbt.html` | Antarmuka ujian lab layar lebar (distraction-free), 6 format soal (PG, Kompleks, Benar/Salah, Menjodohkan, Isian, Esai), timer countdown sinkron, autosave debounced, dan **deteksi anti-cheat perpindahan tab/jendela (blur)**. |
-| **📚 LMS Tugas Siswa** | `/siswa/tugas.html` | Daftar tugas modul ajar, status tenggat waktu, dan modal pengumpulan dokumen tugas. |
-| **📊 E-Rapor Siswa** | `/siswa/rapor.html` | Nilai formatif & sumatif per mapel, KKTP, predikat Kurikulum Merdeka, tombol unduh PDF resmi. |
-| **👨‍👩‍👧 Portal Orang Tua** | `/ortu/index.html` | **Multi-Anak Switcher Bar** (beralih antara *Ahmad Fauzan* dan *Nabila Putri* secara instan), tap gerbang kedatangan anak harian. |
-| **📅 Presensi & Gerbang Ortu** | `/ortu/kehadiran.html` | Rekapitulasi jam masuk/pulang mesin RFID dan kalender kehadiran bulanan anak. |
-| **📝 Surat Izin/Sakit Ortu** | `/ortu/izin.html` | Tabel riwayat izin & formulir pengajuan izin sakit online (tersimpan langsung ke SQLite!). |
-| **📊 E-Rapor Anak Ortu** | `/ortu/rapor.html` | Rapor perkembangan berkala anak, catatan evaluasi wali kelas, dan validasi QR code. |
-| **📊 Admin & Eksekutif** | `/admin/index.html` | Dashboard metrik manajemen sekolah, kehadiran guru 98.5%, log kedatangan gerbang realtime. |
-| **👥 Master Siswa** | `/admin/siswa.html` | DataTable master siswa dengan pencarian realtime, filter kelas, modal biodata, dan ekspor CSV. |
-| **📝 Entri Nilai Guru** | `/admin/nilai.html` | Grid spreadsheet input nilai cepat (Tugas, UH, PTS, PAS) dengan kalkulasi otomatis nilai akhir dan predikat. |
-| **🖥️ CBT Live Monitor Lab** | `/admin/cbt-monitor.html` | Pemantauan ruang lab komputer real-time, progres butir terjawab, deteksi pelanggaran tab switch, dan reset sesi. |
+| Perintah | Deskripsi |
+|---|---|
+| `npm run typecheck` | Validasi TypeScript (`tsc --noEmit`) tanpa error tipe |
+| `npm test` | Menjalankan automated test suite (Vitest + Testing Library) |
+| `npm run build` | Kompilasi build produksi Next.js |
+| `npm run start` | Menjalankan server produksi lokal |
 
 ---
 
-## 🗄️ Struktur Data SQLite (`data/database.sqlite`)
+## 6. Alur Autentikasi Aktual yang Diterapkan
+- **Login**: `POST /api/v1/auth/login` dengan payload `{ identifier, password, platform: 'web' }`.
+- **Response**: Menerima `{ data: { user: {...}, tokens: { accessToken, refreshToken, expiresIn } } }`.
+- **Penyimpanan Token**:
+  - `accessToken` disimpan dalam memori runtime dan diinjeksi via header `Authorization: Bearer <token>` pada instance Axios `apiClient`.
+  - `refreshToken` disimpan di client storage terisolasi dan digunakan secara otomatis oleh interceptor untuk memperbarui sesi saat menerima respons HTTP `401`.
+- **Logout**: `POST /api/v1/auth/logout`, membersihkan seluruh state sesi di memori, dan mengarahkan kembali ke `/masuk`.
 
-1. `school_profile`: Data identitas NPSN dan akreditasi sekolah.
-2. `students`: Data 6 siswa autentik lintas jenjang kelas VII s.d IX.
-3. `guardians` & `student_guardians`: Relasi orang tua multi-anak (H. Suparman sebagai wali 2 siswa).
-4. `attendance_logs`: Log presensi gerbang RFID/Face Recognition.
-5. `leave_requests`: Surat permohonan izin/sakit.
-6. `exams` & `exam_questions`: Ujian CBT & 10 butir soal dengan 6 variasi tipe soal lengkap formula KaTeX.
-7. `exam_sessions`: Sesi pengerjaan siswa, status autosave jawaban, ragu-ragu, dan counter pelanggaran tab.
-8. `grades`: Nilai komponen rapor Kurikulum Merdeka.
-9. `announcements`: Berita warta sekolah.
+---
+
+## 7. Arsip Prototipe Desain Lama (Non-Destruktif)
+Seluruh prototipe awal berbasis HTML/CSS/Vanilla JS dan demo SQLite tetap diarsipkan secara utuh di:
+```text
+legacy/prototype/
+```
+Untuk menjalankan prototipe lama:
+```bash
+cd legacy/prototype
+node server.js
+```
+Prototipe lama dapat ditinjau kapan saja untuk memverifikasi referensi visual tanpa mengganggu aplikasi produksi Next.js.
