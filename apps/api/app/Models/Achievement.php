@@ -13,6 +13,7 @@ class Achievement extends Model
     protected $table = 'achievements';
 
     protected $fillable = [
+        'school_id',
         'student_id',
         'competition_id',
         'title',
@@ -21,11 +22,17 @@ class Achievement extends Model
         'certificate_file_id',
         'photo_file_id',
         'points_awarded',
+        'verification_status',
+        'verified_by',
+        'verified_at',
+        'rejection_reason',
+        'student_point_id',
         'notes',
     ];
 
     protected $casts = [
         'achieved_at' => 'date',
+        'verified_at' => 'datetime',
         'points_awarded' => 'integer',
     ];
 
@@ -47,5 +54,15 @@ class Achievement extends Model
     public function photoFile(): BelongsTo
     {
         return $this->belongsTo(File::class, 'photo_file_id');
+    }
+
+    public function verifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function studentPoint(): BelongsTo
+    {
+        return $this->belongsTo(StudentPoint::class, 'student_point_id');
     }
 }

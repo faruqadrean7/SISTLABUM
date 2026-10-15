@@ -23,13 +23,30 @@ class AssetController extends Controller
     ) {}
 
     /**
+     * BE-SAR-02: Ringkasan metrik inventaris dan kondisi aset.
+     * GET /api/v1/assets/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request);
+
+            return $this->successResponse($summary);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan aset.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-SAR-02: Daftar aset berpaginasi.
      * GET /api/v1/assets
      */
     public function index(ListAssetRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listAssets($request->validated());
+            $paginator = $this->service->listAssets($request->validated(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -43,14 +60,16 @@ class AssetController extends Controller
      * BE-SAR-02: Detail aset berdasarkan ID.
      * GET /api/v1/assets/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
-            $asset = $this->service->getAsset($id);
+            $asset = $this->service->getAsset($id, $request);
 
             return $this->successResponse($asset);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Aset tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -62,18 +81,41 @@ class AssetController extends Controller
      * BE-SAR-02: Scan / lookup aset berdasarkan kode QR/barcode.
      * GET /api/v1/assets/by-code/{code}
      */
-    public function byCode(string $code): JsonResponse
+    public function byCode(string $code, Request $request): JsonResponse
     {
         try {
-            $asset = $this->service->getAssetByCode($code);
+            $asset = $this->service->getAssetByCode($code, $request);
 
             return $this->successResponse($asset);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Aset dengan kode tersebut tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat memindai kode aset.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-SAR-02: Data label fisik QR Code untuk pencetakan.
+     * GET /api/v1/assets/{id}/qr
+     */
+    public function qr(string $id, Request $request): JsonResponse
+    {
+        try {
+            $qrData = $this->service->getAssetQr($id, $request);
+
+            return $this->successResponse($qrData);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Aset tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat menyiapkan label QR aset.', 'INTERNAL_ERROR', 500);
         }
     }
 

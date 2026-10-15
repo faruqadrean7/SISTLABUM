@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Applicant;
 use App\Models\AuditLog;
 use App\Models\Device;
 use App\Models\PasswordReset;
@@ -384,10 +385,12 @@ class AuthService
      */
     public function registerDevice(User $user, array $data, Request $request): Device
     {
+        $token = $data['fcm_token'] ?? $data['token'] ?? null;
+
         $device = Device::updateOrCreate(
             [
                 'user_id' => $user->id,
-                'fcm_token' => $data['fcm_token'],
+                'fcm_token' => $token,
             ],
             [
                 'platform' => $data['platform'],
@@ -441,8 +444,23 @@ class AuthService
             ->first();
 
         if ($teacher && $teacher->user_id) {
-            return User::with(['roles.permissions', 'student', 'teacher', 'guardian', 'staff'])
+            return User::with(['roles.permissions', 'student', 'teacher', 'guardian', 'staff', 'applicant'])
                 ->find($teacher->user_id);
+        }
+
+        // 4. PPDB Applicant Registration Number (No. Registrasi PPDB)
+        $applicant = Applicant::where('registration_no', $identifier)->first();
+        if ($applicant && $applicant->user_id) {
+            return User::with(['roles.permissions', 'student', 'teacher', 'guardian', 'staff', 'applicant'])
+                ->find($applicant->user_id);
+        }
+
+        // 5. Phone number match
+        $byPhone = User::with(['roles.permissions', 'student', 'teacher', 'guardian', 'staff', 'applicant'])
+            ->where('phone', $identifier)
+            ->first();
+        if ($byPhone) {
+            return $byPhone;
         }
 
         return null;
@@ -477,7 +495,7 @@ class AuthService
      */
     public function formatUserResponse(User $user): array
     {
-        $user->loadMissing(['roles.permissions', 'student', 'teacher', 'guardian', 'staff']);
+        $user->loadMissing(['roles.permissions', 'student', 'teacher', 'guardian', 'staff', 'applicant']);
 
         return [
             'id' => $user->id,

@@ -86,4 +86,54 @@ class GradeController extends Controller
             return $this->errorResponse('Terjadi kesalahan saat menginput nilai massal', 'INTERNAL_ERROR', 500);
         }
     }
+
+    /**
+     * BE-GRD-01 / ADM-GRD-01: Grid spreadsheet nilai satu kelas (Siswa x Komponen).
+     * GET /api/v1/grades/matrix
+     */
+    public function matrix(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->service->getClassGradeMatrix($request->all(), $request);
+
+            return $this->successResponse($data);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                422 => 'BUSINESS_RULE_VIOLATION',
+                403 => 'FORBIDDEN',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat grid spreadsheet nilai', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-GRD-01: Hapus nilai siswa tertentu.
+     * DELETE /api/v1/grades/{id}
+     */
+    public function destroy(string $id, Request $request): JsonResponse
+    {
+        try {
+            $this->service->deleteGrade($id, $request);
+
+            return $this->successResponse(['deleted' => true], 200);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                422 => 'BUSINESS_RULE_VIOLATION',
+                403 => 'FORBIDDEN',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat menghapus data nilai', 'INTERNAL_ERROR', 500);
+        }
+    }
 }

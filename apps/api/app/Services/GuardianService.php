@@ -23,7 +23,7 @@ class GuardianService
         $limit = min($request->integer('limit', 20), 100);
         $q = trim((string) $request->query('q', ''));
 
-        $query = Guardian::withCount('students')->with('user');
+        $query = Guardian::withCount('students')->with(['user', 'students']);
 
         // Scoping: If user is a guardian without master.student.read, they can only see themselves
         if ($user && $user->hasRole('guardian') && ! $user->hasPermission('master.student.read')) {

@@ -12,11 +12,13 @@ class Booking extends Model
     use HasUuids;
 
     protected $fillable = [
+        'school_id',
         'facility_id',
         'requested_by',
         'start_at',
         'end_at',
         'purpose',
+        'attendees_count',
         'status',
         'decided_by',
         'decision_notes',
@@ -25,6 +27,7 @@ class Booking extends Model
     protected $casts = [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
+        'attendees_count' => 'integer',
     ];
 
     public function facility(): BelongsTo

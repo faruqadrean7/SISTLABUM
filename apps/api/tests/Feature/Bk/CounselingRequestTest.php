@@ -4,6 +4,7 @@ namespace Tests\Feature\Bk;
 
 use App\Models\AcademicYear;
 use App\Models\ClassStudent;
+use App\Models\CounselingCase;
 use App\Models\CounselingRequest;
 use App\Models\GradeLevel;
 use App\Models\Guardian;
@@ -16,6 +17,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class CounselingRequestTest extends TestCase
@@ -422,5 +424,146 @@ class CounselingRequestTest extends TestCase
 
         $respCounselor->assertStatus(200)
             ->assertJsonPath('meta.total', 2);
+    }
+
+    /**
+     * BE-BK-03: Mencegah duplikasi permintaan konseling aktif dengan topik serupa (422 Unprocessable).
+     */
+    public function test_be_bk_03_cannot_create_duplicate_active_counseling_request(): void
+    {
+        CounselingRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->studentUser1->id,
+            'requester_role' => 'student',
+            'topic' => 'Diskusi pemilihan jurusan kuliah',
+            'status' => 'pending',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->studentUser1, 'sanctum')
+            ->postJson('/api/v1/counseling/requests', [
+                'student_id' => $this->student1->id,
+                'topic' => 'Diskusi pemilihan jurusan kuliah',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
+    }
+
+    /**
+     * BE-BK-03: Isolasi multi-tenant antar-sekolah menolak akses dan penjadwalan siswa sekolah lain (403 Forbidden).
+     */
+    public function test_be_bk_03_cross_school_access_is_forbidden(): void
+    {
+        $schoolIdA = (string) Str::uuid();
+        $schoolIdB = (string) Str::uuid();
+
+        // Counselor bertugas di Sekolah A
+        $this->counselorUser->school_id = $schoolIdA;
+        $this->counselorUser->save();
+
+        // Siswa 2 terdaftar di Sekolah B
+        $this->student2->school_id = $schoolIdB;
+        $this->student2->save();
+
+        $reqSchoolB = CounselingRequest::create([
+            'student_id' => $this->student2->id,
+            'requested_by' => $this->studentUser2->id,
+            'requester_role' => 'student',
+            'topic' => 'Permintaan di Sekolah B',
+            'status' => 'pending',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        // Counselor sekolah A tidak boleh melihat detail request siswa sekolah B
+        $respDetail = $this->actingAs($this->counselorUser, 'sanctum')
+            ->getJson("/api/v1/counseling/requests/{$reqSchoolB->id}");
+
+        $respDetail->assertStatus(403);
+
+        // Counselor sekolah A tidak boleh menjadwalkan request siswa sekolah B
+        $respSchedule = $this->actingAs($this->counselorUser, 'sanctum')
+            ->patchJson("/api/v1/counseling/requests/{$reqSchoolB->id}/schedule", [
+                'scheduled_at' => Carbon::now()->addDays(2)->toDateTimeString(),
+            ]);
+
+        $respSchedule->assertStatus(403);
+    }
+
+    /**
+     * BE-BK-03: Guru BK dapat menyelesaikan permintaan konseling dan mengintegrasikannya ke Kasus BK resmi.
+     */
+    public function test_be_bk_03_counselor_can_complete_scheduled_request_and_create_counseling_case(): void
+    {
+        $scheduledTime = Carbon::now()->addDays(1)->setTime(9, 0);
+
+        $cReq = CounselingRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->studentUser1->id,
+            'requester_role' => 'student',
+            'topic' => 'Konsultasi kesulitan belajar matematika',
+            'status' => 'scheduled',
+            'scheduled_at' => $scheduledTime,
+            'counselor_id' => $this->counselorUser->id,
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->counselorUser, 'sanctum')
+            ->patchJson("/api/v1/counseling/requests/{$cReq->id}/complete", [
+                'notes' => 'Sesi tatap muka telah terlaksana dengan baik.',
+                'create_case' => true,
+                'case_category' => 'Belajar',
+                'case_summary' => 'Siswa mengalami hambatan pemahaman konsep trigonometri dasar.',
+                'session_notes' => 'Diberikan lembar latihan terstruktur dan strategi manajemen waktu.',
+                'follow_up' => 'Evaluasi 2 minggu ke depan bersama guru matematika.',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.status', 'completed');
+
+        $cReq->refresh();
+        $this->assertEquals('completed', $cReq->status);
+
+        // Pastikan Kasus BK terbuat
+        $this->assertDatabaseHas('counseling_cases', [
+            'student_id' => $this->student1->id,
+            'counselor_id' => $this->counselorUser->id,
+            'category' => 'Belajar',
+            'status' => 'aktif',
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $this->counselorUser->id,
+            'action' => 'counseling_request.complete',
+            'entity' => 'counseling_requests',
+            'entity_id' => $cReq->id,
+        ]);
+    }
+
+    /**
+     * BE-BK-03: Permintaan yang belum dijadwalkan (masih pending) dilarang langsung diselesaikan (422 Unprocessable).
+     */
+    public function test_be_bk_03_cannot_complete_pending_or_cancelled_request(): void
+    {
+        $cReq = CounselingRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->studentUser1->id,
+            'requester_role' => 'student',
+            'topic' => 'Permintaan yang masih pending',
+            'status' => 'pending',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->counselorUser, 'sanctum')
+            ->patchJson("/api/v1/counseling/requests/{$cReq->id}/complete", [
+                'notes' => 'Mencoba menyelesaikan request pending',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
     }
 }

@@ -179,7 +179,7 @@ class StaffAttendanceService
         $currentUser = $request->user();
         $isAdmin = $this->checkIsAdmin($currentUser);
 
-        $query = StaffAttendance::with(['user', 'photoFile'])->orderBy('att_date', 'desc');
+        $query = StaffAttendance::with(['user.teacher', 'user.staff', 'photoFile'])->orderBy('att_date', 'desc');
 
         if (! $isAdmin) {
             // Guru/staf biasa hanya bisa melihat miliknya sendiri
@@ -188,6 +188,16 @@ class StaffAttendanceService
             if (! empty($filters['user_id'])) {
                 $query->where('user_id', $filters['user_id']);
             }
+        }
+
+        if (! empty($filters['q'])) {
+            $keyword = trim($filters['q']);
+            $query->whereHas('user', function ($uq) use ($keyword) {
+                $uq->where('username', 'like', "%{$keyword}%")
+                    ->orWhere('email', 'like', "%{$keyword}%")
+                    ->orWhereHas('teacher', fn ($tq) => $tq->where('full_name', 'like', "%{$keyword}%")->orWhere('nip', 'like', "%{$keyword}%"))
+                    ->orWhereHas('staff', fn ($sq) => $sq->where('full_name', 'like', "%{$keyword}%")->orWhere('nip', 'like', "%{$keyword}%"));
+            });
         }
 
         if (! empty($filters['date_from'])) {
@@ -336,6 +346,158 @@ class StaffAttendanceService
     }
 
     /**
+     * BE-ACD-05: Manual record presensi staf oleh Admin.
+     */
+    public function manualStore(array $data, Request $request): StaffAttendance
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+        if (! $this->checkIsAdmin($currentUser)) {
+            throw new HttpException(403, 'Hanya administrator yang berhak mencatat presensi staf secara manual.');
+        }
+
+        $userId = $data['user_id'];
+        $attDate = $data['att_date'];
+
+        $existing = StaffAttendance::where('user_id', $userId)
+            ->whereDate('att_date', $attDate)
+            ->first();
+
+        if ($existing) {
+            throw new HttpException(422, 'Catatan presensi untuk pegawai tersebut pada tanggal ini sudah ada. Gunakan fitur koreksi bila ingin mengubah.');
+        }
+
+        return DB::transaction(function () use ($data, $userId, $attDate, $currentUser, $request) {
+            $attendance = StaffAttendance::create([
+                'user_id' => $userId,
+                'att_date' => $attDate,
+                'status' => $data['status'],
+                'check_in' => $data['check_in'] ?? null,
+                'check_out' => $data['check_out'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $this->logAudit(
+                $currentUser->id,
+                'staff_attendance.manual_recorded',
+                'StaffAttendance',
+                $attendance->id,
+                null,
+                $attendance->toArray(),
+                $request
+            );
+
+            return $attendance->load(['user.teacher', 'user.staff', 'photoFile']);
+        });
+    }
+
+    /**
+     * BE-ACD-05: Koreksi presensi staf oleh Admin berwenang.
+     */
+    public function correct(string $id, array $data, Request $request): StaffAttendance
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+        if (! $this->checkIsAdmin($currentUser)) {
+            throw new HttpException(403, 'Hanya administrator yang berhak melakukan koreksi presensi staf.');
+        }
+
+        $attendance = StaffAttendance::findOrFail($id);
+
+        return DB::transaction(function () use ($attendance, $data, $currentUser, $request) {
+            $oldData = $attendance->toArray();
+
+            $attendance->status = $data['status'];
+            if (array_key_exists('check_in', $data)) {
+                $attendance->check_in = $data['check_in'];
+            }
+            if (array_key_exists('check_out', $data)) {
+                $attendance->check_out = $data['check_out'];
+            }
+
+            $reason = trim($data['reason']);
+            $correctionNote = "[Koreksi oleh {$currentUser->username}]: {$reason}";
+            $attendance->notes = trim(($attendance->notes ? $attendance->notes.' | ' : '').$correctionNote);
+            $attendance->save();
+
+            $this->logAudit(
+                $currentUser->id,
+                'staff_attendance.corrected',
+                'StaffAttendance',
+                $attendance->id,
+                $oldData,
+                $attendance->toArray(),
+                $request
+            );
+
+            return $attendance->load(['user.teacher', 'user.staff', 'photoFile']);
+        });
+    }
+
+    /**
+     * BE-ACD-05: Mengambil konfigurasi GPS dan jam batas presensi staf.
+     */
+    public function getSettings(): array
+    {
+        $gpsSetting = SiteSetting::where('setting_key', 'staff_attendance_gps')->first();
+
+        $latitude = self::DEFAULT_SCHOOL_LAT;
+        $longitude = self::DEFAULT_SCHOOL_LNG;
+        $radiusMeters = self::DEFAULT_RADIUS_METERS;
+        $lateTime = self::DEFAULT_LATE_TIME;
+
+        if ($gpsSetting && is_array($gpsSetting->setting_value)) {
+            $latitude = (float) ($gpsSetting->setting_value['latitude'] ?? $latitude);
+            $longitude = (float) ($gpsSetting->setting_value['longitude'] ?? $longitude);
+            $radiusMeters = (int) ($gpsSetting->setting_value['radius_meters'] ?? $radiusMeters);
+            $lateTime = (string) ($gpsSetting->setting_value['late_time'] ?? $lateTime);
+        }
+
+        return [
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'radius_meters' => $radiusMeters,
+            'late_time' => $lateTime,
+        ];
+    }
+
+    /**
+     * BE-ACD-05: Memperbarui konfigurasi GPS dan jam batas presensi staf (Admin).
+     */
+    public function updateSettings(array $data, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+        if (! $this->checkIsAdmin($currentUser)) {
+            throw new HttpException(403, 'Hanya administrator yang berhak mengubah konfigurasi presensi staf.');
+        }
+
+        $setting = SiteSetting::updateOrCreate(
+            ['setting_key' => 'staff_attendance_gps'],
+            [
+                'setting_value' => [
+                    'latitude' => (float) $data['latitude'],
+                    'longitude' => (float) $data['longitude'],
+                    'radius_meters' => (int) $data['radius_meters'],
+                    'late_time' => $data['late_time'],
+                ],
+            ]
+        );
+
+        $this->logAudit(
+            $currentUser->id,
+            'staff_attendance.settings_updated',
+            'SiteSetting',
+            $setting->id,
+            null,
+            $setting->setting_value,
+            $request
+        );
+
+        return $this->getSettings();
+    }
+
+    /**
      * Cek apakah user adalah administrator atau kepala sekolah.
      */
     protected function checkIsAdmin(User $user): bool
@@ -344,6 +506,7 @@ class StaffAttendanceService
             || $user->hasRole('admin_tu')
             || $user->hasRole('principal')
             || $user->hasPermission('academic.schedule.manage')
+            || $user->hasPermission('master.teacher.manage')
             || $user->roles()->where('code', 'like', 'admin%')->exists();
     }
 

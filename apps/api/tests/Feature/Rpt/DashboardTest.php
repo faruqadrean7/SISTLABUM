@@ -3,6 +3,7 @@
 namespace Tests\Feature\Rpt;
 
 use App\Models\AcademicYear;
+use App\Models\Asset;
 use App\Models\Attendance;
 use App\Models\Exam;
 use App\Models\ExamSession;
@@ -355,5 +356,78 @@ class DashboardTest extends TestCase
         $res = $this->getJson('/api/v1/dashboard/guardian/'.$this->student2->id);
         $res->assertStatus(200)
             ->assertJsonPath('data.student.name', 'Eka Siswa 2');
+    }
+
+    public function test_be_rpt_02_executive_dashboard_includes_master_summary_and_cbt_live(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $res = $this->getJson('/api/v1/dashboard/executive');
+        $res->assertStatus(200);
+
+        $data = $res->json('data');
+        $this->assertArrayHasKey('master_summary', $data);
+        $this->assertArrayHasKey('total_students', $data['master_summary']);
+        $this->assertArrayHasKey('total_teachers', $data['master_summary']);
+        $this->assertArrayHasKey('total_classes', $data['master_summary']);
+        $this->assertArrayHasKey('pending_verifications', $data['master_summary']);
+        $this->assertArrayHasKey('cbt_live', $data);
+        $this->assertArrayHasKey('cached_at', $data);
+    }
+
+    public function test_be_rpt_02_executive_dashboard_counts_damaged_assets_using_asset_condition_column(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        Asset::create([
+            'asset_code' => 'AST-DMG-001',
+            'name' => 'Proyektor Rusak Parah',
+            'category' => 'Elektronik',
+            'asset_condition' => 'rusak_berat',
+        ]);
+
+        $res = $this->getJson('/api/v1/dashboard/executive');
+        $res->assertStatus(200);
+
+        $data = $res->json('data');
+        $this->assertGreaterThanOrEqual(1, $data['infrastructure_status']['heavily_damaged_assets']);
+    }
+
+    public function test_be_rpt_02_executive_dashboard_multi_tenant_isolation(): void
+    {
+        $schoolA = (string) Str::uuid();
+        $schoolB = (string) Str::uuid();
+
+        // Assign admin to school A
+        $this->adminUser->update(['school_id' => $schoolA]);
+        $this->student1->update(['school_id' => $schoolA]);
+        $this->student2->update(['school_id' => $schoolB]);
+
+        Ticket::create([
+            'school_id' => $schoolA,
+            'reporter_id' => $this->adminUser->id,
+            'description' => 'Kerusakan AC Lab Sekolah A',
+            'priority' => 'darurat',
+            'status' => 'pending',
+        ]);
+
+        Ticket::create([
+            'school_id' => $schoolB,
+            'reporter_id' => $this->adminUser->id,
+            'description' => 'Kerusakan Lampu Sekolah B',
+            'priority' => 'darurat',
+            'status' => 'pending',
+        ]);
+
+        Sanctum::actingAs($this->adminUser);
+
+        $res = $this->getJson('/api/v1/dashboard/executive');
+        $res->assertStatus(200);
+
+        $data = $res->json('data');
+        // Only 1 ticket from School A should be counted, not the one from School B
+        $this->assertEquals(1, $data['infrastructure_status']['critical_tickets_count']);
+        // Only student 1 from School A should be counted
+        $this->assertEquals(1, $data['master_summary']['total_students']);
     }
 }

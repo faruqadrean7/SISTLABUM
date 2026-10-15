@@ -7,11 +7,13 @@ use App\Models\AuditLog;
 use App\Models\Extracurricular;
 use App\Models\ExtracurricularJournal;
 use App\Models\ExtracurricularMember;
+use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ExtracurricularService
@@ -112,14 +114,33 @@ class ExtracurricularService
     // 2. PENDAFTARAN ANGGOTA & PENILAIAN RAPOR
     // =========================================================================
 
-    public function listMembers(string $extracurricularId, array $filters): LengthAwarePaginator
+    public function listMembers(?string $extracurricularId, array $filters): LengthAwarePaginator
     {
-        $query = ExtracurricularMember::with('student')
-            ->where('extracurricular_id', $extracurricularId)
+        $query = ExtracurricularMember::with(['student.classes', 'extracurricular.coach'])
             ->orderBy('created_at', 'desc');
+
+        if (! empty($extracurricularId)) {
+            $query->where('extracurricular_id', $extracurricularId);
+        }
+
+        if (! empty($filters['student_id'])) {
+            $query->where('student_id', $filters['student_id']);
+        }
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
+
+        if (! empty($filters['search'])) {
+            $kw = '%'.strtolower($filters['search']).'%';
+            $query->whereHas('student', function ($q) use ($kw) {
+                $q->whereRaw('LOWER(full_name) LIKE ?', [$kw])
+                    ->orWhereRaw('LOWER(nis) LIKE ?', [$kw]);
+            });
         }
 
         return $query->paginate((int) ($filters['per_page'] ?? 20));
@@ -128,60 +149,74 @@ class ExtracurricularService
     public function registerMember(array $data, Request $request): ExtracurricularMember
     {
         $user = $request->user();
-        $ekskul = Extracurricular::findOrFail($data['extracurricular_id']);
 
-        if (! $ekskul->is_active) {
-            throw new HttpException(422, 'Pendaftaran ditutup: Ekstrakurikuler ini sedang tidak aktif.');
-        }
+        return DB::transaction(function () use ($data, $user, $request) {
+            $ekskul = Extracurricular::where('id', $data['extracurricular_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Tentukan student_id
-        $studentId = $data['student_id'] ?? null;
-        if ($this->isStudent($user)) {
-            $student = Student::where('user_id', $user->id)->firstOrFail();
-            $studentId = $student->id;
-        } elseif (! $studentId) {
-            throw new HttpException(422, 'ID siswa wajib disertakan.');
-        }
-
-        // Cek kuota
-        if ($ekskul->available_quota <= 0) {
-            throw new HttpException(422, 'Kuota pendaftaran ekstrakurikuler ini telah penuh.');
-        }
-
-        // Cek apakah sudah terdaftar
-        $existing = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
-            ->where('student_id', $studentId)
-            ->first();
-
-        if ($existing) {
-            if ($existing->status === 'aktif') {
-                throw new HttpException(422, 'Siswa sudah terdaftar aktif di ekstrakurikuler ini.');
+            if (! $ekskul->is_active) {
+                throw new HttpException(422, 'Pendaftaran ditutup: Ekstrakurikuler ini sedang tidak aktif.');
             }
 
-            // Aktifkan kembali
-            $oldValues = $existing->toArray();
-            $existing->update([
+            // Tentukan student_id dan validasi otorisasi
+            $studentId = $data['student_id'] ?? null;
+            if ($this->isStudent($user)) {
+                $student = Student::where('user_id', $user->id)->firstOrFail();
+                $studentId = $student->id;
+            } else {
+                $this->authorizeManageEkskul($user, $ekskul);
+                if (! $studentId) {
+                    throw new HttpException(422, 'ID siswa wajib disertakan.');
+                }
+            }
+
+            // Cek kuota aktif secara atomik
+            $activeCount = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
+                ->where('status', 'aktif')
+                ->lockForUpdate()
+                ->count();
+
+            if ($activeCount >= $ekskul->quota) {
+                throw new HttpException(422, 'Kuota pendaftaran ekstrakurikuler ini telah penuh.');
+            }
+
+            // Cek apakah sudah terdaftar
+            $existing = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
+                ->where('student_id', $studentId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing) {
+                if ($existing->status === 'aktif') {
+                    throw new HttpException(422, 'Siswa sudah terdaftar aktif di ekstrakurikuler ini.');
+                }
+
+                // Aktifkan kembali
+                $oldValues = $existing->toArray();
+                $existing->update([
+                    'status' => 'aktif',
+                    'role' => $data['role'] ?? $existing->role,
+                    'joined_at' => Carbon::now()->toDateString(),
+                ]);
+
+                $this->logAudit($user?->id, 'extracurricular_member.rejoin', 'extracurricular_members', $existing->id, $oldValues, $existing->fresh()->toArray(), $request);
+
+                return $existing->fresh(['extracurricular', 'student']);
+            }
+
+            $member = ExtracurricularMember::create([
+                'extracurricular_id' => $ekskul->id,
+                'student_id' => $studentId,
+                'role' => $data['role'] ?? 'anggota',
                 'status' => 'aktif',
-                'role' => $data['role'] ?? $existing->role,
                 'joined_at' => Carbon::now()->toDateString(),
             ]);
 
-            $this->logAudit($user?->id, 'extracurricular_member.rejoin', 'extracurricular_members', $existing->id, $oldValues, $existing->fresh()->toArray(), $request);
+            $this->logAudit($user?->id, 'extracurricular_member.register', 'extracurricular_members', $member->id, null, $member->toArray(), $request);
 
-            return $existing->fresh(['extracurricular', 'student']);
-        }
-
-        $member = ExtracurricularMember::create([
-            'extracurricular_id' => $ekskul->id,
-            'student_id' => $studentId,
-            'role' => $data['role'] ?? 'anggota',
-            'status' => 'aktif',
-            'joined_at' => Carbon::now()->toDateString(),
-        ]);
-
-        $this->logAudit($user?->id, 'extracurricular_member.register', 'extracurricular_members', $member->id, null, $member->toArray(), $request);
-
-        return $member->fresh(['extracurricular', 'student']);
+            return $member->fresh(['extracurricular', 'student']);
+        });
     }
 
     public function updateMember(string $memberId, array $data, Request $request): ExtracurricularMember
@@ -190,6 +225,17 @@ class ExtracurricularService
         $member = ExtracurricularMember::with('extracurricular.coach')->findOrFail($memberId);
 
         $this->authorizeManageEkskul($user, $member->extracurricular);
+
+        // Jika mengubah nilai rapor, pastikan rapor semester siswa belum dikunci
+        if (isset($data['final_grade']) && ! ($user?->hasRole('super_admin') ?? false)) {
+            $isLocked = ReportCard::where('student_id', $member->student_id)
+                ->where('status', 'locked')
+                ->exists();
+
+            if ($isLocked) {
+                throw new HttpException(422, 'Rapor semester siswa telah dikunci. Perubahan nilai ekstrakurikuler tidak diizinkan tanpa pembukaan kunci oleh administrator.');
+            }
+        }
 
         $oldValues = $member->toArray();
         $member->update($data);
@@ -240,6 +286,19 @@ class ExtracurricularService
         $ekskul = Extracurricular::findOrFail($data['extracurricular_id']);
 
         $this->authorizeManageEkskul($user, $ekskul);
+
+        // Validasi bahwa seluruh siswa yang dicatat dalam attendance adalah anggota aktif ekskul ini
+        if (! empty($data['attendance'])) {
+            $studentIds = collect($data['attendance'])->pluck('student_id')->unique()->all();
+            $validMemberCount = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
+                ->where('status', 'aktif')
+                ->whereIn('student_id', $studentIds)
+                ->count();
+
+            if ($validMemberCount !== count($studentIds)) {
+                throw new HttpException(422, 'Presensi hanya dapat dicatat untuk anggota aktif pada ekstrakurikuler ini.');
+            }
+        }
 
         $journal = ExtracurricularJournal::create([
             'extracurricular_id' => $ekskul->id,
@@ -307,6 +366,8 @@ class ExtracurricularService
     public function createDocument(array $data, Request $request): ActivityDocument
     {
         $user = $request->user();
+        $ekskul = Extracurricular::findOrFail($data['extracurricular_id']);
+        $this->authorizeManageEkskul($user, $ekskul);
 
         $doc = ActivityDocument::create([
             'extracurricular_id' => $data['extracurricular_id'],

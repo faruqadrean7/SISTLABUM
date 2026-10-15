@@ -10,6 +10,9 @@ use App\Models\ExamParticipant;
 use App\Models\ExamQuestion;
 use App\Models\ExamRoom;
 use App\Models\ExamSession;
+use App\Models\Grade;
+use App\Models\GradeComponent;
+use App\Models\GradePeriod;
 use App\Models\Question;
 use App\Models\User;
 use Carbon\Carbon;
@@ -450,7 +453,7 @@ class ExamGradingService
                 }
 
                 $chosenId = is_array($userAnswer)
-                    ? ($userAnswer['selected_option_id'] ?? $userAnswer['option_id'] ?? $userAnswer['value'] ?? null)
+                    ? ($userAnswer['selected_option_id'] ?? $userAnswer['option_id'] ?? $userAnswer['opt'] ?? $userAnswer['value'] ?? null)
                     : $userAnswer;
 
                 if (
@@ -544,10 +547,40 @@ class ExamGradingService
     }
 
     /**
+     * Hitung nilai butir soal objektif (PG, dsb) dan total skor untuk satu sesi ujian.
+     */
+    public function gradeSessionObjectiveAnswers(ExamSession $session): void
+    {
+        $session->loadMissing(['answers.question.options', 'exam']);
+        $examQuestions = ExamQuestion::where('exam_id', $session->exam_id)->get()->keyBy('question_id');
+
+        foreach ($session->answers as $answer) {
+            $question = $answer->question;
+            if (! $question) {
+                continue;
+            }
+
+            if (in_array($question->question_type, ['pg', 'pg_kompleks', 'bs', 'menjodohkan', 'isian'])) {
+                $eq = $examQuestions->get($question->id);
+                $maxWeight = (float) ($eq?->weight_override ?? $question->weight ?? 1.0);
+                $score = $this->evaluateObjectiveAnswer($question, $answer->answer, $maxWeight);
+                $answer->score = $score;
+                $answer->save();
+            }
+        }
+
+        $this->refreshSessionTotalScore($session, $examQuestions);
+    }
+
+    /**
      * Hitung ulang total score sesi dari seluruh butir jawaban dan normalisasi ke skala 0–100.
      */
-    protected function refreshSessionTotalScore(ExamSession $session, $examQuestions): void
+    public function refreshSessionTotalScore(ExamSession $session, $examQuestions = null): void
     {
+        if ($examQuestions === null) {
+            $examQuestions = ExamQuestion::where('exam_id', $session->exam_id)->get()->keyBy('question_id');
+        }
+
         $answers = ExamAnswer::where('session_id', $session->id)->get();
 
         $totalEarned = 0.0;
@@ -627,13 +660,25 @@ class ExamGradingService
             throw new HttpException(422, 'Tidak ada peserta yang memenuhi syarat remedial (seluruh siswa telah lulus KKTP atau belum ada peserta).');
         }
 
-        return DB::transaction(function () use ($parentExam, $data, $eligibleStudentIds, $passingGrade, $maxRemedialScore, $request) {
+        $remedialTitle = $data['title'] ?? ('Remedial - '.$parentExam->title);
+
+        // SEC-CBT-REMEDIAL: Idempotensi pembuatan ujian remedial
+        $existingRemedial = Exam::where('parent_exam_id', $parentExam->id)
+            ->where('title', $remedialTitle)
+            ->where('exam_type', 'remedial')
+            ->first();
+
+        if ($existingRemedial) {
+            return $existingRemedial->load(['subject', 'questions.question', 'rooms', 'participants.student']);
+        }
+
+        return DB::transaction(function () use ($parentExam, $data, $eligibleStudentIds, $passingGrade, $maxRemedialScore, $request, $remedialTitle) {
             $remedialExam = Exam::create([
                 'school_id' => $parentExam->school_id,
                 'subject_id' => $parentExam->subject_id,
                 'created_by' => $request->user()->id,
                 'parent_exam_id' => $parentExam->id,
-                'title' => $data['title'] ?? ('Remedial - '.$parentExam->title),
+                'title' => $remedialTitle,
                 'exam_type' => 'remedial',
                 'duration_min' => $data['duration_min'] ?? $parentExam->duration_min,
                 'start_at' => $data['start_at'],
@@ -712,6 +757,101 @@ class ExamGradingService
 
             return $remedialExam->load(['subject', 'questions.question', 'rooms', 'participants.student']);
         });
+    }
+
+    /**
+     * BE-CBT-05 & ADM-GRD-01: Publikasikan hasil nilai ujian CBT ke Buku Nilai (Gradebook).
+     * POST /api/v1/exams/{id}/publish-gradebook
+     */
+    public function publishToGradebook(string $examId, array $data, Request $request): array
+    {
+        $exam = Exam::with(['subject'])->findOrFail($examId);
+        $this->authorizeTeacherOrAdmin($exam, $request->user());
+
+        $component = GradeComponent::with(['subject', 'semester'])->findOrFail($data['component_id']);
+        if ($component->subject_id !== $exam->subject_id) {
+            throw new HttpException(422, 'Mata pelajaran komponen nilai tidak sesuai dengan mata pelajaran ujian CBT.');
+        }
+
+        $period = GradePeriod::findOrFail($data['period_id']);
+        if ($period->status === 'locked') {
+            throw new HttpException(422, 'Periode penilaian telah dikunci. Pengiriman nilai CBT tidak diizinkan tanpa membuka kunci periode terlebih dahulu.');
+        }
+
+        $sessions = ExamSession::where('exam_id', $exam->id)
+            ->whereNotNull('score')
+            ->get();
+
+        if ($sessions->isEmpty()) {
+            throw new HttpException(422, 'Belum ada sesi ujian siswa dengan nilai yang dapat dipublikasikan ke buku nilai.');
+        }
+
+        $overwriteLocked = (bool) ($data['overwrite_locked'] ?? false);
+        $user = $request->user();
+        if ($overwriteLocked) {
+            $canOverrideLocked = $user && ($user->hasRole(['admin', 'super_admin']) || $user->hasPermission('grade.unlock'));
+            if (! $canOverrideLocked) {
+                throw new HttpException(403, 'Anda tidak memiliki hak akses untuk menimpa nilai yang telah dikunci.');
+            }
+        }
+
+        $syncedCount = 0;
+        $skippedLockedCount = 0;
+
+        DB::transaction(function () use ($sessions, $component, $period, $exam, $request, $overwriteLocked, &$syncedCount, &$skippedLockedCount) {
+            foreach ($sessions as $session) {
+                $existingGrade = Grade::where('student_id', $session->student_id)
+                    ->where('component_id', $component->id)
+                    ->where('period_id', $period->id)
+                    ->first();
+
+                if ($existingGrade && $existingGrade->locked_at !== null && ! $overwriteLocked) {
+                    $skippedLockedCount++;
+                    continue;
+                }
+
+                Grade::updateOrCreate(
+                    [
+                        'student_id' => $session->student_id,
+                        'component_id' => $component->id,
+                        'period_id' => $period->id,
+                    ],
+                    [
+                        'exam_id' => $exam->id,
+                        'value' => $session->score,
+                        'source' => 'cbt',
+                        'entered_by' => $request->user()?->id,
+                    ]
+                );
+
+                $syncedCount++;
+            }
+        });
+
+        $this->logAudit(
+            $request->user()?->id,
+            'exam.publish_gradebook',
+            'exams',
+            $exam->id,
+            null,
+            [
+                'exam_id' => $exam->id,
+                'component_id' => $component->id,
+                'period_id' => $period->id,
+                'grades_synced' => $syncedCount,
+                'skipped_locked' => $skippedLockedCount,
+            ],
+            $request
+        );
+
+        return [
+            'exam_id' => $exam->id,
+            'component_id' => $component->id,
+            'period_id' => $period->id,
+            'grades_synced' => $syncedCount,
+            'skipped_locked' => $skippedLockedCount,
+            'message' => "Nilai ujian CBT berhasil dipublikasikan ke Buku Nilai ({$syncedCount} tersimpan" . ($skippedLockedCount > 0 ? ", {$skippedLockedCount} dilewati karena terkunci" : '') . ").",
+        ];
     }
 
     /**

@@ -24,6 +24,12 @@ class AlumniService
         $query = Alumni::with('student')
             ->orderBy('graduation_year', 'desc');
 
+        if ($currentUser && ! empty($currentUser->school_id)) {
+            $query->whereHas('student', function ($sq) use ($currentUser) {
+                $sq->where('school_id', $currentUser->school_id)->orWhereNull('school_id');
+            });
+        }
+
         if (! empty($filters['graduation_year'])) {
             $query->where('graduation_year', (int) $filters['graduation_year']);
         }
@@ -63,6 +69,10 @@ class AlumniService
     {
         $alumni = Alumni::with(['student', 'tracerResponses.survey'])->findOrFail($id);
 
+        if ($currentUser && ! empty($currentUser->school_id) && ! empty($alumni->student?->school_id) && $alumni->student->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Data alumni berada di luar sekolah penugasan Anda.');
+        }
+
         if (! $this->isStaffOrAdmin($currentUser)) {
             $this->maskAlumniDataIfPrivate($alumni, $currentUser);
         }
@@ -99,7 +109,11 @@ class AlumniService
     public function updateAlumni(string $id, array $data, Request $request): Alumni
     {
         $user = $request->user();
-        $alumni = Alumni::findOrFail($id);
+        $alumni = Alumni::with('student')->findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($alumni->student?->school_id) && $alumni->student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Data alumni berada di luar sekolah penugasan Anda.');
+        }
 
         // Otorisasi: Staff/admin atau alumni pemilik data sendiri
         $isOwner = false;
@@ -127,7 +141,12 @@ class AlumniService
         $user = $request->user();
         $this->authorizeStaffOrAdmin($user);
 
-        $alumni = Alumni::findOrFail($id);
+        $alumni = Alumni::with('student')->findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($alumni->student?->school_id) && $alumni->student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Data alumni berada di luar sekolah penugasan Anda.');
+        }
+
         $oldValues = $alumni->toArray();
 
         $alumni->delete();

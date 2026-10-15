@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Bk;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Bk\CompleteCounselingRequestRequest;
 use App\Http\Requests\Bk\ListCounselingRequestRequest;
 use App\Http\Requests\Bk\RejectCounselingRequestRequest;
 use App\Http\Requests\Bk\ScheduleCounselingRequestRequest;
@@ -53,7 +54,9 @@ class CounselingRequestController extends Controller
 
             return $this->successResponse($counselingRequest, 201);
         } catch (HttpException $e) {
-            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+            $code = $e->getStatusCode() === 422 ? 'VALIDATION_ERROR' : 'FORBIDDEN';
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -95,7 +98,9 @@ class CounselingRequestController extends Controller
         } catch (ModelNotFoundException) {
             return $this->notFoundResponse('Permintaan konseling tidak ditemukan.');
         } catch (HttpException $e) {
-            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+            $code = $e->getStatusCode() === 422 ? 'VALIDATION_ERROR' : 'FORBIDDEN';
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -116,11 +121,36 @@ class CounselingRequestController extends Controller
         } catch (ModelNotFoundException) {
             return $this->notFoundResponse('Permintaan konseling tidak ditemukan.');
         } catch (HttpException $e) {
-            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+            $code = $e->getStatusCode() === 422 ? 'VALIDATION_ERROR' : 'FORBIDDEN';
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat menolak permintaan konseling.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-BK-03: Guru BK menyelesaikan permintaan konseling dan opsional mengintegrasikannya ke Kasus BK.
+     * PATCH /api/v1/counseling/requests/{id}/complete
+     */
+    public function complete(string $id, CompleteCounselingRequestRequest $request): JsonResponse
+    {
+        try {
+            $counselingRequest = $this->service->completeRequest($id, $request->validated(), $request);
+
+            return $this->successResponse($counselingRequest);
+        } catch (ModelNotFoundException) {
+            return $this->notFoundResponse('Permintaan konseling tidak ditemukan.');
+        } catch (HttpException $e) {
+            $code = $e->getStatusCode() === 422 ? 'VALIDATION_ERROR' : 'FORBIDDEN';
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat menyelesaikan permintaan konseling.', 'INTERNAL_ERROR', 500);
         }
     }
 
@@ -137,7 +167,9 @@ class CounselingRequestController extends Controller
         } catch (ModelNotFoundException) {
             return $this->notFoundResponse('Permintaan konseling tidak ditemukan.');
         } catch (HttpException $e) {
-            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+            $code = $e->getStatusCode() === 422 ? 'VALIDATION_ERROR' : 'FORBIDDEN';
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

@@ -2,8 +2,10 @@
 
 namespace App\Services\Rpt;
 
+use App\Models\Achievement;
 use App\Models\Asset;
 use App\Models\Attendance;
+use App\Models\Booking;
 use App\Models\CharacterNote;
 use App\Models\CounselingCase;
 use App\Models\Exam;
@@ -15,10 +17,12 @@ use App\Models\GradeComponent;
 use App\Models\Guardian;
 use App\Models\Loan;
 use App\Models\Schedule;
+use App\Models\SchoolClass;
 use App\Models\StaffAttendance;
 use App\Models\Student;
 use App\Models\StudentPoint;
 use App\Models\Teacher;
+use App\Models\TeacherSalarySlip;
 use App\Models\TeachingAssignment;
 use App\Models\Ticket;
 use App\Models\User;
@@ -38,29 +42,46 @@ class DashboardService
     {
         $user = $request->user();
         $this->authorizeExecutive($user);
+        $schoolId = $user?->school_id;
 
         // 1. CBT Live (Real-Time, TIDAK di-cache)
         $now = Carbon::now();
+        $activeSessionQuery = ExamSession::where('status', 'in_progress');
+        $ongoingExamsQuery = Exam::where(function ($q) {
+            $q->whereIn('status', ['berlangsung', 'dijadwalkan', 'published']);
+        })->where(function ($q) use ($now) {
+            $q->where(fn ($sub) => $sub->where('start_at', '<=', $now)->where('end_at', '>=', $now))
+                ->orWhere(fn ($sub) => $sub->where('start_time', '<=', $now)->where('end_time', '>=', $now));
+        });
+
+        if ($schoolId) {
+            $activeSessionQuery->whereHas('exam', fn ($q) => $q->where('school_id', $schoolId));
+            $ongoingExamsQuery->where('school_id', $schoolId);
+        }
+
+        $activeRoomsQuery = ExamSession::where('exam_sessions.status', 'in_progress')
+            ->join('exams', 'exam_sessions.exam_id', '=', 'exams.id');
+        if ($schoolId) {
+            $activeRoomsQuery->where('exams.school_id', $schoolId);
+        }
+
         $cbtLive = [
-            'active_students_count' => ExamSession::where('status', 'in_progress')->count(),
-            'ongoing_exams_count' => Exam::where(function ($q) {
-                $q->whereIn('status', ['berlangsung', 'dijadwalkan', 'published']);
-            })->where(function ($q) use ($now) {
-                $q->where(fn ($sub) => $sub->where('start_at', '<=', $now)->where('end_at', '>=', $now))
-                    ->orWhere(fn ($sub) => $sub->where('start_time', '<=', $now)->where('end_time', '>=', $now));
-            })->count(),
-            'active_rooms_count' => ExamSession::where('exam_sessions.status', 'in_progress')
-                ->join('exams', 'exam_sessions.exam_id', '=', 'exams.id')
-                ->distinct('exams.id')
-                ->count('exams.id'),
+            'active_students_count' => $activeSessionQuery->count(),
+            'ongoing_exams_count' => $ongoingExamsQuery->count(),
+            'active_rooms_count' => $activeRoomsQuery->distinct('exams.id')->count('exams.id'),
         ];
 
         // 2. Metrik Agregat Ter-cache (Cache 2 Menit / 120 Detik)
-        $cachedMetrics = Cache::remember('dashboard_executive_metrics', 120, function () {
+        $cacheKey = 'dashboard_executive_metrics_' . ($schoolId ?? 'global');
+        $cachedMetrics = Cache::remember($cacheKey, 120, function () use ($schoolId) {
             $today = Carbon::today()->toDateString();
 
             // A. Kehadiran Hari Ini (Siswa & Guru/Staf)
-            $studentAtts = Attendance::whereDate('att_date', Carbon::today())
+            $studentAttsQuery = Attendance::whereDate('att_date', Carbon::today());
+            if ($schoolId) {
+                $studentAttsQuery->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+            }
+            $studentAtts = $studentAttsQuery
                 ->select('status', DB::raw('count(*) as count'))
                 ->groupBy('status')
                 ->pluck('count', 'status')
@@ -69,7 +90,11 @@ class DashboardService
             $totalStudentAtt = array_sum($studentAtts);
             $studentHadir = $studentAtts['hadir'] ?? 0;
 
-            $staffAtts = StaffAttendance::whereDate('att_date', Carbon::today())
+            $staffAttsQuery = StaffAttendance::whereDate('att_date', Carbon::today());
+            if ($schoolId) {
+                $staffAttsQuery->whereHas('user', fn ($q) => $q->where('school_id', $schoolId));
+            }
+            $staffAtts = $staffAttsQuery
                 ->select('status', DB::raw('count(*) as count'))
                 ->groupBy('status')
                 ->pluck('count', 'status')
@@ -99,8 +124,12 @@ class DashboardService
             ];
 
             // B. Ketercapaian Silabus & Pengajaran
-            $totalSchedules = Schedule::count();
-            $schedulesWithJournals = Schedule::has('journals')->count();
+            $schedulesQuery = Schedule::query();
+            if ($schoolId) {
+                $schedulesQuery->whereHas('teacher', fn ($q) => $q->where('school_id', $schoolId));
+            }
+            $totalSchedules = (clone $schedulesQuery)->count();
+            $schedulesWithJournals = (clone $schedulesQuery)->has('journals')->count();
             $syllabusCompletionRate = $totalSchedules > 0
                 ? round(($schedulesWithJournals / $totalSchedules) * 100, 2)
                 : 0;
@@ -112,8 +141,12 @@ class DashboardService
             ];
 
             // C. Persentase Guru Tuntas Nilai
-            $totalComponents = GradeComponent::count();
-            $componentsWithGrades = GradeComponent::whereHas('grades')->count();
+            $componentsQuery = GradeComponent::query();
+            if ($schoolId) {
+                $componentsQuery->whereHas('subject', fn ($q) => $q->where('school_id', $schoolId));
+            }
+            $totalComponents = (clone $componentsQuery)->count();
+            $componentsWithGrades = (clone $componentsQuery)->whereHas('grades')->count();
             $gradingCompletionRate = $totalComponents > 0
                 ? round(($componentsWithGrades / $totalComponents) * 100, 2)
                 : 0;
@@ -125,12 +158,16 @@ class DashboardService
             ];
 
             // D. Rerata Nilai per Angkatan / Tingkat
-            $gradesByLevel = DB::table('grades')
+            $gradesByLevelQuery = DB::table('grades')
                 ->join('students', 'grades.student_id', '=', 'students.id')
                 ->join('class_students', 'students.id', '=', 'class_students.student_id')
                 ->join('classes', 'class_students.class_id', '=', 'classes.id')
                 ->join('grade_levels', 'classes.grade_level_id', '=', 'grade_levels.id')
-                ->select('grade_levels.id as grade_level_id', 'grade_levels.name', 'grade_levels.sort_order', DB::raw('avg(grades.value) as avg_value'), DB::raw('count(grades.id) as count'))
+                ->select('grade_levels.id as grade_level_id', 'grade_levels.name', 'grade_levels.sort_order', DB::raw('avg(grades.value) as avg_value'), DB::raw('count(grades.id) as count'));
+            if ($schoolId) {
+                $gradesByLevelQuery->where('students.school_id', $schoolId);
+            }
+            $gradesByLevel = $gradesByLevelQuery
                 ->groupBy('grade_levels.id', 'grade_levels.name', 'grade_levels.sort_order')
                 ->orderBy('grade_levels.sort_order')
                 ->get()
@@ -140,13 +177,20 @@ class DashboardService
                     'sort_order' => (int) $row->sort_order,
                     'average_score' => round((float) $row->avg_value, 2),
                     'grades_count' => (int) $row->count,
-                ]);
+                ])
+                ->values()
+                ->all();
 
             // E. Kasus Kesiswaan Tindak Lanjut
-            $activeCounselingCases = CounselingCase::where('status', '!=', 'selesai')->count();
-            $recentViolations = StudentPoint::whereHas('pointType', fn ($q) => $q->where('kind', 'pelanggaran'))
-                ->where('point_date', '>=', Carbon::now()->subDays(30)->toDateString())
-                ->count();
+            $counselingQuery = CounselingCase::where('status', '!=', 'selesai');
+            $violationsQuery = StudentPoint::whereHas('pointType', fn ($q) => $q->where('kind', 'pelanggaran'))
+                ->where('point_date', '>=', Carbon::now()->subDays(30)->toDateString());
+            if ($schoolId) {
+                $counselingQuery->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+                $violationsQuery->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+            }
+            $activeCounselingCases = $counselingQuery->count();
+            $recentViolations = $violationsQuery->count();
 
             $studentAffairsFollowUp = [
                 'active_counseling_cases' => $activeCounselingCases,
@@ -154,16 +198,52 @@ class DashboardService
             ];
 
             // F. Status Sarpras Kritis
-            $criticalTickets = Ticket::where(function ($q) {
+            $ticketsQuery = Ticket::where(function ($q) {
                 $q->where('priority', 'darurat')
                     ->orWhere(fn ($sub) => $sub->where('priority', 'tinggi')->where('status', 'pending'));
-            })->count();
-
-            $damagedAssets = Asset::where('condition', 'rusak_berat')->count();
+            });
+            $assetsQuery = Asset::where(function ($q) {
+                $q->where('asset_condition', 'rusak_berat')
+                    ->orWhere('condition', 'rusak_berat');
+            });
+            if ($schoolId) {
+                $ticketsQuery->where('school_id', $schoolId);
+                $assetsQuery->where('school_id', $schoolId);
+            }
+            $criticalTickets = $ticketsQuery->count();
+            $damagedAssets = $assetsQuery->count();
 
             $infrastructureStatus = [
                 'critical_tickets_count' => $criticalTickets,
                 'heavily_damaged_assets' => $damagedAssets,
+            ];
+
+            // G. Master Data & Pending Verifications Summary (Untuk ADM-DASH-01 & ADM-DASH-02)
+            $studentsQuery = Student::query();
+            $teachersQuery = Teacher::query();
+            $classesQuery = SchoolClass::query();
+            if ($schoolId) {
+                $studentsQuery->where('school_id', $schoolId);
+                $teachersQuery->where('school_id', $schoolId);
+                $classesQuery->where('school_id', $schoolId);
+            }
+
+            $pendingAchievements = Achievement::where('verification_status', 'pending');
+            $pendingBookings = Booking::where('status', 'menunggu');
+            if ($schoolId) {
+                $pendingAchievements->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+                $pendingBookings->whereHas('facility', fn ($q) => $q->where('school_id', $schoolId));
+            }
+
+            $masterSummary = [
+                'total_students' => $studentsQuery->count(),
+                'total_teachers' => $teachersQuery->count(),
+                'total_classes' => $classesQuery->count(),
+                'pending_verifications' => [
+                    'achievements' => $pendingAchievements->count(),
+                    'facility_bookings' => $pendingBookings->count(),
+                    'total' => $pendingAchievements->count() + $pendingBookings->count(),
+                ],
             ];
 
             return [
@@ -173,6 +253,7 @@ class DashboardService
                 'grades_by_grade_level' => $gradesByLevel,
                 'student_affairs_follow_up' => $studentAffairsFollowUp,
                 'infrastructure_status' => $infrastructureStatus,
+                'master_summary' => $masterSummary,
                 'cached_at' => Carbon::now()->toIso8601String(),
             ];
         });
@@ -298,6 +379,18 @@ class DashboardService
             ];
         })->values()->all();
 
+        $totalHours = (int) $assignments->sum('hours_per_week');
+        $targetHours = 24;
+
+        $latestSalarySlip = $teacherId ? TeacherSalarySlip::where('teacher_id', $teacherId)
+            ->where('status', '!=', 'draft')
+            ->orderBy('period_year', 'desc')
+            ->orderBy('period_month', 'desc')
+            ->with('file')
+            ->first() : null;
+
+        $salarySlipsCount = $teacherId ? TeacherSalarySlip::where('teacher_id', $teacherId)->count() : 0;
+
         return [
             'teacher' => [
                 'id' => $teacher?->id,
@@ -305,6 +398,14 @@ class DashboardService
                 'nip' => $teacher?->nip,
             ],
             'teaching_classes_count' => $assignments->count(),
+            'teaching_hours_recap' => [
+                'total_hours' => $totalHours,
+                'target_hours' => $targetHours,
+                'is_target_met' => $totalHours >= $targetHours,
+                'difference' => $totalHours - $targetHours,
+            ],
+            'latest_salary_slip' => $latestSalarySlip,
+            'salary_slips_count' => $salarySlipsCount,
             'today_day' => $todayDay,
             'today_schedules' => $todaySchedules,
             'pending_journals_count' => $pendingJournals,
@@ -688,8 +789,9 @@ class DashboardService
             throw new HttpException(401, 'Unauthenticated');
         }
 
-        $allowed = $user->hasRole(['super_admin', 'admin', 'principal', 'admin_tu', 'kurikulum', 'kesiswaan']) ||
-            $user->hasPermission('dashboard.executive');
+        $allowed = $user->hasRole(['super_admin', 'admin', 'principal', 'admin_tu', 'kurikulum', 'kesiswaan', 'student_affairs']) ||
+            $user->hasPermission('dashboard.executive') ||
+            $user->hasPermission('executive.dashboard.view');
 
         if (! $allowed) {
             throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang mengakses Dashboard Eksekutif.');

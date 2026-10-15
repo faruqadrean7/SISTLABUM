@@ -26,13 +26,30 @@ class LibraryController extends Controller
     ) {}
 
     /**
+     * BE-SAR-04: Ringkasan metrik dashboard perpustakaan.
+     * GET /api/v1/library/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request);
+
+            return $this->successResponse($summary);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan perpustakaan.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-SAR-04: Daftar buku perpustakaan.
      * GET /api/v1/library/books
      */
     public function indexBooks(ListLibraryBookRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listBooks($request->validated());
+            $paginator = $this->service->listBooks($request->validated(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -46,14 +63,16 @@ class LibraryController extends Controller
      * BE-SAR-04: Detail buku perpustakaan.
      * GET /api/v1/library/books/{id}
      */
-    public function showBook(string $id): JsonResponse
+    public function showBook(string $id, Request $request): JsonResponse
     {
         try {
-            $book = $this->service->getBook($id);
+            $book = $this->service->getBook($id, $request);
 
             return $this->successResponse($book);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Buku tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'HTTP_ERROR', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

@@ -523,7 +523,7 @@ class ReportService
             return false;
         }
 
-        return $user->hasRole(['super_admin', 'admin', 'teacher', 'admin_tu', 'principal', 'kesiswaan', 'humas', 'kurikulum']) ||
+        return $user->hasRole(['super_admin', 'admin', 'teacher', 'admin_tu', 'principal', 'kesiswaan', 'humas', 'kurikulum', 'student_affairs', 'public_relations']) ||
             $user->hasPermission('reports.view');
     }
 

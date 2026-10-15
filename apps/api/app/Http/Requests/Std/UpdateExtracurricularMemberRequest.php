@@ -16,7 +16,7 @@ class UpdateExtracurricularMemberRequest extends FormRequest
         return [
             'status' => ['sometimes', 'required', 'string', 'in:aktif,nonaktif,keluar'],
             'role' => ['sometimes', 'required', 'string', 'in:ketua,wakil_ketua,sekretaris,bendahara,anggota'],
-            'final_grade' => ['nullable', 'string', 'max:10'],
+            'final_grade' => ['nullable', 'string', 'in:A,B,C,D,Sangat Baik,Baik,Cukup,Kurang'],
         ];
     }
 }

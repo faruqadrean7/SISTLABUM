@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ApproveReportCardRequest;
+use App\Http\Requests\Academic\BulkApproveReportCardRequest;
+use App\Http\Requests\Academic\BulkLockReportCardRequest;
 use App\Http\Requests\Academic\GenerateReportCardRequest;
 use App\Http\Requests\Academic\ListReportCardRequest;
 use App\Http\Requests\Academic\LockReportCardRequest;
@@ -23,6 +25,106 @@ class ReportCardController extends Controller
     public function __construct(
         protected ReportCardService $service
     ) {}
+
+    /**
+     * BE-GRD-04: Tinjauan status & kesiapan data rapor semester satu kelas.
+     * GET /api/v1/report-cards/class-status
+     */
+    public function classStatus(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->service->getClassReportCardsStatus($request->query(), $request);
+
+            return $this->successResponse($data);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'VALIDATION_ERROR',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat status rapor kelas.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-GRD-04: Pratinjau data snapshot rapor semester siswa sebelum disimpan.
+     * GET /api/v1/report-cards/preview
+     */
+    public function preview(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->service->previewReportCard($request->query(), $request);
+
+            return $this->successResponse($data);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'VALIDATION_ERROR',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat membuat pratinjau e-rapor semester.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-GRD-04: Pengesahan massal E-Rapor semester oleh Kepala Sekolah atau Admin.
+     * POST /api/v1/report-cards/bulk-approve
+     */
+    public function bulkApprove(BulkApproveReportCardRequest $request): JsonResponse
+    {
+        try {
+            $result = $this->service->bulkApprove($request->validated(), $request);
+
+            return $this->successResponse($result);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memproses pengesahan massal e-rapor semester.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-GRD-04: Penguncian massal E-Rapor semester oleh Admin Kurikulum.
+     * POST /api/v1/report-cards/bulk-lock
+     */
+    public function bulkLock(BulkLockReportCardRequest $request): JsonResponse
+    {
+        try {
+            $result = $this->service->bulkLock($request->validated(), $request);
+
+            return $this->successResponse($result);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memproses penguncian massal e-rapor semester.', 'INTERNAL_ERROR', 500);
+        }
+    }
 
     /**
      * BE-GRD-04: Daftar E-Rapor semester.

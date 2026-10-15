@@ -347,4 +347,117 @@ class TicketTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    /**
+     * BE-SAR-03: Ringkasan statistik tiket, SLA warning, dan metrik Kanban.
+     */
+    public function test_be_sar_03_get_ticket_summary_metrics_and_sla(): void
+    {
+        // 1. Tiket pending normal
+        Ticket::create([
+            'ticket_number' => 'TCK-202610-0201',
+            'title' => 'Kran Bocor',
+            'reporter_id' => $this->teacherUser->id,
+            'priority' => 'sedang',
+            'status' => 'pending',
+            'description' => 'Bocor halus',
+            'created_at' => now(),
+        ]);
+
+        // 2. Tiket darurat dan SLA warning (dibuat 30 jam lalu, belum selesai)
+        $t2 = Ticket::create([
+            'ticket_number' => 'TCK-202610-0202',
+            'title' => 'Kabel Listrik Terbakar',
+            'reporter_id' => $this->teacherUser->id,
+            'priority' => 'darurat',
+            'status' => 'diproses',
+            'description' => 'Ada bau sangit dan percikan api',
+        ]);
+        \Illuminate\Support\Facades\DB::table('tickets')->where('id', $t2->id)->update(['created_at' => now()->subHours(30)]);
+
+        // 3. Tiket selesai (resolusi 2 jam)
+        $t3 = Ticket::create([
+            'ticket_number' => 'TCK-202610-0203',
+            'title' => 'Ganti Lampu',
+            'reporter_id' => $this->teacherUser->id,
+            'assignee_id' => $this->technicianUser->id,
+            'priority' => 'rendah',
+            'status' => 'selesai',
+            'description' => 'Lampu neon redup',
+            'resolved_at' => now()->subHours(2),
+        ]);
+        \Illuminate\Support\Facades\DB::table('tickets')->where('id', $t3->id)->update(['created_at' => now()->subHours(4)]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson('/api/v1/tickets/summary');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.total', 3)
+            ->assertJsonPath('data.pending', 1)
+            ->assertJsonPath('data.diproses', 1)
+            ->assertJsonPath('data.selesai', 1)
+            ->assertJsonPath('data.darurat', 1)
+            ->assertJsonPath('data.sla_warning', 1)
+            ->assertJsonPath('data.avg_resolution_hours', 2);
+    }
+
+    /**
+     * BE-SAR-03: Daftar teknisi dan beban kerja penugasan.
+     */
+    public function test_be_sar_03_get_technicians_list_and_workload(): void
+    {
+        // Berikan penugasan pada teknisi
+        Ticket::create([
+            'ticket_number' => 'TCK-202610-0301',
+            'title' => 'Perbaikan AC',
+            'reporter_id' => $this->teacherUser->id,
+            'assignee_id' => $this->technicianUser->id,
+            'priority' => 'tinggi',
+            'status' => 'diproses',
+            'description' => 'AC mati total',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson('/api/v1/tickets/technicians');
+
+        $response->assertStatus(200);
+        $technicians = $response->json('data');
+
+        $this->assertNotEmpty($technicians);
+        $techJoko = collect($technicians)->firstWhere('id', $this->technicianUser->id);
+        $this->assertNotNull($techJoko);
+        $this->assertEquals(1, $techJoko['active_tickets_count']);
+    }
+
+    /**
+     * BE-SAR-03: Multi-tenant scoping mencegah akses tiket antar-sekolah berbeda.
+     */
+    public function test_be_sar_03_multi_tenant_school_isolation_prevents_unauthorized_access(): void
+    {
+        $schoolA = '99999999-1111-2222-3333-444444444444';
+        $schoolB = '99999999-5555-6666-7777-888888888888';
+
+        $this->sarprasUser->school_id = $schoolA;
+        $this->sarprasUser->save();
+
+        $ticketSchoolB = Ticket::create([
+            'school_id' => $schoolB,
+            'ticket_number' => 'TCK-202610-0401',
+            'title' => 'Tiket Sekolah Lain',
+            'reporter_id' => $this->teacherUser->id,
+            'description' => 'Tiket sekolah sebelah',
+            'status' => 'pending',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson("/api/v1/tickets/{$ticketSchoolB->id}");
+
+        $response->assertStatus(403);
+    }
 }

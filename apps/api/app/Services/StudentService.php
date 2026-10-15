@@ -43,6 +43,17 @@ class StudentService
             });
         }
 
+        // Filter by without_class (siswa belum memiliki rombel aktif)
+        if ($request->boolean('without_class')) {
+            $academicYearId = $request->query('academic_year_id');
+            $query->whereDoesntHave('classes', function ($q) use ($academicYearId) {
+                $q->whereNull('class_students.left_at');
+                if ($academicYearId) {
+                    $q->where('classes.academic_year_id', $academicYearId);
+                }
+            });
+        }
+
         // Filter by status
         if ($status) {
             $query->where('status', $status);

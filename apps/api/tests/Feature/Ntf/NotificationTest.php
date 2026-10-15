@@ -522,4 +522,81 @@ class NotificationTest extends TestCase
         $res3->assertStatus(422)
             ->assertJsonValidationErrors(['target_class_id']);
     }
+
+    public function test_be_ntf_01_broadcast_tenant_isolation_prevents_broadcasting_to_other_schools(): void
+    {
+        $schoolAId = (string) Str::uuid();
+        $schoolBId = (string) Str::uuid();
+
+        // Admin of School A
+        $adminSchoolA = User::create([
+            'username' => 'admin_school_a',
+            'email' => 'admin_a@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+            'school_id' => $schoolAId,
+        ]);
+        $roleAdmin = Role::where('code', 'super_admin')->first();
+        $adminSchoolA->roles()->attach($roleAdmin->id);
+
+        // Student of School A
+        $userStudentA = User::create([
+            'username' => 'student_school_a',
+            'email' => 'student_a@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+            'school_id' => $schoolAId,
+        ]);
+        $roleStudent = Role::where('code', 'student')->first();
+        $userStudentA->roles()->attach($roleStudent->id);
+
+        // Student of School B
+        $userStudentB = User::create([
+            'username' => 'student_school_b',
+            'email' => 'student_b@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+            'school_id' => $schoolBId,
+        ]);
+        $userStudentB->roles()->attach($roleStudent->id);
+
+        // School A admin broadcasts to role 'student'
+        // For school-scoped admin (not super_admin), let's create a school admin role
+        $roleSchoolAdmin = Role::firstOrCreate(['code' => 'admin_tu'], ['name' => 'Admin TU', 'is_system' => true]);
+        $permBroadcast = Permission::where('code', 'notification.broadcast')->first();
+        $roleSchoolAdmin->permissions()->syncWithoutDetaching([$permBroadcast->id]);
+
+        $tuAdminA = User::create([
+            'username' => 'tu_school_a',
+            'email' => 'tu_a@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+            'school_id' => $schoolAId,
+        ]);
+        $tuAdminA->roles()->attach($roleSchoolAdmin->id);
+
+        $response = $this->actingAs($tuAdminA)
+            ->postJson('/api/v1/notifications/broadcast', [
+                'target_type' => 'role',
+                'target_role' => 'student',
+                'title' => 'Pengumuman Sekolah A',
+                'body' => 'Khusus siswa Sekolah A.',
+            ]);
+
+        $response->assertStatus(201);
+        $this->assertEquals(1, $response->json('data.sent_count'));
+
+        // Notification received by Student A
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $userStudentA->id,
+            'title' => 'Pengumuman Sekolah A',
+        ]);
+
+        // Notification NOT received by Student B of School B
+        $this->assertDatabaseMissing('notifications', [
+            'user_id' => $userStudentB->id,
+            'title' => 'Pengumuman Sekolah A',
+        ]);
+    }
 }
+

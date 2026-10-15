@@ -131,6 +131,11 @@ class User extends Authenticatable
         return $this->roles->flatMap->permissions->pluck('code')->unique()->values()->all();
     }
 
+    public function getProfileSummaryAttribute(): ?array
+    {
+        return $this->getProfileSummary();
+    }
+
     public function getProfileSummary(): ?array
     {
         if ($this->relationLoaded('student') && $this->student) {

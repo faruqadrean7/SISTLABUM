@@ -23,6 +23,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class EarlyWarningTest extends TestCase
@@ -436,5 +437,142 @@ class EarlyWarningTest extends TestCase
             ->getJson('/api/v1/early-warnings');
 
         $response->assertStatus(403);
+    }
+
+    /**
+     * BE-BK-02: Endpoint ringkasan metrik peringatan dini mengembalikan statistik yang valid.
+     */
+    public function test_be_bk_02_summary_metrics_endpoint(): void
+    {
+        EarlyWarning::create([
+            'student_id' => $this->student1->id,
+            'rule_code' => 'ATTENDANCE_LOW',
+            'severity' => 'sedang',
+            'data' => ['test' => 1],
+            'status' => 'open',
+        ]);
+
+        EarlyWarning::create([
+            'student_id' => $this->student1->id,
+            'rule_code' => 'GRADE_DROP',
+            'severity' => 'tinggi',
+            'data' => ['test' => 2],
+            'status' => 'open',
+        ]);
+
+        EarlyWarning::create([
+            'student_id' => $this->student2->id,
+            'rule_code' => 'VIOLATION_POINTS',
+            'severity' => 'sedang',
+            'data' => ['test' => 3],
+            'status' => 'in_progress',
+        ]);
+
+        EarlyWarning::create([
+            'student_id' => $this->student2->id,
+            'rule_code' => 'ATTENDANCE_LOW',
+            'severity' => 'sedang',
+            'data' => ['test' => 4],
+            'status' => 'resolved',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->counselorUser, 'sanctum')
+            ->getJson('/api/v1/early-warnings/summary');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.open_count', 2)
+            ->assertJsonPath('data.in_progress_count', 1)
+            ->assertJsonPath('data.resolved_count', 1)
+            ->assertJsonPath('data.high_severity_count', 1)
+            ->assertJsonPath('data.total_active', 3);
+    }
+
+    /**
+     * BE-BK-02: Wali murid dilarang mengakses sistem deteksi dini (403 Forbidden).
+     */
+    public function test_be_bk_02_guardian_forbidden_to_access_early_warnings(): void
+    {
+        $roleGuardian = Role::firstOrCreate(['code' => 'guardian'], ['name' => 'Wali Murid', 'is_system' => true]);
+
+        $guardianUser = User::create([
+            'username' => 'wali_faiz',
+            'email' => 'wali@keluarga.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+        ]);
+        $guardianUser->roles()->attach($roleGuardian->id);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($guardianUser, 'sanctum')
+            ->getJson('/api/v1/early-warnings');
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * BE-BK-02: Isolasi multi-tenant antar-sekolah menolak akses data siswa sekolah lain (403 Forbidden).
+     */
+    public function test_be_bk_02_cross_school_access_is_forbidden(): void
+    {
+        $schoolIdA = (string) Str::uuid();
+        $schoolIdB = (string) Str::uuid();
+
+        // Counselor bertugas di School A
+        $this->counselorUser->school_id = $schoolIdA;
+        $this->counselorUser->save();
+
+        // Student2 terdaftar di School B
+        $this->student2->school_id = $schoolIdB;
+        $this->student2->save();
+
+        $warningSchoolB = EarlyWarning::create([
+            'student_id' => $this->student2->id,
+            'rule_code' => 'ATTENDANCE_LOW',
+            'severity' => 'tinggi',
+            'data' => ['test' => 1],
+            'status' => 'open',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->counselorUser, 'sanctum')
+            ->getJson("/api/v1/early-warnings/{$warningSchoolB->id}");
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * BE-BK-02: Alert yang berstatus resolved tidak dapat diregresi langsung ke status open (422 Unprocessable).
+     */
+    public function test_be_bk_02_cannot_regress_resolved_warning_to_open(): void
+    {
+        $warning = EarlyWarning::create([
+            'student_id' => $this->student1->id,
+            'rule_code' => 'ATTENDANCE_LOW',
+            'severity' => 'sedang',
+            'data' => ['alpa_count' => 3],
+            'status' => 'resolved',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->counselorUser, 'sanctum')
+            ->patchJson("/api/v1/early-warnings/{$warning->id}/handle", [
+                'status' => 'open',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    /**
+     * BE-BK-02: Artisan command bk:evaluate-early-warnings berjalan sukses.
+     */
+    public function test_be_bk_02_artisan_console_command_evaluates_rules(): void
+    {
+        $this->artisan('bk:evaluate-early-warnings')
+            ->assertExitCode(0);
     }
 }

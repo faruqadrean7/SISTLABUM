@@ -17,11 +17,18 @@ class AssetAuditService
     /**
      * BE-SAR-02: Daftar sesi stok opname aset.
      */
-    public function listAudits(array $filters): LengthAwarePaginator
+    public function listAudits(array $filters, ?Request $request = null): LengthAwarePaginator
     {
         $query = AssetAudit::with(['auditor:id,username', 'room'])
             ->withCount('items')
             ->orderBy('audit_date', 'desc');
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -45,9 +52,16 @@ class AssetAuditService
     /**
      * BE-SAR-02: Detail sesi audit aset.
      */
-    public function getAudit(string $id): AssetAudit
+    public function getAudit(string $id, ?Request $request = null): AssetAudit
     {
-        return AssetAudit::with(['auditor:id,username', 'room', 'items.asset.room'])->findOrFail($id);
+        $user = $request?->user();
+        $audit = AssetAudit::with(['auditor:id,username', 'room', 'items.asset.room'])->findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($audit->school_id) && $audit->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Sesi opname aset berada di luar sekolah penugasan Anda.');
+        }
+
+        return $audit;
     }
 
     /**
@@ -59,10 +73,11 @@ class AssetAuditService
         $this->authorizeManage($user);
 
         $status = $data['status'] ?? 'selesai';
+        $schoolId = $data['school_id'] ?? $user?->school_id ?? null;
 
-        $audit = DB::transaction(function () use ($data, $user, $status) {
+        $audit = DB::transaction(function () use ($data, $user, $status, $schoolId) {
             $audit = AssetAudit::create([
-                'school_id' => $data['school_id'] ?? null,
+                'school_id' => $schoolId,
                 'room_id' => $data['room_id'] ?? null,
                 'title' => $data['title'],
                 'audit_date' => $data['audit_date'],
@@ -107,6 +122,11 @@ class AssetAuditService
         $this->authorizeManage($user);
 
         $audit = AssetAudit::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($audit->school_id) && $audit->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang mengubah sesi opname sekolah lain.');
+        }
+
         $oldValues = $audit->toArray();
 
         $audit = DB::transaction(function () use ($audit, $data) {

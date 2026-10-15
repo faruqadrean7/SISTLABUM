@@ -31,6 +31,10 @@ class EarlyWarningService
             ->orderByRaw("CASE severity WHEN 'tinggi' THEN 1 WHEN 'sedang' THEN 2 ELSE 3 END")
             ->orderBy('created_at', 'desc');
 
+        if (! empty($user->school_id)) {
+            $query->whereHas('student', fn ($sq) => $sq->where('school_id', $user->school_id));
+        }
+
         // Scoping jika wali kelas biasa (bukan admin dan bukan guru BK)
         if (! $this->isCounselorOrAdminOrPrincipal($user)) {
             $managedClassIds = SchoolClass::whereHas('homeroomTeacher', function ($hq) use ($user) {
@@ -43,7 +47,11 @@ class EarlyWarningService
         }
 
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if ($filters['status'] === 'open' || $filters['status'] === 'aktif') {
+                $query->whereIn('status', ['open', 'aktif']);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
         if (! empty($filters['severity'])) {
@@ -51,7 +59,11 @@ class EarlyWarningService
         }
 
         if (! empty($filters['rule_code'])) {
-            $query->where('rule_code', $filters['rule_code']);
+            if (in_array($filters['rule_code'], ['ATTENDANCE_LOW', 'ATT_LOW'])) {
+                $query->whereIn('rule_code', ['ATTENDANCE_LOW', 'ATT_LOW']);
+            } else {
+                $query->where('rule_code', $filters['rule_code']);
+            }
         }
 
         if (! empty($filters['student_id'])) {
@@ -76,6 +88,46 @@ class EarlyWarningService
     }
 
     /**
+     * BE-BK-02: Ambil ringkasan metrik peringatan dini untuk dashboard/tabs.
+     */
+    public function getSummary(Request $request): array
+    {
+        $user = $request->user();
+        $this->authorizeStaffOrAdmin($user);
+
+        $query = EarlyWarning::query();
+
+        if (! empty($user->school_id)) {
+            $query->whereHas('student', fn ($sq) => $sq->where('school_id', $user->school_id));
+        }
+
+        if (! $this->isCounselorOrAdminOrPrincipal($user)) {
+            $managedClassIds = SchoolClass::whereHas('homeroomTeacher', function ($hq) use ($user) {
+                $hq->where('user_id', $user->id);
+            })->pluck('id');
+
+            $query->whereHas('student.classes', function ($cq) use ($managedClassIds) {
+                $cq->whereIn('classes.id', $managedClassIds);
+            });
+        }
+
+        $openCount = (clone $query)->whereIn('status', ['open', 'aktif'])->count();
+        $inProgressCount = (clone $query)->where('status', 'in_progress')->count();
+        $resolvedCount = (clone $query)->where('status', 'resolved')->count();
+        $dismissedCount = (clone $query)->where('status', 'dismissed')->count();
+        $highSeverityCount = (clone $query)->whereIn('status', ['open', 'aktif', 'in_progress'])->where('severity', 'tinggi')->count();
+
+        return [
+            'open_count' => $openCount,
+            'in_progress_count' => $inProgressCount,
+            'resolved_count' => $resolvedCount,
+            'dismissed_count' => $dismissedCount,
+            'high_severity_count' => $highSeverityCount,
+            'total_active' => $openCount + $inProgressCount,
+        ];
+    }
+
+    /**
      * BE-BK-02: Ambil detail alert peringatan dini.
      */
     public function getWarning(string $id, Request $request): EarlyWarning
@@ -84,6 +136,10 @@ class EarlyWarningService
         $this->authorizeStaffOrAdmin($user);
 
         $warning = EarlyWarning::with(['student.classes', 'handler'])->findOrFail($id);
+
+        if (! empty($user->school_id) && ! empty($warning->student?->school_id) && $warning->student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Peringatan dini berada di luar sekolah penugasan Anda.');
+        }
 
         if (! $this->isCounselorOrAdminOrPrincipal($user)) {
             $isHomeroom = SchoolClass::whereHas('homeroomTeacher', fn ($hq) => $hq->where('user_id', $user->id))
@@ -95,18 +151,36 @@ class EarlyWarningService
             }
         }
 
+        $this->logAudit(
+            $user->id,
+            'early_warning.read',
+            'early_warnings',
+            $warning->id,
+            null,
+            ['student_id' => $warning->student_id, 'rule_code' => $warning->rule_code],
+            $request
+        );
+
         return $warning;
     }
 
     /**
      * BE-BK-02: Evaluasi otomatis aturan deteksi dini (kehadiran, penurunan nilai, poin pelanggaran).
      */
-    public function evaluateRules(array $options, Request $request): array
+    public function evaluateRules(array $options, ?Request $request = null): array
     {
-        $user = $request->user();
-        $this->authorizeCounselorOrAdmin($user);
+        $user = $request?->user();
+        if ($user) {
+            $this->authorizeCounselorOrAdmin($user);
+        }
 
-        $studentQuery = Student::query()->where('status', 'aktif');
+        $studentQuery = Student::query()->whereIn('status', ['active', 'aktif']);
+
+        if (! empty($user?->school_id)) {
+            $studentQuery->where('school_id', $user->school_id);
+        } elseif (! empty($options['school_id'])) {
+            $studentQuery->where('school_id', $options['school_id']);
+        }
 
         if (! empty($options['student_ids'])) {
             $studentQuery->whereIn('id', $options['student_ids']);
@@ -188,7 +262,11 @@ class EarlyWarningService
         $user = $request->user();
         $this->authorizeStaffOrAdmin($user);
 
-        $warning = EarlyWarning::findOrFail($id);
+        $warning = EarlyWarning::with(['student.classes', 'handler'])->findOrFail($id);
+
+        if (! empty($user->school_id) && ! empty($warning->student?->school_id) && $warning->student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Peringatan dini berada di luar sekolah penugasan Anda.');
+        }
 
         if (! $this->isCounselorOrAdminOrPrincipal($user)) {
             $isHomeroom = SchoolClass::whereHas('homeroomTeacher', fn ($hq) => $hq->where('user_id', $user->id))
@@ -198,6 +276,10 @@ class EarlyWarningService
             if (! $isHomeroom) {
                 throw new HttpException(403, 'Anda tidak berwenang menindaklanjuti peringatan dini siswa di luar kelas bimbingan.');
             }
+        }
+
+        if ($warning->status === 'resolved' && ($data['status'] ?? '') === 'open') {
+            throw new HttpException(422, 'Status peringatan yang telah diselesaikan (resolved) tidak dapat dikembalikan langsung ke open.');
         }
 
         $oldStatus = $warning->status;
@@ -351,6 +433,7 @@ class EarlyWarningService
         $existing = EarlyWarning::where('student_id', $studentId)
             ->where('rule_code', $ruleCode)
             ->whereIn('status', ['open', 'in_progress'])
+            ->lockForUpdate()
             ->first();
 
         if ($existing) {
@@ -386,7 +469,7 @@ class EarlyWarningService
             return true;
         }
 
-        return $user->hasPermission('bk.counseling.manage');
+        return $user->hasPermission('bk.counseling.manage') || $user->hasPermission('counseling.case.write');
     }
 
     protected function authorizeCounselorOrAdmin(?User $user): void
@@ -395,7 +478,7 @@ class EarlyWarningService
             throw new HttpException(401, 'Unauthenticated');
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('super_admin') || $user->hasRole('counselor') || $user->hasRole('guru_bk') || $user->hasPermission('bk.counseling.manage')) {
+        if ($user->hasRole('admin') || $user->hasRole('super_admin') || $user->hasRole('counselor') || $user->hasRole('guru_bk') || $user->hasPermission('bk.counseling.manage') || $user->hasPermission('counseling.case.write')) {
             return;
         }
 
@@ -411,6 +494,10 @@ class EarlyWarningService
         if ($user->hasRole('siswa') || $user->hasRole('student')) {
             throw new HttpException(403, 'Siswa dilarang keras mengakses sistem deteksi dini.');
         }
+
+        if ($user->hasRole('guardian') || $user->hasRole('wali_murid') || $user->hasRole('ortu') || $user->hasRole('parent')) {
+            throw new HttpException(403, 'Wali murid tidak memiliki akses ke sistem deteksi dini.');
+        }
     }
 
     protected function logAudit(
@@ -420,7 +507,7 @@ class EarlyWarningService
         ?string $entityId,
         ?array $oldValue,
         ?array $newValue,
-        Request $request
+        ?Request $request = null
     ): void {
         try {
             AuditLog::create([
@@ -430,8 +517,8 @@ class EarlyWarningService
                 'entity_id' => $entityId,
                 'old_value' => $oldValue,
                 'new_value' => $newValue,
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
+                'ip' => $request?->ip(),
+                'user_agent' => $request?->userAgent(),
             ]);
         } catch (\Throwable $e) {
             report($e);

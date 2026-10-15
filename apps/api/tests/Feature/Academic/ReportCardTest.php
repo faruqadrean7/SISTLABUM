@@ -715,4 +715,253 @@ class ReportCardTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['target']);
     }
+
+    /**
+     * BE-GRD-04: Tinjauan status & kesiapan data rapor semester satu kelas (Class Status Matrix).
+     */
+    public function test_be_grd_04_class_status_matrix_for_homeroom_teacher_and_admin(): void
+    {
+        // 1. Walas mengakses class-status
+        $response = $this->actingAs($this->walasUser, 'sanctum')
+            ->getJson("/api/v1/report-cards/class-status?class_id={$this->classA->id}&semester_id={$this->semester1->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.class.id', $this->classA->id)
+            ->assertJsonPath('data.semester.id', $this->semester1->id)
+            ->assertJsonPath('data.summary.total_students', 2)
+            ->assertJsonPath('data.summary.generated_count', 0)
+            ->assertJsonPath('data.summary.belum_dibuat_count', 2)
+            ->assertJsonPath('data.students.0.data_readiness.has_grades', true);
+
+        // 2. Admin juga dapat mengakses
+        $responseAdmin = $this->actingAs($this->adminUser, 'sanctum')
+            ->getJson("/api/v1/report-cards/class-status?class_id={$this->classA->id}&semester_id={$this->semester1->id}");
+
+        $responseAdmin->assertStatus(200);
+    }
+
+    /**
+     * BE-GRD-04: Akses class status ditolak untuk guru yang bukan wali kelas rombel tersebut.
+     */
+    public function test_be_grd_04_class_status_forbidden_for_other_teacher(): void
+    {
+        $roleTeacher = Role::where('code', 'teacher')->first();
+        $otherTeacherUser = User::create([
+            'username' => 'guru_lain',
+            'email' => 'guru.lain@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+        ]);
+        $otherTeacherUser->roles()->attach($roleTeacher->id);
+
+        Teacher::create([
+            'user_id' => $otherTeacherUser->id,
+            'nip' => '199901012020011001',
+            'full_name' => 'Guru Lain, S.Pd',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($otherTeacherUser, 'sanctum')
+            ->getJson("/api/v1/report-cards/class-status?class_id={$this->classA->id}&semester_id={$this->semester1->id}");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    /**
+     * BE-GRD-04: Pratinjau data snapshot semester siswa on-the-fly tanpa menyimpan ke database.
+     */
+    public function test_be_grd_04_preview_semester_report_without_persisting(): void
+    {
+        $response = $this->actingAs($this->walasUser, 'sanctum')
+            ->getJson("/api/v1/report-cards/preview?student_id={$this->student1->id}&semester_id={$this->semester1->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.student.id', $this->student1->id)
+            ->assertJsonPath('data.student.full_name', 'Muhammad Danang')
+            ->assertJsonPath('data.subjects.0.subject_code', 'MAT-10')
+            ->assertJsonPath('data.subjects.0.final_score', 88)
+            ->assertJsonPath('data.subjects.0.level', 'tuntas')
+            ->assertJsonPath('data.attendance.hadir', 1)
+            ->assertJsonPath('data.attendance.sakit', 1);
+
+        // Pastikan tidak ada data yang tersimpan di tabel report_cards
+        $this->assertDatabaseMissing('report_cards', [
+            'student_id' => $this->student1->id,
+            'semester_id' => $this->semester1->id,
+        ]);
+    }
+
+    /**
+     * BE-GRD-04: Pratinjau rapor semester ditolak jika diakses oleh guru yang bukan wali kelas siswa tersebut.
+     */
+    public function test_be_grd_04_preview_forbidden_for_unauthorized_teacher(): void
+    {
+        $roleTeacher = Role::where('code', 'teacher')->first();
+        $otherTeacherUser = User::create([
+            'username' => 'guru_asing_preview',
+            'email' => 'guru.asing@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+        ]);
+        $otherTeacherUser->roles()->attach($roleTeacher->id);
+
+        Teacher::create([
+            'user_id' => $otherTeacherUser->id,
+            'nip' => '199901012020011002',
+            'full_name' => 'Guru Asing, S.Pd',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($otherTeacherUser, 'sanctum')
+            ->getJson("/api/v1/report-cards/preview?student_id={$this->student1->id}&semester_id={$this->semester1->id}");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    /**
+     * BE-GRD-04: Penguncian dan pembukaan kunci massal oleh Admin Kurikulum.
+     */
+    public function test_be_grd_04_bulk_lock_and_unlock_by_admin(): void
+    {
+        // 1. Generate rapor untuk kelas
+        $this->actingAs($this->walasUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/generate', [
+                'semester_id' => $this->semester1->id,
+                'class_id' => $this->classA->id,
+            ]);
+
+        // 2. Kunci massal oleh admin
+        $responseLock = $this->actingAs($this->adminUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/bulk-lock', [
+                'class_id' => $this->classA->id,
+                'semester_id' => $this->semester1->id,
+                'is_locked' => true,
+                'reason' => 'Batas akhir input nilai semester telah ditutup.',
+            ]);
+
+        $responseLock->assertStatus(200)
+            ->assertJsonPath('data.count', 2)
+            ->assertJsonPath('data.is_locked', true);
+
+        $this->assertDatabaseHas('report_cards', [
+            'student_id' => $this->student1->id,
+            'status' => 'terkunci',
+        ]);
+
+        // 3. Buka kunci massal oleh admin
+        $responseUnlock = $this->actingAs($this->adminUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/bulk-lock', [
+                'class_id' => $this->classA->id,
+                'semester_id' => $this->semester1->id,
+                'is_locked' => false,
+                'reason' => 'Perbaikan nilai susulan disetujui.',
+            ]);
+
+        $responseUnlock->assertStatus(200)
+            ->assertJsonPath('data.count', 2)
+            ->assertJsonPath('data.is_locked', false);
+
+        $this->assertDatabaseHas('report_cards', [
+            'student_id' => $this->student1->id,
+            'status' => 'draft',
+        ]);
+    }
+
+    /**
+     * BE-GRD-04: Pengesahan dan penerbitan massal oleh Kepala Sekolah.
+     */
+    public function test_be_grd_04_bulk_approve_and_publish_by_principal(): void
+    {
+        // 1. Generate rapor untuk kelas
+        $this->actingAs($this->walasUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/generate', [
+                'semester_id' => $this->semester1->id,
+                'class_id' => $this->classA->id,
+            ]);
+
+        // 2. ACC / Pengesahan massal oleh Kepala Sekolah
+        $responseApprove = $this->actingAs($this->principalUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/bulk-approve', [
+                'class_id' => $this->classA->id,
+                'semester_id' => $this->semester1->id,
+                'status' => 'disetujui',
+                'note' => 'Seluruh capaian kompetensi semester telah valid dan terverifikasi.',
+            ]);
+
+        $responseApprove->assertStatus(200)
+            ->assertJsonPath('data.count', 2)
+            ->assertJsonPath('data.status', 'disetujui');
+
+        $this->assertDatabaseHas('report_cards', [
+            'student_id' => $this->student1->id,
+            'status' => 'disetujui',
+            'approved_by' => $this->principalUser->id,
+        ]);
+
+        // 3. Penerbitan massal ke siswa & orang tua
+        $responsePublish = $this->actingAs($this->principalUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/bulk-approve', [
+                'class_id' => $this->classA->id,
+                'semester_id' => $this->semester1->id,
+                'status' => 'terbit',
+            ]);
+
+        $responsePublish->assertStatus(200)
+            ->assertJsonPath('data.count', 2)
+            ->assertJsonPath('data.status', 'terbit');
+
+        $this->assertDatabaseHas('report_cards', [
+            'student_id' => $this->student1->id,
+            'status' => 'terbit',
+        ]);
+    }
+
+    /**
+     * BE-GRD-04: Guru biasa tidak berwenang melakukan bulk approve.
+     */
+    public function test_be_grd_04_bulk_approve_forbidden_for_regular_teacher(): void
+    {
+        $response = $this->actingAs($this->walasUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/bulk-approve', [
+                'class_id' => $this->classA->id,
+                'semester_id' => $this->semester1->id,
+                'status' => 'disetujui',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    /**
+     * BE-GRD-04: Guru tidak berwenang men-generate rapor untuk rombel lain (IDOR check).
+     */
+    public function test_be_grd_04_generate_forbidden_for_non_homeroom_teacher(): void
+    {
+        $roleTeacher = Role::where('code', 'teacher')->first();
+        $otherTeacherUser = User::create([
+            'username' => 'guru_non_walas',
+            'email' => 'guru.nonwalas@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+        ]);
+        $otherTeacherUser->roles()->attach($roleTeacher->id);
+
+        Teacher::create([
+            'user_id' => $otherTeacherUser->id,
+            'nip' => '199901012020011003',
+            'full_name' => 'Guru Non Walas, S.Pd',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($otherTeacherUser, 'sanctum')
+            ->postJson('/api/v1/report-cards/generate', [
+                'semester_id' => $this->semester1->id,
+                'class_id' => $this->classA->id,
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
 }

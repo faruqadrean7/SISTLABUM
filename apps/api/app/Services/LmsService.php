@@ -62,6 +62,10 @@ class LmsService
             $query->where('subject_id', $filters['subject_id']);
         }
 
+        if (! empty($filters['teacher_id'])) {
+            $query->where('teacher_id', $filters['teacher_id']);
+        }
+
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
@@ -160,6 +164,69 @@ class LmsService
     }
 
     /**
+     * BE-ACD-07: Perbarui materi pembelajaran.
+     */
+    public function updateMaterial(string $id, array $data, Request $request): LearningMaterial
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+        $material = LearningMaterial::findOrFail($id);
+        $teacher = Teacher::where('user_id', $currentUser->id)->first();
+        $isAdmin = $this->checkIsAdmin($currentUser);
+
+        if (! $isAdmin && (! $teacher || $teacher->id !== $material->teacher_id)) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk mengubah materi pembelajaran ini.');
+        }
+
+        $fileId = $material->file_id;
+        if ($request->hasFile('file')) {
+            $uploaded = $request->file('file');
+            $storagePath = $uploaded->store("learning-materials/{$currentUser->id}", 'local');
+            $checksum = hash_file('sha256', $uploaded->getRealPath());
+
+            $fileRecord = File::create([
+                'owner_id' => $currentUser->id,
+                'owner_type' => 'User',
+                'bucket' => 'learning-materials',
+                'object_key' => $storagePath,
+                'mime_type' => $uploaded->getMimeType() ?: 'application/octet-stream',
+                'size_bytes' => $uploaded->getSize(),
+                'visibility' => 'publik',
+                'checksum' => $checksum,
+            ]);
+
+            $fileId = $fileRecord->id;
+        } elseif (array_key_exists('file_id', $data)) {
+            $fileId = $data['file_id'];
+        }
+
+        return DB::transaction(function () use ($material, $data, $fileId, $currentUser, $request) {
+            $oldData = $material->toArray();
+
+            if (isset($data['title'])) {
+                $material->title = trim($data['title']);
+            }
+            if (array_key_exists('description', $data)) {
+                $material->description = $data['description'] !== null ? trim($data['description']) : null;
+            }
+            $material->file_id = $fileId;
+            $material->save();
+
+            $this->logAudit(
+                $currentUser->id,
+                'learning_material.updated',
+                'LearningMaterial',
+                $material->id,
+                $oldData,
+                $material->toArray(),
+                $request
+            );
+
+            return $material->load(['class', 'subject', 'teacher', 'file']);
+        });
+    }
+
+    /**
      * BE-ACD-07: Hapus materi pembelajaran.
      */
     public function deleteMaterial(string $id, Request $request): bool
@@ -229,6 +296,10 @@ class LmsService
 
         if (! empty($filters['subject_id'])) {
             $query->where('subject_id', $filters['subject_id']);
+        }
+
+        if (! empty($filters['teacher_id'])) {
+            $query->where('teacher_id', $filters['teacher_id']);
         }
 
         if (! empty($filters['search'])) {
@@ -352,6 +423,78 @@ class LmsService
         }
 
         return $assignment;
+    }
+
+    /**
+     * BE-ACD-07: Perbarui tugas kelas.
+     */
+    public function updateAssignment(string $id, array $data, Request $request): Assignment
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+        $assignment = Assignment::findOrFail($id);
+        $teacher = Teacher::where('user_id', $currentUser->id)->first();
+        $isAdmin = $this->checkIsAdmin($currentUser);
+
+        if (! $isAdmin && (! $teacher || $teacher->id !== $assignment->teacher_id)) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk mengubah tugas ini.');
+        }
+
+        $fileId = $assignment->file_id;
+        if ($request->hasFile('file')) {
+            $uploaded = $request->file('file');
+            $storagePath = $uploaded->store("assignments/{$currentUser->id}", 'local');
+            $checksum = hash_file('sha256', $uploaded->getRealPath());
+
+            $fileRecord = File::create([
+                'owner_id' => $currentUser->id,
+                'owner_type' => 'User',
+                'bucket' => 'assignments',
+                'object_key' => $storagePath,
+                'mime_type' => $uploaded->getMimeType() ?: 'application/octet-stream',
+                'size_bytes' => $uploaded->getSize(),
+                'visibility' => 'publik',
+                'checksum' => $checksum,
+            ]);
+
+            $fileId = $fileRecord->id;
+        } elseif (array_key_exists('file_id', $data)) {
+            $fileId = $data['file_id'];
+        }
+
+        return DB::transaction(function () use ($assignment, $data, $fileId, $currentUser, $request) {
+            $oldData = $assignment->toArray();
+
+            if (isset($data['title'])) {
+                $assignment->title = trim($data['title']);
+            }
+            if (array_key_exists('description', $data)) {
+                $assignment->description = $data['description'] !== null ? trim($data['description']) : null;
+            }
+            if (isset($data['due_at'])) {
+                $assignment->due_at = $data['due_at'];
+            }
+            if (isset($data['max_score'])) {
+                $assignment->max_score = $data['max_score'];
+            }
+            if (array_key_exists('grade_component_id', $data)) {
+                $assignment->grade_component_id = $data['grade_component_id'];
+            }
+            $assignment->file_id = $fileId;
+            $assignment->save();
+
+            $this->logAudit(
+                $currentUser->id,
+                'assignment.updated',
+                'Assignment',
+                $assignment->id,
+                $oldData,
+                $assignment->toArray(),
+                $request
+            );
+
+            return $assignment->load(['class', 'subject', 'teacher', 'file', 'gradeComponent']);
+        });
     }
 
     /**

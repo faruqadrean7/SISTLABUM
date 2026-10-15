@@ -3,12 +3,17 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\File;
 use App\Models\Staff;
 use App\Models\Teacher;
+use App\Models\TeacherSalarySlip;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class TeacherStaffService
@@ -24,6 +29,7 @@ class TeacherStaffService
 
         $query = Teacher::with([
             'teachingAssignments.subject',
+            'teachingAssignments.class',
             'homeroomClasses',
             'photoFile',
         ]);
@@ -52,9 +58,11 @@ class TeacherStaffService
         return Teacher::with([
             'teachingAssignments.subject',
             'teachingAssignments.class',
+            'teachingAssignments.semester',
             'homeroomClasses',
             'photoFile',
             'user',
+            'salarySlips.file',
         ])->findOrFail($id);
     }
 
@@ -554,5 +562,311 @@ class TeacherStaffService
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    // =========================================================================
+    // SLIP GAJI & REKAPITULASI JAM MENGAJAR (JJM)
+    // =========================================================================
+
+    /**
+     * BE-MST-03 / TCH-SAL-01: List salary slips for a teacher.
+     */
+    public function listSalarySlips(string $teacherId, Request $request): Collection
+    {
+        $teacher = Teacher::findOrFail($teacherId);
+        $user = $request->user();
+
+        if (! $this->canAccessTeacherSalary($user, $teacher)) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk melihat slip gaji guru ini.');
+        }
+
+        return TeacherSalarySlip::where('teacher_id', $teacherId)
+            ->with(['file', 'creator'])
+            ->orderBy('period_year', 'desc')
+            ->orderBy('period_month', 'desc')
+            ->get();
+    }
+
+    /**
+     * BE-MST-03 / TCH-SAL-01: Store / upload salary slip for a teacher.
+     */
+    public function storeSalarySlip(string $teacherId, array $data, Request $request): TeacherSalarySlip
+    {
+        $teacher = Teacher::findOrFail($teacherId);
+        $user = $request->user();
+
+        if (! $user || (! $user->hasPermission('master.teacher.manage') && ! $user->hasRole(['super_admin', 'admin', 'staff_tu']))) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mengunggah slip gaji.');
+        }
+
+        $month = (int) $data['period_month'];
+        $year = (int) $data['period_year'];
+
+        $exists = TeacherSalarySlip::where('teacher_id', $teacherId)
+            ->where('period_year', $year)
+            ->where('period_month', $month)
+            ->exists();
+
+        if ($exists) {
+            throw new HttpException(422, "Slip gaji untuk periode bulan {$month} tahun {$year} sudah pernah diunggah. Hapus slip sebelumnya bila ingin mengganti berkas.");
+        }
+
+        return DB::transaction(function () use ($teacher, $teacherId, $month, $year, $data, $request, $user) {
+            $fileId = null;
+
+            if ($request->hasFile('file')) {
+                $uploaded = $request->file('file');
+                $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+                if (! in_array($uploaded->getMimeType(), $allowedMimes, true)) {
+                    throw new HttpException(422, 'Berkas slip gaji harus berformat PDF atau gambar (PNG/JPG).');
+                }
+
+                $storagePath = $uploaded->store("salary-slips/{$teacherId}", 'local');
+                $checksum = hash_file('sha256', $uploaded->getRealPath());
+
+                $fileRecord = File::create([
+                    'school_id' => $teacher->school_id ?? $user->school_id,
+                    'owner_id' => $teacher->user_id ?? $user->id,
+                    'owner_type' => 'Teacher',
+                    'bucket' => 'salary-slips',
+                    'object_key' => $storagePath,
+                    'mime_type' => $uploaded->getMimeType() ?: 'application/pdf',
+                    'size_bytes' => $uploaded->getSize(),
+                    'visibility' => 'privat',
+                    'checksum' => $checksum,
+                ]);
+
+                $fileId = $fileRecord->id;
+            }
+
+            $basicSalary = (float) ($data['basic_salary'] ?? 0);
+            $allowances = (float) ($data['allowances'] ?? 0);
+            $deductions = (float) ($data['deductions'] ?? 0);
+            $netSalary = isset($data['net_salary']) && $data['net_salary'] !== '' && $data['net_salary'] !== null
+                ? (float) $data['net_salary']
+                : ($basicSalary + $allowances - $deductions);
+
+            $monthPad = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+            $slipNumber = ! empty($data['slip_number'])
+                ? trim($data['slip_number'])
+                : "PAY-{$year}/{$monthPad}/".strtoupper(substr(str_replace('-', '', $teacherId), 0, 4));
+
+            $salarySlip = TeacherSalarySlip::create([
+                'teacher_id' => $teacherId,
+                'slip_number' => $slipNumber,
+                'period_month' => $month,
+                'period_year' => $year,
+                'payment_date' => $data['payment_date'] ?? now()->toDateString(),
+                'basic_salary' => $basicSalary,
+                'allowances' => $allowances,
+                'deductions' => $deductions,
+                'net_salary' => $netSalary,
+                'status' => $data['status'] ?? 'published',
+                'file_id' => $fileId,
+                'notes' => $data['notes'] ?? null,
+                'created_by' => $user->id,
+            ]);
+
+            $this->logAudit(
+                $user->id,
+                'teacher.salary_slip.created',
+                'TeacherSalarySlip',
+                $salarySlip->id,
+                null,
+                [
+                    'teacher_id' => $teacherId,
+                    'teacher_name' => $teacher->full_name,
+                    'period' => "{$month}/{$year}",
+                    'net_salary' => $netSalary,
+                    'has_file' => (bool) $fileId,
+                ],
+                $request
+            );
+
+            return $salarySlip->load(['file', 'creator']);
+        });
+    }
+
+    /**
+     * BE-MST-03 / TCH-SAL-01: Get detail of a specific salary slip.
+     */
+    public function getSalarySlip(string $teacherId, string $slipId, Request $request): TeacherSalarySlip
+    {
+        $teacher = Teacher::findOrFail($teacherId);
+        $user = $request->user();
+
+        if (! $this->canAccessTeacherSalary($user, $teacher)) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk melihat slip gaji ini.');
+        }
+
+        return TeacherSalarySlip::where('teacher_id', $teacherId)
+            ->where('id', $slipId)
+            ->with(['file', 'creator', 'teacher'])
+            ->firstOrFail();
+    }
+
+    /**
+     * BE-MST-03 / TCH-SAL-01: Download salary slip file securely.
+     */
+    public function downloadSalarySlip(string $teacherId, string $slipId, Request $request): StreamedResponse
+    {
+        $salarySlip = $this->getSalarySlip($teacherId, $slipId, $request);
+
+        if (! $salarySlip->file) {
+            throw new HttpException(404, 'Berkas fisik slip gaji tidak ditemukan pada sistem.');
+        }
+
+        $file = $salarySlip->file;
+        if (! Storage::disk('local')->exists($file->object_key)) {
+            throw new HttpException(404, 'Berkas penyimpanan lokal tidak ditemukan atau telah dipindahkan.');
+        }
+
+        $downloadFilename = "Slip_Gaji_{$salarySlip->teacher->full_name}_{$salarySlip->period_year}_{$salarySlip->period_month}.pdf";
+
+        return Storage::disk('local')->download(
+            $file->object_key,
+            $downloadFilename,
+            [
+                'Content-Type' => $file->mime_type ?: 'application/pdf',
+                'Cache-Control' => 'private, no-cache, must-revalidate',
+            ]
+        );
+    }
+
+    /**
+     * BE-MST-03 / TCH-SAL-01: Delete salary slip.
+     */
+    public function deleteSalarySlip(string $teacherId, string $slipId, Request $request): void
+    {
+        $teacher = Teacher::findOrFail($teacherId);
+        $user = $request->user();
+
+        if (! $user || (! $user->hasPermission('master.teacher.manage') && ! $user->hasRole(['super_admin', 'admin', 'staff_tu']))) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk menghapus slip gaji.');
+        }
+
+        $salarySlip = TeacherSalarySlip::where('teacher_id', $teacherId)
+            ->where('id', $slipId)
+            ->firstOrFail();
+
+        $oldData = $salarySlip->toArray();
+        $salarySlip->delete();
+
+        $this->logAudit(
+            $user->id,
+            'teacher.salary_slip.deleted',
+            'TeacherSalarySlip',
+            $slipId,
+            $oldData,
+            null,
+            $request
+        );
+    }
+
+    /**
+     * TCH-SAL-02: Get authenticated teacher's own salary slips (Self-service portal).
+     */
+    public function getMySalarySlips(Request $request): Collection
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new HttpException(401, 'Unauthenticated');
+        }
+
+        $teacher = Teacher::where('user_id', $user->id)->first();
+        if (! $teacher) {
+            throw new HttpException(404, 'Profil pendidik guru Anda belum terdaftar.');
+        }
+
+        return TeacherSalarySlip::where('teacher_id', $teacher->id)
+            ->where('status', '!=', 'draft')
+            ->with('file')
+            ->orderBy('period_year', 'desc')
+            ->orderBy('period_month', 'desc')
+            ->get();
+    }
+
+    /**
+     * TCH-SAL-02: Download authenticated teacher's own salary slip (Self-service portal).
+     */
+    public function downloadMySalarySlip(string $slipId, Request $request): StreamedResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new HttpException(401, 'Unauthenticated');
+        }
+
+        $teacher = Teacher::where('user_id', $user->id)->first();
+        if (! $teacher) {
+            throw new HttpException(404, 'Profil pendidik guru Anda belum terdaftar.');
+        }
+
+        return $this->downloadSalarySlip($teacher->id, $slipId, $request);
+    }
+
+    /**
+     * TCH-JJM-01: Get teaching hours recap for teacher (JJM).
+     */
+    public function getTeachingHoursRecap(string $teacherId): array
+    {
+        $teacher = Teacher::with([
+            'teachingAssignments.subject',
+            'teachingAssignments.class',
+            'teachingAssignments.semester',
+            'homeroomClasses',
+        ])->findOrFail($teacherId);
+
+        $assignments = $teacher->teachingAssignments;
+        $totalHours = (int) $assignments->sum('hours_per_week');
+        $targetHours = 24;
+
+        $breakdown = $assignments->map(function ($ta) {
+            return [
+                'id' => $ta->id,
+                'subject_id' => $ta->subject_id,
+                'subject_name' => $ta->subject?->name ?? 'Mata Pelajaran',
+                'subject_code' => $ta->subject?->code ?? '-',
+                'class_id' => $ta->class_id,
+                'class_name' => $ta->class?->name ?? '-',
+                'semester_name' => $ta->semester?->name ?? '-',
+                'hours_per_week' => (int) ($ta->hours_per_week ?? 2),
+            ];
+        });
+
+        return [
+            'teacher' => [
+                'id' => $teacher->id,
+                'full_name' => $teacher->full_name,
+                'nip' => $teacher->nip,
+                'status' => $teacher->status,
+            ],
+            'total_hours' => $totalHours,
+            'target_hours' => $targetHours,
+            'is_target_met' => $totalHours >= $targetHours,
+            'difference' => $totalHours - $targetHours,
+            'assignments_count' => $assignments->count(),
+            'homeroom_count' => $teacher->homeroomClasses->count(),
+            'assignments' => $breakdown,
+        ];
+    }
+
+    /**
+     * Helper to verify if user has access to view a teacher's salary information (IDOR safe).
+     */
+    protected function canAccessTeacherSalary(?\App\Models\User $user, Teacher $teacher): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasRole(['super_admin', 'admin', 'staff_tu']) || $user->hasPermission('master.teacher.manage')) {
+            return true;
+        }
+
+        if ($teacher->user_id && $teacher->user_id === $user->id) {
+            return true;
+        }
+
+        return false;
     }
 }

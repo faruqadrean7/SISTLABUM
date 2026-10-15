@@ -3,8 +3,11 @@
 namespace App\Services\Bk;
 
 use App\Models\AuditLog;
+use App\Models\CounselingCase;
 use App\Models\CounselingRequest;
+use App\Models\CounselingSession;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -26,9 +29,13 @@ class CounselingRequestService
         $query = CounselingRequest::with(['student.classes', 'requester', 'preferredCounselor', 'counselor'])
             ->orderBy('created_at', 'desc');
 
+        if (! empty($user->school_id)) {
+            $query->whereHas('student', fn ($sq) => $sq->where('school_id', $user->school_id));
+        }
+
         // Scoping peranan
         if ($this->isCounselorOrAdminOrPrincipal($user)) {
-            // Counselor, Admin, Kepsek dapat melihat semua permintaan
+            // Counselor, Admin, Kepsek dapat melihat semua permintaan di sekolahnya
             if (! empty($filters['student_id'])) {
                 $query->where('student_id', $filters['student_id']);
             }
@@ -103,6 +110,12 @@ class CounselingRequestService
             throw new HttpException(401, 'Unauthenticated');
         }
 
+        $student = Student::findOrFail($data['student_id']);
+
+        if (! empty($user->school_id) && ! empty($student->school_id) && $student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Siswa berada di luar sekolah penugasan Anda.');
+        }
+
         $requesterRole = 'other';
 
         // Validasi anti-IDOR
@@ -124,6 +137,17 @@ class CounselingRequestService
             $requesterRole = 'teacher';
         }
 
+        // Cegah spamming/duplikasi permintaan yang masih aktif
+        $existingActive = CounselingRequest::where('student_id', $data['student_id'])
+            ->where('requested_by', $user->id)
+            ->whereIn('status', ['pending', 'scheduled'])
+            ->where('topic', $data['topic'])
+            ->first();
+
+        if ($existingActive) {
+            throw new HttpException(422, 'Permintaan konseling serupa untuk siswa ini masih dalam status aktif (menunggu jadwal atau telah dijadwalkan).');
+        }
+
         $counselingRequest = CounselingRequest::create([
             'student_id' => $data['student_id'],
             'requested_by' => $user->id,
@@ -142,7 +166,11 @@ class CounselingRequestService
             'counseling_requests',
             $counselingRequest->id,
             null,
-            $counselingRequest->toArray(),
+            [
+                'student_id' => $counselingRequest->student_id,
+                'requester_role' => $counselingRequest->requester_role,
+                'status' => $counselingRequest->status,
+            ],
             $request
         );
 
@@ -157,7 +185,8 @@ class CounselingRequestService
         $user = $request->user();
         $this->authorizeCounselorOrAdmin($user);
 
-        $counselingRequest = CounselingRequest::findOrFail($id);
+        $counselingRequest = CounselingRequest::with(['student.classes', 'requester', 'preferredCounselor', 'counselor'])->findOrFail($id);
+        $this->authorizeRequestAccess($user, $counselingRequest);
 
         if (in_array($counselingRequest->status, ['completed', 'cancelled'])) {
             throw new HttpException(422, "Permintaan konseling dengan status {$counselingRequest->status} tidak dapat dijadwalkan ulang.");
@@ -194,7 +223,8 @@ class CounselingRequestService
         $user = $request->user();
         $this->authorizeCounselorOrAdmin($user);
 
-        $counselingRequest = CounselingRequest::findOrFail($id);
+        $counselingRequest = CounselingRequest::with(['student.classes', 'requester', 'preferredCounselor', 'counselor'])->findOrFail($id);
+        $this->authorizeRequestAccess($user, $counselingRequest);
 
         if (in_array($counselingRequest->status, ['completed', 'cancelled'])) {
             throw new HttpException(422, "Permintaan konseling dengan status {$counselingRequest->status} tidak dapat ditolak.");
@@ -228,7 +258,8 @@ class CounselingRequestService
             throw new HttpException(401, 'Unauthenticated');
         }
 
-        $counselingRequest = CounselingRequest::findOrFail($id);
+        $counselingRequest = CounselingRequest::with(['student.classes', 'requester', 'preferredCounselor', 'counselor'])->findOrFail($id);
+        $this->authorizeRequestAccess($user, $counselingRequest);
 
         // Hanya pemohon atau BK/Admin yang boleh membatalkan
         $isRequester = $counselingRequest->requested_by === $user->id;
@@ -260,10 +291,72 @@ class CounselingRequestService
     }
 
     /**
+     * BE-BK-03: Guru BK menyelesaikan permintaan konseling dan opsional mengintegrasikannya ke Kasus BK.
+     */
+    public function completeRequest(string $id, array $data, Request $request): CounselingRequest
+    {
+        $user = $request->user();
+        $this->authorizeCounselorOrAdmin($user);
+
+        $counselingRequest = CounselingRequest::with(['student.classes', 'requester', 'preferredCounselor', 'counselor'])->findOrFail($id);
+        $this->authorizeRequestAccess($user, $counselingRequest);
+
+        if ($counselingRequest->status !== 'scheduled') {
+            throw new HttpException(422, "Hanya permintaan berstatus 'scheduled' yang dapat diselesaikan.");
+        }
+
+        $oldStatus = $counselingRequest->status;
+        $counselingRequest->status = 'completed';
+        if (! empty($data['notes'])) {
+            $counselingRequest->notes = $data['notes'];
+        }
+        $counselingRequest->save();
+
+        // Integrasi alur: Buat kasus konseling resmi dan sesi konseling jika diminta
+        if (! empty($data['create_case'])) {
+            $category = $data['case_category'] ?? 'Pribadi';
+            $summary = $data['case_summary'] ?? ($counselingRequest->topic . ': ' . ($data['notes'] ?? 'Tindak lanjut permintaan konseling'));
+
+            $case = CounselingCase::create([
+                'student_id' => $counselingRequest->student_id,
+                'counselor_id' => $user->id,
+                'category' => $category,
+                'status' => 'aktif',
+                'summary_enc' => $summary,
+            ]);
+
+            if (! empty($data['session_notes'])) {
+                CounselingSession::create([
+                    'case_id' => $case->id,
+                    'session_date' => Carbon::now()->toDateString(),
+                    'notes_enc' => $data['session_notes'],
+                    'follow_up' => $data['follow_up'] ?? null,
+                ]);
+            }
+        }
+
+        $this->logAudit(
+            $user->id,
+            'counseling_request.complete',
+            'counseling_requests',
+            $counselingRequest->id,
+            ['status' => $oldStatus],
+            ['status' => 'completed'],
+            $request
+        );
+
+        return $counselingRequest->fresh(['student.classes', 'requester', 'preferredCounselor', 'counselor']);
+    }
+
+    /**
      * Otorisasi akses detail permintaan konseling.
      */
     protected function authorizeRequestAccess(User $user, CounselingRequest $counselingRequest): void
     {
+        if (! empty($user->school_id) && ! empty($counselingRequest->student?->school_id) && $counselingRequest->student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Permintaan konseling berada di luar sekolah penugasan Anda.');
+        }
+
         if ($this->isCounselorOrAdminOrPrincipal($user)) {
             return;
         }
@@ -291,7 +384,7 @@ class CounselingRequestService
             }
         }
 
-        throw new HttpException(403, 'Akses ditolak: Anda tidak berwenang melihat permintaan konseling ini.');
+        throw new HttpException(403, 'Akses ditolak: Anda tidak berwenang mengakses permintaan konseling ini.');
     }
 
     protected function isCounselorOrAdmin(?User $user): bool

@@ -31,6 +31,7 @@ class DatabaseSeederRolePermissionsTest extends TestCase
         // 2. Role Counselor / Guru BK
         $counselorRole = Role::where('code', 'counselor')->firstOrFail();
         $this->assertTrue($counselorRole->permissions()->where('code', 'counseling.case.write')->exists());
+        $this->assertTrue($counselorRole->permissions()->where('code', 'bk.counseling.manage')->exists());
         $this->assertTrue($counselorRole->permissions()->where('code', 'complaint.manage')->exists());
         // BK tidak boleh mengedit master fasilitas
         $this->assertFalse($counselorRole->permissions()->where('code', 'facility.asset.manage')->exists());
@@ -55,6 +56,8 @@ class DatabaseSeederRolePermissionsTest extends TestCase
         $principalRole = Role::where('code', 'principal')->firstOrFail();
         $this->assertTrue($principalRole->permissions()->where('code', 'cbt.exam.manage')->exists());
         $this->assertTrue($principalRole->permissions()->where('code', 'academic.report.generate')->exists());
+        $this->assertTrue($principalRole->permissions()->where('code', 'executive.dashboard.view')->exists());
+        $this->assertTrue($principalRole->permissions()->where('code', 'reports.view')->exists());
 
         // 6. Role Facility Staff
         $facilityRole = Role::where('code', 'facility_staff')->firstOrFail();
@@ -68,6 +71,26 @@ class DatabaseSeederRolePermissionsTest extends TestCase
         // 8. Role PPDB Committee
         $ppdbRole = Role::where('code', 'ppdb_committee')->firstOrFail();
         $this->assertTrue($ppdbRole->permissions()->where('code', 'ppdb.applicant.verify')->exists());
+
+        // 9. Role Student Affairs / Kesiswaan (SEC-RBAC-02)
+        $studentAffairsRole = Role::where('code', 'student_affairs')->firstOrFail();
+        $this->assertTrue($studentAffairsRole->permissions()->where('code', 'student.point.read')->exists());
+        $this->assertTrue($studentAffairsRole->permissions()->where('code', 'student.point.write')->exists());
+        $this->assertTrue($studentAffairsRole->permissions()->where('code', 'master.student.read')->exists());
+        $this->assertTrue($studentAffairsRole->permissions()->where('code', 'reports.view')->exists());
+        $this->assertFalse($studentAffairsRole->permissions()->where('code', 'facility.asset.manage')->exists());
+        $this->assertFalse($studentAffairsRole->permissions()->where('code', 'cbt.bank.write')->exists());
+
+        // 10. Role Public Relations / Humas (SEC-RBAC-02)
+        $prRole = Role::where('code', 'public_relations')->firstOrFail();
+        $this->assertTrue($prRole->permissions()->where('code', 'guest.book.read')->exists());
+        $this->assertTrue($prRole->permissions()->where('code', 'guest.book.manage')->exists());
+        $this->assertTrue($prRole->permissions()->where('code', 'complaint.read')->exists());
+        $this->assertTrue($prRole->permissions()->where('code', 'complaint.manage')->exists());
+        $this->assertTrue($prRole->permissions()->where('code', 'cms.post.manage')->exists());
+        $this->assertTrue($prRole->permissions()->where('code', 'cms.site.manage')->exists());
+        $this->assertFalse($prRole->permissions()->where('code', 'academic.grade.write')->exists());
+        $this->assertFalse($prRole->permissions()->where('code', 'student.point.write')->exists());
     }
 
     /**

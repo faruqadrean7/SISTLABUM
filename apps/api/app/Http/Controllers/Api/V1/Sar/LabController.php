@@ -26,13 +26,30 @@ class LabController extends Controller
     ) {}
 
     /**
+     * BE-SAR-04: Ringkasan metrik inventaris alat laboratorium.
+     * GET /api/v1/lab-equipment/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request);
+
+            return $this->successResponse($summary);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan alat laboratorium.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-SAR-04: Daftar alat laboratorium.
      * GET /api/v1/lab-equipment
      */
     public function indexEquipment(ListLabEquipmentRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listEquipment($request->validated());
+            $paginator = $this->service->listEquipment($request->validated(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -46,14 +63,16 @@ class LabController extends Controller
      * BE-SAR-04: Detail alat laboratorium.
      * GET /api/v1/lab-equipment/{id}
      */
-    public function showEquipment(string $id): JsonResponse
+    public function showEquipment(string $id, Request $request): JsonResponse
     {
         try {
-            $equipment = $this->service->getEquipment($id);
+            $equipment = $this->service->getEquipment($id, $request);
 
             return $this->successResponse($equipment);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Alat laboratorium tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'HTTP_ERROR', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

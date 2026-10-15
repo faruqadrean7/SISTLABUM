@@ -460,4 +460,97 @@ class CharacterNoteTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonPath('error.code', 'BUSINESS_RULE_VIOLATION');
     }
+
+    public function test_be_grd_02_walas_can_get_class_character_notes_matrix(): void
+    {
+        // Berikan catatan untuk siswa 1 saja
+        CharacterNote::create([
+            'student_id' => $this->student1->id,
+            'period_id' => $this->periodMonth8->id,
+            'scale_data' => ['beriman_bertakwa' => 'sangat_baik', 'gotong_royong' => 'baik'],
+            'homeroom_note' => 'Catatan Siswa 1',
+            'author_id' => $this->walasUser->id,
+        ]);
+
+        $token = $this->walasUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson("/api/v1/character-notes/matrix?class_id={$this->classA->id}&period_id={$this->periodMonth8->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.summary.total_students', 2)
+            ->assertJsonPath('data.summary.complete_count', 1)
+            ->assertJsonPath('data.summary.incomplete_count', 1)
+            ->assertJsonPath('data.students.0.is_complete', true)
+            ->assertJsonPath('data.students.1.is_complete', false);
+    }
+
+    public function test_be_grd_02_non_walas_teacher_cannot_get_class_character_notes_matrix_403(): void
+    {
+        $tokenOtherTeacher = $this->otherTeacherUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$tokenOtherTeacher}")
+            ->getJson("/api/v1/character-notes/matrix?class_id={$this->classA->id}&period_id={$this->periodMonth8->id}");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    public function test_be_grd_02_batch_route_alias_works_and_creates_records(): void
+    {
+        $token = $this->walasUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/character-notes/batch', [
+                'period_id' => $this->periodMonth8->id,
+                'notes' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'scale_data' => ['beriman_bertakwa' => 'baik'],
+                        'homeroom_note' => 'Batch note 1',
+                    ],
+                    [
+                        'student_id' => $this->student2->id,
+                        'scale_data' => ['beriman_bertakwa' => 'sangat_baik'],
+                        'homeroom_note' => 'Batch note 2',
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.count', 2);
+
+        $this->assertDatabaseHas('character_notes', [
+            'student_id' => $this->student1->id,
+            'period_id' => $this->periodMonth8->id,
+            'homeroom_note' => 'Batch note 1',
+        ]);
+    }
+
+    public function test_be_grd_02_progress_report_integration_deterministic_lookup(): void
+    {
+        $scaleData = [
+            'beriman_bertakwa' => 'sangat_baik',
+            'gotong_royong' => 'baik',
+            'mandiri' => 'membudaya',
+        ];
+
+        CharacterNote::create([
+            'student_id' => $this->student1->id,
+            'period_id' => $this->periodMonth8->id,
+            'scale_data' => $scaleData,
+            'homeroom_note' => 'Catatan Walas untuk Rapor Siswa 1',
+            'author_id' => $this->walasUser->id,
+        ]);
+
+        // Pengambilan data deterministik oleh ADM-GRD-03 (E-Progress Report snapshot)
+        $retrieved = CharacterNote::where('student_id', $this->student1->id)
+            ->where('period_id', $this->periodMonth8->id)
+            ->first();
+
+        $this->assertNotNull($retrieved);
+        $this->assertEquals('sangat_baik', $retrieved->scale_data['beriman_bertakwa']);
+        $this->assertEquals('Catatan Walas untuk Rapor Siswa 1', $retrieved->homeroom_note);
+        $this->assertEquals($this->walasUser->id, $retrieved->author_id);
+    }
 }

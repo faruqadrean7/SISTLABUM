@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\DecideLeaveRequest;
+use App\Http\Requests\Academic\ListLeaveRequestRequest;
 use App\Http\Requests\Academic\StoreLeaveRequest;
 use App\Http\Requests\Academic\UpdateLeaveRequestStatusRequest;
 use App\Services\AcademicAttendanceService;
@@ -26,10 +27,10 @@ class LeaveRequestController extends Controller
      * BE-ACD-03: List leave requests.
      * GET /api/v1/leave-requests
      */
-    public function index(Request $request): JsonResponse
+    public function index(ListLeaveRequestRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listLeaveRequests($request->all(), $request);
+            $paginator = $this->service->listLeaveRequests($request->validated(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {

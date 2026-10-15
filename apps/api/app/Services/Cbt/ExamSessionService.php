@@ -322,19 +322,63 @@ class ExamSessionService
         $isFlagged = (bool) ($data['is_flagged'] ?? false);
 
         $now = Carbon::now();
+        $incomingAnsweredAt = ! empty($data['answered_at'])
+            ? Carbon::parse($data['answered_at'])
+            : $now;
+
+        // Batasi answered_at agar tidak melebihi jam server
+        if ($incomingAnsweredAt->greaterThan($now)) {
+            $incomingAnsweredAt = $now;
+        }
+
+        // Batasi answered_at agar tidak mendahului waktu mulai sesi ujian
+        if ($session->started_at && $incomingAnsweredAt->lessThan($session->started_at)) {
+            $incomingAnsweredAt = $session->started_at->copy();
+        }
+
+        // Cek apakah jawaban sudah tersimpan sebelumnya
+        $existing = ExamAnswer::where('session_id', $session->id)
+            ->where('question_id', $questionId)
+            ->first();
+
+        if ($existing) {
+            // Rule 1: Idempotent match (nilai jawaban dan flag ragu-ragu persis sama)
+            $existingAnswer = is_string($existing->answer) ? json_decode($existing->answer, true) : $existing->answer;
+            if ($existingAnswer == $answerData && (bool) $existing->is_flagged === $isFlagged) {
+                return [
+                    'question_id' => $questionId,
+                    'is_saved' => true,
+                    'is_flagged' => (bool) $existing->is_flagged,
+                    'is_stale' => false,
+                    'answered_at' => $existing->answered_at?->toIso8601String() ?? $now->toIso8601String(),
+                    'server_time' => $now->toIso8601String(),
+                ];
+            }
+
+            // Rule 2: Out-of-order retry protection (timestamp incoming lebih lama dari yang telah tersimpan)
+            if ($existing->answered_at && $incomingAnsweredAt->lessThan($existing->answered_at)) {
+                return [
+                    'question_id' => $questionId,
+                    'is_saved' => true,
+                    'is_stale' => true,
+                    'answered_at' => $existing->answered_at->toIso8601String(),
+                    'server_time' => $now->toIso8601String(),
+                ];
+            }
+        }
 
         // SEC-CBT-CONC: Atomic UPSERT berbasis DB (ON CONFLICT DO UPDATE)
         // Mencegah abort transaksi PostgreSQL dan race condition pada autosave konkuren
         ExamAnswer::upsert(
             [
                 [
-                    'id' => (string) Str::uuid(),
+                    'id' => $existing ? $existing->id : (string) Str::uuid(),
                     'session_id' => $session->id,
                     'question_id' => $questionId,
                     'answer' => $answerData !== null ? json_encode($answerData) : null,
                     'is_flagged' => $isFlagged,
-                    'answered_at' => $now,
-                    'created_at' => $now,
+                    'answered_at' => $incomingAnsweredAt,
+                    'created_at' => $existing ? $existing->created_at : $now,
                     'updated_at' => $now,
                 ],
             ],
@@ -346,7 +390,7 @@ class ExamSessionService
             'question_id' => $questionId,
             'is_saved' => true,
             'is_flagged' => $isFlagged,
-            'answered_at' => $now->toIso8601String(),
+            'answered_at' => $incomingAnsweredAt->toIso8601String(),
             'server_time' => $now->toIso8601String(),
         ];
     }
@@ -649,6 +693,12 @@ class ExamSessionService
             $session->status = 'selesai';
             $session->submitted_at = $effectiveEndsAt;
             $session->save();
+
+            try {
+                app(\App\Services\Cbt\ExamGradingService::class)->gradeSessionObjectiveAnswers($session);
+            } catch (\Throwable $gradeEx) {
+                // Non-blocking
+            }
 
             $errorCode = $session->ends_at ? 'EXAM_TIME_OVER' : 'BUSINESS_RULE_VIOLATION';
 

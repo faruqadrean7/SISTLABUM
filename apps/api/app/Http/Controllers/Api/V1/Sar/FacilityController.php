@@ -28,7 +28,7 @@ class FacilityController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listFacilities($request->all());
+            $paginator = $this->service->listFacilities($request->all(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -42,14 +42,16 @@ class FacilityController extends Controller
      * BE-SAR-01: Detail fasilitas.
      * GET /api/v1/facilities/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
-            $facility = $this->service->getFacility($id);
+            $facility = $this->service->getFacility($id, $request);
 
             return $this->successResponse($facility);
         } catch (ModelNotFoundException) {
             return $this->notFoundResponse('Fasilitas tidak ditemukan.');
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

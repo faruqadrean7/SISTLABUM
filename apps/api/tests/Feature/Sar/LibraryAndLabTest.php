@@ -627,4 +627,186 @@ class LibraryAndLabTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('error.code', 'HTTP_ERROR');
     }
+
+    public function test_be_sar_04_library_summary_metrics_returns_accurate_counts(): void
+    {
+        $book = LibraryBook::create([
+            'title' => 'Biologi Sel Molekuler',
+            'author' => 'Alberts',
+            'category' => 'Sains',
+            'book_type' => 'fisik',
+            'stock' => 10,
+        ]);
+
+        Loan::create([
+            'book_id' => $book->id,
+            'borrower_id' => $this->studentUser->id,
+            'loan_date' => Carbon::now()->subDays(10)->toDateString(),
+            'due_date' => Carbon::now()->subDays(3)->toDateString(),
+            'status' => 'dipinjam',
+            'fine_amount' => 0,
+            'fine_paid' => false,
+        ]);
+
+        $res = $this->actingAs($this->librarianUser)
+            ->getJson('/api/v1/library/summary');
+
+        $res->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'total_books',
+                    'total_stock',
+                    'active_loans',
+                    'overdue_loans',
+                    'total_fines_unpaid',
+                    'category_counts',
+                    'book_types',
+                ],
+            ]);
+
+        $this->assertGreaterThanOrEqual(1, $res->json('data.total_books'));
+        $this->assertGreaterThanOrEqual(1, $res->json('data.active_loans'));
+        $this->assertGreaterThanOrEqual(1, $res->json('data.overdue_loans'));
+    }
+
+    public function test_be_sar_04_lab_summary_metrics_returns_accurate_counts(): void
+    {
+        $equipment = LabEquipment::create([
+            'room_id' => $this->labFisika->id,
+            'name' => 'Neraca Ohaus 311g',
+            'category' => 'Pengukuran',
+            'stock' => 5,
+            'condition' => 'baik',
+        ]);
+
+        LabLoan::create([
+            'equipment_id' => $equipment->id,
+            'borrower_id' => $this->studentUser->id,
+            'loan_date' => Carbon::now()->subDays(5)->toDateString(),
+            'due_date' => Carbon::now()->subDays(1)->toDateString(),
+            'quantity' => 2,
+            'status' => 'dipinjam',
+        ]);
+
+        $res = $this->actingAs($this->laboranUser)
+            ->getJson('/api/v1/lab-equipment/summary');
+
+        $res->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'total_equipment',
+                    'total_units',
+                    'active_loans',
+                    'overdue_loans',
+                    'conditions_breakdown',
+                    'category_counts',
+                ],
+            ]);
+
+        $this->assertGreaterThanOrEqual(1, $res->json('data.total_equipment'));
+        $this->assertGreaterThanOrEqual(1, $res->json('data.active_loans'));
+        $this->assertGreaterThanOrEqual(1, $res->json('data.overdue_loans'));
+    }
+
+    public function test_be_sar_04_prevents_double_borrowing_of_same_book(): void
+    {
+        $book = LibraryBook::create([
+            'title' => 'Struktur Aljabar',
+            'author' => 'Dummit',
+            'book_type' => 'fisik',
+            'stock' => 5,
+        ]);
+
+        // Peminjaman pertama
+        $this->actingAs($this->studentUser)
+            ->postJson('/api/v1/library/loans', [
+                'book_id' => $book->id,
+                'due_date' => Carbon::now()->addDays(7)->toDateString(),
+            ])
+            ->assertStatus(201);
+
+        // Peminjaman kedua oleh siswa yang sama untuk buku yang sama harus ditolak
+        $this->actingAs($this->studentUser)
+            ->postJson('/api/v1/library/loans', [
+                'book_id' => $book->id,
+                'due_date' => Carbon::now()->addDays(7)->toDateString(),
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error.message', 'Peminjam masih memiliki status peminjaman aktif untuk buku ini.');
+    }
+
+    public function test_be_sar_04_multi_tenant_isolation_prevents_cross_school_access_on_library(): void
+    {
+        $schoolA = '99999999-0000-0000-0000-000000000001';
+        $schoolB = '99999999-0000-0000-0000-000000000002';
+
+        $this->librarianUser->school_id = $schoolA;
+        $this->librarianUser->save();
+
+        $bookSchoolB = LibraryBook::create([
+            'school_id' => $schoolB,
+            'title' => 'Buku Rahasia Sekolah B',
+            'author' => 'Pengarang B',
+            'stock' => 3,
+        ]);
+
+        // Akses detail dari pustakawan sekolah A harus ditolak 403
+        $this->actingAs($this->librarianUser)
+            ->getJson("/api/v1/library/books/{$bookSchoolB->id}")
+            ->assertStatus(403);
+
+        // Update dari pustakawan sekolah A harus ditolak 403
+        $this->actingAs($this->librarianUser)
+            ->putJson("/api/v1/library/books/{$bookSchoolB->id}", ['stock' => 10])
+            ->assertStatus(403);
+
+        // Peminjaman buku sekolah B oleh user sekolah A harus ditolak
+        $this->studentUser->school_id = $schoolA;
+        $this->studentUser->save();
+
+        $this->actingAs($this->studentUser)
+            ->postJson('/api/v1/library/loans', [
+                'book_id' => $bookSchoolB->id,
+                'due_date' => Carbon::now()->addDays(7)->toDateString(),
+            ])
+            ->assertStatus(403);
+    }
+
+    public function test_be_sar_04_multi_tenant_isolation_prevents_cross_school_access_on_lab(): void
+    {
+        $schoolA = '99999999-0000-0000-0000-000000000001';
+        $schoolB = '99999999-0000-0000-0000-000000000002';
+
+        $this->laboranUser->school_id = $schoolA;
+        $this->laboranUser->save();
+
+        $equipmentSchoolB = LabEquipment::create([
+            'school_id' => $schoolB,
+            'room_id' => $this->labFisika->id,
+            'name' => 'Spektrofotometer Sekolah B',
+            'stock' => 1,
+        ]);
+
+        // Akses detail alat lab sekolah B harus ditolak 403
+        $this->actingAs($this->laboranUser)
+            ->getJson("/api/v1/lab-equipment/{$equipmentSchoolB->id}")
+            ->assertStatus(403);
+
+        // Update alat lab sekolah B harus ditolak 403
+        $this->actingAs($this->laboranUser)
+            ->putJson("/api/v1/lab-equipment/{$equipmentSchoolB->id}", ['stock' => 5])
+            ->assertStatus(403);
+
+        // Peminjaman alat lab sekolah B oleh siswa sekolah A harus ditolak 403
+        $this->studentUser->school_id = $schoolA;
+        $this->studentUser->save();
+
+        $this->actingAs($this->studentUser)
+            ->postJson('/api/v1/lab-loans', [
+                'equipment_id' => $equipmentSchoolB->id,
+                'due_date' => Carbon::now()->addDays(2)->toDateString(),
+                'quantity' => 1,
+            ])
+            ->assertStatus(403);
+    }
 }

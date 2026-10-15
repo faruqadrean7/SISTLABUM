@@ -56,6 +56,7 @@ class DailyAttendanceSummaryCommand extends Command
                 [
                     'severity' => $alpaCount >= 5 ? 'tinggi' : 'sedang',
                     'data' => [
+                        'rule' => 'Akumulasi alpa presensi mencapai atau melampaui batas ambang',
                         'alpa_count' => $alpaCount,
                         'period_days' => 30,
                         'detected_at' => Carbon::now()->toIso8601String(),

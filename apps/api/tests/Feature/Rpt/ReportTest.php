@@ -409,4 +409,55 @@ class ReportTest extends TestCase
         $this->assertStringContainsString('LAPORAN REKAPITULASI: ATTENDANCE', $res->getContent());
         $this->assertStringContainsString('Ahmad Rapor', $res->getContent());
     }
+
+    public function test_be_rpt_01_report_generator_applies_multi_tenant_isolation_per_school(): void
+    {
+        $schoolA = (string) Str::uuid();
+        $schoolB = (string) Str::uuid();
+
+        $this->adminUser->update(['school_id' => $schoolA]);
+        $this->student->update(['school_id' => $schoolA]);
+
+        // Student in School B
+        $userStudentB = User::create([
+            'username' => 'siswa_sekolah_b',
+            'email' => 'siswa_b@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+        ]);
+        $studentB = Student::create([
+            'user_id' => $userStudentB->id,
+            'school_id' => $schoolB,
+            'nis' => '88888',
+            'nisn' => '0088888888',
+            'nik_enc' => '3578010101018002',
+            'full_name' => 'Budi Sekolah B',
+            'gender' => 'L',
+            'birth_place' => 'Malang',
+            'birth_date' => '2009-02-02',
+            'entry_date' => '2026-07-01',
+            'status' => 'active',
+        ]);
+
+        Attendance::create([
+            'student_id' => $this->student->id,
+            'att_date' => '2026-09-01',
+            'status' => 'hadir',
+        ]);
+
+        Attendance::create([
+            'student_id' => $studentB->id,
+            'att_date' => '2026-09-01',
+            'status' => 'hadir',
+        ]);
+
+        Sanctum::actingAs($this->adminUser);
+
+        $res = $this->getJson('/api/v1/reports/attendance');
+        $res->assertStatus(200);
+
+        // Only 1 record from School A should be present
+        $this->assertEquals(1, $res->json('data.summary.total_records'));
+        $this->assertEquals(1, $res->json('data.meta.total'));
+    }
 }

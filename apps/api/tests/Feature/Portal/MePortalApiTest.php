@@ -569,6 +569,114 @@ class MePortalApiTest extends TestCase
     }
 
     /**
+     * COND-03: Permohonan konseling dengan topik eksplisit valid (<= 200 karakter).
+     */
+    public function test_cond_03_counseling_request_with_valid_explicit_topic(): void
+    {
+        $token = $this->studentUser1->createToken('token')->plainTextToken;
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/me/counseling-requests', [
+                'topic' => 'Konsultasi Manajemen Waktu Belajar',
+                'reason' => 'Sering bentrok antara jadwal les privat dan ekstrakurikuler.',
+                'preferred_date' => now()->addDays(2)->toDateString(),
+                'preferred_time' => '14:00 WIB',
+            ]);
+
+        $res->assertStatus(201)
+            ->assertJsonPath('data.student_id', $this->student1->id)
+            ->assertJsonPath('data.topic', 'Konsultasi Manajemen Waktu Belajar')
+            ->assertJsonPath('data.notes', 'Sering bentrok antara jadwal les privat dan ekstrakurikuler.');
+
+        $this->assertDatabaseHas('counseling_requests', [
+            'student_id' => $this->student1->id,
+            'topic' => 'Konsultasi Manajemen Waktu Belajar',
+        ]);
+    }
+
+    /**
+     * COND-03: Permohonan konseling tanpa topik (null) fallback ke reason.
+     */
+    public function test_cond_03_counseling_request_with_null_topic_falls_back_to_reason(): void
+    {
+        $token = $this->studentUser1->createToken('token')->plainTextToken;
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/me/counseling-requests', [
+                'topic' => null,
+                'reason' => 'Alasan permohonan konseling tanpa topik khusus.',
+            ]);
+
+        $res->assertStatus(201)
+            ->assertJsonPath('data.student_id', $this->student1->id)
+            ->assertJsonPath('data.topic', 'Alasan permohonan konseling tanpa topik khusus.');
+    }
+
+    /**
+     * COND-03: Menolak topik yang melebihi batas 200 karakter dengan 422 Unprocessable Entity.
+     */
+    public function test_cond_03_counseling_request_rejects_topic_exceeding_200_chars(): void
+    {
+        $token = $this->studentUser1->createToken('token')->plainTextToken;
+        $longTopic = str_repeat('A', 201);
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/me/counseling-requests', [
+                'topic' => $longTopic,
+                'reason' => 'Alasan valid untuk konseling.',
+            ]);
+
+        $res->assertStatus(422)
+            ->assertJsonValidationErrors(['topic']);
+    }
+
+    /**
+     * COND-03: Menolak topik bertipe data non-string (array).
+     */
+    public function test_cond_03_counseling_request_rejects_non_string_topic(): void
+    {
+        $token = $this->studentUser1->createToken('token')->plainTextToken;
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/me/counseling-requests', [
+                'topic' => ['invalid' => 'format'],
+                'reason' => 'Alasan valid untuk konseling.',
+            ]);
+
+        $res->assertStatus(422)
+            ->assertJsonValidationErrors(['topic']);
+    }
+
+    /**
+     * COND-03: Request tanpa autentikasi ditolak 401 Unauthorized.
+     */
+    public function test_cond_03_counseling_request_unauthenticated_returns_401(): void
+    {
+        $res = $this->postJson('/api/v1/me/counseling-requests', [
+            'topic' => 'Topik Konseling',
+            'reason' => 'Alasan konseling.',
+        ]);
+
+        $res->assertStatus(401);
+    }
+
+    /**
+     * COND-03: User tanpa profil siswa (misal guru) ditolak 403 Forbidden.
+     */
+    public function test_cond_03_counseling_request_non_student_returns_403(): void
+    {
+        $teacherToken = $this->teacherUser1->createToken('token')->plainTextToken;
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$teacherToken)
+            ->postJson('/api/v1/me/counseling-requests', [
+                'topic' => 'Topik Konseling',
+                'reason' => 'Alasan konseling.',
+            ]);
+
+        $res->assertStatus(403);
+    }
+
+    /**
      * GAP-08: Guru membuat tugas KBM dan menilai submission siswa -> 201 & 200.
      */
     public function test_gap_08_teacher_assignment_creation_and_grading_flow(): void

@@ -24,6 +24,7 @@ class StoreCompetitionEntryRequest extends FormRequest
             'competition_id' => ['required', 'uuid', 'exists:competitions,id'],
             'student_id' => ['required', 'uuid', 'exists:students,id'],
             'coach_teacher_id' => ['nullable', 'uuid', 'exists:teachers,id'],
+            'status' => ['nullable', 'string', 'in:terdaftar,dikonfirmasi,hadir,gugur,selesai,dibatalkan'],
             'result' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

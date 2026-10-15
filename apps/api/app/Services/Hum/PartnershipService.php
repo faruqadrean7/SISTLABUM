@@ -20,10 +20,17 @@ class PartnershipService
     // 1. MASTER KERJA SAMA & DOKUMEN MOU
     // =========================================================================
 
-    public function listPartnerships(array $filters): LengthAwarePaginator
+    public function listPartnerships(array $filters, ?Request $request = null): LengthAwarePaginator
     {
         $query = Partnership::with('mouFile')
             ->orderBy('valid_until', 'asc');
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->where('school_id', $user->school_id)->orWhereNull('school_id');
+            });
+        }
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -55,12 +62,19 @@ class PartnershipService
         return $query->paginate((int) ($filters['per_page'] ?? 15));
     }
 
-    public function getPartnership(string $id): Partnership
+    public function getPartnership(string $id, ?Request $request = null): Partnership
     {
-        return Partnership::with([
+        $partnership = Partnership::with([
             'mouFile',
             'exchangePrograms.participants.student',
         ])->findOrFail($id);
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id) && ! empty($partnership->school_id) && $partnership->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Kemitraan berada di luar sekolah penugasan Anda.');
+        }
+
+        return $partnership;
     }
 
     public function createPartnership(array $data, Request $request): Partnership
@@ -73,7 +87,7 @@ class PartnershipService
         $status = $data['status'] ?? ($validUntil->isPast() ? 'kedaluwarsa' : 'aktif');
 
         $partnership = Partnership::create([
-            'school_id' => $data['school_id'] ?? null,
+            'school_id' => $data['school_id'] ?? $user?->school_id ?? null,
             'partner_name' => $data['partner_name'],
             'mou_number' => $data['mou_number'] ?? null,
             'partner_type' => $data['partner_type'] ?? 'instansi',
@@ -100,6 +114,11 @@ class PartnershipService
         $this->authorizeStaffOrAdmin($user);
 
         $partnership = Partnership::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($partnership->school_id) && $partnership->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Kemitraan berada di luar sekolah penugasan Anda.');
+        }
+
         $oldValues = $partnership->toArray();
 
         $partnership->update($data);
@@ -115,6 +134,10 @@ class PartnershipService
         $this->authorizeStaffOrAdmin($user);
 
         $partnership = Partnership::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($partnership->school_id) && $partnership->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Kemitraan berada di luar sekolah penugasan Anda.');
+        }
 
         if ($partnership->exchangePrograms()->whereIn('status', ['dibuka', 'berjalan'])->exists()) {
             throw new HttpException(422, 'Tidak dapat menghapus kemitraan yang memiliki program pertukaran aktif atau sedang berjalan.');

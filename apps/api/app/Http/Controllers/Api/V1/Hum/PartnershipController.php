@@ -29,7 +29,7 @@ class PartnershipController extends Controller
     public function index(ListPartnershipRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listPartnerships($request->validated());
+            $paginator = $this->service->listPartnerships($request->validated(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -43,14 +43,16 @@ class PartnershipController extends Controller
      * BE-HUM-01: Detail kemitraan, berkas MoU, dan riwayat program pertukaran.
      * GET /api/v1/partnerships/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
-            $partnership = $this->service->getPartnership($id);
+            $partnership = $this->service->getPartnership($id, $request);
 
             return $this->successResponse($partnership);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Data kemitraan tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

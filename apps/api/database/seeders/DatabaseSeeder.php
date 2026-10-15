@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             ['code' => 'facility_staff', 'name' => 'Staf Sarana & Prasarana'],
             ['code' => 'ppdb_committee', 'name' => 'Panitia PPDB'],
             ['code' => 'librarian', 'name' => 'Pustakawan'],
+            ['code' => 'student_affairs', 'name' => 'Staf Kesiswaan'],
+            ['code' => 'public_relations', 'name' => 'Staf Humas'],
             ['code' => 'student', 'name' => 'Siswa'],
             ['code' => 'guardian', 'name' => 'Orang Tua / Wali Murid'],
             ['code' => 'guest', 'name' => 'Tamu / Calon Siswa'],
@@ -89,6 +91,7 @@ class DatabaseSeeder extends Seeder
             ['code' => 'student.point.write', 'description' => 'Mencatat poin pelanggaran/prestasi'],
             ['code' => 'counseling.case.read', 'description' => 'Melihat kasus konseling BK'],
             ['code' => 'counseling.case.write', 'description' => 'Mencatat sesi dan kasus konseling BK'],
+            ['code' => 'bk.counseling.manage', 'description' => 'Mengelola catatan dan sesi konseling BK'],
 
             // Sarpras & Pustaka
             ['code' => 'facility.booking.manage', 'description' => 'Menyetujui/menolak booking fasilitas'],
@@ -111,6 +114,13 @@ class DatabaseSeeder extends Seeder
             // Pengaduan & Aspirasi (Whistleblowing)
             ['code' => 'complaint.read', 'description' => 'Melihat daftar dan detail aduan/aspirasi'],
             ['code' => 'complaint.manage', 'description' => 'Menindaklanjuti dan mengubah status aduan/aspirasi'],
+            ['code' => 'complaint.view_reporter', 'description' => 'Melihat identitas pelapor non-anonim aduan/aspirasi'],
+
+            // Eksekutif & Persetujuan (SEC-APPR-09)
+            ['code' => 'executive.approval.manage', 'description' => 'Mengelola antrean dan putusan persetujuan eksekutif'],
+            ['code' => 'dashboard.executive', 'description' => 'Melihat dashboard dan ringkasan eksekutif'],
+            ['code' => 'executive.dashboard.view', 'description' => 'Melihat ringkasan eksekutif dan analitik pimpinan'],
+            ['code' => 'reports.view', 'description' => 'Melihat laporan dan rekapitulasi data sekolah'],
         ];
 
         $allPermissionIds = [];
@@ -147,6 +157,10 @@ class DatabaseSeeder extends Seeder
 
         // 1. Kepala Sekolah (principal)
         $assignRolePermissions('principal', [
+            'executive.approval.manage',
+            'dashboard.executive',
+            'executive.dashboard.view',
+            'reports.view',
             'academic.grade.read',
             'academic.report.generate',
             'academic.attendance.read',
@@ -160,6 +174,7 @@ class DatabaseSeeder extends Seeder
             'guest.book.read',
             'complaint.read',
             'complaint.manage',
+            'complaint.view_reporter',
             'audit.read',
             'master.student.read',
             'master.teacher.manage',
@@ -224,6 +239,7 @@ class DatabaseSeeder extends Seeder
         $assignRolePermissions('counselor', [
             'counseling.case.read',
             'counseling.case.write',
+            'bk.counseling.manage',
             'complaint.read',
             'complaint.manage',
             'student.point.read',
@@ -252,7 +268,29 @@ class DatabaseSeeder extends Seeder
             'ppdb.selection.run',
         ]);
 
-        // 9. Siswa (student)
+        // 9. Staf Kesiswaan (student_affairs)
+        $assignRolePermissions('student_affairs', [
+            'student.point.read',
+            'student.point.write',
+            'master.student.read',
+            'reports.view',
+        ]);
+
+        // 10. Staf Humas (public_relations)
+        $assignRolePermissions('public_relations', [
+            'guest.book.read',
+            'guest.book.manage',
+            'complaint.read',
+            'complaint.manage',
+            'cms.site.manage',
+            'cms.post.manage',
+            'cms.gallery.manage',
+            'cms.event.manage',
+            'cms.download.manage',
+            'cms.page.manage',
+        ]);
+
+        // 11. Siswa (student)
         $assignRolePermissions('student', [
             'cbt.exam.take',
             'cbt.exam.review',
@@ -261,7 +299,7 @@ class DatabaseSeeder extends Seeder
             'academic.grade.read',
         ]);
 
-        // 10. Orang Tua / Wali Murid (guardian)
+        // 12. Orang Tua / Wali Murid (guardian)
         $assignRolePermissions('guardian', [
             'academic.attendance.read',
             'academic.grade.read',

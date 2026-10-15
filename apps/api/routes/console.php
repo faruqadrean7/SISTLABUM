@@ -32,3 +32,13 @@ Schedule::command('sarpras:ticket-sla-reminder')->hourly()->withoutOverlapping()
 
 // 7. backup-verify: Mingguan (Verifikasi backup)
 Schedule::command('system:backup-verify')->weekly()->withoutOverlapping();
+
+// 8. bk-evaluate-early-warnings: Harian malam (Evaluasi aturan deteksi dini siswa)
+Schedule::command('bk:evaluate-early-warnings')->dailyAt('23:30')->withoutOverlapping();
+
+// 9. reminder-dispatch: Pengingat otomatis CBT, LMS, dan ATT (Presensi) dengan idempotency guard
+Schedule::command('reminder:dispatch --type=all')->everyFifteenMinutes()->withoutOverlapping(10);
+Schedule::command('reminder:dispatch --type=att')->timezone('Asia/Jakarta')->dailyAt('10:00')->withoutOverlapping(10);
+Schedule::command('reminder:dispatch --recover-stuck')->hourly()->withoutOverlapping(10);
+
+

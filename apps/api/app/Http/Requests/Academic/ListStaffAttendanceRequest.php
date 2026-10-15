@@ -13,6 +13,7 @@ class ListStaffAttendanceRequest extends BaseApiRequest
             'date_from' => ['nullable', 'date', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'status' => ['nullable', 'string', 'in:hadir,terlambat,izin,sakit,alfa'],
+            'q' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];

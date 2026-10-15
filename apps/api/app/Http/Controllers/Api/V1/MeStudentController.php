@@ -211,13 +211,17 @@ class MeStudentController extends Controller
         }
 
         $validated = $request->validate([
+            'topic' => 'nullable|string|max:200',
             'reason' => 'required|string|max:1000',
             'preferred_date' => 'nullable|date',
             'preferred_time' => 'nullable|string',
             'is_urgent' => 'nullable|boolean',
         ]);
 
-        $topic = $validated['topic'] ?? ($validated['reason'] ?? 'Konseling Mandiri');
+        $topic = (isset($validated['topic']) && trim($validated['topic']) !== '')
+            ? trim($validated['topic'])
+            : mb_substr($validated['reason'], 0, 200);
+
         $counseling = CounselingRequest::create([
             'student_id' => $student->id,
             'requested_by' => $request->user()->id,

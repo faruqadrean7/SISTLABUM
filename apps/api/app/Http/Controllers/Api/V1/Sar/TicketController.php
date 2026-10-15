@@ -25,6 +25,44 @@ class TicketController extends Controller
     ) {}
 
     /**
+     * BE-SAR-03: Ringkasan KPI & metrik tiket sarpras.
+     * GET /api/v1/tickets/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request);
+
+            return $this->successResponse($summary);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan tiket.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-SAR-03: Daftar teknisi dan evaluasi beban kerja penugasan.
+     * GET /api/v1/tickets/technicians
+     */
+    public function technicians(Request $request): JsonResponse
+    {
+        try {
+            $technicians = $this->service->getTechnicians($request);
+
+            return $this->successResponse($technicians);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat daftar teknisi.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-SAR-03: Daftar tiket perbaikan berpaginasi.
      * GET /api/v1/tickets
      */

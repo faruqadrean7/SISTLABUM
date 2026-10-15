@@ -32,6 +32,12 @@ class TicketService
             $query->where('reporter_id', $user->id);
         }
 
+        if (! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -88,6 +94,10 @@ class TicketService
             'events.file',
         ])->findOrFail($id);
 
+        if (! empty($user->school_id) && ! empty($ticket->school_id) && $ticket->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Tiket berada di luar sekolah penugasan Anda.');
+        }
+
         if (! $this->isManagerOrTechnician($user) && $ticket->reporter_id !== $user->id && $ticket->assignee_id !== $user->id) {
             throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang melihat tiket perbaikan ini.');
         }
@@ -106,10 +116,11 @@ class TicketService
         }
 
         $ticketNumber = $this->generateTicketNumber();
+        $schoolId = $data['school_id'] ?? $user->school_id ?? null;
 
-        $ticket = DB::transaction(function () use ($data, $user, $ticketNumber) {
+        $ticket = DB::transaction(function () use ($data, $user, $ticketNumber, $schoolId) {
             $ticket = Ticket::create([
-                'school_id' => $data['school_id'] ?? null,
+                'school_id' => $schoolId,
                 'ticket_number' => $ticketNumber,
                 'title' => $data['title'] ?? ('Laporan Kerusakan '.Carbon::now()->format('d/m/Y')),
                 'reporter_id' => $user->id,
@@ -261,6 +272,128 @@ class TicketService
         ]);
 
         return $event->fresh(['actor:id,username', 'file']);
+    }
+
+    /**
+     * BE-SAR-03: Ambil ringkasan statistik tiket dan metrik papan Kanban.
+     */
+    public function getSummary(Request $request): array
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new HttpException(401, 'Unauthenticated');
+        }
+
+        $isManager = $this->isManagerOrTechnician($user);
+        $baseQuery = Ticket::query();
+
+        if (! $isManager) {
+            $baseQuery->where('reporter_id', $user->id);
+        }
+
+        if (! empty($user->school_id)) {
+            $baseQuery->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+
+        $total = (clone $baseQuery)->count();
+        $pending = (clone $baseQuery)->where('status', 'pending')->count();
+        $diproses = (clone $baseQuery)->where('status', 'diproses')->count();
+        $selesai = (clone $baseQuery)->where('status', 'selesai')->count();
+        $darurat = (clone $baseQuery)->where('priority', 'darurat')->where('status', '!=', 'selesai')->count();
+
+        // SLA Warning: tiket yang belum selesai dan dibuat lebih dari 24 jam lalu
+        $slaWarning = (clone $baseQuery)->where('status', '!=', 'selesai')
+            ->where('created_at', '<', Carbon::now()->subHours(24))
+            ->count();
+
+        // Rata-rata jam resolusi tiket selesai
+        $resolvedTickets = (clone $baseQuery)->where('status', 'selesai')
+            ->whereNotNull('resolved_at')
+            ->get(['created_at', 'resolved_at']);
+
+        $avgResolutionHours = 0;
+        if ($resolvedTickets->count() > 0) {
+            $totalHours = $resolvedTickets->reduce(function ($carry, $item) {
+                return $carry + Carbon::parse($item->created_at)->diffInHours(Carbon::parse($item->resolved_at));
+            }, 0);
+            $avgResolutionHours = round($totalHours / $resolvedTickets->count(), 1);
+        }
+
+        return [
+            'total' => $total,
+            'pending' => $pending,
+            'diproses' => $diproses,
+            'selesai' => $selesai,
+            'darurat' => $darurat,
+            'sla_warning' => $slaWarning,
+            'avg_resolution_hours' => $avgResolutionHours,
+        ];
+    }
+
+    /**
+     * BE-SAR-03: Ambil daftar teknisi / staf pemeliharaan sarpras dan evaluasi beban kerja responnya.
+     */
+    public function getTechnicians(Request $request): array
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new HttpException(401, 'Unauthenticated');
+        }
+
+        $this->authorizeManage($user);
+
+        $query = User::with(['roles', 'staff'])
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereHas('roles', function ($rq) {
+                    $rq->whereIn('code', ['technician', 'teknisi', 'facility_staff', 'sarpras', 'admin', 'super_admin']);
+                })->orWhereHas('roles.permissions', function ($pq) {
+                    $pq->whereIn('code', ['facility.asset.manage', 'facility.booking.manage']);
+                });
+            });
+
+        if (! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+
+        $users = $query->get();
+
+        return $users->map(function ($tech) {
+            $activeTicketsCount = Ticket::where('assignee_id', $tech->id)
+                ->whereIn('status', ['pending', 'diproses'])
+                ->count();
+            $completedTicketsCount = Ticket::where('assignee_id', $tech->id)
+                ->where('status', 'selesai')
+                ->count();
+
+            $resolvedTickets = Ticket::where('assignee_id', $tech->id)
+                ->where('status', 'selesai')
+                ->whereNotNull('resolved_at')
+                ->get(['created_at', 'resolved_at']);
+
+            $avgResolutionHours = 0;
+            if ($resolvedTickets->count() > 0) {
+                $totalHours = $resolvedTickets->reduce(function ($carry, $item) {
+                    return $carry + Carbon::parse($item->created_at)->diffInHours(Carbon::parse($item->resolved_at));
+                }, 0);
+                $avgResolutionHours = round($totalHours / $resolvedTickets->count(), 1);
+            }
+
+            return [
+                'id' => $tech->id,
+                'name' => $tech->staff?->full_name ?? $tech->username,
+                'username' => $tech->username,
+                'email' => $tech->email,
+                'roles' => $tech->roles->pluck('name', 'code')->toArray(),
+                'active_tickets_count' => $activeTicketsCount,
+                'completed_tickets_count' => $completedTicketsCount,
+                'avg_resolution_hours' => $avgResolutionHours,
+            ];
+        })->values()->toArray();
     }
 
     protected function generateTicketNumber(): string

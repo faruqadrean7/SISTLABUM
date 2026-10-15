@@ -589,4 +589,186 @@ class AttendanceTest extends TestCase
                 'status' => 'hadir',
             ])->assertStatus(403);
     }
+
+    public function test_be_acd_03_student_not_enrolled_in_class_is_rejected_422(): void
+    {
+        // Create student 3 who is NOT in class A
+        $studentUser3 = User::create([
+            'username' => 'siswa3',
+            'email' => 'siswa3@sekolah.sch.id',
+            'password_hash' => Hash::make('secret'),
+            'status' => 'active',
+        ]);
+        $student3 = Student::create([
+            'user_id' => $studentUser3->id,
+            'nis' => '202600003',
+            'nisn' => '0012345680',
+            'nik_enc' => 'enc_3578010101010003',
+            'full_name' => 'Citra Lestari',
+            'gender' => 'P',
+            'birth_place' => 'Malang',
+            'birth_date' => '2008-09-10',
+            'status' => 'aktif',
+            'entry_date' => '2026-07-15',
+        ]);
+
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/attendances', [
+                'journal_id' => $this->journal->id,
+                'attendances' => [
+                    [
+                        'student_id' => $student3->id,
+                        'status' => 'hadir',
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'UNPROCESSABLE_ENTITY');
+    }
+
+    public function test_be_acd_03_invalid_attendance_status_is_rejected_422(): void
+    {
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/attendances', [
+                'journal_id' => $this->journal->id,
+                'attendances' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'status' => 'bolos', // invalid status
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(400)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    public function test_be_acd_03_duplicate_student_in_payload_is_rejected_422(): void
+    {
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/attendances', [
+                'journal_id' => $this->journal->id,
+                'attendances' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'status' => 'hadir',
+                    ],
+                    [
+                        'student_id' => $this->student1->id,
+                        'status' => 'izin',
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'UNPROCESSABLE_ENTITY');
+    }
+
+    public function test_be_acd_03_teacher_cannot_submit_attendance_past_edit_window_422(): void
+    {
+        // Journal created 5 days ago
+        $pastJournal = Journal::create([
+            'schedule_id' => $this->journal->schedule_id,
+            'teacher_id' => $this->teacher1->id,
+            'session_date' => Carbon::now()->subDays(5)->format('Y-m-d'),
+            'topic' => 'Sesi 5 Hari Lalu',
+            'method' => 'Ceramah',
+        ]);
+
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/attendances', [
+                'journal_id' => $pastJournal->id,
+                'attendances' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'status' => 'hadir',
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'UNPROCESSABLE_ENTITY');
+    }
+
+    public function test_be_acd_03_admin_can_override_edit_window_attendance(): void
+    {
+        // Journal created 10 days ago
+        $pastJournal = Journal::create([
+            'schedule_id' => $this->journal->schedule_id,
+            'teacher_id' => $this->teacher1->id,
+            'session_date' => Carbon::now()->subDays(10)->format('Y-m-d'),
+            'topic' => 'Sesi 10 Hari Lalu',
+            'method' => 'Diskusi',
+        ]);
+
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/attendances', [
+                'journal_id' => $pastJournal->id,
+                'attendances' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'status' => 'hadir',
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.total_recorded', 1);
+    }
+
+    public function test_be_acd_03_non_existent_journal_id_is_rejected_422(): void
+    {
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/attendances', [
+                'journal_id' => '00000000-0000-0000-0000-000000000000',
+                'attendances' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'status' => 'hadir',
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(400)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    public function test_be_acd_03_list_attendances_supports_search_keyword_q(): void
+    {
+        Attendance::create([
+            'student_id' => $this->student1->id,
+            'att_date' => Carbon::now()->format('Y-m-d'),
+            'status' => 'hadir',
+            'source' => 'gerbang',
+        ]);
+        Attendance::create([
+            'student_id' => $this->student2->id,
+            'att_date' => Carbon::now()->format('Y-m-d'),
+            'status' => 'hadir',
+            'source' => 'gerbang',
+        ]);
+
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        // Search for student 1: 'Aditya'
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/attendances?q=Aditya');
+
+        $response->assertStatus(200);
+        $this->assertCount(1, $response->json('data'));
+        $this->assertEquals($this->student1->id, $response->json('data.0.student_id'));
+    }
 }

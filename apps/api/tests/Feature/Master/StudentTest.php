@@ -596,4 +596,48 @@ class StudentTest extends TestCase
             'entity' => 'Student',
         ]);
     }
+
+    /**
+     * BE-MST-02: Filter students without class in specific academic year
+     */
+    public function test_be_mst_02_filter_students_without_class(): void
+    {
+        $ay = AcademicYear::create([
+            'name' => '2024/2025',
+            'semester' => 'ganjil',
+            'start_date' => '2024-07-15',
+            'end_date' => '2024-12-20',
+            'is_active' => true,
+        ]);
+
+        $gl = GradeLevel::create([
+            'level' => 10,
+            'name' => 'Kelas 10',
+            'order' => 1,
+        ]);
+
+        $class = SchoolClass::create([
+            'academic_year_id' => $ay->id,
+            'grade_level_id' => $gl->id,
+            'name' => 'X-A',
+            'capacity' => 36,
+        ]);
+
+        // Attach student1 to class, student2 remains without class
+        $class->students()->attach($this->student1->id, [
+            'id' => (string) Str::uuid(),
+            'joined_at' => '2024-07-15',
+            'left_at' => null,
+        ]);
+
+        // Query with without_class=true
+        $resp = $this->actingAs($this->adminUser)
+            ->getJson("/api/v1/students?without_class=true&academic_year_id={$ay->id}");
+
+        $resp->assertStatus(200);
+        $data = $resp->json('data');
+        $this->assertCount(1, $data);
+        $this->assertEquals($this->student2->id, $data[0]['id']);
+    }
 }
+

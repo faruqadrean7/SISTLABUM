@@ -497,4 +497,112 @@ class PostTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(2, 'data');
     }
+
+    /**
+     * BE-CMS-02 / MULTI-TENANCY: School isolation prevents updating or deleting posts belonging to another school.
+     */
+    public function test_be_cms_02_tenant_isolation_prevents_updating_or_deleting_post_across_schools(): void
+    {
+        $schoolAId = '11111111-1111-1111-1111-111111111111';
+        $schoolBId = '22222222-2222-2222-2222-222222222222';
+
+        $this->adminUser->update(['school_id' => $schoolAId]);
+
+        $postSchoolB = Post::create([
+            'school_id' => $schoolBId,
+            'author_id' => $this->adminUser->id,
+            'title' => 'Pengumuman Internal Sekolah B',
+            'slug' => 'pengumuman-internal-b',
+            'content' => 'Konten khusus sekolah B.',
+            'status' => 'draft',
+            'visibility' => 'internal',
+        ]);
+
+        // Attempt show
+        $showRes = $this->actingAs($this->adminUser)
+            ->getJson("/api/v1/posts/{$postSchoolB->id}");
+        $showRes->assertStatus(403);
+
+        // Attempt update
+        $updateRes = $this->actingAs($this->adminUser)
+            ->putJson("/api/v1/posts/{$postSchoolB->id}", [
+                'title' => 'Coba bajak judul',
+            ]);
+        $updateRes->assertStatus(403);
+
+        // Attempt delete
+        $deleteRes = $this->actingAs($this->adminUser)
+            ->deleteJson("/api/v1/posts/{$postSchoolB->id}");
+        $deleteRes->assertStatus(403);
+    }
+
+    /**
+     * INT-05: Post creation and update with cover_file_id properly links file and serializes cover_file relation.
+     */
+    public function test_int_05_post_creation_and_update_with_cover_file_id_eager_loads_cover_file(): void
+    {
+        $coverFile1 = \App\Models\File::create([
+            'school_id' => null,
+            'owner_id' => $this->adminUser->id,
+            'owner_type' => 'App\Models\User',
+            'bucket' => 'default',
+            'object_key' => 'https://cdn.example.com/cover1.jpg',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 54321,
+            'visibility' => 'publik',
+        ]);
+
+        $coverFile2 = \App\Models\File::create([
+            'school_id' => null,
+            'owner_id' => $this->adminUser->id,
+            'owner_type' => 'App\Models\User',
+            'bucket' => 'default',
+            'object_key' => 'https://cdn.example.com/cover2.jpg',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 98765,
+            'visibility' => 'publik',
+        ]);
+
+        // 1. Create post with cover_file_id
+        $createRes = $this->actingAs($this->adminUser)
+            ->postJson('/api/v1/posts', [
+                'title' => 'Berita Dengan Sampul Eksklusif',
+                'content' => 'Detail warta resmi dengan gambar sampul.',
+                'status' => 'terbit',
+                'visibility' => 'publik',
+                'cover_file_id' => $coverFile1->id,
+            ]);
+
+        $createRes->assertStatus(201)
+            ->assertJsonPath('data.cover_file_id', $coverFile1->id);
+
+        $postId = $createRes->json('data.id');
+        $slug = $createRes->json('data.slug');
+
+        // 2. Fetch public post detail - ensure cover_file is eager loaded with url
+        $publicDetailRes = $this->getJson("/api/v1/public/posts/{$slug}");
+        $publicDetailRes->assertStatus(200)
+            ->assertJsonPath('data.cover_file_id', $coverFile1->id)
+            ->assertJsonPath('data.cover_file.id', $coverFile1->id)
+            ->assertJsonPath('data.cover_file.url', 'https://cdn.example.com/cover1.jpg');
+
+        // 3. Update post with new cover_file_id
+        $updateRes = $this->actingAs($this->adminUser)
+            ->putJson("/api/v1/posts/{$postId}", [
+                'cover_file_id' => $coverFile2->id,
+            ]);
+
+        $updateRes->assertStatus(200)
+            ->assertJsonPath('data.cover_file_id', $coverFile2->id);
+
+        // 4. Fetch admin post list - ensure cover_file is eager loaded
+        $adminListRes = $this->actingAs($this->adminUser)
+            ->getJson('/api/v1/posts');
+        $adminListRes->assertStatus(200);
+
+        $matchedPost = collect($adminListRes->json('data'))->firstWhere('id', $postId);
+        $this->assertNotNull($matchedPost);
+        $this->assertEquals($coverFile2->id, $matchedPost['cover_file_id']);
+        $this->assertEquals('https://cdn.example.com/cover2.jpg', $matchedPost['cover_file']['url'] ?? null);
+    }
 }

@@ -123,6 +123,37 @@ class PPDBAccountController extends Controller
     }
 
     /**
+     * BE-PPDB-02: Applicant Login via Email/Phone/RegistrationNo + Password.
+     * POST /api/v1/ppdb/login
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'identifier' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        try {
+            $data = $this->service->login($validated['identifier'], $validated['password'], $request);
+
+            return $this->successResponse($data);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                401 => 'INVALID_CREDENTIALS',
+                403 => 'ACCOUNT_INACTIVE',
+                429 => 'RATE_LIMITED',
+                default => 'BUSINESS_RULE_VIOLATION',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat masuk ke akun pendaftar', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-PPDB-02: Get currently authenticated applicant profile & applications.
      * GET /api/v1/ppdb/me
      */

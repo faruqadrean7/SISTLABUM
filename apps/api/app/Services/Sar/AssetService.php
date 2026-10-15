@@ -14,9 +14,16 @@ class AssetService
     /**
      * BE-SAR-02: Daftar aset berpaginasi.
      */
-    public function listAssets(array $filters): LengthAwarePaginator
+    public function listAssets(array $filters, ?Request $request = null): LengthAwarePaginator
     {
         $query = Asset::with('room')->orderBy('created_at', 'desc');
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
 
         if (! empty($filters['room_id'])) {
             $query->where('room_id', $filters['room_id']);
@@ -46,19 +53,120 @@ class AssetService
     /**
      * BE-SAR-02: Detail aset berdasarkan ID.
      */
-    public function getAsset(string $id): Asset
+    public function getAsset(string $id, ?Request $request = null): Asset
     {
-        return Asset::with(['room', 'auditItems.audit'])->findOrFail($id);
+        $user = $request?->user();
+        $asset = Asset::with([
+            'room',
+            'auditItems.audit.auditor:id,username',
+            'tickets.reporter:id,username',
+            'tickets.assignee:id,username',
+        ])->findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($asset->school_id) && $asset->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Aset berada di luar sekolah penugasan Anda.');
+        }
+
+        return $asset;
     }
 
     /**
      * BE-SAR-02: Scan / lookup aset berdasarkan kode QR/barcode.
      */
-    public function getAssetByCode(string $code): Asset
+    public function getAssetByCode(string $code, ?Request $request = null): Asset
     {
-        return Asset::with(['room', 'auditItems.audit'])
-            ->where('asset_code', $code)
-            ->firstOrFail();
+        $user = $request?->user();
+        $query = Asset::with([
+            'room',
+            'auditItems.audit.auditor:id,username',
+            'tickets.reporter:id,username',
+            'tickets.assignee:id,username',
+        ])->where('asset_code', $code);
+
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+
+        return $query->firstOrFail();
+    }
+
+    /**
+     * BE-SAR-02: Dapatkan data label QR code dan identitas fisik untuk pencetakan.
+     */
+    public function getAssetQr(string $id, Request $request): array
+    {
+        $asset = $this->getAsset($id, $request);
+
+        $qrPayload = [
+            'system' => 'SISTLABUM',
+            'module' => 'SAR-02',
+            'asset_id' => $asset->id,
+            'code' => $asset->asset_code,
+            'name' => $asset->name,
+            'room' => $asset->room?->name ?? 'Belum ditentukan',
+            'category' => $asset->category,
+        ];
+
+        return [
+            'asset' => $asset,
+            'qr_code' => $asset->asset_code,
+            'qr_data_string' => $asset->asset_code,
+            'qr_payload' => $qrPayload,
+            'label_title' => 'INVENTARIS SEKOLAH',
+            'school_id' => $asset->school_id,
+            'printed_at' => \Carbon\Carbon::now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * BE-SAR-02: Ringkasan metrik inventaris dan kondisi aset.
+     */
+    public function getSummary(Request $request): array
+    {
+        $user = $request->user();
+        $query = Asset::query();
+
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+
+        $totalAssets = (clone $query)->count();
+        $conditionBaik = (clone $query)->where('asset_condition', 'baik')->count();
+        $conditionRusakRingan = (clone $query)->where('asset_condition', 'rusak_ringan')->count();
+        $conditionRusakBerat = (clone $query)->where('asset_condition', 'rusak_berat')->count();
+
+        // Kategori distribusi
+        $categories = (clone $query)
+            ->select('category', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('category')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->pluck('count', 'category')
+            ->toArray();
+
+        // Sesi stok opname
+        $auditQuery = \App\Models\AssetAudit::query();
+        if ($user && ! empty($user->school_id)) {
+            $auditQuery->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
+        $totalAudits = $auditQuery->count();
+        $completedAudits = (clone $auditQuery)->where('status', 'selesai')->count();
+
+        return [
+            'total_assets' => $totalAssets,
+            'condition_baik' => $conditionBaik,
+            'condition_rusak_ringan' => $conditionRusakRingan,
+            'condition_rusak_berat' => $conditionRusakBerat,
+            'category_counts' => $categories,
+            'total_audits' => $totalAudits,
+            'completed_audits' => $completedAudits,
+        ];
     }
 
     /**
@@ -69,8 +177,10 @@ class AssetService
         $user = $request->user();
         $this->authorizeManage($user);
 
+        $schoolId = $data['school_id'] ?? $user?->school_id ?? null;
+
         $asset = Asset::create([
-            'school_id' => $data['school_id'] ?? null,
+            'school_id' => $schoolId,
             'room_id' => $data['room_id'] ?? null,
             'asset_code' => $data['asset_code'],
             'name' => $data['name'],
@@ -97,13 +207,18 @@ class AssetService
         $this->authorizeManage($user);
 
         $asset = Asset::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($asset->school_id) && $asset->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang mengubah aset sekolah lain.');
+        }
+
         $oldValues = $asset->toArray();
 
         $asset->update($data);
 
         $this->logAudit($user?->id, 'asset.update', 'assets', $asset->id, $oldValues, $asset->fresh()->toArray(), $request);
 
-        return $asset->fresh('room');
+        return $asset->fresh(['room', 'auditItems.audit']);
     }
 
     /**
@@ -115,6 +230,11 @@ class AssetService
         $this->authorizeManage($user);
 
         $asset = Asset::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($asset->school_id) && $asset->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki wewenang menghapus aset sekolah lain.');
+        }
+
         $oldValues = $asset->toArray();
 
         $asset->delete();

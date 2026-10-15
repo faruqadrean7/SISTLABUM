@@ -14,7 +14,7 @@ class ApproveProgressReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', 'in:disetujui,terbit,draft'],
+            'status' => ['required', 'string', 'in:disetujui,terbit,draft,menunggu_acc'],
             'note' => ['nullable', 'string', 'max:500'],
         ];
     }
@@ -23,7 +23,7 @@ class ApproveProgressReportRequest extends FormRequest
     {
         return [
             'status.required' => 'Status persetujuan wajib diisi.',
-            'status.in' => 'Status hanya boleh berupa disetujui, terbit, atau draft (revisi).',
+            'status.in' => 'Status hanya boleh berupa disetujui, terbit, draft (revisi), atau menunggu_acc.',
             'note.max' => 'Catatan persetujuan maksimal 500 karakter.',
         ];
     }

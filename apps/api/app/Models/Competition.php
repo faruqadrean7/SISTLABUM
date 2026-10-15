@@ -19,11 +19,14 @@ class Competition extends Model
         'level',
         'category',
         'held_at',
+        'registration_deadline',
+        'status',
         'description',
     ];
 
     protected $casts = [
         'held_at' => 'date',
+        'registration_deadline' => 'date',
     ];
 
     public function entries(): HasMany

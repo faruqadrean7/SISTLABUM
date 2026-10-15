@@ -307,19 +307,25 @@ class ProgressReportService
         /** @var User $currentUser */
         $currentUser = $request->user();
 
-        if (! $this->canApprove($currentUser)) {
+        $newStatus = $data['status'];
+
+        if ($newStatus !== 'menunggu_acc' && ! $this->canApprove($currentUser)) {
             throw new HttpException(403, 'Hanya Kepala Sekolah atau Administrator yang berwenang menyetujui e-progress report.');
         }
 
         $report = ProgressReport::findOrFail($id);
+
+        if ($newStatus === 'menunggu_acc' && ! $this->checkIsAdmin($currentUser)) {
+            $this->authorizeAccess($report, $request);
+        }
+
         $oldStatus = $report->status;
-        $newStatus = $data['status'];
 
         $report->status = $newStatus;
         if (in_array($newStatus, ['disetujui', 'terbit'])) {
             $report->approved_by = $currentUser->id;
         } else {
-            // Jika dikembalikan ke draft untuk revisi
+            // Jika dikembalikan ke draft untuk revisi atau diajukan ke menunggu_acc
             $report->approved_by = null;
         }
 
@@ -336,6 +342,257 @@ class ProgressReportService
         );
 
         return $report->fresh(['student', 'period.semester.academicYear', 'approver']);
+    }
+
+    /**
+     * BE-GRD-03: Pengesahan massal / ACC Kepala Sekolah atas E-Progress Report.
+     */
+    public function bulkApprove(array $data, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        $newStatus = $data['status'];
+
+        if ($newStatus !== 'menunggu_acc' && ! $this->canApprove($currentUser)) {
+            throw new HttpException(403, 'Hanya Kepala Sekolah atau Administrator yang berwenang menyetujui e-progress report.');
+        }
+        $query = ProgressReport::query();
+
+        if (! empty($data['report_ids'])) {
+            $query->whereIn('id', $data['report_ids']);
+        } elseif (! empty($data['class_id']) && ! empty($data['period_id'])) {
+            $classId = $data['class_id'];
+            $periodId = $data['period_id'];
+            $query->where('period_id', $periodId)
+                ->whereHas('student.classes', fn ($q) => $q->where('classes.id', $classId)->whereNull('class_students.left_at'));
+        } else {
+            throw new HttpException(422, 'Wajib menyertakan report_ids atau kombinasi class_id dan period_id.');
+        }
+
+        $reports = $query->get();
+
+        if ($reports->isEmpty()) {
+            return [
+                'count' => 0,
+                'status' => $newStatus,
+                'items' => [],
+            ];
+        }
+
+        $updatedCount = 0;
+        $updatedItems = [];
+
+        DB::transaction(function () use ($reports, $newStatus, $currentUser, $request, $data, &$updatedCount, &$updatedItems) {
+            foreach ($reports as $report) {
+                $oldStatus = $report->status;
+                $report->status = $newStatus;
+
+                if (in_array($newStatus, ['disetujui', 'terbit'])) {
+                    $report->approved_by = $currentUser->id;
+                } else {
+                    $report->approved_by = null;
+                }
+
+                $report->save();
+                $updatedCount++;
+
+                $this->logAudit(
+                    $currentUser->id,
+                    'progress_report.bulk_approve',
+                    'progress_reports',
+                    $report->id,
+                    ['status' => $oldStatus],
+                    ['status' => $newStatus, 'approved_by' => $report->approved_by, 'note' => $data['note'] ?? null],
+                    $request
+                );
+
+                $updatedItems[] = $report->fresh(['student', 'period.semester', 'approver']);
+            }
+        });
+
+        return [
+            'count' => $updatedCount,
+            'status' => $newStatus,
+            'items' => $updatedItems,
+        ];
+    }
+
+    /**
+     * BE-GRD-03: Tinjauan status & kesiapan data rapor satu kelas/rombel.
+     */
+    public function getClassProgressReportsStatus(array $filters, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (empty($filters['class_id']) || empty($filters['period_id'])) {
+            throw new HttpException(422, 'Parameter class_id dan period_id wajib disertakan.');
+        }
+
+        $class = SchoolClass::with('homeroomTeacher')->findOrFail($filters['class_id']);
+        $period = GradePeriod::with('semester.academicYear')->findOrFail($filters['period_id']);
+
+        // Otorisasi: Walas kelas bersangkutan atau Admin/Kepsek
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if (! $teacher || $class->homeroom_teacher_id !== $teacher->id) {
+                throw new HttpException(403, 'Anda bukan wali kelas dari rombel ini.');
+            }
+        }
+
+        // Siswa aktif di rombel
+        $students = Student::whereHas('classes', function ($q) use ($class) {
+            $q->where('classes.id', $class->id)->whereNull('class_students.left_at');
+        })->orderBy('full_name', 'asc')->get();
+
+        $studentIds = $students->pluck('id');
+
+        // Existing reports
+        $existingReports = ProgressReport::with('approver')
+            ->whereIn('student_id', $studentIds)
+            ->where('period_id', $period->id)
+            ->get()
+            ->keyBy('student_id');
+
+        // Data nilai per siswa di periode ini
+        $gradesCount = Grade::whereIn('student_id', $studentIds)
+            ->where('period_id', $period->id)
+            ->select('student_id', DB::raw('count(distinct component_id) as comp_count'))
+            ->groupBy('student_id')
+            ->pluck('comp_count', 'student_id');
+
+        // Catatan karakter per siswa di periode ini
+        $charNotes = CharacterNote::whereIn('student_id', $studentIds)
+            ->where('period_id', $period->id)
+            ->get()
+            ->keyBy('student_id');
+
+        // Kehadiran per siswa di bulan ini
+        $attendanceQuery = Attendance::whereIn('student_id', $studentIds);
+        if ($period->month) {
+            $attendanceQuery->whereMonth('att_date', $period->month);
+        }
+        $attendanceCount = $attendanceQuery
+            ->select('student_id', DB::raw('count(*) as att_count'))
+            ->groupBy('student_id')
+            ->pluck('att_count', 'student_id');
+
+        $studentRows = [];
+        $counts = [
+            'total_students' => $students->count(),
+            'generated_count' => 0,
+            'draft_count' => 0,
+            'menunggu_acc_count' => 0,
+            'disetujui_count' => 0,
+            'terbit_count' => 0,
+            'belum_dibuat_count' => 0,
+            'ready_to_generate_count' => 0,
+        ];
+
+        foreach ($students as $stu) {
+            /** @var ProgressReport|null $rep */
+            $rep = $existingReports->get($stu->id);
+            $hasGrades = ($gradesCount->get($stu->id, 0) > 0);
+            $cNote = $charNotes->get($stu->id);
+            $hasCharNote = ($cNote !== null);
+            $charNoteComplete = $cNote ? (count($cNote->scale_data ?? []) > 0 && ! empty($cNote->homeroom_note)) : false;
+            $attDays = $attendanceCount->get($stu->id, 0);
+
+            $isReady = $hasGrades && $hasCharNote;
+            if ($isReady) {
+                $counts['ready_to_generate_count']++;
+            }
+
+            if ($rep) {
+                $counts['generated_count']++;
+                match ($rep->status) {
+                    'draft' => $counts['draft_count']++,
+                    'menunggu_acc' => $counts['menunggu_acc_count']++,
+                    'disetujui' => $counts['disetujui_count']++,
+                    'terbit' => $counts['terbit_count']++,
+                    default => null,
+                };
+            } else {
+                $counts['belum_dibuat_count']++;
+            }
+
+            $studentRows[] = [
+                'student' => [
+                    'id' => $stu->id,
+                    'nis' => $stu->nis,
+                    'nisn' => $stu->nisn,
+                    'full_name' => $stu->full_name,
+                    'gender' => $stu->gender,
+                ],
+                'report' => $rep ? [
+                    'id' => $rep->id,
+                    'status' => $rep->status,
+                    'verify_token' => $rep->verify_token,
+                    'created_at' => $rep->created_at?->toIso8601String(),
+                    'updated_at' => $rep->updated_at?->toIso8601String(),
+                    'approved_by' => $rep->approved_by,
+                    'approver_name' => $rep->approver?->name ?? $rep->approver?->username,
+                ] : null,
+                'data_readiness' => [
+                    'has_grades' => $hasGrades,
+                    'graded_subjects_count' => (int) $gradesCount->get($stu->id, 0),
+                    'has_character_note' => $hasCharNote,
+                    'character_note_complete' => $charNoteComplete,
+                    'attendance_days_count' => (int) $attDays,
+                    'is_ready_to_generate' => $isReady,
+                ],
+            ];
+        }
+
+        return [
+            'class' => [
+                'id' => $class->id,
+                'name' => $class->name,
+                'homeroom_teacher' => $class->homeroomTeacher?->full_name,
+            ],
+            'period' => [
+                'id' => $period->id,
+                'month' => (int) $period->month,
+                'semester_name' => $period->semester?->name,
+                'academic_year' => $period->semester?->academicYear?->name,
+                'is_locked' => (bool) $period->is_locked,
+            ],
+            'students' => $studentRows,
+            'summary' => $counts,
+        ];
+    }
+
+    /**
+     * BE-GRD-03: Pratinjau data snapshot rapor siswa sebelum disimpan.
+     */
+    public function previewProgressReport(array $data, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (empty($data['student_id']) || empty($data['period_id'])) {
+            throw new HttpException(422, 'Parameter student_id dan period_id wajib disertakan.');
+        }
+
+        $student = Student::with('classes')->findOrFail($data['student_id']);
+        $period = GradePeriod::with('semester.academicYear')->findOrFail($data['period_id']);
+
+        // Cek otorisasi
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if ($teacher) {
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+                $isWalas = $student->classes()->whereIn('classes.id', $homeroomClassIds)->whereNull('class_students.left_at')->exists();
+                if (! $isWalas) {
+                    throw new HttpException(403, 'Akses ditolak.');
+                }
+            } else {
+                throw new HttpException(403, 'Akses ditolak.');
+            }
+        }
+
+        return $this->compileSnapshot($student, $period);
     }
 
     /**
@@ -464,7 +721,7 @@ class ProgressReportService
             'RINGKASAN NILAI MATA PELAJARAN:',
         ];
 
-        foreach (array_slice($grades, 0, 8) as $g) {
+        foreach ($grades as $g) {
             $lines[] = sprintf(' - %-30s : Skor Akhir = %s', ($g['subject_name'] ?? 'Mapel'), ($g['final_score'] ?? 0));
         }
 
@@ -476,7 +733,28 @@ class ProgressReportService
             $att['alpa'] ?? 0,
             $att['percentage'] ?? 0
         );
-        $lines[] = 'CATATAN WALI KELAS: '.substr(($char['homeroom_note'] ?? '-'), 0, 80);
+        $lines[] = '------------------------------------------------------------------------';
+        $lines[] = 'DIMENSI KARAKTER (PROFIL PELAJAR PANCASILA):';
+        if (! empty($char['scale_data']) && is_array($char['scale_data'])) {
+            $dimPairs = [];
+            foreach ($char['scale_data'] as $dim => $val) {
+                $dimLabel = ucwords(str_replace('_', ' ', $dim));
+                $valLabel = is_string($val) ? ucwords(str_replace('_', ' ', $val)) : (string) $val;
+                $dimPairs[] = "{$dimLabel}: {$valLabel}";
+            }
+            foreach (array_chunk($dimPairs, 2) as $pairChunk) {
+                $lines[] = ' - ' . implode(' | ', $pairChunk);
+            }
+        } else {
+            $lines[] = ' - Belum ada catatan dimensi karakter';
+        }
+        $lines[] = '------------------------------------------------------------------------';
+        $note = $char['homeroom_note'] ?? '-';
+        $lines[] = 'CATATAN WALI KELAS:';
+        $wrapped = wordwrap($note, 70, "\n");
+        foreach (explode("\n", $wrapped) as $noteLine) {
+            $lines[] = '   ' . $noteLine;
+        }
         $lines[] = '========================================================================';
         $lines[] = 'STATUS PENGESAHAN : '.strtoupper($report->status);
         $lines[] = 'KEPALA SEKOLAH    : '.($report->approver?->name ?? 'Kepala Sekolah');
@@ -484,38 +762,52 @@ class ProgressReportService
         $lines[] = 'URL VERIFIKASI    : '.$verifyUrl;
         $lines[] = '========================================================================';
 
-        // Render PDF content stream
-        $textStream = "BT\n/F1 10 Tf\n50 780 Td\n15 TL\n";
-        foreach ($lines as $line) {
-            // Escape kurung untuk format PostScript/PDF
-            $sanitized = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line);
-            $textStream .= "({$sanitized}) '\n";
+        $pagesLines = array_chunk($lines, 48);
+        if (empty($pagesLines)) {
+            $pagesLines = [[]];
         }
-        $textStream .= "ET\n";
-
-        $streamLen = strlen($textStream);
+        $numPages = count($pagesLines);
 
         $objects = [];
-        $objects[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
-        $objects[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
-        $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
-        $objects[] = "4 0 obj\n<< /Length ".$streamLen." >>\nstream\n".$textStream."endstream\nendobj\n";
-        $objects[] = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n";
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+        $kids = [];
+        for ($k = 0; $k < $numPages; $k++) {
+            $kids[] = (4 + 2 * $k).' 0 R';
+        }
+        $objects[2] = '<< /Type /Pages /Kids ['.implode(' ', $kids).'] /Count '.$numPages.' >>';
+        $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>';
+
+        for ($k = 0; $k < $numPages; $k++) {
+            $pageObjId = 4 + 2 * $k;
+            $contentObjId = 5 + 2 * $k;
+
+            $textStream = "BT\n/F1 10 Tf\n50 780 Td\n15 TL\n";
+            foreach ($pagesLines[$k] as $line) {
+                $sanitized = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line);
+                $textStream .= "({$sanitized}) '\n";
+            }
+            $textStream .= "ET\n";
+            $streamLen = strlen($textStream);
+
+            $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents '.$contentObjId.' 0 R /Resources << /Font << /F1 3 0 R >> >> >>';
+            $objects[$contentObjId] = "<< /Length {$streamLen} >>\nstream\n{$textStream}endstream";
+        }
 
         $pdf = "%PDF-1.4\n";
-        $offsets = [0];
-        foreach ($objects as $obj) {
-            $offsets[] = strlen($pdf);
-            $pdf .= $obj;
+        $offsets = [0 => 0];
+        $totalObjs = count($objects);
+        for ($i = 1; $i <= $totalObjs; $i++) {
+            $offsets[$i] = strlen($pdf);
+            $pdf .= "{$i} 0 obj\n{$objects[$i]}\nendobj\n";
         }
 
         $xrefOffset = strlen($pdf);
-        $pdf .= "xref\n0 ".(count($objects) + 1)."\n";
+        $pdf .= "xref\n0 ".($totalObjs + 1)."\n";
         $pdf .= "0000000000 65535 f \n";
-        for ($i = 1; $i <= count($objects); $i++) {
+        for ($i = 1; $i <= $totalObjs; $i++) {
             $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
         }
-        $pdf .= "trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\n";
+        $pdf .= "trailer\n<< /Size ".($totalObjs + 1)." /Root 1 0 R >>\n";
         $pdf .= "startxref\n".$xrefOffset."\n%%EOF\n";
 
         return $pdf;
@@ -575,8 +867,22 @@ class ProgressReportService
 
         $teacher = Teacher::where('user_id', $user->id)->first();
         if ($teacher) {
-            // Walas atau guru
-            return true;
+            // Walas harus merupakan wali kelas dari kelas / siswa target
+            if (! empty($data['class_id'])) {
+                return SchoolClass::where('id', $data['class_id'])
+                    ->where('homeroom_teacher_id', $teacher->id)
+                    ->exists();
+            }
+
+            if (! empty($data['student_id'])) {
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+
+                return Student::where('id', $data['student_id'])
+                    ->whereHas('classes', fn ($q) => $q->whereIn('classes.id', $homeroomClassIds)->whereNull('class_students.left_at'))
+                    ->exists();
+            }
+
+            return false;
         }
 
         return false;

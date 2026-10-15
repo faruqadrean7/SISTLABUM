@@ -162,6 +162,117 @@ class CharacterNoteService
     }
 
     /**
+     * BE-GRD-02 / ADM-GRD-02: Tampilan massal catatan karakter satu rombel kelas.
+     */
+    public function getClassCharacterNotes(array $filters, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (empty($filters['class_id']) || empty($filters['period_id'])) {
+            throw new HttpException(422, 'Parameter class_id dan period_id wajib disertakan.');
+        }
+
+        $classId = $filters['class_id'];
+        $periodId = $filters['period_id'];
+
+        $schoolClass = SchoolClass::with(['gradeLevel', 'academicYear', 'homeroomTeacher'])->findOrFail($classId);
+        $period = GradePeriod::with('semester.academicYear')->findOrFail($periodId);
+
+        // Otorisasi IDOR: Jika bukan admin, harus wali kelas dari rombel ini
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if (! $teacher || $schoolClass->homeroom_teacher_id !== $teacher->id) {
+                throw new HttpException(403, 'Anda bukan wali kelas dari rombel kelas ini.');
+            }
+        }
+
+        // Ambil siswa aktif di rombel kelas
+        $enrolledStudentIds = ClassStudent::where('class_id', $classId)->pluck('student_id');
+        $students = Student::whereIn('id', $enrolledStudentIds)
+            ->whereIn('status', ['aktif', 'active'])
+            ->orderBy('nisn', 'asc')
+            ->get(['id', 'nisn', 'nis', 'full_name', 'gender']);
+
+        // Ambil catatan karakter untuk periode ini
+        $notes = CharacterNote::with('author')
+            ->where('period_id', $periodId)
+            ->whereIn('student_id', $enrolledStudentIds)
+            ->get()
+            ->keyBy('student_id');
+
+        $studentRows = [];
+        $completeCount = 0;
+        $incompleteCount = 0;
+
+        foreach ($students as $stu) {
+            /** @var CharacterNote|null $note */
+            $note = $notes->get($stu->id);
+            $hasNote = $note !== null;
+            $scaleData = $hasNote ? ($note->scale_data ?? []) : [];
+            $homeroomNote = $hasNote ? $note->homeroom_note : null;
+
+            // Hitung kelengkapan 8 dimensi profil pelajar pancasila & catatan walas
+            $nonEmptyDimensions = is_array($scaleData)
+                ? array_filter($scaleData, fn ($v) => $v !== null && $v !== '')
+                : [];
+            $dimensionsCount = count($nonEmptyDimensions);
+            $allDimensionsComplete = $dimensionsCount >= 8;
+            $hasHomeroomNote = ! empty(trim((string) $homeroomNote));
+
+            if (! $hasNote || $dimensionsCount === 0) {
+                $completenessStatus = 'belum_dibuat';
+            } elseif ($allDimensionsComplete && $hasHomeroomNote) {
+                $completenessStatus = 'lengkap';
+            } else {
+                $completenessStatus = 'belum_lengkap';
+            }
+
+            $isComplete = $hasNote && ! empty($scaleData);
+            if ($isComplete) {
+                $completeCount++;
+            } else {
+                $incompleteCount++;
+            }
+
+            $studentRows[] = [
+                'student' => [
+                    'id' => $stu->id,
+                    'nisn' => $stu->nisn,
+                    'nis' => $stu->nis,
+                    'name' => $stu->name,
+                    'full_name' => $stu->full_name,
+                    'gender' => $stu->gender,
+                ],
+                'note' => $note,
+                'scale_data' => $scaleData,
+                'homeroom_note' => $homeroomNote,
+                'is_complete' => $isComplete,
+                'completeness_status' => $completenessStatus,
+                'all_dimensions_complete' => $allDimensionsComplete,
+                'dimensions_count' => $dimensionsCount,
+                'updated_at' => $note?->updated_at,
+            ];
+        }
+
+        $totalStudents = $students->count();
+        $completionRate = $totalStudents > 0 ? round(($completeCount / $totalStudents) * 100, 2) : 0;
+
+        return [
+            'class' => $schoolClass,
+            'period' => $period,
+            'is_locked' => $period->status === 'locked',
+            'students' => $studentRows,
+            'summary' => [
+                'total_students' => $totalStudents,
+                'complete_count' => $completeCount,
+                'incomplete_count' => $incompleteCount,
+                'completion_rate' => $completionRate,
+            ],
+        ];
+    }
+
+    /**
      * BE-GRD-02: Detail catatan karakter.
      */
     public function getCharacterNoteDetail(string $id, Request $request): CharacterNote

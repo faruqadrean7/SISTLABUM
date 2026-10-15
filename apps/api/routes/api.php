@@ -66,6 +66,7 @@ use App\Http\Controllers\Api\V1\RbacController;
 use App\Http\Controllers\Api\V1\ReportCardController;
 use App\Http\Controllers\Api\V1\ReportDescriptionTemplateController;
 use App\Http\Controllers\Api\V1\RoomController;
+use App\Http\Controllers\Api\V1\Rpt\ApprovalController;
 use App\Http\Controllers\Api\V1\Rpt\DashboardController;
 use App\Http\Controllers\Api\V1\Rpt\ReportController;
 use App\Http\Controllers\Api\V1\Sar\AssetAuditController;
@@ -696,7 +697,8 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-GUEST-01 & BE-GUEST-03: Buku Tamu Digital (Staff / Admin Operations)
         // =====================================================================
-        Route::get('/guests', [GuestController::class, 'index']);
+        Route::get('/guests', [GuestController::class, 'index'])
+            ->middleware('permission:guest.book.read');
         Route::get('/guests/{id}', [GuestController::class, 'show']);
         Route::get('/guests/{id}/signature', [GuestController::class, 'getSignature']);
         Route::patch('/guests/{id}/checkout', [GuestController::class, 'checkout'])
@@ -1353,6 +1355,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/dashboard/teacher', [DashboardController::class, 'teacher']);
         Route::get('/dashboard/student', [DashboardController::class, 'student']);
         Route::get('/dashboard/guardian/{studentId?}', [DashboardController::class, 'guardian']);
+
+        // =====================================================================
+        // BE-RPT-02 / ADM-DASH-02: Antrean & Eksekusi Persetujuan Eksekutif
+        // =====================================================================
+        Route::get('/approvals/pending', [ApprovalController::class, 'pending']);
+        Route::post('/approvals/{id}/review', [ApprovalController::class, 'review']);
 
         // =====================================================================
         // BE-FILE-01: Penyimpanan & Utilitas Berkas (Upload Bertanda Tangan)

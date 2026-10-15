@@ -21,7 +21,7 @@ class SiteSettingService
         foreach ($defaults as $section => $defaultValues) {
             $storedSection = $stored[$section] ?? [];
             if (is_array($defaultValues)) {
-                $profile[$section] = array_merge($defaultValues, $storedSection);
+                $profile[$section] = $this->resolveSection($section, $defaultValues, is_array($storedSection) ? $storedSection : []);
             } else {
                 $profile[$section] = $storedSection ?: $defaultValues;
             }
@@ -45,7 +45,7 @@ class SiteSettingService
                     $existing = $setting?->setting_value ?? ($this->getDefaults()[$section] ?? []);
 
                     $oldValues[$section] = $existing;
-                    $merged = array_merge($existing, $data[$section]);
+                    $merged = is_array($existing) ? $this->deepMerge($existing, $data[$section]) : $data[$section];
 
                     SiteSetting::updateOrCreate(
                         ['setting_key' => $section],
@@ -82,22 +82,22 @@ class SiteSettingService
     {
         return [
             'identity' => [
-                'name' => 'SMA Labschool UM',
-                'tagline' => 'Membangun Karakter Cerdas, Islami, dan Berdaya Saing Global',
+                'name' => 'SMP Laboratorium UM',
+                'tagline' => 'Beradab, Kreatif, Berprestasi',
                 'logo_url' => null,
                 'favicon_url' => null,
             ],
             'contact' => [
-                'phone' => '(0341) 551312',
-                'email' => 'info@labschool.sch.id',
-                'whatsapp' => '081234567890',
+                'phone' => '(0341) 588550',
+                'email' => 'info@smplab-um.sch.id',
+                'whatsapp' => '0851-2608-8473',
             ],
             'address' => [
-                'street' => 'Jl. Surabaya No. 6',
+                'street' => 'Jl. Simpang Bogor No. T-7',
                 'city' => 'Kota Malang',
                 'postal_code' => '65145',
-                'latitude' => -7.9622,
-                'longitude' => 112.6173,
+                'latitude' => -7.9531,
+                'longitude' => 112.6144,
                 'maps_embed_url' => null,
             ],
             'social_media' => [
@@ -108,16 +108,16 @@ class SiteSettingService
                 'tiktok' => null,
             ],
             'profile' => [
-                'vision' => 'Menjadi sekolah rujukan berstandar nasional dan global berlandaskan nilai-nilai luhur dan inovasi.',
+                'vision' => 'Mewujudkan Generasi Beriman, Berkarakter, Berprestasi, dan Berbudaya',
                 'mission' => [
                     'Menyelenggarakan pendidikan berkualitas yang mengembangkan potensi kecerdasan intelektual, emosional, dan spiritual.',
                     'Membina budaya riset, teknologi, dan kewirausahaan sejak dini.',
                     'Menanamkan karakter berwawasan kebangsaan dan kepedulian lingkungan hidup.',
                 ],
                 'principal_greeting' => [
-                    'principal_name' => 'Dr. Hj. Siti Fatimah, M.Pd.',
+                    'principal_name' => 'Bapak Tamyis Suliantoro, M.Pd.',
                     'principal_photo_url' => null,
-                    'greeting_text' => 'Selamat datang di Portal Resmi Portal Sekolah Satu Pintu SMA Labschool UM.',
+                    'greeting_text' => 'Selamat datang di Portal Resmi Portal Sekolah Satu Pintu SMP Laboratorium UM.',
                 ],
                 'accreditation' => [
                     'grade' => 'A',
@@ -172,5 +172,96 @@ class SiteSettingService
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    /**
+     * BE-CMS-01 / INT-06-FIX: Resolve section fields with field-specific fallback rules.
+     *
+     * Rules:
+     * 1. If stored field is non-empty / valid, admin value takes precedence.
+     * 2. If stored field is null or empty string for an invariant field with a default, fallback to default.
+     * 3. If default is null (optional fields like social media, logo, favicon), keep null if stored is empty.
+     * 4. For numeric fields (latitude, longitude, score), 0 is a valid number and never treated as empty.
+     * 5. For array fields (mission, featured_programs), non-empty arrays take precedence; empty arrays fallback.
+     */
+    protected function resolveSection(string $section, array $defaults, array $stored): array
+    {
+        $resolved = [];
+
+        foreach ($defaults as $key => $defaultValue) {
+            $hasStored = array_key_exists($key, $stored);
+            $storedValue = $hasStored ? $stored[$key] : null;
+
+            if (is_array($defaultValue)) {
+                if ($this->isAssoc($defaultValue)) {
+                    $storedSub = is_array($storedValue) ? $storedValue : [];
+                    $resolved[$key] = $this->resolveSection("{$section}.{$key}", $defaultValue, $storedSub);
+                } else {
+                    if (is_array($storedValue) && count($storedValue) > 0) {
+                        $resolved[$key] = $storedValue;
+                    } else {
+                        $resolved[$key] = $defaultValue;
+                    }
+                }
+            } elseif (is_numeric($defaultValue)) {
+                if ($hasStored && ! is_null($storedValue) && $storedValue !== '' && is_numeric($storedValue)) {
+                    $resolved[$key] = is_float($defaultValue) ? (float) $storedValue : (int) $storedValue;
+                } else {
+                    $resolved[$key] = $defaultValue;
+                }
+            } elseif (is_null($defaultValue)) {
+                // Intentionally optional field (logo_url, favicon_url, maps_embed_url, social_media URLs, principal_photo_url)
+                if ($hasStored && ! is_null($storedValue) && trim((string) $storedValue) !== '') {
+                    $resolved[$key] = trim((string) $storedValue);
+                } else {
+                    $resolved[$key] = null;
+                }
+            } else {
+                // Invariant string field (name, tagline, phone, email, whatsapp, street, city, vision, etc.)
+                if ($hasStored && ! is_null($storedValue) && trim((string) $storedValue) !== '') {
+                    $resolved[$key] = trim((string) $storedValue);
+                } else {
+                    $resolved[$key] = $defaultValue;
+                }
+            }
+        }
+
+        // Include any extra custom keys stored by admin
+        foreach ($stored as $key => $storedValue) {
+            if (! array_key_exists($key, $resolved)) {
+                $resolved[$key] = $storedValue;
+            }
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * Recursively merge associative arrays while preserving non-associative sub-arrays.
+     */
+    protected function deepMerge(array $array1, array $array2): array
+    {
+        $merged = $array1;
+        foreach ($array2 as $key => $value) {
+            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key]) && $this->isAssoc($value)) {
+                $merged[$key] = $this->deepMerge($merged[$key], $value);
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Check if an array is associative (dictionary) vs sequential list.
+     */
+    protected function isAssoc(array $arr): bool
+    {
+        if ([] === $arr) {
+            return false;
+        }
+
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }

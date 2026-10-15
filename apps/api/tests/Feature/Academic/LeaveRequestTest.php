@@ -497,4 +497,156 @@ class LeaveRequestTest extends TestCase
         $response->assertStatus(403)
             ->assertJsonPath('error.code', 'FORBIDDEN');
     }
+
+    public function test_be_acd_04_cannot_decide_already_decided_leave_request_422(): void
+    {
+        $leave = LeaveRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->guardianUser->id,
+            'leave_type' => 'sakit',
+            'start_date' => Carbon::now()->format('Y-m-d'),
+            'end_date' => Carbon::now()->format('Y-m-d'),
+            'reason' => 'Demam tinggi',
+            'status' => 'disetujui',
+            'decided_by' => $this->walasUser->id,
+        ]);
+
+        $token = $this->walasUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/v1/leave-requests/{$leave->id}/decision", [
+                'status' => 'ditolak',
+                'decision_notes' => 'Mencoba membatalkan tanpa izin admin',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'BUSINESS_RULE_VIOLATION');
+    }
+
+    public function test_be_acd_04_admin_can_redecide_and_revokes_attendance_on_rejection(): void
+    {
+        $today = Carbon::now()->format('Y-m-d');
+
+        $leave = LeaveRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->guardianUser->id,
+            'leave_type' => 'sakit',
+            'start_date' => $today,
+            'end_date' => $today,
+            'reason' => 'Flu berat',
+            'status' => 'menunggu',
+        ]);
+
+        // First approved by walas
+        $walasToken = $this->walasUser->createToken('test')->plainTextToken;
+        $this->withHeader('Authorization', "Bearer {$walasToken}")
+            ->patchJson("/api/v1/leave-requests/{$leave->id}/decision", [
+                'status' => 'disetujui',
+            ])->assertStatus(200);
+
+        $this->assertTrue(Attendance::where('student_id', $this->student1->id)
+            ->where('status', 'sakit')
+            ->whereDate('att_date', $today)
+            ->where('source', 'gerbang')
+            ->exists());
+
+        // Reset auth guards to switch user
+        app('auth')->forgetGuards();
+
+        // Admin re-decides to 'ditolak'
+        $adminToken = $this->adminUser->createToken('test')->plainTextToken;
+        $response = $this->withHeader('Authorization', "Bearer {$adminToken}")
+            ->patchJson("/api/v1/leave-requests/{$leave->id}/decision", [
+                'status' => 'ditolak',
+                'decision_notes' => 'Dibatalkan oleh kurikulum karena terbukti tidak sakit.',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.status', 'ditolak');
+
+        // Attendance entry should be cleaned up
+        $this->assertFalse(Attendance::where('student_id', $this->student1->id)
+            ->where('status', 'sakit')
+            ->whereDate('att_date', $today)
+            ->where('source', 'gerbang')
+            ->exists());
+    }
+
+    public function test_be_acd_04_list_leave_requests_with_filters_and_search(): void
+    {
+        LeaveRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->guardianUser->id,
+            'leave_type' => 'sakit',
+            'start_date' => '2026-08-01',
+            'end_date' => '2026-08-03',
+            'reason' => 'Sakit typhus',
+            'status' => 'disetujui',
+        ]);
+
+        LeaveRequest::create([
+            'student_id' => $this->student2->id,
+            'requested_by' => $this->student2User->id,
+            'leave_type' => 'dispen',
+            'start_date' => '2026-08-10',
+            'end_date' => '2026-08-10',
+            'reason' => 'Lomba karya ilmiah',
+            'status' => 'menunggu',
+        ]);
+
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        // Filter by leave_type
+        $res = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/leave-requests?leave_type=dispen');
+        $res->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.leave_type', 'dispen');
+
+        // Search by student name 'Bella'
+        $resSearch = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/leave-requests?q=Bella');
+        $resSearch->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.student.full_name', 'Bella Safitri');
+
+        // Filter by class_id
+        $resClass = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson("/api/v1/leave-requests?class_id={$this->classA->id}");
+        $resClass->assertStatus(200)
+            ->assertJsonCount(2, 'data');
+    }
+
+    public function test_be_acd_04_student_can_only_view_own_leave_requests_idor(): void
+    {
+        LeaveRequest::create([
+            'student_id' => $this->student1->id,
+            'requested_by' => $this->student1User->id,
+            'leave_type' => 'sakit',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-02',
+            'reason' => 'Demam',
+            'status' => 'menunggu',
+        ]);
+
+        LeaveRequest::create([
+            'student_id' => $this->student2->id,
+            'requested_by' => $this->student2User->id,
+            'leave_type' => 'izin',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-01',
+            'reason' => 'Acara keluarga',
+            'status' => 'menunggu',
+        ]);
+
+        $token = $this->student1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/leave-requests');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.student_id', $this->student1->id);
+    }
 }
+
