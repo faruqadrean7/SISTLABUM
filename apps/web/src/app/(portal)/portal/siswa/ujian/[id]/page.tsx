@@ -65,6 +65,11 @@ export default function StudentCbtPlayerPage() {
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // In-memory storage fallback for private browsing / quota exceeded
+  const memoryPendingAnswersRef = useRef<Record<string, any>>({});
+  const memoryPendingViolationsRef = useRef<any[]>([]);
+  const isDrainingRef = useRef<boolean>(false);
+
   useEffect(() => {
     isFinishedRef.current = isFinished;
   }, [isFinished]);
@@ -72,6 +77,138 @@ export default function StudentCbtPlayerPage() {
   useEffect(() => {
     doubtsRef.current = doubts;
   }, [doubts]);
+
+  // User-scoped storage keys to prevent cross-account queue leaks on shared devices
+  const getUserScope = useCallback(() => {
+    return user?.id || user?.username || '';
+  }, [user?.id, user?.username]);
+
+  const getAnswerStorageKey = useCallback(() => {
+    const scope = getUserScope();
+    return scope ? `cbt_pending_answers_${scope}_${examId}` : `cbt_pending_answers_${examId}`;
+  }, [getUserScope, examId]);
+
+  const getViolationStorageKey = useCallback(() => {
+    const scope = getUserScope();
+    return scope ? `cbt_pending_violations_${scope}_${examId}` : `cbt_pending_violations_${examId}`;
+  }, [getUserScope, examId]);
+
+  const readStoredAnswers = useCallback((): Record<string, any> => {
+    try {
+      const scope = getUserScope();
+      if (scope) {
+        const scopedRaw = localStorage.getItem(`cbt_pending_answers_${scope}_${examId}`);
+        if (scopedRaw) {
+          return { ...JSON.parse(scopedRaw), ...memoryPendingAnswersRef.current };
+        }
+      }
+      const owner = localStorage.getItem(`cbt_active_owner_${examId}`);
+      if (owner && scope && owner !== scope) {
+        return { ...memoryPendingAnswersRef.current };
+      }
+      const raw = localStorage.getItem(`cbt_pending_answers_${examId}`);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return { ...parsed, ...memoryPendingAnswersRef.current };
+    } catch {
+      return { ...memoryPendingAnswersRef.current };
+    }
+  }, [getUserScope, examId]);
+
+  const readStoredAnswersMeta = useCallback((): Record<string, any> => {
+    try {
+      const scope = getUserScope();
+      if (scope) {
+        const scopedRaw = localStorage.getItem(`cbt_pending_answers_meta_${scope}_${examId}`);
+        if (scopedRaw) {
+          return JSON.parse(scopedRaw);
+        }
+      }
+      const owner = localStorage.getItem(`cbt_active_owner_${examId}`);
+      if (owner && scope && owner !== scope) {
+        return {};
+      }
+      const raw = localStorage.getItem(`cbt_pending_answers_meta_${examId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }, [getUserScope, examId]);
+
+  const writeStoredAnswers = useCallback((map: Record<string, any>, meta?: Record<string, any>) => {
+    memoryPendingAnswersRef.current = { ...map };
+    try {
+      const scope = getUserScope();
+      const raw = JSON.stringify(map);
+      localStorage.setItem(`cbt_pending_answers_${examId}`, raw);
+      if (scope) {
+        localStorage.setItem(`cbt_pending_answers_${scope}_${examId}`, raw);
+        localStorage.setItem(`cbt_active_owner_${examId}`, scope);
+      }
+      if (meta) {
+        const metaRaw = JSON.stringify(meta);
+        localStorage.setItem(`cbt_pending_answers_meta_${examId}`, metaRaw);
+        if (scope) {
+          localStorage.setItem(`cbt_pending_answers_meta_${scope}_${examId}`, metaRaw);
+        }
+      }
+    } catch (e) {
+      console.warn('localStorage setItem failed, using in-memory store:', e);
+    }
+  }, [getUserScope, examId]);
+
+  const readStoredViolations = useCallback((): any[] => {
+    try {
+      const scope = getUserScope();
+      if (scope) {
+        const scopedRaw = localStorage.getItem(`cbt_pending_violations_${scope}_${examId}`);
+        if (scopedRaw) {
+          const list = JSON.parse(scopedRaw);
+          return Array.isArray(list) ? [...list, ...memoryPendingViolationsRef.current] : [...memoryPendingViolationsRef.current];
+        }
+      }
+      const owner = localStorage.getItem(`cbt_active_owner_${examId}`);
+      if (owner && scope && owner !== scope) {
+        return [...memoryPendingViolationsRef.current];
+      }
+      const raw = localStorage.getItem(`cbt_pending_violations_${examId}`);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const list = Array.isArray(parsed) ? parsed : [];
+      return [...list, ...memoryPendingViolationsRef.current];
+    } catch {
+      return [...memoryPendingViolationsRef.current];
+    }
+  }, [getUserScope, examId]);
+
+  const writeStoredViolations = useCallback((list: any[]) => {
+    memoryPendingViolationsRef.current = [...list];
+    try {
+      const scope = getUserScope();
+      const raw = JSON.stringify(list);
+      localStorage.setItem(`cbt_pending_violations_${examId}`, raw);
+      if (scope) {
+        localStorage.setItem(`cbt_pending_violations_${scope}_${examId}`, raw);
+      }
+    } catch (e) {
+      console.warn('localStorage setItem failed for violations:', e);
+    }
+  }, [getUserScope, examId]);
+
+  const clearOfflineQueues = useCallback(() => {
+    memoryPendingAnswersRef.current = {};
+    memoryPendingViolationsRef.current = [];
+    try {
+      const scope = getUserScope();
+      localStorage.removeItem(`cbt_pending_answers_${examId}`);
+      localStorage.removeItem(`cbt_pending_violations_${examId}`);
+      localStorage.removeItem(`cbt_pending_answers_meta_${examId}`);
+      localStorage.removeItem(`cbt_active_owner_${examId}`);
+      if (scope) {
+        localStorage.removeItem(`cbt_pending_answers_${scope}_${examId}`);
+        localStorage.removeItem(`cbt_pending_violations_${scope}_${examId}`);
+        localStorage.removeItem(`cbt_pending_answers_meta_${scope}_${examId}`);
+      }
+    } catch {}
+  }, [getUserScope, examId]);
 
   // Hitung sisa waktu absolut: sisa = ends_at - (Date.now() + offset)
   // Kebal terhadap background tab throttling browser dan jam HP yang salah
@@ -83,19 +220,21 @@ export default function StudentCbtPlayerPage() {
 
   // Flush pending offline answers & violations to server
   const flushPendingOfflineData = useCallback(async () => {
-    if (!examId || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+    if (!examId || isDrainingRef.current) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
 
-    // 1. Flush pending violations
+    isDrainingRef.current = true;
+
     try {
-      const vKey = `cbt_pending_violations_${examId}`;
-      const vRaw = localStorage.getItem(vKey);
-      if (vRaw) {
-        const vList = JSON.parse(vRaw);
-        if (Array.isArray(vList) && vList.length > 0) {
-          for (const item of vList) {
+      // 1. Flush pending violations
+      const vList = readStoredViolations();
+      if (vList.length > 0) {
+        const remainingViolations: any[] = [];
+        for (const item of vList) {
+          try {
             const res = await cbtApi.logStudentViolation(examId, {
               violation_type: item.violation_type,
-              details: { timestamp: item.timestamp },
+              details: { timestamp: item.timestamp, idempotency_key: item.idempotency_key },
             });
             const serverCount = res.data?.violation_count ?? res.data?.total_violations;
             if (typeof serverCount === 'number') {
@@ -107,37 +246,66 @@ export default function StudentCbtPlayerPage() {
             if (res.data?.session_status === 'selesai') {
               setIsFinished(true);
             }
+          } catch (itemErr) {
+            remainingViolations.push(item);
           }
-          localStorage.removeItem(vKey);
         }
+        writeStoredViolations(remainingViolations);
       }
-    } catch (e) {
-      console.error('Failed to flush offline violations:', e);
-    }
 
-    // 2. Flush pending answers
-    try {
-      const aKey = `cbt_pending_answers_${examId}`;
-      const aRaw = localStorage.getItem(aKey);
-      if (aRaw) {
-        const aMap = JSON.parse(aRaw);
-        const entries = Object.entries(aMap);
-        if (entries.length > 0) {
-          for (const [qId, val] of entries) {
+      // 2. Flush pending answers
+      const aMap = readStoredAnswers();
+      const entries = Object.entries(aMap);
+      if (entries.length > 0) {
+        const metaMap = readStoredAnswersMeta();
+
+        for (const [qId, val] of entries) {
+          const entryMeta = metaMap[qId];
+          const answeredAt = entryMeta?.timestamp ? new Date(entryMeta.timestamp).toISOString() : undefined;
+          const idempotencyKey = entryMeta?.idempotency_key;
+
+          try {
             await cbtApi.saveStudentAnswer(examId, {
               question_id: qId,
               answer: val,
               is_flagged: doubtsRef.current.includes(qId),
-            });
+              answered_at: answeredAt,
+              idempotency_key: idempotencyKey,
+            } as any);
+
+            const latestQueue = readStoredAnswers();
+            const latestMeta = readStoredAnswersMeta();
+
+            const storedTs = latestMeta[qId]?.timestamp ?? 0;
+            const entryTs = entryMeta?.timestamp ?? 0;
+
+            if (storedTs <= entryTs) {
+              delete latestQueue[qId];
+              delete latestMeta[qId];
+              writeStoredAnswers(latestQueue, latestMeta);
+            }
+          } catch (ansErr: any) {
+            if (
+              ansErr?.code === 'EXAM_TIME_OVER' ||
+              ansErr?.code === 'BUSINESS_RULE_VIOLATION' ||
+              ansErr?.message?.includes('timeout') ||
+              ansErr?.message?.includes('berakhir')
+            ) {
+              setRemainingSeconds(0);
+              setIsFinished(true);
+            }
+            break;
           }
-          localStorage.removeItem(aKey);
+        }
+        const remainingCount = Object.keys(readStoredAnswers()).length;
+        if (remainingCount === 0) {
           setAutosaveStatus('saved');
         }
       }
-    } catch (e) {
-      console.error('Failed to flush offline answers:', e);
+    } finally {
+      isDrainingRef.current = false;
     }
-  }, [examId]);
+  }, [examId, readStoredViolations, writeStoredViolations, readStoredAnswers, writeStoredAnswers, readStoredAnswersMeta]);
 
   // Listener event 'online' untuk retry otomatis
   useEffect(() => {
@@ -159,12 +327,9 @@ export default function StudentCbtPlayerPage() {
     } finally {
       setIsSubmitting(false);
       setIsFinished(true);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(`cbt_pending_answers_${examId}`);
-        localStorage.removeItem(`cbt_pending_violations_${examId}`);
-      }
+      clearOfflineQueues();
     }
-  }, [examId]);
+  }, [examId, clearOfflineQueues]);
 
   // Load Session Questions & Server State
   useEffect(() => {
@@ -231,14 +396,12 @@ export default function StudentCbtPlayerPage() {
           }
         });
 
-        // 4. Pulihkan jawaban pending dari localStorage yang belum sempat tersimpan
-        try {
-          const pendingJson = localStorage.getItem(`cbt_pending_answers_${examId}`);
-          if (pendingJson) {
-            const pendingMap = JSON.parse(pendingJson);
-            Object.assign(initialAnswers, pendingMap);
-          }
-        } catch {}
+        // 4. Pulihkan jawaban pending dari storage yang belum sempat tersimpan
+        const pendingMap = readStoredAnswers();
+        for (const [qId, entry] of Object.entries(pendingMap)) {
+          const val = typeof entry === 'object' && entry !== null && 'value' in entry ? entry.value : entry;
+          initialAnswers[qId] = val;
+        }
 
         setAnswers(initialAnswers);
         setDoubts(initialDoubts);
@@ -246,7 +409,18 @@ export default function StudentCbtPlayerPage() {
         // Flush offline data
         flushPendingOfflineData();
       } catch (err: any) {
-        setLoadError(err?.message || 'Gagal memuat butir soal ujian. Pastikan token telah dimasukkan.');
+        if (
+          err?.code === 'EXAM_TIME_OVER' ||
+          err?.code === 'BUSINESS_RULE_VIOLATION' ||
+          err?.message?.includes('timeout') ||
+          err?.message?.includes('selesai') ||
+          err?.message?.includes('berakhir')
+        ) {
+          setIsFinished(true);
+          clearOfflineQueues();
+        } else {
+          setLoadError(err?.message || 'Gagal memuat butir soal ujian. Pastikan token telah dimasukkan.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -324,14 +498,17 @@ export default function StudentCbtPlayerPage() {
   const triggerViolation = async (violationType: string) => {
     setShowViolationModal(true);
 
+    const idempotencyKey = `${violationType}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const timestamp = new Date().toISOString();
+
     const queueOfflineViolation = () => {
-      try {
-        const key = `cbt_pending_violations_${examId}`;
-        const raw = localStorage.getItem(key);
-        const list = raw ? JSON.parse(raw) : [];
-        list.push({ violation_type: violationType, timestamp: new Date().toISOString() });
-        localStorage.setItem(key, JSON.stringify(list));
-      } catch {}
+      const list = readStoredViolations();
+      list.push({
+        violation_type: violationType,
+        timestamp,
+        idempotency_key: idempotencyKey,
+      });
+      writeStoredViolations(list);
       setViolationCount((prev) => prev + 1);
     };
 
@@ -343,7 +520,7 @@ export default function StudentCbtPlayerPage() {
     try {
       const res = await cbtApi.logStudentViolation(examId, {
         violation_type: violationType,
-        details: { timestamp: new Date().toISOString() },
+        details: { timestamp, idempotency_key: idempotencyKey },
       });
 
       const serverCount = res.data?.violation_count ?? res.data?.total_violations;
@@ -408,42 +585,53 @@ export default function StudentCbtPlayerPage() {
     setAnswers(updated);
     setAutosaveStatus('saving');
 
-    // Simpan ke local storage terlebih dahulu agar tidak hilang bila koneksi putus atau reload mendadak
-    try {
-      const aKey = `cbt_pending_answers_${examId}`;
-      const raw = localStorage.getItem(aKey);
-      const map = raw ? JSON.parse(raw) : {};
-      map[questionId] = answerValue;
-      localStorage.setItem(aKey, JSON.stringify(map));
-    } catch {}
+    const timestamp = Date.now();
+    const idempotencyKey = `${questionId}_${timestamp}_${Math.random().toString(36).substring(2, 7)}`;
+    const entry = {
+      value: answerValue,
+      timestamp,
+      idempotency_key: idempotencyKey,
+    };
+
+    // 1. Simpan ke local storage terlebih dahulu agar tidak hilang bila koneksi putus atau reload mendadak
+    const currentQueue = readStoredAnswers();
+    currentQueue[questionId] = answerValue;
+
+    const metaMap = readStoredAnswersMeta();
+    metaMap[questionId] = { timestamp, idempotency_key: idempotencyKey };
+
+    writeStoredAnswers(currentQueue, metaMap);
 
     try {
       await cbtApi.saveStudentAnswer(examId, {
         question_id: questionId,
         answer: answerValue,
         is_flagged: doubts.includes(questionId),
-      });
+        answered_at: new Date(timestamp).toISOString(),
+        idempotency_key: idempotencyKey,
+      } as any);
 
-      // Berhasil tersimpan ke server: hapus dari antrean pending
-      try {
-        const aKey = `cbt_pending_answers_${examId}`;
-        const raw = localStorage.getItem(aKey);
-        if (raw) {
-          const map = JSON.parse(raw);
-          delete map[questionId];
-          if (Object.keys(map).length === 0) {
-            localStorage.removeItem(aKey);
-          } else {
-            localStorage.setItem(aKey, JSON.stringify(map));
-          }
-        }
-      } catch {}
+      // Berhasil tersimpan ke server: hanya hapus bila data di storage belum diperbarui oleh pilihan yang lebih baru
+      const latestMeta = readStoredAnswersMeta();
+      const currentStoredTs = latestMeta[questionId]?.timestamp ?? 0;
+
+      if (currentStoredTs <= timestamp) {
+        const latestQueue = readStoredAnswers();
+        delete latestQueue[questionId];
+        delete latestMeta[questionId];
+        writeStoredAnswers(latestQueue, latestMeta);
+      }
 
       setAutosaveStatus('saved');
     } catch (err: any) {
       setAutosaveStatus('error');
-      // Server-side timing lock rejection
-      if (err?.code === 'EXAM_TIME_OVER' || err?.message?.includes('timeout') || err?.message?.includes('berakhir')) {
+      // Server-side timing lock rejection (mendukung EXAM_TIME_OVER dan BUSINESS_RULE_VIOLATION backward compatible)
+      if (
+        err?.code === 'EXAM_TIME_OVER' ||
+        err?.code === 'BUSINESS_RULE_VIOLATION' ||
+        err?.message?.includes('timeout') ||
+        err?.message?.includes('berakhir')
+      ) {
         setRemainingSeconds(0);
         setIsFinished(true);
       }
@@ -468,7 +656,12 @@ export default function StudentCbtPlayerPage() {
       });
     } catch (e: any) {
       console.error('Failed to save doubt flag:', e);
-      if (e?.code === 'EXAM_TIME_OVER' || e?.message?.includes('timeout')) {
+      if (
+        e?.code === 'EXAM_TIME_OVER' ||
+        e?.code === 'BUSINESS_RULE_VIOLATION' ||
+        e?.message?.includes('timeout') ||
+        e?.message?.includes('berakhir')
+      ) {
         setRemainingSeconds(0);
         setIsFinished(true);
       }
@@ -481,10 +674,7 @@ export default function StudentCbtPlayerPage() {
       await cbtApi.finishStudentSession(examId);
       setShowConfirmModal(false);
       setIsFinished(true);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(`cbt_pending_answers_${examId}`);
-        localStorage.removeItem(`cbt_pending_violations_${examId}`);
-      }
+      clearOfflineQueues();
     } catch (err: any) {
       alert(err?.message || 'Gagal mengirim jawaban ujian.');
     } finally {

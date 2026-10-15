@@ -9,6 +9,10 @@ import {
   StudentDashboardSummary,
   StudentScheduleItem,
   StudentExamItem,
+  StudentTaskItem,
+  StudentCounselingItem,
+  StudentPointLogItem,
+  StudentPointsResult,
 } from './types';
 
 export class PortalSecurityError extends Error {
@@ -38,6 +42,96 @@ const loadPortalMock =
   process.env.NODE_ENV !== 'production'
     ? () => import('./portal-mock-data')
     : null;
+/**
+ * Mapper aman respons GET /api/v1/student-points (COND-02)
+ * Menangani:
+ * 1. Laravel paginated response: { data: [...], meta: {...} }
+ * 2. Raw array response: [...]
+ * 3. Pre-aggregated summary: { totalPrestasi, totalPelanggaran, balancePoints, logs: [...] }
+ * 4. Empty / malformed response: { totalPrestasi: 0, totalPelanggaran: 0, balancePoints: 0, logs: [] }
+ */
+export function mapBackendStudentPointsResponse(rawPayload: unknown): StudentPointsResult {
+  if (!rawPayload || typeof rawPayload !== 'object') {
+    return {
+      totalPrestasi: 0,
+      totalPelanggaran: 0,
+      balancePoints: 0,
+      logs: [],
+    };
+  }
+
+  const payloadObj = rawPayload as Record<string, any>;
+
+  // Ambil list item mentah dari array atau pagination
+  let rawList: any[] = [];
+  if (Array.isArray(payloadObj.data)) {
+    rawList = payloadObj.data;
+  } else if (Array.isArray(payloadObj.logs)) {
+    rawList = payloadObj.logs;
+  } else if (Array.isArray(rawPayload)) {
+    rawList = rawPayload as any[];
+  }
+
+  const logs: StudentPointLogItem[] = rawList
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => {
+      const pointType = item.point_type || item.pointType || {};
+      const rawKind = String(pointType.kind || item.kind || '').toLowerCase();
+      const kind: 'prestasi' | 'pelanggaran' = rawKind === 'pelanggaran' ? 'pelanggaran' : 'prestasi';
+      const points = Math.abs(Number(pointType.points ?? item.points ?? 0));
+      const recorder = item.recorder || {};
+
+      return {
+        id: String(item.id || ''),
+        date: String(item.point_date || item.date || item.created_at || '').substring(0, 10),
+        category: String(pointType.severity || item.category || 'Umum'),
+        title: String(pointType.name || item.title || 'Catatan Poin'),
+        kind,
+        points,
+        reporterName: String(recorder.full_name || recorder.name || item.reporterName || 'Guru Pembina'),
+        notes: item.notes ? String(item.notes) : undefined,
+      };
+    });
+
+  let totalPrestasi = 0;
+  let totalPelanggaran = 0;
+
+  if (typeof payloadObj.totalPrestasi === 'number' && typeof payloadObj.totalPelanggaran === 'number') {
+    totalPrestasi = payloadObj.totalPrestasi;
+    totalPelanggaran = payloadObj.totalPelanggaran;
+  } else {
+    totalPrestasi = logs
+      .filter((l) => l.kind === 'prestasi')
+      .reduce((sum, l) => sum + l.points, 0);
+    totalPelanggaran = logs
+      .filter((l) => l.kind === 'pelanggaran')
+      .reduce((sum, l) => sum + l.points, 0);
+  }
+
+  const balancePoints =
+    typeof payloadObj.balancePoints === 'number'
+      ? payloadObj.balancePoints
+      : totalPrestasi - totalPelanggaran;
+
+  let pagination: StudentPointsResult['pagination'] | undefined;
+  if (payloadObj.meta && typeof payloadObj.meta === 'object') {
+    const meta = payloadObj.meta;
+    pagination = {
+      page: Number(meta.page ?? meta.current_page ?? 1),
+      limit: Number(meta.limit ?? meta.per_page ?? (logs.length || 15)),
+      total: Number(meta.total ?? logs.length),
+      totalPages: Number(meta.totalPages ?? meta.last_page ?? 1),
+    };
+  }
+
+  return {
+    totalPrestasi,
+    totalPelanggaran,
+    balancePoints,
+    logs,
+    ...(pagination ? { pagination } : {}),
+  };
+}
 
 export const portalApi = {
   // === ORANG TUA / WALI MURID ===
@@ -239,4 +333,103 @@ export const portalApi = {
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_EXAMS) : undefined
     );
   },
+
+  /**
+   * Mengambil daftar tugas KBM siswa
+   */
+  async getStudentTasks(): Promise<StudentTaskItem[]> {
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<StudentTaskItem[]>('/assignments');
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => (m as any).MOCK_STUDENT_TASKS || []) : undefined
+    );
+  },
+
+  /**
+   * Mengumpulkan jawaban / berkas tugas siswa
+   */
+  async submitStudentTask(
+    taskId: string,
+    payload: { file_name?: string; drive_link?: string; notes?: string }
+  ): Promise<{ success: boolean; message: string }> {
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.post<{ success: boolean; message: string }>(
+          `/assignments/${taskId}/submissions`,
+          payload
+        );
+        return res.data;
+      },
+      async () => ({ success: true, message: 'Tugas berhasil dikumpulkan.' })
+    );
+  },
+
+  /**
+   * Mengambil daftar permohonan konseling siswa
+   */
+  async getStudentCounseling(): Promise<StudentCounselingItem[]> {
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<StudentCounselingItem[]>('/counseling/requests');
+        return res.data;
+      },
+      loadPortalMock ? () => loadPortalMock().then((m) => (m as any).MOCK_STUDENT_COUNSELING || []) : undefined
+    );
+  },
+
+  /**
+   * Mengajukan janji temu konseling mandiri
+   */
+  async submitStudentCounseling(payload: {
+    topic: string;
+    category?: string;
+    preferred_date?: string;
+    preferred_time?: string;
+    reason: string;
+  }): Promise<StudentCounselingItem> {
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.post<StudentCounselingItem>('/me/counseling-requests', payload);
+        return res.data;
+      },
+      async () => ({
+        id: `csl-${Date.now()}`,
+        topic: payload.topic,
+        category: payload.category || 'Pengembangan Diri',
+        requestDate: 'Hari Ini',
+        preferredSchedule: `${payload.preferred_date || 'Tanggal fleksibel'} - ${payload.preferred_time || 'Sepulang Sekolah'}`,
+        counselorName: 'Guru BK Terjadwal',
+        status: 'menunggu',
+        notes: payload.reason,
+      })
+    );
+  },
+
+  /**
+   * Mengambil ringkasan dan riwayat poin kedisiplinan & prestasi siswa (COND-02)
+   */
+  async getStudentPoints(): Promise<StudentPointsResult> {
+    return executeWithMockFallback(
+      async () => {
+        const res = await apiClient.get<unknown>('/student-points');
+        return mapBackendStudentPointsResponse(res.data);
+      },
+      loadPortalMock
+        ? () =>
+            loadPortalMock().then((m) =>
+              mapBackendStudentPointsResponse(
+                (m as any).MOCK_STUDENT_POINTS || {
+                  totalPrestasi: 45,
+                  totalPelanggaran: 0,
+                  balancePoints: 45,
+                  logs: [],
+                }
+              )
+            )
+        : undefined
+    );
+  },
 };
+

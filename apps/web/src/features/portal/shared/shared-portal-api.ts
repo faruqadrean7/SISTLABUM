@@ -29,12 +29,17 @@ const loadSharedMock =
     ? () => import('./shared-portal-mock-data')
     : null;
 
+const resolvePortalPath = (portalType: 'guru' | 'staf'): string => {
+  return portalType === 'guru' ? 'teacher' : 'staff';
+};
+
 export const sharedPortalApi = {
   // === PRESENSI MANDIRI (GURU / STAF) ===
   async getSelfAttendance(portalType: 'guru' | 'staf' = 'staf'): Promise<SharedSelfAttendance> {
+    const prefix = resolvePortalPath(portalType);
     return executeWithMockFallback(
       async () => {
-        const res = await apiClient.get<SharedSelfAttendance>(`/me/${portalType}/self-attendance`);
+        const res = await apiClient.get<SharedSelfAttendance>(`/me/${prefix}/self-attendance`);
         return res.data;
       },
       loadSharedMock ? () => loadSharedMock().then((m) => m.MOCK_SHARED_SELF_ATTENDANCE) : undefined
@@ -45,8 +50,9 @@ export const sharedPortalApi = {
     action: 'check_in' | 'check_out',
     portalType: 'guru' | 'staf' = 'staf'
   ): Promise<{ success: boolean; message: string; timestamp: string }> {
+    const prefix = resolvePortalPath(portalType);
     const now = new Date().toTimeString().split(' ')[0];
-    await apiClient.post(`/me/${portalType}/self-attendance`, { action });
+    await apiClient.post(`/me/${prefix}/self-attendance`, { action });
     return {
       success: true,
       message: `Presensi kerja (${action === 'check_in' ? 'Masuk' : 'Pulang'}) berhasil dicatat.`,
@@ -56,9 +62,10 @@ export const sharedPortalApi = {
 
   // === IZIN & CUTI (GURU / STAF) ===
   async getLeaveRequests(portalType: 'guru' | 'staf' = 'staf'): Promise<SharedLeaveRequest[]> {
+    const prefix = resolvePortalPath(portalType);
     return executeWithMockFallback(
       async () => {
-        const res = await apiClient.get<SharedLeaveRequest[]>(`/me/${portalType}/leave-requests`);
+        const res = await apiClient.get<SharedLeaveRequest[]>(`/me/${prefix}/leave-requests`);
         return res.data;
       },
       loadSharedMock ? () => loadSharedMock().then((m) => m.MOCK_SHARED_LEAVE_REQUESTS) : undefined
@@ -69,7 +76,8 @@ export const sharedPortalApi = {
     payload: CreateLeaveRequestInput,
     portalType: 'guru' | 'staf' = 'staf'
   ): Promise<{ success: boolean; message: string }> {
-    await apiClient.post(`/me/${portalType}/leave-requests`, payload);
+    const prefix = resolvePortalPath(portalType);
+    await apiClient.post(`/me/${prefix}/leave-requests`, payload);
     return { success: true, message: 'Permohonan izin berhasil diajukan.' };
   },
 

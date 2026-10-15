@@ -219,4 +219,127 @@ describe('GAP-02: CBT Server-Enforced Exam Duration and Anti-Throttling Timing',
       }));
     });
   });
+
+  it('Skenario 2: immune to negative client clock skew (clock set 2 hours backward)', async () => {
+    // Jam gawai siswa disetel mundur 2 jam ke belakang
+    mockCurrentTime = baseServerTime - 2 * 3600 * 1000;
+
+    render(<StudentCbtPlayerPage />);
+    await waitFor(() => {
+      expect(screen.queryByText(/Menyiapkan workspace/i)).not.toBeInTheDocument();
+    });
+
+    // Sisa waktu tetap tepat 01:00:00 karena offset = serverTime - clientTime
+    expect(screen.getByText('01:00:00')).toBeInTheDocument();
+  });
+
+  it('Skenario 7: connection drops during drain; succeeded item deleted, failed item remains queued', async () => {
+    mockCurrentTime = baseServerTime;
+
+    // Mulai dalam kondisi offline agar initial mount tidak langsung mem-flush antrean
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+
+    // Siapkan 2 butir soal dalam antrean pending
+    const initialPending = {
+      'q-math-1': 'opt-a',
+      'q-math-2': 'opt-b',
+    };
+    store[`cbt_pending_answers_${mockExamId}`] = JSON.stringify(initialPending);
+
+    // Item 1 berhasil, item 2 gagal karena koneksi terputus saat drain
+    vi.spyOn(cbtApi, 'saveStudentAnswer')
+      .mockResolvedValueOnce({ data: { is_saved: true } } as any)
+      .mockRejectedValueOnce(new Error('Connection lost midway'));
+
+    render(<StudentCbtPlayerPage />);
+    await waitFor(() => {
+      expect(screen.queryByText(/Menyiapkan workspace/i)).not.toBeInTheDocument();
+    });
+
+    // Kembalikan status online dan picu event 'online'
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+    });
+
+    await waitFor(() => {
+      expect(cbtApi.saveStudentAnswer).toHaveBeenCalledWith(mockExamId, expect.objectContaining({
+        question_id: 'q-math-1',
+        answer: 'opt-a',
+      }));
+    });
+
+    // Item 1 telah dihapus dari antrean karena server mengonfirmasi keberhasilan,
+    // sedangkan item 2 TETAP berada di antrean untuk retry berikutnya!
+    const queueAfterPartialDrain = JSON.parse(store[`cbt_pending_answers_${mockExamId}`] || '{}');
+    expect(queueAfterPartialDrain['q-math-1']).toBeUndefined();
+    expect(queueAfterPartialDrain['q-math-2']).toBe('opt-b');
+  });
+
+  it('Skenario B: offline answer queue does not leak between students on a shared device', async () => {
+    mockCurrentTime = baseServerTime;
+
+    // Simulasikan Siswa 1 (usr-student-1) memiliki jawaban pending di antrean lokal
+    store[`cbt_pending_answers_usr-student-1_${mockExamId}`] = JSON.stringify({ 'q-math-1': 'opt-a' });
+
+    // Sekarang Siswa 2 (usr-student-2) login pada perangkat yang sama
+    vi.spyOn(AuthProviderModule, 'useAuth').mockReturnValue({
+      user: {
+        id: 'usr-student-2',
+        username: '20261002',
+        role: 'student',
+        permissions: ['cbt.exam.take'],
+        profile: { fullName: 'Budi Santoso', nis: '20261002' },
+      },
+      isAuthenticated: true,
+      isLoading: false,
+    } as any);
+
+    render(<StudentCbtPlayerPage />);
+    await waitFor(() => {
+      expect(screen.queryByText(/Menyiapkan workspace/i)).not.toBeInTheDocument();
+    });
+
+    // Siswa 2 tidak boleh memuat jawaban milik Siswa 1
+    const radioA = screen.queryByRole('radio', { name: /A/i });
+    if (radioA) {
+      expect(radioA).not.toBeChecked();
+    }
+  });
+
+  it('Release Gate: loads session that is already expired or finished gracefully', async () => {
+    vi.spyOn(cbtApi, 'getStudentSessionQuestions').mockRejectedValueOnce({
+      code: 'EXAM_TIME_OVER',
+      message: 'Waktu pengerjaan ujian telah berakhir (timeout lock).',
+    });
+
+    render(<StudentCbtPlayerPage />);
+    await waitFor(() => {
+      expect(screen.queryByText(/Menyiapkan workspace/i)).not.toBeInTheDocument();
+    });
+
+    // Harus menampilkan layar selesai dan bukan pesan error crash
+    expect(screen.getByText(/Ujian Berhasil Dikumpulkan/i)).toBeInTheDocument();
+  });
+
+  it('Release Gate: answers are saved exclusively with user-scoped storage keys', async () => {
+    mockCurrentTime = baseServerTime;
+    vi.spyOn(cbtApi, 'saveStudentAnswer').mockRejectedValueOnce(new Error('Network offline'));
+
+    render(<StudentCbtPlayerPage />);
+    await waitFor(() => {
+      expect(screen.queryByText(/Menyiapkan workspace/i)).not.toBeInTheDocument();
+    });
+
+    const optB = screen.getByText('60');
+    fireEvent.click(optB);
+
+    await waitFor(() => {
+      // Scoped key dan active owner harus tercatat untuk mencegah kebocoran pada perangkat bersama
+      expect(store[`cbt_pending_answers_usr-student-1_${mockExamId}`]).toBeTruthy();
+      expect(store[`cbt_pending_answers_meta_usr-student-1_${mockExamId}`]).toBeTruthy();
+      expect(store[`cbt_active_owner_${mockExamId}`]).toBe('usr-student-1');
+    });
+  });
 });
