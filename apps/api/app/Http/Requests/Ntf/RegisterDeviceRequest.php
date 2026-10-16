@@ -15,7 +15,8 @@ class RegisterDeviceRequest extends FormRequest
     {
         return [
             'platform' => ['required', 'string', 'in:android,ios,web'],
-            'fcm_token' => ['required', 'string', 'max:500'],
+            'fcm_token' => ['required_without:token', 'nullable', 'string', 'max:1000'],
+            'token' => ['required_without:fcm_token', 'nullable', 'string', 'max:1000'],
         ];
     }
 }

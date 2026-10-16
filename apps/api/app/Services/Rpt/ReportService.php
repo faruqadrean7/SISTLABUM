@@ -33,14 +33,15 @@ class ReportService
         $user = $request->user();
         $this->authorizeStaff($user);
         $this->validateReportType($type);
+        $schoolId = $user?->school_id;
 
         return match ($type) {
-            'attendance' => $this->generateAttendanceReport($filters),
-            'grades' => $this->generateGradesReport($filters),
-            'ppdb' => $this->generatePpdbReport($filters),
-            'student_points' => $this->generateStudentPointsReport($filters),
-            'tickets' => $this->generateTicketsReport($filters),
-            'loans' => $this->generateLoansReport($filters),
+            'attendance' => $this->generateAttendanceReport($filters, false, $schoolId),
+            'grades' => $this->generateGradesReport($filters, false, $schoolId),
+            'ppdb' => $this->generatePpdbReport($filters, false, $schoolId),
+            'student_points' => $this->generateStudentPointsReport($filters, false, $schoolId),
+            'tickets' => $this->generateTicketsReport($filters, false, $schoolId),
+            'loans' => $this->generateLoansReport($filters, false, $schoolId),
         };
     }
 
@@ -52,18 +53,34 @@ class ReportService
         $user = $request->user();
         $this->authorizeStaff($user);
         $this->validateReportType($type);
+        $schoolId = $user?->school_id;
 
         $reportData = match ($type) {
-            'attendance' => $this->generateAttendanceReport($filters, true),
-            'grades' => $this->generateGradesReport($filters, true),
-            'ppdb' => $this->generatePpdbReport($filters, true),
-            'student_points' => $this->generateStudentPointsReport($filters, true),
-            'tickets' => $this->generateTicketsReport($filters, true),
-            'loans' => $this->generateLoansReport($filters, true),
+            'attendance' => $this->generateAttendanceReport($filters, true, $schoolId),
+            'grades' => $this->generateGradesReport($filters, true, $schoolId),
+            'ppdb' => $this->generatePpdbReport($filters, true, $schoolId),
+            'student_points' => $this->generateStudentPointsReport($filters, true, $schoolId),
+            'tickets' => $this->generateTicketsReport($filters, true, $schoolId),
+            'loans' => $this->generateLoansReport($filters, true, $schoolId),
         };
 
         $csvContent = $this->buildCsv($type, $reportData['summary'], $reportData['rows']);
         $filename = 'rekap_'.$type.'_'.Carbon::now()->format('Ymd_His').'.csv';
+
+        app(\App\Services\AuditLogService::class)->record(
+            action: 'report.export',
+            entity: 'Report_'.$type,
+            entityId: null,
+            oldValues: null,
+            newValues: [
+                'type' => $type,
+                'filters' => $filters,
+                'summary' => $reportData['summary'],
+            ],
+            reason: $request->query('reason') ?? 'Ekspor data laporan massal',
+            request: $request,
+            isAuthoritative: true
+        );
 
         return [
             'filename' => $filename,
@@ -76,10 +93,13 @@ class ReportService
     // 1. REKAP KEHADIRAN (ATTENDANCE)
     // =========================================================================
 
-    protected function generateAttendanceReport(array $filters, bool $forExport = false): array
+    protected function generateAttendanceReport(array $filters, bool $forExport = false, ?string $schoolId = null): array
     {
         $query = Attendance::with(['student']);
 
+        if ($schoolId) {
+            $query->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+        }
         if (! empty($filters['start_date'])) {
             $query->where('att_date', '>=', $filters['start_date']);
         }
@@ -145,10 +165,13 @@ class ReportService
     // 2. REKAP NILAI (GRADES)
     // =========================================================================
 
-    protected function generateGradesReport(array $filters, bool $forExport = false): array
+    protected function generateGradesReport(array $filters, bool $forExport = false, ?string $schoolId = null): array
     {
         $query = Grade::with(['student', 'component']);
 
+        if ($schoolId) {
+            $query->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+        }
         if (! empty($filters['class_id'])) {
             $query->whereHas('student.classes', fn ($q) => $q->where('classes.id', $filters['class_id']));
         }
@@ -205,10 +228,13 @@ class ReportService
     // 3. REKAP PPDB (ADMISSIONS)
     // =========================================================================
 
-    protected function generatePpdbReport(array $filters, bool $forExport = false): array
+    protected function generatePpdbReport(array $filters, bool $forExport = false, ?string $schoolId = null): array
     {
         $query = Applicant::with(['wave', 'track']);
 
+        if ($schoolId) {
+            $query->whereHas('wave', fn ($q) => $q->where('school_id', $schoolId));
+        }
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -266,10 +292,13 @@ class ReportService
     // 4. REKAP POIN KESISWAAN (STUDENT POINTS)
     // =========================================================================
 
-    protected function generateStudentPointsReport(array $filters, bool $forExport = false): array
+    protected function generateStudentPointsReport(array $filters, bool $forExport = false, ?string $schoolId = null): array
     {
         $query = StudentPoint::with(['student', 'pointType']);
 
+        if ($schoolId) {
+            $query->whereHas('student', fn ($q) => $q->where('school_id', $schoolId));
+        }
         if (! empty($filters['start_date'])) {
             $query->where('point_date', '>=', $filters['start_date']);
         }
@@ -328,10 +357,13 @@ class ReportService
     // 5. REKAP TIKET SARPRAS (TICKETS)
     // =========================================================================
 
-    protected function generateTicketsReport(array $filters, bool $forExport = false): array
+    protected function generateTicketsReport(array $filters, bool $forExport = false, ?string $schoolId = null): array
     {
         $query = Ticket::with(['reporter', 'assignee']);
 
+        if ($schoolId) {
+            $query->where('school_id', $schoolId);
+        }
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -388,10 +420,13 @@ class ReportService
     // 6. REKAP PEMINJAMAN (LOANS)
     // =========================================================================
 
-    protected function generateLoansReport(array $filters, bool $forExport = false): array
+    protected function generateLoansReport(array $filters, bool $forExport = false, ?string $schoolId = null): array
     {
         $query = Loan::with(['book', 'borrower']);
 
+        if ($schoolId) {
+            $query->whereHas('book', fn ($q) => $q->where('school_id', $schoolId));
+        }
         if (! empty($filters['start_date'])) {
             $query->where('loan_date', '>=', $filters['start_date']);
         }
@@ -488,7 +523,7 @@ class ReportService
             return false;
         }
 
-        return $user->hasRole(['super_admin', 'admin', 'teacher', 'admin_tu', 'principal', 'kesiswaan', 'humas', 'kurikulum']) ||
+        return $user->hasRole(['super_admin', 'admin', 'teacher', 'admin_tu', 'principal', 'kesiswaan', 'humas', 'kurikulum', 'student_affairs', 'public_relations']) ||
             $user->hasPermission('reports.view');
     }
 

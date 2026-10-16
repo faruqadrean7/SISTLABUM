@@ -122,4 +122,9 @@ class Student extends Model
     {
         return $this->hasOne(Alumni::class);
     }
+
+    public function getNameAttribute(): string
+    {
+        return $this->full_name ?? '';
+    }
 }

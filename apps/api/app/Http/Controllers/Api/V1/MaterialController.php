@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\StoreMaterialRequest;
+use App\Http\Requests\Academic\UpdateMaterialRequest;
 use App\Services\LmsService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -80,6 +81,33 @@ class MaterialController extends Controller
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat mengambil detail materi', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-ACD-07: Perbarui materi pembelajaran.
+     * PUT /api/v1/materials/{id}
+     */
+    public function update(string $id, UpdateMaterialRequest $request): JsonResponse
+    {
+        try {
+            $material = $this->service->updateMaterial($id, $request->validated(), $request);
+
+            return $this->successResponse($material);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Materi pembelajaran tidak ditemukan', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memperbarui materi pembelajaran', 'INTERNAL_ERROR', 500);
         }
     }
 

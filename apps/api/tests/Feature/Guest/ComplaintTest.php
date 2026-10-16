@@ -322,4 +322,87 @@ class ComplaintTest extends TestCase
         $response->assertStatus(400)
             ->assertJsonPath('error.code', 'VALIDATION_FAILED');
     }
+
+    /**
+     * BE-GUEST-02 / SEC-PRIVACY: Reporter identity is masked for staff lacking complaint.view_reporter permission.
+     */
+    public function test_be_guest_02_reporter_identity_is_masked_for_handler_without_view_reporter_permission(): void
+    {
+        $complaint = Complaint::create([
+            'ticket_code' => 'ASP-20261014-PRIV1',
+            'category' => 'bullying',
+            'content' => 'Laporan insiden kekerasan oleh oknum siswa kelas 12.',
+            'is_anonymous' => false,
+            'reporter_user_id' => $this->reporterUser->id,
+            'status' => 'baru',
+        ]);
+
+        // Counselor (Guru BK) has complaint.read & complaint.manage, but NOT complaint.view_reporter
+        $response = $this->actingAs($this->counselorUser)
+            ->getJson("/api/v1/complaints/{$complaint->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.ticket_code', 'ASP-20261014-PRIV1')
+            ->assertJsonPath('data.is_anonymous', false)
+            ->assertJsonPath('data.reporter', null)
+            ->assertJsonPath('data.reporter_user_id', null);
+
+        // Also masked in list view
+        $listResponse = $this->actingAs($this->counselorUser)
+            ->getJson('/api/v1/complaints');
+
+        $listResponse->assertStatus(200)
+            ->assertJsonPath('data.0.reporter', null)
+            ->assertJsonPath('data.0.reporter_user_id', null);
+    }
+
+    /**
+     * BE-GUEST-02 / SEC-PRIVACY: Reporter identity is visible for principal or user with complaint.view_reporter.
+     */
+    public function test_be_guest_02_reporter_identity_is_visible_for_principal(): void
+    {
+        $complaint = Complaint::create([
+            'ticket_code' => 'ASP-20261014-PRIV2',
+            'category' => 'bullying',
+            'content' => 'Laporan insiden kekerasan oleh oknum siswa kelas 12.',
+            'is_anonymous' => false,
+            'reporter_user_id' => $this->reporterUser->id,
+            'status' => 'baru',
+        ]);
+
+        // Principal has role 'principal' and can view reporter
+        $response = $this->actingAs($this->principalUser)
+            ->getJson("/api/v1/complaints/{$complaint->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.ticket_code', 'ASP-20261014-PRIV2')
+            ->assertJsonPath('data.reporter.id', $this->reporterUser->id)
+            ->assertJsonPath('data.reporter.email', $this->reporterUser->email);
+    }
+
+    /**
+     * BE-GUEST-02 / MULTI-TENANCY: School isolation prevents accessing complaints from other schools.
+     */
+    public function test_be_guest_02_tenant_isolation_prevents_accessing_other_school_complaint(): void
+    {
+        $schoolAId = '11111111-1111-1111-1111-111111111111';
+        $schoolBId = '22222222-2222-2222-2222-222222222222';
+
+        $this->principalUser->update(['school_id' => $schoolAId]);
+
+        $complaintSchoolB = Complaint::create([
+            'school_id' => $schoolBId,
+            'ticket_code' => 'ASP-20261014-SCHB',
+            'category' => 'fasilitas',
+            'content' => 'AC ruang guru sekolah B rusak berat.',
+            'is_anonymous' => true,
+            'status' => 'baru',
+        ]);
+
+        $response = $this->actingAs($this->principalUser)
+            ->getJson("/api/v1/complaints/{$complaintSchoolB->id}");
+
+        $response->assertStatus(403);
+        $this->assertStringContainsString('di luar sekolah penugasan', $response->json('error.message'));
+    }
 }

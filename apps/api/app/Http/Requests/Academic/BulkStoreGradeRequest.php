@@ -9,10 +9,11 @@ class BulkStoreGradeRequest extends BaseApiRequest
     public function rules(): array
     {
         return [
-            'component_id' => ['required', 'uuid', 'exists:grade_components,id'],
+            'component_id' => ['nullable', 'uuid', 'exists:grade_components,id'],
             'period_id' => ['required', 'uuid', 'exists:grade_periods,id'],
             'grades' => ['required', 'array', 'min:1'],
             'grades.*.student_id' => ['required', 'uuid', 'exists:students,id'],
+            'grades.*.component_id' => ['nullable', 'uuid', 'exists:grade_components,id'],
             'grades.*.value' => ['required', 'numeric', 'between:0,100'],
         ];
     }

@@ -2,11 +2,14 @@
 
 namespace Tests\Feature\Std;
 
+use App\Models\AcademicYear;
 use App\Models\ActivityDocument;
 use App\Models\Extracurricular;
 use App\Models\ExtracurricularMember;
 use App\Models\File;
+use App\Models\ReportCard;
 use App\Models\Role;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\User;
@@ -331,6 +334,17 @@ class ExtracurricularTest extends TestCase
 
     public function test_be_std_02_coach_can_record_journal_with_attendance(): void
     {
+        ExtracurricularMember::create([
+            'extracurricular_id' => $this->futsal->id,
+            'student_id' => $this->student->id,
+            'status' => 'aktif',
+        ]);
+        ExtracurricularMember::create([
+            'extracurricular_id' => $this->futsal->id,
+            'student_id' => $this->otherStudent->id,
+            'status' => 'aktif',
+        ]);
+
         $payload = [
             'extracurricular_id' => $this->futsal->id,
             'session_date' => Carbon::now()->toDateString(),
@@ -427,5 +441,144 @@ class ExtracurricularTest extends TestCase
             ->assertStatus(200);
 
         $this->assertDatabaseMissing('activity_documents', ['id' => $doc->id]);
+    }
+
+    public function test_be_std_02_can_query_members_by_student_id_search_and_role(): void
+    {
+        ExtracurricularMember::create([
+            'extracurricular_id' => $this->futsal->id,
+            'student_id' => $this->student->id,
+            'status' => 'aktif',
+            'role' => 'ketua',
+            'final_grade' => 'A',
+        ]);
+
+        ExtracurricularMember::create([
+            'extracurricular_id' => $this->futsal->id,
+            'student_id' => $this->otherStudent->id,
+            'status' => 'aktif',
+            'role' => 'anggota',
+            'final_grade' => 'B',
+        ]);
+
+        // 1. Query by student_id directly without extracurricular_id
+        $resByStudent = $this->actingAs($this->studentUser)
+            ->getJson("/api/v1/extracurricular-members?student_id={$this->student->id}");
+
+        $resByStudent->assertStatus(200)
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.student_id', $this->student->id)
+            ->assertJsonPath('data.0.role', 'ketua')
+            ->assertJsonPath('data.0.final_grade', 'A');
+
+        // 2. Query with search and role filter
+        $resFiltered = $this->actingAs($this->coachUser)
+            ->getJson("/api/v1/extracurricular-members?extracurricular_id={$this->futsal->id}&search=Maya&role=anggota");
+
+        $resFiltered->assertStatus(200)
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.student_id', $this->otherStudent->id)
+            ->assertJsonPath('data.0.role', 'anggota');
+    }
+
+    public function test_be_std_02_journal_rejects_attendance_for_non_members(): void
+    {
+        // student is member, otherStudent is NOT member
+        ExtracurricularMember::create([
+            'extracurricular_id' => $this->futsal->id,
+            'student_id' => $this->student->id,
+            'status' => 'aktif',
+        ]);
+
+        $payload = [
+            'extracurricular_id' => $this->futsal->id,
+            'session_date' => Carbon::now()->toDateString(),
+            'activity' => 'Latihan strategi',
+            'attendance' => [
+                ['student_id' => $this->student->id, 'status' => 'hadir'],
+                ['student_id' => $this->otherStudent->id, 'status' => 'hadir'], // bukan anggota
+            ],
+        ];
+
+        $res = $this->actingAs($this->coachUser)
+            ->postJson('/api/v1/extracurricular-journals', $payload);
+
+        $res->assertStatus(422)
+            ->assertJsonPath('error.message', 'Presensi hanya dapat dicatat untuk anggota aktif pada ekstrakurikuler ini.');
+    }
+
+    public function test_be_std_02_cannot_update_final_grade_when_report_card_is_locked(): void
+    {
+        $member = ExtracurricularMember::create([
+            'extracurricular_id' => $this->futsal->id,
+            'student_id' => $this->student->id,
+            'status' => 'aktif',
+            'role' => 'anggota',
+        ]);
+
+        $ay = AcademicYear::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-07-01',
+            'end_date' => '2027-06-30',
+            'is_active' => true,
+        ]);
+        $sem = Semester::create([
+            'academic_year_id' => $ay->id,
+            'name' => 'Ganjil',
+            'semester' => 'ganjil',
+            'start_date' => '2026-07-01',
+            'end_date' => '2026-12-31',
+            'is_active' => true,
+        ]);
+
+        ReportCard::create([
+            'student_id' => $this->student->id,
+            'semester_id' => $sem->id,
+            'status' => 'locked',
+            'locked_at' => now(),
+            'verify_token' => \Illuminate\Support\Str::random(32),
+            'data_snapshot' => ['extracurriculars' => []],
+        ]);
+
+        // Coach mencoba mengubah nilai saat rapor terkunci -> 422
+        $res = $this->actingAs($this->coachUser)
+            ->putJson("/api/v1/extracurricular-members/{$member->id}", [
+                'final_grade' => 'A',
+            ]);
+
+        $res->assertStatus(422)
+            ->assertJsonPath('error.message', 'Rapor semester siswa telah dikunci. Perubahan nilai ekstrakurikuler tidak diizinkan tanpa pembukaan kunci oleh administrator.');
+    }
+
+    public function test_be_std_02_unauthorized_teacher_cannot_upload_document_to_other_ekskul(): void
+    {
+        $file = File::create([
+            'bucket' => 'local',
+            'object_key' => 'docs/proposal.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 1024,
+            'visibility' => 'private',
+        ]);
+
+        // otherTeacherUser bukan coach futsal dan bukan staf kesiswaan -> 403
+        $this->actingAs($this->otherTeacherUser)
+            ->postJson('/api/v1/activity-documents', [
+                'extracurricular_id' => $this->futsal->id,
+                'file_id' => $file->id,
+                'doc_type' => 'proposal',
+                'title' => 'Proposal Ilegal',
+            ])
+            ->assertStatus(403);
+    }
+
+    public function test_be_std_02_unauthorized_teacher_cannot_register_student_to_other_ekskul(): void
+    {
+        // otherTeacherUser mencoba mendaftarkan siswa ke futsal -> 403
+        $this->actingAs($this->otherTeacherUser)
+            ->postJson('/api/v1/extracurricular-members', [
+                'extracurricular_id' => $this->futsal->id,
+                'student_id' => $this->student->id,
+            ])
+            ->assertStatus(403);
     }
 }

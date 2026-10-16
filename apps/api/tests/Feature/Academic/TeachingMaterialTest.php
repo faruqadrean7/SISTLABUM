@@ -435,4 +435,40 @@ class TeachingMaterialTest extends TestCase
             'id' => $material->id,
         ]);
     }
+
+    public function test_be_acd_06_can_access_via_learning_modules_alias(): void
+    {
+        $dummyFile = File::create([
+            'owner_id' => $this->teacher1User->id,
+            'owner_type' => 'User',
+            'bucket' => 'teaching-materials',
+            'object_key' => 'teaching-materials/alias-test.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 2048,
+            'visibility' => 'publik',
+            'checksum' => 'checksum-alias',
+        ]);
+
+        $material = TeachingMaterial::create([
+            'title' => 'Modul Via Alias Learning Modules',
+            'material_type' => 'ATP',
+            'uploaded_by' => $this->teacher1User->id,
+            'file_id' => $dummyFile->id,
+            'version' => 1,
+        ]);
+
+        $tokenTeacher = $this->teacher1User->createToken('test')->plainTextToken;
+
+        // Test GET /learning-modules
+        $resIndex = $this->withHeader('Authorization', "Bearer {$tokenTeacher}")
+            ->getJson('/api/v1/learning-modules');
+        $resIndex->assertStatus(200)
+            ->assertJsonPath('data.0.title', 'Modul Via Alias Learning Modules');
+
+        // Test GET /learning-modules/{id}
+        $resShow = $this->withHeader('Authorization', "Bearer {$tokenTeacher}")
+            ->getJson("/api/v1/learning-modules/{$material->id}");
+        $resShow->assertStatus(200)
+            ->assertJsonPath('data.id', $material->id);
+    }
 }

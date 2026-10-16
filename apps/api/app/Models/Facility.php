@@ -14,15 +14,21 @@ class Facility extends Model
     protected $fillable = [
         'school_id',
         'room_id',
+        'code',
         'name',
+        'location',
+        'description',
         'facility_type',
         'capacity',
         'requires_approval',
+        'is_active',
+        'status',
     ];
 
     protected $casts = [
         'capacity' => 'integer',
         'requires_approval' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function room(): BelongsTo

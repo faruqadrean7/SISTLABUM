@@ -10,7 +10,8 @@ class RegisterDeviceRequest extends BaseApiRequest
     {
         return [
             'platform' => ['required', 'string', 'in:android,ios,web'],
-            'fcm_token' => ['required', 'string', 'max:500'],
+            'fcm_token' => ['required_without:token', 'nullable', 'string', 'max:1000'],
+            'token' => ['required_without:fcm_token', 'nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -19,8 +20,10 @@ class RegisterDeviceRequest extends BaseApiRequest
         return [
             'platform.required' => 'Platform perangkat wajib dipilih',
             'platform.in' => 'Platform harus salah satu dari: android, ios, web',
-            'fcm_token.required' => 'Token FCM perangkat wajib diisi',
-            'fcm_token.max' => 'Token FCM maksimal 500 karakter',
+            'fcm_token.required_without' => 'Token perangkat wajib diisi',
+            'token.required_without' => 'Token perangkat wajib diisi',
+            'fcm_token.max' => 'Token perangkat maksimal 1000 karakter',
+            'token.max' => 'Token perangkat maksimal 1000 karakter',
         ];
     }
 }

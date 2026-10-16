@@ -167,6 +167,13 @@ class PostService
             'coverFile',
         ]);
 
+        $user = $request->user();
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->where('school_id', $user->school_id)->orWhereNull('school_id');
+            });
+        }
+
         if ($status) {
             $query->where('status', $status);
         }
@@ -192,15 +199,22 @@ class PostService
     /**
      * BE-CMS-02: Get post detail for admin.
      */
-    public function getAdminPost(string $id): Post
+    public function getAdminPost(string $id, ?Request $request = null): Post
     {
-        return Post::with([
+        $post = Post::with([
             'category',
             'author:id,username,email',
             'coverFile',
         ])->where(function ($query) use ($id) {
             $query->where('id', $id)->orWhere('slug', $id);
         })->firstOrFail();
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id) && ! empty($post->school_id) && $post->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Berita/artikel berada di luar sekolah penugasan Anda.');
+        }
+
+        return $post;
     }
 
     /**
@@ -253,6 +267,10 @@ class PostService
     {
         return DB::transaction(function () use ($id, $data, $request) {
             $post = Post::findOrFail($id);
+            $user = $request->user();
+            if ($user && ! empty($user->school_id) && ! empty($post->school_id) && $post->school_id !== $user->school_id) {
+                throw new HttpException(403, 'Akses ditolak: Berita/artikel berada di luar sekolah penugasan Anda.');
+            }
             $oldValue = $post->toArray();
 
             if (! empty($data['slug'])) {
@@ -298,6 +316,10 @@ class PostService
     public function deletePost(string $id, Request $request): void
     {
         $post = Post::findOrFail($id);
+        $user = $request->user();
+        if ($user && ! empty($user->school_id) && ! empty($post->school_id) && $post->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Berita/artikel berada di luar sekolah penugasan Anda.');
+        }
         $oldValue = $post->toArray();
 
         $post->delete();

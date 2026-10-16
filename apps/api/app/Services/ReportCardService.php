@@ -105,6 +105,26 @@ class ReportCardService
 
         $semester = Semester::with('academicYear')->findOrFail($data['semester_id']);
 
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if (! $teacher) {
+                throw new HttpException(403, 'Akses ditolak.');
+            }
+            if (! empty($data['student_id'])) {
+                $student = Student::with('classes')->findOrFail($data['student_id']);
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+                $isWalas = $student->classes()->whereIn('classes.id', $homeroomClassIds)->whereNull('class_students.left_at')->exists();
+                if (! $isWalas) {
+                    throw new HttpException(403, 'Anda bukan wali kelas dari siswa ini.');
+                }
+            } elseif (! empty($data['class_id'])) {
+                $targetClass = SchoolClass::findOrFail($data['class_id']);
+                if ($targetClass->homeroom_teacher_id !== $teacher->id) {
+                    throw new HttpException(403, 'Anda bukan wali kelas dari rombel ini.');
+                }
+            }
+        }
+
         $students = collect();
         if (! empty($data['student_id'])) {
             $student = Student::with('classes')->findOrFail($data['student_id']);
@@ -391,31 +411,36 @@ class ReportCardService
             throw new HttpException(403, 'Hanya Administrator atau Admin Kurikulum yang berwenang mengunci e-rapor.');
         }
 
-        $report = ReportCard::findOrFail($id);
-        $oldStatus = $report->status;
-        $isLocked = (bool) $data['is_locked'];
+        return DB::transaction(function () use ($id, $data, $currentUser, $request) {
+            $report = ReportCard::findOrFail($id);
+            $oldStatus = $report->status;
+            $isLocked = (bool) $data['is_locked'];
 
-        if ($isLocked) {
-            $report->status = 'terkunci';
-            $report->locked_at = now();
-        } else {
-            $report->status = 'draft';
-            $report->locked_at = null;
-        }
+            if ($isLocked) {
+                $report->status = 'terkunci';
+                $report->locked_at = now();
+            } else {
+                $report->status = 'draft';
+                $report->locked_at = null;
+            }
 
-        $report->save();
+            $report->save();
 
-        $this->logAudit(
-            $currentUser->id,
-            $isLocked ? 'report_card.lock' : 'report_card.unlock',
-            'report_cards',
-            $report->id,
-            ['status' => $oldStatus],
-            ['status' => $report->status, 'locked_at' => $report->locked_at, 'reason' => $data['reason'] ?? null],
-            $request
-        );
+            $action = $isLocked ? 'academic.report_card.lock' : 'academic.report_card.unlock';
 
-        return $report->fresh(['student', 'semester.academicYear', 'approver']);
+            app(\App\Services\AuditLogService::class)->record(
+                action: $action,
+                entity: 'ReportCard',
+                entityId: $report->id,
+                oldValues: ['status' => $oldStatus],
+                newValues: ['status' => $report->status, 'locked_at' => $report->locked_at],
+                reason: $data['reason'] ?? null,
+                request: $request,
+                isAuthoritative: true
+            );
+
+            return $report->fresh(['student', 'semester.academicYear', 'approver']);
+        });
     }
 
     /**
@@ -430,30 +455,373 @@ class ReportCardService
             throw new HttpException(403, 'Hanya Kepala Sekolah atau Administrator yang berwenang mengesahkan e-rapor.');
         }
 
-        $report = ReportCard::findOrFail($id);
-        $oldStatus = $report->status;
-        $newStatus = $data['status'];
+        return DB::transaction(function () use ($id, $data, $currentUser, $request) {
+            $report = ReportCard::findOrFail($id);
+            $oldStatus = $report->status;
+            $newStatus = $data['status'];
 
-        $report->status = $newStatus;
-        if (in_array($newStatus, ['disetujui', 'terbit'])) {
-            $report->approved_by = $currentUser->id;
-        } else {
-            $report->approved_by = null;
+            $report->status = $newStatus;
+            if (in_array($newStatus, ['disetujui', 'terbit'])) {
+                $report->approved_by = $currentUser->id;
+            } else {
+                $report->approved_by = null;
+            }
+
+            $report->save();
+
+            $reason = $data['note'] ?? $data['reason'] ?? null;
+
+            app(\App\Services\AuditLogService::class)->record(
+                action: 'academic.report_card.approve',
+                entity: 'ReportCard',
+                entityId: $report->id,
+                oldValues: ['status' => $oldStatus],
+                newValues: ['status' => $newStatus, 'approved_by' => $report->approved_by, 'note' => $reason],
+                reason: $reason,
+                request: $request,
+                isAuthoritative: true
+            );
+
+            return $report->fresh(['student', 'semester.academicYear', 'approver']);
+        });
+    }
+
+    /**
+     * BE-GRD-04: Pengesahan massal E-Rapor semester oleh Kepala Sekolah atau Admin.
+     */
+    public function bulkApprove(array $data, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (! $this->canApprove($currentUser)) {
+            throw new HttpException(403, 'Hanya Kepala Sekolah atau Administrator yang berwenang mengesahkan e-rapor.');
         }
 
-        $report->save();
+        $newStatus = $data['status'];
+        $query = ReportCard::query();
 
-        $this->logAudit(
-            $currentUser->id,
-            'report_card.approve',
-            'report_cards',
-            $report->id,
-            ['status' => $oldStatus],
-            ['status' => $newStatus, 'approved_by' => $report->approved_by, 'note' => $data['note'] ?? null],
-            $request
-        );
+        if (! empty($data['report_ids'])) {
+            $query->whereIn('id', $data['report_ids']);
+        } elseif (! empty($data['class_id']) && ! empty($data['semester_id'])) {
+            $classId = $data['class_id'];
+            $semesterId = $data['semester_id'];
+            $query->where('semester_id', $semesterId)
+                ->whereHas('student.classes', fn ($q) => $q->where('classes.id', $classId)->whereNull('class_students.left_at'));
+        } else {
+            throw new HttpException(422, 'Wajib menyertakan report_ids atau kombinasi class_id dan semester_id.');
+        }
 
-        return $report->fresh(['student', 'semester.academicYear', 'approver']);
+        $reports = $query->get();
+
+        if ($reports->isEmpty()) {
+            return [
+                'count' => 0,
+                'status' => $newStatus,
+                'items' => [],
+            ];
+        }
+
+        $updatedCount = 0;
+        $updatedItems = [];
+
+        DB::transaction(function () use ($reports, $newStatus, $currentUser, $request, $data, &$updatedCount, &$updatedItems) {
+            foreach ($reports as $report) {
+                $oldStatus = $report->status;
+                $report->status = $newStatus;
+
+                if (in_array($newStatus, ['disetujui', 'terbit'])) {
+                    $report->approved_by = $currentUser->id;
+                } else {
+                    $report->approved_by = null;
+                }
+
+                $report->save();
+                $updatedCount++;
+
+                $reason = $data['note'] ?? $data['reason'] ?? null;
+                app(\App\Services\AuditLogService::class)->record(
+                    action: 'academic.report_card.bulk_approve',
+                    entity: 'ReportCard',
+                    entityId: $report->id,
+                    oldValues: ['status' => $oldStatus],
+                    newValues: ['status' => $newStatus, 'approved_by' => $report->approved_by, 'note' => $reason],
+                    reason: $reason,
+                    request: $request,
+                    isAuthoritative: true
+                );
+
+                $updatedItems[] = $report->fresh(['student', 'semester.academicYear', 'approver']);
+            }
+        });
+
+        return [
+            'count' => $updatedCount,
+            'status' => $newStatus,
+            'items' => $updatedItems,
+        ];
+    }
+
+    /**
+     * BE-GRD-04: Penguncian massal E-Rapor semester oleh Admin Kurikulum.
+     */
+    public function bulkLock(array $data, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (! $this->checkIsAdmin($currentUser)) {
+            throw new HttpException(403, 'Hanya Administrator atau Admin Kurikulum yang berwenang mengunci e-rapor.');
+        }
+
+        $isLocked = (bool) $data['is_locked'];
+        $query = ReportCard::query();
+
+        if (! empty($data['report_ids'])) {
+            $query->whereIn('id', $data['report_ids']);
+        } elseif (! empty($data['class_id']) && ! empty($data['semester_id'])) {
+            $classId = $data['class_id'];
+            $semesterId = $data['semester_id'];
+            $query->where('semester_id', $semesterId)
+                ->whereHas('student.classes', fn ($q) => $q->where('classes.id', $classId)->whereNull('class_students.left_at'));
+        } else {
+            throw new HttpException(422, 'Wajib menyertakan report_ids atau kombinasi class_id dan semester_id.');
+        }
+
+        $reports = $query->get();
+
+        if ($reports->isEmpty()) {
+            return [
+                'count' => 0,
+                'is_locked' => $isLocked,
+                'items' => [],
+            ];
+        }
+
+        $updatedCount = 0;
+        $updatedItems = [];
+
+        DB::transaction(function () use ($reports, $isLocked, $currentUser, $request, $data, &$updatedCount, &$updatedItems) {
+            foreach ($reports as $report) {
+                $oldStatus = $report->status;
+                if ($isLocked) {
+                    $report->status = 'terkunci';
+                    $report->locked_at = now();
+                } else {
+                    $report->status = 'draft';
+                    $report->locked_at = null;
+                }
+
+                $report->save();
+                $updatedCount++;
+
+                $this->logAudit(
+                    $currentUser->id,
+                    $isLocked ? 'report_card.bulk_lock' : 'report_card.bulk_unlock',
+                    'report_cards',
+                    $report->id,
+                    ['status' => $oldStatus],
+                    ['status' => $report->status, 'locked_at' => $report->locked_at, 'reason' => $data['reason'] ?? null],
+                    $request
+                );
+
+                $updatedItems[] = $report->fresh(['student', 'semester.academicYear', 'approver']);
+            }
+        });
+
+        return [
+            'count' => $updatedCount,
+            'is_locked' => $isLocked,
+            'items' => $updatedItems,
+        ];
+    }
+
+    /**
+     * BE-GRD-04: Tinjauan status & kesiapan data e-rapor semester satu kelas/rombel.
+     */
+    public function getClassReportCardsStatus(array $filters, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (empty($filters['class_id']) || empty($filters['semester_id'])) {
+            throw new HttpException(422, 'Parameter class_id dan semester_id wajib disertakan.');
+        }
+
+        $class = SchoolClass::with('homeroomTeacher')->findOrFail($filters['class_id']);
+        $semester = Semester::with('academicYear')->findOrFail($filters['semester_id']);
+
+        // Otorisasi: Walas kelas bersangkutan atau Admin/Kepsek
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if (! $teacher || $class->homeroom_teacher_id !== $teacher->id) {
+                throw new HttpException(403, 'Anda bukan wali kelas dari rombel ini.');
+            }
+        }
+
+        // Siswa aktif di rombel
+        $students = Student::whereHas('classes', function ($q) use ($class) {
+            $q->where('classes.id', $class->id)->whereNull('class_students.left_at');
+        })->orderBy('full_name', 'asc')->get();
+
+        $studentIds = $students->pluck('id');
+
+        // Existing report cards
+        $existingReports = ReportCard::with('approver')
+            ->whereIn('student_id', $studentIds)
+            ->where('semester_id', $semester->id)
+            ->get()
+            ->keyBy('student_id');
+
+        // Nilai semester per siswa
+        $gradesCount = Grade::whereIn('student_id', $studentIds)
+            ->where(function ($q) use ($semester) {
+                $q->whereHas('period', fn ($p) => $p->where('semester_id', $semester->id))
+                    ->orWhereHas('component', fn ($c) => $c->where('semester_id', $semester->id));
+            })
+            ->select('student_id', DB::raw('count(distinct component_id) as comp_count'))
+            ->groupBy('student_id')
+            ->pluck('comp_count', 'student_id');
+
+        // Presensi semester per siswa
+        $attendanceQuery = Attendance::whereIn('student_id', $studentIds);
+        if ($semester->start_date && $semester->end_date) {
+            $attendanceQuery->whereBetween('att_date', [$semester->start_date, $semester->end_date]);
+        }
+        $attendanceCount = $attendanceQuery
+            ->select('student_id', DB::raw('count(*) as att_count'))
+            ->groupBy('student_id')
+            ->pluck('att_count', 'student_id');
+
+        // Catatan karakter semester
+        $charNotesCount = CharacterNote::whereIn('student_id', $studentIds)
+            ->whereHas('period', fn ($p) => $p->where('semester_id', $semester->id))
+            ->select('student_id', DB::raw('count(*) as note_count'))
+            ->groupBy('student_id')
+            ->pluck('note_count', 'student_id');
+
+        // Ekstrakurikuler siswa
+        $ekskulCount = ExtracurricularMember::whereIn('student_id', $studentIds)
+            ->select('student_id', DB::raw('count(*) as ekskul_count'))
+            ->groupBy('student_id')
+            ->pluck('ekskul_count', 'student_id');
+
+        $studentRows = [];
+        $counts = [
+            'total_students' => $students->count(),
+            'generated_count' => 0,
+            'draft_count' => 0,
+            'terkunci_count' => 0,
+            'disetujui_count' => 0,
+            'terbit_count' => 0,
+            'belum_dibuat_count' => 0,
+            'ready_to_generate_count' => 0,
+        ];
+
+        foreach ($students as $stu) {
+            /** @var ReportCard|null $rep */
+            $rep = $existingReports->get($stu->id);
+            $hasGrades = ($gradesCount->get($stu->id, 0) > 0);
+            $attDays = (int) $attendanceCount->get($stu->id, 0);
+            $hasAttendance = ($attDays > 0);
+            $hasCharNote = ($charNotesCount->get($stu->id, 0) > 0);
+            $hasEkskul = ($ekskulCount->get($stu->id, 0) > 0);
+
+            $isReady = $hasGrades;
+            if ($isReady) {
+                $counts['ready_to_generate_count']++;
+            }
+
+            if ($rep) {
+                $counts['generated_count']++;
+                match ($rep->status) {
+                    'draft' => $counts['draft_count']++,
+                    'terkunci' => $counts['terkunci_count']++,
+                    'disetujui' => $counts['disetujui_count']++,
+                    'terbit' => $counts['terbit_count']++,
+                    default => null,
+                };
+            } else {
+                $counts['belum_dibuat_count']++;
+            }
+
+            $studentRows[] = [
+                'student' => [
+                    'id' => $stu->id,
+                    'nis' => $stu->nis,
+                    'nisn' => $stu->nisn,
+                    'full_name' => $stu->full_name,
+                    'gender' => $stu->gender,
+                ],
+                'report' => $rep ? [
+                    'id' => $rep->id,
+                    'status' => $rep->status,
+                    'verify_token' => $rep->verify_token,
+                    'locked_at' => $rep->locked_at?->toIso8601String(),
+                    'created_at' => $rep->created_at?->toIso8601String(),
+                    'updated_at' => $rep->updated_at?->toIso8601String(),
+                    'approved_by' => $rep->approved_by,
+                    'approver_name' => $rep->approver?->name ?? $rep->approver?->username,
+                ] : null,
+                'data_readiness' => [
+                    'has_grades' => $hasGrades,
+                    'graded_subjects_count' => (int) $gradesCount->get($stu->id, 0),
+                    'has_attendance' => $hasAttendance,
+                    'attendance_days_count' => $attDays,
+                    'has_character_note' => $hasCharNote,
+                    'has_extracurricular' => $hasEkskul,
+                    'is_ready_to_generate' => $isReady,
+                ],
+            ];
+        }
+
+        return [
+            'class' => [
+                'id' => $class->id,
+                'name' => $class->name,
+                'homeroom_teacher' => $class->homeroomTeacher?->full_name,
+            ],
+            'semester' => [
+                'id' => $semester->id,
+                'name' => $semester->name,
+                'academic_year' => $semester->academicYear?->name,
+                'is_active' => (bool) $semester->is_active,
+            ],
+            'students' => $studentRows,
+            'summary' => $counts,
+        ];
+    }
+
+    /**
+     * BE-GRD-04: Pratinjau data snapshot rapor semester siswa sebelum disimpan.
+     */
+    public function previewReportCard(array $data, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (empty($data['student_id']) || empty($data['semester_id'])) {
+            throw new HttpException(422, 'Parameter student_id dan semester_id wajib disertakan.');
+        }
+
+        $student = Student::with('classes')->findOrFail($data['student_id']);
+        $semester = Semester::with('academicYear')->findOrFail($data['semester_id']);
+
+        // Cek otorisasi
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if ($teacher) {
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+                $isWalas = $student->classes()->whereIn('classes.id', $homeroomClassIds)->whereNull('class_students.left_at')->exists();
+                if (! $isWalas) {
+                    throw new HttpException(403, 'Akses ditolak.');
+                }
+            } else {
+                throw new HttpException(403, 'Akses ditolak.');
+            }
+        }
+
+        return $this->compileSemesterSnapshot($student, $semester, $data['homeroom_note'] ?? null);
     }
 
     /**
@@ -508,7 +876,11 @@ class ReportCardService
                 $s['final_score'] ?? 0,
                 strtoupper($s['level'] ?? 'tuntas')
             );
-            $lines[] = '   Deskripsi: '.substr($s['competency_description'] ?? '-', 0, 75);
+            $desc = $s['competency_description'] ?? '-';
+            $wrappedDesc = wordwrap($desc, 68, "\n");
+            foreach (explode("\n", $wrappedDesc) as $dl) {
+                $lines[] = '   Deskripsi: '.$dl;
+            }
         }
 
         $lines[] = '------------------------------------------------------------------------';
@@ -525,7 +897,11 @@ class ReportCardService
             }
         }
 
-        $lines[] = 'CATATAN WALI KELAS: '.substr($homeroomNote, 0, 80);
+        $lines[] = 'CATATAN WALI KELAS:';
+        $wrappedNote = wordwrap($homeroomNote, 70, "\n");
+        foreach (explode("\n", $wrappedNote) as $nl) {
+            $lines[] = '   '.$nl;
+        }
         $lines[] = '========================================================================';
         $lines[] = 'STATUS DOKUMEN    : '.strtoupper($report->status);
         $lines[] = 'KEPALA SEKOLAH    : '.($report->approver?->username ?? 'Kepala Sekolah');
@@ -533,36 +909,52 @@ class ReportCardService
         $lines[] = 'URL VERIFIKASI QR : '.$verifyUrl;
         $lines[] = '========================================================================';
 
-        $textStream = "BT\n/F1 9 Tf\n50 790 Td\n13 TL\n";
-        foreach ($lines as $line) {
-            $sanitized = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line);
-            $textStream .= "({$sanitized}) '\n";
+        $pagesLines = array_chunk($lines, 50);
+        if (empty($pagesLines)) {
+            $pagesLines = [[]];
         }
-        $textStream .= "ET\n";
-
-        $streamLen = strlen($textStream);
+        $numPages = count($pagesLines);
 
         $objects = [];
-        $objects[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
-        $objects[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
-        $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
-        $objects[] = "4 0 obj\n<< /Length ".$streamLen." >>\nstream\n".$textStream."endstream\nendobj\n";
-        $objects[] = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n";
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+        $kids = [];
+        for ($k = 0; $k < $numPages; $k++) {
+            $kids[] = (4 + 2 * $k).' 0 R';
+        }
+        $objects[2] = '<< /Type /Pages /Kids ['.implode(' ', $kids).'] /Count '.$numPages.' >>';
+        $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>';
+
+        for ($k = 0; $k < $numPages; $k++) {
+            $pageObjId = 4 + 2 * $k;
+            $contentObjId = 5 + 2 * $k;
+
+            $textStream = "BT\n/F1 9 Tf\n50 790 Td\n13 TL\n";
+            foreach ($pagesLines[$k] as $line) {
+                $sanitized = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line);
+                $textStream .= "({$sanitized}) '\n";
+            }
+            $textStream .= "ET\n";
+            $streamLen = strlen($textStream);
+
+            $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents '.$contentObjId.' 0 R /Resources << /Font << /F1 3 0 R >> >> >>';
+            $objects[$contentObjId] = "<< /Length {$streamLen} >>\nstream\n{$textStream}endstream";
+        }
 
         $pdf = "%PDF-1.4\n";
-        $offsets = [0];
-        foreach ($objects as $obj) {
-            $offsets[] = strlen($pdf);
-            $pdf .= $obj;
+        $offsets = [0 => 0];
+        $totalObjs = count($objects);
+        for ($i = 1; $i <= $totalObjs; $i++) {
+            $offsets[$i] = strlen($pdf);
+            $pdf .= "{$i} 0 obj\n{$objects[$i]}\nendobj\n";
         }
 
         $xrefOffset = strlen($pdf);
-        $pdf .= "xref\n0 ".(count($objects) + 1)."\n";
+        $pdf .= "xref\n0 ".($totalObjs + 1)."\n";
         $pdf .= "0000000000 65535 f \n";
-        for ($i = 1; $i <= count($objects); $i++) {
+        for ($i = 1; $i <= $totalObjs; $i++) {
             $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
         }
-        $pdf .= "trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\n";
+        $pdf .= "trailer\n<< /Size ".($totalObjs + 1)." /Root 1 0 R >>\n";
         $pdf .= "startxref\n".$xrefOffset."\n%%EOF\n";
 
         return $pdf;

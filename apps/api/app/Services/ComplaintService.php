@@ -125,7 +125,17 @@ class ComplaintService
     {
         $this->verifyComplaintAccess($request->user());
 
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
         $query = Complaint::with(['reporter', 'assignedToUser', 'events']);
+
+        // Multi-tenant school isolation
+        if (! empty($currentUser->school_id)) {
+            $query->where(function ($q) use ($currentUser) {
+                $q->where('school_id', $currentUser->school_id)->orWhereNull('school_id');
+            });
+        }
 
         if (! empty($filters['q'])) {
             $q = trim($filters['q']);
@@ -157,7 +167,23 @@ class ComplaintService
 
         $perPage = min((int) ($filters['per_page'] ?? 15), 100);
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        // Hak akses melihat identitas pelapor non-anonim
+        $canViewReporter = $this->canViewReporterIdentity($currentUser);
+
+        if (! $canViewReporter) {
+            $paginator->getCollection()->transform(function (Complaint $complaint) {
+                if (! $complaint->is_anonymous) {
+                    $complaint->setRelation('reporter', null);
+                    $complaint->reporter_user_id = null;
+                }
+
+                return $complaint;
+            });
+        }
+
+        return $paginator;
     }
 
     /**
@@ -167,7 +193,21 @@ class ComplaintService
     {
         $this->verifyComplaintAccess($request->user());
 
-        return Complaint::with(['reporter', 'assignedToUser', 'events.actor'])->findOrFail($id);
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        $complaint = Complaint::with(['reporter', 'assignedToUser', 'events.actor'])->findOrFail($id);
+
+        if (! empty($currentUser->school_id) && ! empty($complaint->school_id) && $complaint->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Pengaduan berada di luar sekolah penugasan Anda.');
+        }
+
+        if (! $this->canViewReporterIdentity($currentUser) && ! $complaint->is_anonymous) {
+            $complaint->setRelation('reporter', null);
+            $complaint->reporter_user_id = null;
+        }
+
+        return $complaint;
     }
 
     /**
@@ -181,6 +221,10 @@ class ComplaintService
         $currentUser = $request->user();
 
         $complaint = Complaint::with('events')->findOrFail($id);
+
+        if (! empty($currentUser->school_id) && ! empty($complaint->school_id) && $complaint->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Pengaduan berada di luar sekolah penugasan Anda.');
+        }
 
         $newStatus = $data['status'];
         $currentStatus = $complaint->status;
@@ -228,8 +272,31 @@ class ComplaintService
                 $request->userAgent()
             );
 
-            return $complaint->fresh(['reporter', 'assignedToUser', 'events.actor']);
+            $refreshed = $complaint->fresh(['reporter', 'assignedToUser', 'events.actor']);
+
+            if (! $this->canViewReporterIdentity($currentUser) && ! $refreshed->is_anonymous) {
+                $refreshed->setRelation('reporter', null);
+                $refreshed->reporter_user_id = null;
+            }
+
+            return $refreshed;
         });
+    }
+
+    /**
+     * Memeriksa apakah pengguna memiliki wewenang melihat identitas pelapor non-anonim.
+     */
+    protected function canViewReporterIdentity(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasRole('super_admin') || $user->hasRole('principal')) {
+            return true;
+        }
+
+        return $user->hasPermission('complaint.view_reporter');
     }
 
     /**

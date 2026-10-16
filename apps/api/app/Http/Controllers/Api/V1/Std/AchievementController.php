@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1\Std;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Std\ListAchievementRequest;
 use App\Http\Requests\Std\StoreAchievementRequest;
+use App\Http\Requests\Std\UpdateAchievementRequest;
+use App\Http\Requests\Std\VerifyAchievementRequest;
 use App\Services\Std\CompetitionAndAchievementService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -28,9 +30,11 @@ class AchievementController extends Controller
     public function index(ListAchievementRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listAchievements($request->validated());
+            $paginator = $this->service->listAchievements($request->validated(), $request->user());
 
             return $this->paginatedResponse($paginator);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'HTTP_ERROR', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -42,14 +46,16 @@ class AchievementController extends Controller
      * BE-STD-03: Detail prestasi siswa beserta trofi/sertifikat.
      * GET /api/v1/achievements/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
-            $achievement = $this->service->getAchievement($id);
+            $achievement = $this->service->getAchievement($id, $request->user());
 
             return $this->successResponse($achievement);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Data prestasi tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'HTTP_ERROR', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -82,7 +88,7 @@ class AchievementController extends Controller
      * BE-STD-03: Perbarui data prestasi.
      * PUT /api/v1/achievements/{id}
      */
-    public function update(string $id, StoreAchievementRequest $request): JsonResponse
+    public function update(string $id, UpdateAchievementRequest $request): JsonResponse
     {
         try {
             $achievement = $this->service->updateAchievement($id, $request->validated(), $request);
@@ -96,6 +102,27 @@ class AchievementController extends Controller
             report($e);
 
             return $this->errorResponse('Gagal memperbarui data prestasi.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-STD-03: Verifikasi bukti prestasi & piala oleh staf kesiswaan/admin.
+     * PATCH /api/v1/achievements/{id}/verify
+     */
+    public function verify(string $id, VerifyAchievementRequest $request): JsonResponse
+    {
+        try {
+            $achievement = $this->service->verifyAchievement($id, $request->validated(), $request);
+
+            return $this->successResponse($achievement);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Data prestasi tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'HTTP_ERROR', $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Gagal memverifikasi data prestasi.', 'INTERNAL_ERROR', 500);
         }
     }
 

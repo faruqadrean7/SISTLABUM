@@ -431,4 +431,181 @@ class AssetAndAuditTest extends TestCase
             'entity_id' => $assetId,
         ]);
     }
+
+    /**
+     * BE-SAR-02: Ringkasan statistik aset dan distribusi kondisi.
+     */
+    public function test_be_sar_02_get_asset_summary_metrics(): void
+    {
+        Asset::create([
+            'asset_code' => 'AST-SUMM-01',
+            'name' => 'Laptop Asus Core i7',
+            'category' => 'Elektronik',
+            'asset_condition' => 'baik',
+        ]);
+
+        Asset::create([
+            'asset_code' => 'AST-SUMM-02',
+            'name' => 'Proyektor Epson',
+            'category' => 'Elektronik',
+            'asset_condition' => 'rusak_ringan',
+        ]);
+
+        Asset::create([
+            'asset_code' => 'AST-SUMM-03',
+            'name' => 'Meja Rusak Patah',
+            'category' => 'Furnitur',
+            'asset_condition' => 'rusak_berat',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson('/api/v1/assets/summary');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.total_assets', 3)
+            ->assertJsonPath('data.condition_baik', 1)
+            ->assertJsonPath('data.condition_rusak_ringan', 1)
+            ->assertJsonPath('data.condition_rusak_berat', 1);
+    }
+
+    /**
+     * BE-SAR-02: Pengambilan data label fisik QR code untuk pencetakan.
+     */
+    public function test_be_sar_02_get_asset_qr_label_data(): void
+    {
+        $asset = Asset::create([
+            'asset_code' => 'AST-QR-TEST-01',
+            'name' => 'Kamera DSLR Canon',
+            'category' => 'Multimedia',
+            'asset_condition' => 'baik',
+            'room_id' => $this->labKomputer->id,
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson("/api/v1/assets/{$asset->id}/qr");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.qr_code', 'AST-QR-TEST-01')
+            ->assertJsonPath('data.qr_payload.code', 'AST-QR-TEST-01')
+            ->assertJsonPath('data.qr_payload.name', 'Kamera DSLR Canon')
+            ->assertJsonPath('data.label_title', 'INVENTARIS SEKOLAH');
+    }
+
+    /**
+     * BE-SAR-02: Multi-tenant scoping mencegah akses aset antar-sekolah berbeda (anti-IDOR 403).
+     */
+    public function test_be_sar_02_multi_tenant_isolation_prevents_cross_school_access(): void
+    {
+        $schoolA = '88888888-1111-2222-3333-444444444444';
+        $schoolB = '88888888-5555-6666-7777-888888888888';
+
+        $this->sarprasUser->school_id = $schoolA;
+        $this->sarprasUser->save();
+
+        $assetSchoolB = Asset::create([
+            'school_id' => $schoolB,
+            'asset_code' => 'AST-SCHB-001',
+            'name' => 'Aset Sekolah Sebelah',
+            'category' => 'Elektronik',
+            'asset_condition' => 'baik',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        // 1. Dilarang melihat detail aset sekolah lain
+        $respShow = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson("/api/v1/assets/{$assetSchoolB->id}");
+        $respShow->assertStatus(403);
+
+        $this->app['auth']->forgetGuards();
+
+        // 2. Dilarang mengubah aset sekolah lain
+        $respUpdate = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->putJson("/api/v1/assets/{$assetSchoolB->id}", [
+                'name' => 'Aset Diretas',
+            ]);
+        $respUpdate->assertStatus(403);
+
+        $this->app['auth']->forgetGuards();
+
+        // 3. Dilarang menghapus aset sekolah lain
+        $respDelete = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->deleteJson("/api/v1/assets/{$assetSchoolB->id}");
+        $respDelete->assertStatus(403);
+    }
+
+    /**
+     * BE-SAR-02: Multi-tenant scoping pada sesi stok opname aset (anti-IDOR 403).
+     */
+    public function test_be_sar_02_multi_tenant_isolation_on_asset_audits(): void
+    {
+        $schoolA = '77777777-1111-2222-3333-444444444444';
+        $schoolB = '77777777-5555-6666-7777-888888888888';
+
+        $this->sarprasUser->school_id = $schoolA;
+        $this->sarprasUser->save();
+
+        $auditSchoolB = AssetAudit::create([
+            'school_id' => $schoolB,
+            'title' => 'Audit Sekolah B',
+            'audit_date' => Carbon::now()->toDateString(),
+            'auditor_id' => $this->adminUser->id,
+            'status' => 'draf',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        // Dilarang melihat detail audit sekolah lain
+        $respShow = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson("/api/v1/asset-audits/{$auditSchoolB->id}");
+        $respShow->assertStatus(403);
+
+        $this->app['auth']->forgetGuards();
+
+        // Dilarang mengupdate audit sekolah lain
+        $respUpdate = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->patchJson("/api/v1/asset-audits/{$auditSchoolB->id}", [
+                'status' => 'selesai',
+            ]);
+        $respUpdate->assertStatus(403);
+    }
+
+    /**
+     * BE-SAR-02: Detail aset mengintegrasikan riwayat tiket perbaikan helpdesk (BE-SAR-03).
+     */
+    public function test_be_sar_02_asset_detail_includes_ticket_maintenance_history(): void
+    {
+        $asset = Asset::create([
+            'asset_code' => 'AST-TCK-LINK-01',
+            'name' => 'Proyektor Ruang Multimedia',
+            'category' => 'Elektronik',
+            'asset_condition' => 'rusak_ringan',
+            'room_id' => $this->labKomputer->id,
+        ]);
+
+        \App\Models\Ticket::create([
+            'ticket_number' => 'TCK-202610-9001',
+            'title' => 'Lensa Proyektor Berdebu',
+            'reporter_id' => $this->teacherUser->id,
+            'asset_id' => $asset->id,
+            'room_id' => $this->labKomputer->id,
+            'description' => 'Tampilan buram saat presentasi',
+            'priority' => 'sedang',
+            'status' => 'selesai',
+        ]);
+
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson("/api/v1/assets/{$asset->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.id', $asset->id)
+            ->assertJsonPath('data.tickets.0.ticket_number', 'TCK-202610-9001')
+            ->assertJsonPath('data.tickets.0.status', 'selesai');
+    }
 }

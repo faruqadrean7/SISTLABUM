@@ -75,6 +75,13 @@ class ExamSessionService
 
         $now = Carbon::now();
         $durationMinutes = (int) ($exam->duration_min ?? 90);
+        $calculatedEndsAt = $now->copy()->addMinutes($durationMinutes);
+        if ($exam->end_at) {
+            $examEndAt = Carbon::parse($exam->end_at);
+            if ($calculatedEndsAt->greaterThan($examEndAt)) {
+                $calculatedEndsAt = $examEndAt;
+            }
+        }
 
         // Cari atau buat sesi ujian siswa secara aman terhadap konkurensi
         try {
@@ -86,9 +93,11 @@ class ExamSessionService
                 [
                     'status' => 'mengerjakan',
                     'started_at' => $now,
-                    'deadline_at' => $now->copy()->addMinutes($durationMinutes),
+                    'ends_at' => $calculatedEndsAt,
+                    'deadline_at' => $calculatedEndsAt,
                     'seed' => Str::random(16),
                     'extra_minutes' => 0,
+                    'violation_count' => 0,
                 ]
             );
         } catch (UniqueConstraintViolationException) {
@@ -101,7 +110,9 @@ class ExamSessionService
         if ($session->status === 'belum') {
             $session->status = 'mengerjakan';
             $session->started_at = $now;
-            $session->deadline_at = $now->copy()->addMinutes($durationMinutes + $session->extra_minutes);
+            $endsAtWithExtra = $calculatedEndsAt->copy()->addMinutes($session->extra_minutes);
+            $session->ends_at = $endsAtWithExtra;
+            $session->deadline_at = $endsAtWithExtra;
             $session->save();
         } elseif ($session->status === 'selesai') {
             throw new HttpException(422, 'Ujian telah Anda selesaikan sebelumnya dan tidak dapat diakses kembali.');
@@ -109,15 +120,38 @@ class ExamSessionService
             throw new HttpException(403, 'Sesi ujian Anda sedang terkunci: '.($session->locked_reason ?? 'Pelanggaran anti-cheat atau aturan ujian').'. Hubungi pengawas ruang.');
         }
 
-        // Auto-lock jika waktu server telah melewati deadline
-        if ($session->deadline_at && $now->greaterThan($session->deadline_at)) {
-            $session->status = 'selesai';
-            $session->submitted_at = $session->deadline_at;
+        if (! $session->ends_at && $session->deadline_at) {
+            $session->ends_at = $session->deadline_at;
             $session->save();
-            throw new HttpException(422, 'Waktu ujian telah habis. Sesi ujian otomatis diselesaikan.');
         }
 
-        $remainingSeconds = max(0, $now->diffInSeconds($session->deadline_at, false));
+        $effectiveEndsAt = $session->ends_at ?? $session->deadline_at;
+        $graceSeconds = (int) config('cbt.grace_period_seconds', 5);
+
+        // Auto-lock jika waktu server telah melewati deadline
+        if ($effectiveEndsAt && $now->greaterThan($effectiveEndsAt->copy()->addSeconds($graceSeconds))) {
+            $session->status = 'selesai';
+            $session->submitted_at = $effectiveEndsAt;
+            $session->save();
+            throw new HttpException(422, 'Waktu ujian telah habis. Sesi ujian otomatis diselesaikan.', null, [
+                'X-Error-Code' => 'EXAM_TIME_OVER',
+            ]);
+        }
+
+        $remainingSeconds = max(0, $now->diffInSeconds($effectiveEndsAt, false));
+
+        // Ambil jawaban yang sudah tersimpan untuk memulihkan state klien pada resume
+        $savedAnswers = ExamAnswer::where('session_id', $session->id)
+            ->get()
+            ->keyBy('question_id')
+            ->map(function ($ans) {
+                return [
+                    'question_id' => $ans->question_id,
+                    'answer' => $ans->answer,
+                    'is_flagged' => (bool) $ans->is_flagged,
+                    'answered_at' => $ans->answered_at?->toIso8601String(),
+                ];
+            });
 
         $this->logAudit(
             $user->id,
@@ -137,10 +171,13 @@ class ExamSessionService
             'student_name' => $student->full_name,
             'status' => $session->status,
             'started_at' => $session->started_at?->toIso8601String(),
-            'deadline_at' => $session->deadline_at?->toIso8601String(),
+            'deadline_at' => $effectiveEndsAt?->toIso8601String(),
+            'ends_at' => $effectiveEndsAt?->toIso8601String(),
             'extra_minutes' => $session->extra_minutes,
             'remaining_seconds' => $remainingSeconds,
+            'violation_count' => $session->violation_count ?? 0,
             'server_time' => $now->toIso8601String(),
+            'answers' => $savedAnswers,
             'room_name' => $examRoom->room?->name,
             'session_no' => $examRoom->session_no,
         ];
@@ -196,7 +233,8 @@ class ExamSessionService
         }
 
         $now = Carbon::now();
-        $remainingSeconds = max(0, $now->diffInSeconds($session->deadline_at, false));
+        $effectiveEndsAt = $session->ends_at ?? $session->deadline_at;
+        $remainingSeconds = max(0, $now->diffInSeconds($effectiveEndsAt, false));
 
         // Format butir soal yang aman (STRIP jawaban yang benar)
         $formattedQuestions = [];
@@ -228,10 +266,13 @@ class ExamSessionService
             $formattedQuestions[] = [
                 'number' => $index++,
                 'id' => $q->id,
+                'question_id' => $q->id,
                 'question_type' => $q->question_type,
                 'body' => $q->body,
+                'stem' => is_array($q->body) ? ($q->body['content'] ?? '') : (string) $q->body,
                 'options' => $sanitizedOptions,
                 'user_answer' => $existingAnswer?->answer,
+                'current_answer' => $existingAnswer?->answer,
                 'is_flagged' => (bool) ($existingAnswer?->is_flagged ?? false),
                 'answered_at' => $existingAnswer?->answered_at?->toIso8601String(),
             ];
@@ -243,7 +284,10 @@ class ExamSessionService
             'title' => $exam->title,
             'status' => $session->status,
             'remaining_seconds' => $remainingSeconds,
-            'deadline_at' => $session->deadline_at?->toIso8601String(),
+            'deadline_at' => $effectiveEndsAt?->toIso8601String(),
+            'ends_at' => $effectiveEndsAt?->toIso8601String(),
+            'violation_count' => $session->violation_count ?? 0,
+            'server_time' => $now->toIso8601String(),
             'total_questions' => count($formattedQuestions),
             'questions' => $formattedQuestions,
         ];
@@ -278,19 +322,63 @@ class ExamSessionService
         $isFlagged = (bool) ($data['is_flagged'] ?? false);
 
         $now = Carbon::now();
+        $incomingAnsweredAt = ! empty($data['answered_at'])
+            ? Carbon::parse($data['answered_at'])
+            : $now;
+
+        // Batasi answered_at agar tidak melebihi jam server
+        if ($incomingAnsweredAt->greaterThan($now)) {
+            $incomingAnsweredAt = $now;
+        }
+
+        // Batasi answered_at agar tidak mendahului waktu mulai sesi ujian
+        if ($session->started_at && $incomingAnsweredAt->lessThan($session->started_at)) {
+            $incomingAnsweredAt = $session->started_at->copy();
+        }
+
+        // Cek apakah jawaban sudah tersimpan sebelumnya
+        $existing = ExamAnswer::where('session_id', $session->id)
+            ->where('question_id', $questionId)
+            ->first();
+
+        if ($existing) {
+            // Rule 1: Idempotent match (nilai jawaban dan flag ragu-ragu persis sama)
+            $existingAnswer = is_string($existing->answer) ? json_decode($existing->answer, true) : $existing->answer;
+            if ($existingAnswer == $answerData && (bool) $existing->is_flagged === $isFlagged) {
+                return [
+                    'question_id' => $questionId,
+                    'is_saved' => true,
+                    'is_flagged' => (bool) $existing->is_flagged,
+                    'is_stale' => false,
+                    'answered_at' => $existing->answered_at?->toIso8601String() ?? $now->toIso8601String(),
+                    'server_time' => $now->toIso8601String(),
+                ];
+            }
+
+            // Rule 2: Out-of-order retry protection (timestamp incoming lebih lama dari yang telah tersimpan)
+            if ($existing->answered_at && $incomingAnsweredAt->lessThan($existing->answered_at)) {
+                return [
+                    'question_id' => $questionId,
+                    'is_saved' => true,
+                    'is_stale' => true,
+                    'answered_at' => $existing->answered_at->toIso8601String(),
+                    'server_time' => $now->toIso8601String(),
+                ];
+            }
+        }
 
         // SEC-CBT-CONC: Atomic UPSERT berbasis DB (ON CONFLICT DO UPDATE)
         // Mencegah abort transaksi PostgreSQL dan race condition pada autosave konkuren
         ExamAnswer::upsert(
             [
                 [
-                    'id' => (string) Str::uuid(),
+                    'id' => $existing ? $existing->id : (string) Str::uuid(),
                     'session_id' => $session->id,
                     'question_id' => $questionId,
                     'answer' => $answerData !== null ? json_encode($answerData) : null,
                     'is_flagged' => $isFlagged,
-                    'answered_at' => $now,
-                    'created_at' => $now,
+                    'answered_at' => $incomingAnsweredAt,
+                    'created_at' => $existing ? $existing->created_at : $now,
                     'updated_at' => $now,
                 ],
             ],
@@ -302,7 +390,7 @@ class ExamSessionService
             'question_id' => $questionId,
             'is_saved' => true,
             'is_flagged' => $isFlagged,
-            'answered_at' => $now->toIso8601String(),
+            'answered_at' => $incomingAnsweredAt->toIso8601String(),
             'server_time' => $now->toIso8601String(),
         ];
     }
@@ -315,42 +403,67 @@ class ExamSessionService
         $user = $request->user();
         $student = $this->resolveStudentForUser($user);
 
-        $session = ExamSession::where('exam_id', $examId)
-            ->where('student_id', $student->id)
-            ->firstOrFail();
+        return DB::transaction(function () use ($examId, $student, $data) {
+            $session = ExamSession::where('exam_id', $examId)
+                ->where('student_id', $student->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($session->status === 'selesai') {
-            return ['status' => 'already_finished'];
-        }
+            if ($session->status === 'selesai') {
+                return [
+                    'status' => 'already_finished',
+                    'session_status' => 'selesai',
+                    'violation_count' => $session->violation_count ?? 0,
+                    'total_violations' => $session->violation_count ?? 0,
+                    'is_locked' => false,
+                    'consequence' => 'none',
+                    'server_time' => Carbon::now()->toIso8601String(),
+                ];
+            }
 
-        $now = Carbon::now();
+            $now = Carbon::now();
+            $session->increment('violation_count');
+            $session->refresh();
 
-        $violation = ExamViolation::create([
-            'session_id' => $session->id,
-            'violation_type' => $data['violation_type'],
-            'meta' => $data['meta'] ?? [],
-            'occurred_at' => $now,
-        ]);
+            $violation = ExamViolation::create([
+                'session_id' => $session->id,
+                'violation_type' => $data['violation_type'],
+                'meta' => $data['meta'] ?? ($data['details'] ?? []),
+                'occurred_at' => $now,
+            ]);
 
-        // Cek jumlah pelanggaran total
-        $totalViolations = ExamViolation::where('session_id', $session->id)->count();
-        $isLocked = false;
+            $totalViolations = $session->violation_count;
+            $isLocked = false;
+            $consequence = 'warning';
 
-        // Toleransi maksimal pelanggaran: 3 kali
-        if ($totalViolations >= 3 && $session->status === 'mengerjakan') {
-            $session->status = 'terkunci';
-            $session->locked_reason = 'Terdeteksi perpindahan layar/aplikasi melebihi toleransi ('.$totalViolations.' kali)';
-            $session->save();
-            $isLocked = true;
-        }
+            $lockThreshold = (int) config('cbt.lock_threshold', 3);
+            $disqualifyThreshold = (int) config('cbt.disqualify_threshold', 5);
 
-        return [
-            'violation_id' => $violation->id,
-            'total_violations' => $totalViolations,
-            'is_locked' => $isLocked,
-            'session_status' => $session->status,
-            'locked_reason' => $session->locked_reason,
-        ];
+            if ($totalViolations >= $disqualifyThreshold && in_array($session->status, ['mengerjakan', 'terkunci'])) {
+                $session->status = 'selesai';
+                $session->submitted_at = $now;
+                $session->locked_reason = "Diskualifikasi otomatis: Pelanggaran integritas ujian berulang ({$totalViolations} kali)";
+                $session->save();
+                $consequence = 'disqualified';
+            } elseif ($totalViolations >= $lockThreshold && $session->status === 'mengerjakan') {
+                $session->status = 'terkunci';
+                $session->locked_reason = "Terdeteksi perpindahan layar/aplikasi melebihi toleransi ({$totalViolations} kali)";
+                $session->save();
+                $isLocked = true;
+                $consequence = 'locked';
+            }
+
+            return [
+                'violation_id' => $violation->id,
+                'total_violations' => $totalViolations,
+                'violation_count' => $totalViolations,
+                'is_locked' => $isLocked,
+                'consequence' => $consequence,
+                'session_status' => $session->status,
+                'locked_reason' => $session->locked_reason,
+                'server_time' => $now->toIso8601String(),
+            ];
+        });
     }
 
     /**
@@ -441,7 +554,23 @@ class ExamSessionService
         $reason = $data['reason'] ?? 'Tindakan pengawas ruang';
         $extraMinutes = (int) ($data['extra_minutes'] ?? 0);
 
-        DB::transaction(function () use ($session, $action, $reason, $extraMinutes, $currentUser) {
+        if ($session->exam?->status === 'arsip') {
+            throw new HttpException(422, 'Ujian telah diarsipkan, data sesi tidak dapat diubah.');
+        }
+
+        if ($action === 'extra_time') {
+            if ($session->status === 'selesai') {
+                throw new HttpException(422, 'Tidak dapat menambahkan waktu pada sesi ujian yang telah selesai. Buka kembali sesi terlebih dahulu bila diperlukan.');
+            }
+            if ($extraMinutes <= 0) {
+                throw new HttpException(422, 'Jumlah tambahan waktu harus lebih dari 0 menit.');
+            }
+        }
+
+        $oldStatus = $session->status;
+        $oldDeadline = $session->deadline_at?->toIso8601String();
+
+        DB::transaction(function () use ($session, $action, $reason, $extraMinutes, $currentUser, $request, $oldStatus, $oldDeadline) {
             if ($action === 'unlock') {
                 $session->status = 'mengerjakan';
                 $session->locked_reason = null;
@@ -457,24 +586,30 @@ class ExamSessionService
                     $session->extra_minutes += 10;
                     $session->deadline_at = Carbon::now()->addMinutes(10);
                 }
+                $session->ends_at = $session->deadline_at;
                 $session->save();
             } elseif ($action === 'extra_time') {
                 $session->extra_minutes += $extraMinutes;
                 $session->deadline_at = ($session->deadline_at && $session->deadline_at->isFuture()
                     ? $session->deadline_at
                     : Carbon::now())->addMinutes($extraMinutes);
+                $session->ends_at = $session->deadline_at;
                 $session->save();
             } elseif ($action === 'reset') {
                 $session->status = 'mengerjakan';
                 $session->started_at = Carbon::now();
                 $session->deadline_at = Carbon::now()->addMinutes((int) ($session->exam?->duration_min ?? 90));
+                $session->ends_at = $session->deadline_at;
                 $session->submitted_at = null;
                 $session->locked_reason = null;
+                $session->violation_count = 0;
                 $session->save();
             } elseif ($action === 'force_submit') {
-                $session->status = 'selesai';
-                $session->submitted_at = Carbon::now();
-                $session->save();
+                if ($session->status !== 'selesai') {
+                    $session->status = 'selesai';
+                    $session->submitted_at = Carbon::now();
+                    $session->save();
+                }
             }
 
             ExamProctorAction::create([
@@ -483,6 +618,22 @@ class ExamSessionService
                 'action' => $action,
                 'reason' => $reason,
             ]);
+
+            $this->logAudit(
+                $currentUser->id,
+                'exam.proctor_action.'.$action,
+                'exam_sessions',
+                $session->id,
+                ['status' => $oldStatus, 'deadline_at' => $oldDeadline],
+                [
+                    'status' => $session->status,
+                    'action' => $action,
+                    'reason' => $reason,
+                    'extra_minutes' => $extraMinutes,
+                    'deadline_at' => $session->deadline_at?->toIso8601String(),
+                ],
+                $request
+            );
         });
 
         $session->refresh();
@@ -494,6 +645,7 @@ class ExamSessionService
             'action_performed' => $action,
             'extra_minutes' => $session->extra_minutes,
             'deadline_at' => $session->deadline_at?->toIso8601String(),
+            'ends_at' => $session->ends_at?->toIso8601String(),
         ];
     }
 
@@ -508,8 +660,8 @@ class ExamSessionService
 
         $student = Student::where('user_id', $user->id)->first();
 
-        // Fallback jika login via NIS atau email siswa tanpa user_id relasi langsung
-        if (! $student) {
+        // Fallback jika login via NIS siswa tanpa user_id relasi langsung, HANYA jika akun memiliki role student
+        if (! $student && $user->hasRole('student')) {
             $student = Student::where('nis', $user->username)->first();
         }
 
@@ -534,12 +686,25 @@ class ExamSessionService
         }
 
         $now = Carbon::now();
-        if ($session->deadline_at && $now->greaterThan($session->deadline_at)) {
+        $effectiveEndsAt = $session->ends_at ?? $session->deadline_at;
+        $graceSeconds = (int) config('cbt.grace_period_seconds', 5);
+
+        if ($effectiveEndsAt && $now->greaterThan($effectiveEndsAt->copy()->addSeconds($graceSeconds))) {
             $session->status = 'selesai';
-            $session->submitted_at = $session->deadline_at;
+            $session->submitted_at = $effectiveEndsAt;
             $session->save();
 
-            throw new HttpException(422, 'Waktu pengerjaan ujian telah berakhir (timeout lock).');
+            try {
+                app(\App\Services\Cbt\ExamGradingService::class)->gradeSessionObjectiveAnswers($session);
+            } catch (\Throwable $gradeEx) {
+                // Non-blocking
+            }
+
+            $errorCode = $session->ends_at ? 'EXAM_TIME_OVER' : 'BUSINESS_RULE_VIOLATION';
+
+            throw new HttpException(422, 'Waktu pengerjaan ujian telah berakhir (timeout lock).', null, [
+                'X-Error-Code' => $errorCode,
+            ]);
         }
     }
 
@@ -921,6 +1086,185 @@ class ExamSessionService
                 'blur_events' => $blurCount,
             ],
             'anomalies' => $list,
+        ];
+    }
+
+    /**
+     * BE-CBT-04 / GAP-B: Siswa melihat hasil dan pembahasan mandiri ujian.
+     */
+    public function getExamReview(string $examId, Request $request): array
+    {
+        $user = $request->user();
+        $student = $this->resolveStudentForUser($user);
+
+        $exam = Exam::with(['subject'])->findOrFail($examId);
+
+        if (in_array($exam->status, ['draft', 'dibatalkan'])) {
+            throw new HttpException(403, 'Ujian ini tidak dalam status yang dapat direview.');
+        }
+
+        $participant = ExamParticipant::where('exam_id', $exam->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if (! $participant) {
+            throw new HttpException(403, 'Akses ditolak: Anda tidak terdaftar sebagai peserta ujian ini.');
+        }
+
+        $session = ExamSession::where('exam_id', $exam->id)
+            ->where('student_id', $student->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (! $session) {
+            throw new HttpException(404, 'Sesi ujian Anda tidak ditemukan.');
+        }
+
+        if ($session->status !== 'selesai') {
+            throw new HttpException(403, 'Hasil dan pembahasan hanya dapat diakses setelah sesi ujian selesai dikumpulkan.');
+        }
+
+        $mode = $exam->show_result_mode ?? 'never';
+
+        if ($mode === 'never') {
+            throw new HttpException(403, 'Hasil dan pembahasan mandiri dinonaktifkan untuk ujian ini.');
+        }
+
+        if ($mode === 'after_release') {
+            if (! in_array($exam->status, ['selesai', 'arsip'])) {
+                throw new HttpException(403, 'Hasil dan pembahasan ujian belum dirilis oleh pihak sekolah.');
+            }
+        }
+
+        $packageCode = $participant->package_code;
+        $examQuestionsQuery = ExamQuestion::with(['question.options'])
+            ->where('exam_id', $exam->id);
+
+        if ($packageCode) {
+            $examQuestionsQuery->where(function ($q) use ($packageCode) {
+                $q->where('package_code', $packageCode)
+                    ->orWhereNull('package_code');
+            });
+        }
+
+        $examQuestions = $examQuestionsQuery->orderBy('sort_order', 'asc')->get();
+
+        $savedAnswers = ExamAnswer::where('session_id', $session->id)
+            ->get()
+            ->keyBy('question_id');
+
+        $questionItems = $examQuestions->map(fn ($eq) => $eq->question)->filter()->values();
+        if ($exam->shuffle_questions) {
+            $questionItems = $this->shuffleWithSeed($questionItems, $session->seed.'_q');
+        }
+
+        $examQuestionsByKey = $examQuestions->keyBy('question_id');
+
+        $reviewedQuestions = [];
+        $totalAnswered = 0;
+        $totalCorrect = 0;
+        $hasEssay = false;
+
+        foreach ($questionItems as $index => $q) {
+            $answer = $savedAnswers->get($q->id);
+            $eq = $examQuestionsByKey->get($q->id);
+            $maxWeight = (float) ($eq?->weight_override ?? $q->weight ?? 1.0);
+            $userAnswer = $answer?->answer;
+
+            if ($userAnswer !== null) {
+                $totalAnswered++;
+            }
+
+            $isEssay = ($q->question_type === 'uraian');
+            if ($isEssay) {
+                $hasEssay = true;
+            }
+
+            $options = $q->options;
+            if ($exam->shuffle_options && in_array($q->question_type, ['pg', 'pg_kompleks', 'bs'])) {
+                $options = $this->shuffleWithSeed($options, $session->seed.'_opt_'.$q->id);
+            }
+
+            $optionsData = $options->map(function ($opt) {
+                return [
+                    'id' => $opt->id,
+                    'label' => $opt->label,
+                    'body' => $opt->body,
+                    'is_correct' => (bool) $opt->is_correct,
+                    'match_key' => $opt->match_key,
+                ];
+            })->values()->all();
+
+            $score = $answer?->score !== null ? (float) $answer->score : null;
+            $isCorrect = null;
+
+            if (! $isEssay) {
+                if ($score !== null) {
+                    $isCorrect = ($score >= $maxWeight);
+                }
+                if ($isCorrect) {
+                    $totalCorrect++;
+                }
+            }
+
+            $reviewedQuestions[] = [
+                'number' => $index + 1,
+                'question_id' => $q->id,
+                'question_type' => $q->question_type,
+                'body' => $q->body,
+                'options' => $optionsData,
+                'max_score' => $maxWeight,
+                'student_answer' => $userAnswer,
+                'score' => $score,
+                'is_correct' => $isCorrect,
+                'is_graded' => $isEssay ? ($score !== null) : true,
+                'explanation' => $q->explanation,
+            ];
+        }
+
+        $totalScore = $session->score !== null ? (float) $session->score : null;
+        $passingGrade = $exam->passing_grade !== null ? (float) $exam->passing_grade : 75.0;
+        $isPassed = $totalScore !== null ? ($totalScore >= $passingGrade) : null;
+
+        $remedialExam = null;
+        if ($isPassed === false) {
+            $remedial = Exam::where('parent_exam_id', $exam->id)
+                ->whereIn('status', ['dijadwalkan', 'berlangsung'])
+                ->first();
+            if ($remedial) {
+                $remedialExam = [
+                    'remedial_exam_id' => $remedial->id,
+                    'title' => $remedial->title,
+                    'start_at' => $remedial->start_at?->toIso8601String(),
+                    'end_at' => $remedial->end_at?->toIso8601String(),
+                ];
+            }
+        }
+
+        return [
+            'exam' => [
+                'id' => $exam->id,
+                'title' => $exam->title,
+                'exam_type' => $exam->exam_type,
+                'subject_name' => $exam->subject?->name,
+                'passing_grade' => $passingGrade,
+                'show_result_mode' => $mode,
+            ],
+            'attempt' => [
+                'session_id' => $session->id,
+                'student_id' => $student->id,
+                'student_name' => $student->full_name,
+                'status' => $session->status,
+                'started_at' => $session->started_at?->toIso8601String(),
+                'submitted_at' => $session->submitted_at?->toIso8601String(),
+                'total_score' => $totalScore,
+                'is_passed' => $isPassed,
+                'total_questions' => count($questionItems),
+                'total_answered' => $totalAnswered,
+                'has_ungraded_essay' => $hasEssay && ($totalScore === null),
+            ],
+            'remedial' => $remedialExam,
+            'questions' => $reviewedQuestions,
         ];
     }
 

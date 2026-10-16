@@ -31,6 +31,8 @@ class CounselingReferralController extends Controller
             $paginator = $this->service->listReferrals($request->all(), $request);
 
             return $this->paginatedResponse($paginator);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

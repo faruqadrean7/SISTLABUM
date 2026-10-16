@@ -81,11 +81,22 @@ class GuestService
         /** @var User $currentUser */
         $currentUser = $request->user();
 
+        if (! $currentUser) {
+            throw new HttpException(401, 'Unauthenticated');
+        }
+
+        // SEC-RBAC-01: Tolak pengguna tanpa permission baca buku tamu
+        if (! $currentUser->hasRole('super_admin') && ! $currentUser->hasPermission('guest.book.read')) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk melihat daftar buku tamu');
+        }
+
         $query = Guest::with(['targetUser', 'photoFile']);
 
-        // Data scoping: jika tidak punya permission guest.book.read, hanya bisa melihat tamu yang ditujukan kepadanya
-        if (! $currentUser->hasRole('super_admin') && ! $currentUser->hasPermission('guest.book.read')) {
-            $query->where('target_user_id', $currentUser->id);
+        // Multi-tenant school isolation
+        if (! empty($currentUser->school_id)) {
+            $query->where(function ($q) use ($currentUser) {
+                $q->where('school_id', $currentUser->school_id)->orWhereNull('school_id');
+            });
         }
 
         // Filter search (nama, instansi, nomor telepon, keperluan)
@@ -135,6 +146,10 @@ class GuestService
 
         $guest = Guest::with(['targetUser', 'photoFile'])->findOrFail($id);
 
+        if (! empty($currentUser->school_id) && ! empty($guest->school_id) && $guest->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk melihat data kunjungan tamu ini');
+        }
+
         // IDOR / Scoping check
         if (! $currentUser->hasRole('super_admin')
             && ! $currentUser->hasPermission('guest.book.read')
@@ -154,6 +169,10 @@ class GuestService
         $currentUser = $request->user();
 
         $guest = Guest::with(['targetUser', 'photoFile'])->findOrFail($id);
+
+        if (! empty($currentUser->school_id) && ! empty($guest->school_id) && $guest->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Data kunjungan tamu berada di luar sekolah penugasan Anda.');
+        }
 
         if ($guest->check_out !== null) {
             $formattedOut = $guest->check_out->translatedFormat('d F Y H:i');
@@ -185,6 +204,11 @@ class GuestService
     public function attachSignature(string $id, array $data, Request $request): array
     {
         $guest = Guest::findOrFail($id);
+
+        $currentUser = $request->user();
+        if ($currentUser && ! empty($currentUser->school_id) && ! empty($guest->school_id) && $guest->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Data kunjungan tamu berada di luar sekolah penugasan Anda.');
+        }
 
         if ($guest->check_out !== null) {
             throw new HttpException(422, 'Tamu sudah melakukan checkout, tidak dapat menambahkan tanda tangan.');
@@ -270,6 +294,10 @@ class GuestService
         $currentUser = $request->user();
 
         $guest = Guest::with(['signatureFile'])->findOrFail($id);
+
+        if (! empty($currentUser->school_id) && ! empty($guest->school_id) && $guest->school_id !== $currentUser->school_id) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk melihat tanda tangan kunjungan tamu ini');
+        }
 
         if (! $currentUser->hasRole('super_admin')
             && ! $currentUser->hasPermission('guest.book.read')

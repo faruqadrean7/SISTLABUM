@@ -89,6 +89,31 @@ class CharacterNoteController extends Controller
     }
 
     /**
+     * BE-GRD-02 / ADM-GRD-02: Tampilan massal catatan karakter satu rombel kelas.
+     * GET /api/v1/character-notes/matrix
+     */
+    public function matrix(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->service->getClassCharacterNotes($request->all(), $request);
+
+            return $this->successResponse($data);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                422 => 'BUSINESS_RULE_VIOLATION',
+                403 => 'FORBIDDEN',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat tampilan massal catatan karakter', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-GRD-02: Detail catatan karakter.
      * GET /api/v1/character-notes/{id}
      */
@@ -118,7 +143,7 @@ class CharacterNoteController extends Controller
         try {
             $this->service->deleteCharacterNote($id, $request);
 
-            return $this->successResponse(['message' => 'Catatan karakter berhasil dihapus']);
+            return $this->successResponse(['deleted' => true, 'message' => 'Catatan karakter berhasil dihapus']);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Catatan karakter tidak ditemukan', 'NOT_FOUND', 404);
         } catch (HttpException $e) {

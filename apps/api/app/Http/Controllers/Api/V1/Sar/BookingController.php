@@ -30,15 +30,36 @@ class BookingController extends Controller
     public function availability(CheckAvailabilityRequest $request): JsonResponse
     {
         try {
-            $result = $this->service->checkAvailability($request->validated());
+            $result = $this->service->checkAvailability($request->validated(), $request);
 
             return $this->successResponse($result);
         } catch (ModelNotFoundException) {
             return $this->notFoundResponse('Fasilitas tidak ditemukan.');
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat memeriksa ketersediaan fasilitas.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-SAR-01: Ringkasan statistik operasional peminjaman fasilitas.
+     * GET /api/v1/bookings/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request);
+
+            return $this->successResponse($summary);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan peminjaman.', 'INTERNAL_ERROR', 500);
         }
     }
 

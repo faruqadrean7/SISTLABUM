@@ -167,7 +167,7 @@ class StudentPointService
     public function listStudentPoints(array $filters, Request $request): LengthAwarePaginator
     {
         $user = $request->user();
-        $query = StudentPoint::with(['student', 'pointType', 'recorder', 'evidenceFile'])
+        $query = StudentPoint::with(['student.classes', 'pointType', 'recorder', 'evidenceFile'])
             ->orderBy('point_date', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -181,6 +181,20 @@ class StudentPointService
             $query->whereIn('student_id', $studentIds);
         } elseif (! empty($filters['student_id'])) {
             $query->where('student_id', $filters['student_id']);
+        }
+
+        if (! empty($filters['class_id'])) {
+            $query->whereHas('student.classes', function ($q) use ($filters) {
+                $q->where('classes.id', $filters['class_id']);
+            });
+        }
+
+        if (! empty($filters['search'])) {
+            $kw = '%'.strtolower($filters['search']).'%';
+            $query->whereHas('student', function ($q) use ($kw) {
+                $q->whereRaw('LOWER(full_name) LIKE ?', [$kw])
+                    ->orWhereRaw('LOWER(nis) LIKE ?', [$kw]);
+            });
         }
 
         if (! empty($filters['kind'])) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Cbt;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cbt\CreateRemedialExamRequest;
 use App\Http\Requests\Cbt\GradeEssayAnswerRequest;
+use App\Http\Requests\Cbt\PublishExamToGradebookRequest;
 use App\Http\Requests\Cbt\RunAutoGradingRequest;
 use App\Services\Cbt\ExamGradingService;
 use App\Traits\ApiResponse;
@@ -166,6 +167,34 @@ class ExamGradingController extends Controller
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat membuat ujian remedial.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-CBT-05 & ADM-GRD-01: Publikasikan rekapitulasi nilai ujian CBT ke Buku Nilai.
+     * POST /api/v1/exams/{id}/publish-gradebook
+     */
+    public function publishGradebook(string $id, PublishExamToGradebookRequest $request): JsonResponse
+    {
+        try {
+            $result = $this->service->publishToGradebook($id, $request->validated(), $request);
+
+            return $this->successResponse($result, 200);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Data ujian atau komponen nilai tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                401 => 'UNAUTHENTICATED',
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat mempublikasikan nilai ujian ke Buku Nilai.', 'INTERNAL_ERROR', 500);
         }
     }
 }

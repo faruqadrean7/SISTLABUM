@@ -20,10 +20,12 @@ class NotificationService
 
     public function registerDevice(User $user, array $data): Device
     {
+        $token = $data['fcm_token'] ?? $data['token'] ?? null;
+
         return Device::updateOrCreate(
             [
                 'user_id' => $user->id,
-                'fcm_token' => $data['fcm_token'],
+                'fcm_token' => $token,
             ],
             [
                 'platform' => $data['platform'],
@@ -116,20 +118,37 @@ class NotificationService
         $targetType = $data['target_type'];
         $userIds = collect();
 
+        $schoolId = $user->school_id;
+        $isSuperAdmin = $user->hasRole('super_admin');
+
         if ($targetType === 'all') {
-            $userIds = User::where('status', 'active')->pluck('id');
+            $query = User::where('status', 'active');
+            if ($schoolId && ! $isSuperAdmin) {
+                $query->where('school_id', $schoolId);
+            }
+            $userIds = $query->pluck('id');
         } elseif ($targetType === 'role') {
             $roleCode = $data['target_role'];
-            $userIds = User::whereHas('roles', fn ($q) => $q->where('code', $roleCode))
-                ->where('status', 'active')
-                ->pluck('id');
+            $query = User::whereHas('roles', fn ($q) => $q->where('code', $roleCode))
+                ->where('status', 'active');
+            if ($schoolId && ! $isSuperAdmin) {
+                $query->where('school_id', $schoolId);
+            }
+            $userIds = $query->pluck('id');
         } elseif ($targetType === 'class') {
             $classId = $data['target_class_id'];
-            $userIds = Student::whereHas('classes', fn ($q) => $q->where('classes.id', $classId))
-                ->whereNotNull('user_id')
-                ->pluck('user_id');
+            $query = Student::whereHas('classes', fn ($q) => $q->where('classes.id', $classId))
+                ->whereNotNull('user_id');
+            if ($schoolId && ! $isSuperAdmin) {
+                $query->where('school_id', $schoolId);
+            }
+            $userIds = $query->pluck('user_id');
         } elseif ($targetType === 'users') {
-            $userIds = collect($data['user_ids']);
+            $query = User::whereIn('id', $data['user_ids']);
+            if ($schoolId && ! $isSuperAdmin) {
+                $query->where('school_id', $schoolId);
+            }
+            $userIds = $query->pluck('id');
         }
 
         $userIds = $userIds->filter()->unique()->values();
@@ -145,8 +164,19 @@ class NotificationService
         $customData = $data['data'] ?? null;
         $jsonData = $customData ? json_encode($customData) : null;
 
+        // GAP-11: Filter out recipients who disabled this notification type or push channel
+        $disabledUserIds = \App\Models\NotificationPreference::whereIn('user_id', $userIds)
+            ->where('notif_type', $notifType)
+            ->where(function ($q) {
+                $q->where('is_enabled', false)
+                  ->orWhere('channel_push', false);
+            })
+            ->pluck('user_id');
+
+        $activeRecipientIds = $userIds->reject(fn ($id) => $disabledUserIds->contains($id))->values();
+
         $insertRows = [];
-        foreach ($userIds as $recipientId) {
+        foreach ($activeRecipientIds as $recipientId) {
             $insertRows[] = [
                 'id' => (string) Str::uuid(),
                 'user_id' => $recipientId,
@@ -164,19 +194,19 @@ class NotificationService
             Notification::insert($chunk);
         }
 
-        $deviceCount = Device::whereIn('user_id', $userIds)
+        $deviceCount = Device::whereIn('user_id', $activeRecipientIds)
             ->whereNotNull('fcm_token')
             ->count();
 
         $this->logAudit($user?->id, 'notification.broadcast', 'notifications', null, null, [
             'target_type' => $targetType,
             'title' => $title,
-            'recipient_count' => count($userIds),
+            'recipient_count' => count($activeRecipientIds),
             'device_count' => $deviceCount,
         ], $request);
 
         return [
-            'sent_count' => count($userIds),
+            'sent_count' => count($activeRecipientIds),
             'device_count' => $deviceCount,
             'target_type' => $targetType,
             'title' => $title,

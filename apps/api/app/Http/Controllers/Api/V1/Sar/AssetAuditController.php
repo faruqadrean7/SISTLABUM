@@ -28,7 +28,7 @@ class AssetAuditController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listAudits($request->all());
+            $paginator = $this->service->listAudits($request->all(), $request);
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -42,14 +42,16 @@ class AssetAuditController extends Controller
      * BE-SAR-02: Detail sesi stok opname aset.
      * GET /api/v1/asset-audits/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
-            $audit = $this->service->getAudit($id);
+            $audit = $this->service->getAudit($id, $request);
 
             return $this->successResponse($audit);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Sesi opname aset tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

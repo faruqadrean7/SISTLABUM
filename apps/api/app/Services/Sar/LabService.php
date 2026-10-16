@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LabService
@@ -16,9 +17,16 @@ class LabService
     /**
      * BE-SAR-04: Daftar alat laboratorium berpaginasi.
      */
-    public function listEquipment(array $filters): LengthAwarePaginator
+    public function listEquipment(array $filters, ?Request $request = null): LengthAwarePaginator
     {
         $query = LabEquipment::with('room')->orderBy('created_at', 'desc');
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
 
         if (! empty($filters['room_id'])) {
             $query->where('room_id', $filters['room_id']);
@@ -55,9 +63,15 @@ class LabService
     /**
      * BE-SAR-04: Detail inventaris alat laboratorium.
      */
-    public function getEquipment(string $id): LabEquipment
+    public function getEquipment(string $id, ?Request $request = null): LabEquipment
     {
+        $user = $request?->user();
         $equipment = LabEquipment::with(['room', 'loans.borrower'])->findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($equipment->school_id) && $equipment->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Alat laboratorium berada di luar sekolah penugasan Anda.');
+        }
+
         $equipment->append('available_stock');
 
         return $equipment;
@@ -72,7 +86,7 @@ class LabService
         $this->authorizeManageLab($user);
 
         $equipment = LabEquipment::create([
-            'school_id' => $data['school_id'] ?? null,
+            'school_id' => $data['school_id'] ?? $user?->school_id,
             'room_id' => $data['room_id'],
             'code' => $data['code'] ?? null,
             'name' => $data['name'],
@@ -98,6 +112,11 @@ class LabService
         $this->authorizeManageLab($user);
 
         $equipment = LabEquipment::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($equipment->school_id) && $equipment->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Alat laboratorium berada di luar sekolah penugasan Anda.');
+        }
+
         $oldValues = $equipment->toArray();
 
         $equipment->update($data);
@@ -118,6 +137,10 @@ class LabService
         $this->authorizeManageLab($user);
 
         $equipment = LabEquipment::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($equipment->school_id) && $equipment->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Alat laboratorium berada di luar sekolah penugasan Anda.');
+        }
 
         if ($equipment->active_loans_quantity > 0) {
             throw new HttpException(422, 'Alat lab tidak dapat dihapus karena masih ada peminjaman aktif.');
@@ -140,6 +163,12 @@ class LabService
         $isStaff = $this->isLabStaffOrAdmin($user);
 
         $query = LabLoan::with(['equipment.room', 'borrower'])->orderBy('created_at', 'desc');
+
+        if ($user && ! empty($user->school_id)) {
+            $query->whereHas('equipment', function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+        }
 
         if (! $isStaff) {
             $query->where('borrower_id', $user->id);
@@ -166,6 +195,10 @@ class LabService
         $user = $request->user();
         $loan = LabLoan::with(['equipment.room', 'borrower'])->findOrFail($id);
 
+        if ($user && ! empty($user->school_id) && $loan->equipment && ! empty($loan->equipment->school_id) && $loan->equipment->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Transaksi peminjaman alat lab berada di luar sekolah penugasan Anda.');
+        }
+
         if (! $this->isLabStaffOrAdmin($user) && $loan->borrower_id !== $user->id) {
             throw new HttpException(403, 'Akses ditolak: Anda tidak memiliki akses ke peminjaman alat lab ini.');
         }
@@ -185,30 +218,37 @@ class LabService
             throw new HttpException(403, 'Akses ditolak: Anda hanya dapat meminjam alat lab untuk diri sendiri.');
         }
 
-        $equipment = LabEquipment::findOrFail($data['equipment_id']);
-        $quantity = (int) ($data['quantity'] ?? 1);
+        return DB::transaction(function () use ($data, $user, $borrowerId, $request) {
+            $equipment = LabEquipment::lockForUpdate()->findOrFail($data['equipment_id']);
 
-        if ($equipment->available_stock < $quantity) {
-            throw new HttpException(422, 'Stok alat laboratorium tidak mencukupi untuk dipinjam.');
-        }
+            if ($user && ! empty($user->school_id) && ! empty($equipment->school_id) && $equipment->school_id !== $user->school_id) {
+                throw new HttpException(403, 'Akses ditolak: Alat laboratorium berada di luar sekolah penugasan Anda.');
+            }
 
-        $loanDate = $data['loan_date'] ?? Carbon::now()->toDateString();
-        $dueDate = $data['due_date'];
+            $quantity = (int) ($data['quantity'] ?? 1);
 
-        $loan = LabLoan::create([
-            'equipment_id' => $equipment->id,
-            'borrower_id' => $borrowerId,
-            'loan_date' => $loanDate,
-            'due_date' => $dueDate,
-            'quantity' => $quantity,
-            'status' => 'dipinjam',
-            'purpose' => $data['purpose'] ?? null,
-            'notes' => $data['notes'] ?? null,
-        ]);
+            if ($equipment->available_stock < $quantity) {
+                throw new HttpException(422, 'Stok alat laboratorium tidak mencukupi untuk dipinjam.');
+            }
 
-        $this->logAudit($user?->id, 'lab_loan.create', 'lab_loans', $loan->id, null, $loan->toArray(), $request);
+            $loanDate = $data['loan_date'] ?? Carbon::now()->toDateString();
+            $dueDate = $data['due_date'];
 
-        return $loan->fresh(['equipment.room', 'borrower']);
+            $loan = LabLoan::create([
+                'equipment_id' => $equipment->id,
+                'borrower_id' => $borrowerId,
+                'loan_date' => $loanDate,
+                'due_date' => $dueDate,
+                'quantity' => $quantity,
+                'status' => 'dipinjam',
+                'purpose' => $data['purpose'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $this->logAudit($user?->id, 'lab_loan.create', 'lab_loans', $loan->id, null, $loan->toArray(), $request);
+
+            return $loan->fresh(['equipment.room', 'borrower']);
+        });
     }
 
     /**
@@ -217,28 +257,84 @@ class LabService
     public function returnLoan(string $id, array $data, Request $request): LabLoan
     {
         $user = $request->user();
-        $loan = LabLoan::with(['equipment', 'borrower'])->findOrFail($id);
 
-        if (! $this->isLabStaffOrAdmin($user) && $loan->borrower_id !== $user->id) {
-            throw new HttpException(403, 'Akses ditolak: Anda tidak berwenang mengembalikan pinjaman alat lab ini.');
+        return DB::transaction(function () use ($id, $data, $user, $request) {
+            $loan = LabLoan::with(['equipment', 'borrower'])->lockForUpdate()->findOrFail($id);
+
+            if ($user && ! empty($user->school_id) && $loan->equipment && ! empty($loan->equipment->school_id) && $loan->equipment->school_id !== $user->school_id) {
+                throw new HttpException(403, 'Akses ditolak: Transaksi peminjaman alat lab berada di luar sekolah penugasan Anda.');
+            }
+
+            if (! $this->isLabStaffOrAdmin($user) && $loan->borrower_id !== $user->id) {
+                throw new HttpException(403, 'Akses ditolak: Anda tidak berwenang mengembalikan pinjaman alat lab ini.');
+            }
+
+            if ($loan->status === 'dikembalikan') {
+                throw new HttpException(422, 'Peminjaman alat laboratorium ini sudah dikembalikan.');
+            }
+
+            $oldValues = $loan->toArray();
+            $returnedAt = $data['returned_at'] ?? Carbon::now()->toDateString();
+
+            $loan->update([
+                'returned_at' => $returnedAt,
+                'status' => 'dikembalikan',
+                'notes' => $data['notes'] ?? $loan->notes,
+            ]);
+
+            $this->logAudit($user?->id, 'lab_loan.return', 'lab_loans', $loan->id, $oldValues, $loan->fresh()->toArray(), $request);
+
+            return $loan->fresh(['equipment.room', 'borrower']);
+        });
+    }
+
+    /**
+     * BE-SAR-04: Ringkasan metrik dashboard inventaris alat laboratorium.
+     */
+    public function getSummary(Request $request): array
+    {
+        $user = $request->user();
+        $equipQuery = LabEquipment::query();
+        $loanQuery = LabLoan::query();
+
+        if ($user && ! empty($user->school_id)) {
+            $equipQuery->where(function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
+            $loanQuery->whereHas('equipment', function ($q) use ($user) {
+                $q->whereNull('school_id')->orWhere('school_id', $user->school_id);
+            });
         }
 
-        if ($loan->status === 'dikembalikan') {
-            throw new HttpException(422, 'Peminjaman alat laboratorium ini sudah dikembalikan.');
-        }
+        $totalEquipment = (clone $equipQuery)->count();
+        $totalUnits = (int) (clone $equipQuery)->sum('stock');
+        $activeLoans = (clone $loanQuery)->where('status', 'dipinjam')->count();
+        $overdueLoans = (clone $loanQuery)
+            ->where('status', 'dipinjam')
+            ->where('due_date', '<', Carbon::now()->toDateString())
+            ->count();
 
-        $oldValues = $loan->toArray();
-        $returnedAt = $data['returned_at'] ?? Carbon::now()->toDateString();
+        $conditions = [
+            'baik' => (clone $equipQuery)->where('condition', 'baik')->count(),
+            'rusak_ringan' => (clone $equipQuery)->where('condition', 'rusak_ringan')->count(),
+            'rusak_berat' => (clone $equipQuery)->where('condition', 'rusak_berat')->count(),
+        ];
 
-        $loan->update([
-            'returned_at' => $returnedAt,
-            'status' => 'dikembalikan',
-            'notes' => $data['notes'] ?? $loan->notes,
-        ]);
+        $categories = (clone $equipQuery)
+            ->whereNotNull('category')
+            ->groupBy('category')
+            ->selectRaw('category, count(*) as count')
+            ->pluck('count', 'category')
+            ->toArray();
 
-        $this->logAudit($user?->id, 'lab_loan.return', 'lab_loans', $loan->id, $oldValues, $loan->fresh()->toArray(), $request);
-
-        return $loan->fresh(['equipment.room', 'borrower']);
+        return [
+            'total_equipment' => $totalEquipment,
+            'total_units' => $totalUnits,
+            'active_loans' => $activeLoans,
+            'overdue_loans' => $overdueLoans,
+            'conditions_breakdown' => $conditions,
+            'category_counts' => $categories,
+        ];
     }
 
     public function isLabStaffOrAdmin(?User $user): bool

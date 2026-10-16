@@ -17,6 +17,9 @@ class SaveExamAnswerRequest extends FormRequest
             'question_id' => ['required', 'uuid', 'exists:questions,id'],
             'answer' => ['nullable'],
             'is_flagged' => ['nullable', 'boolean'],
+            'answered_at' => ['nullable', 'string'],
+            'idempotency_key' => ['nullable', 'string', 'max:100'],
+            'client_timestamp' => ['nullable'],
         ];
     }
 

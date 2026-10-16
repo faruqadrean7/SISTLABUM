@@ -13,17 +13,40 @@ class FacilityService
     /**
      * BE-SAR-01: Ambil daftar fasilitas dan ruangan.
      */
-    public function listFacilities(array $filters): LengthAwarePaginator
+    public function listFacilities(array $filters, ?Request $request = null): LengthAwarePaginator
     {
+        $user = $request?->user();
         $query = Facility::with('room')->orderBy('name', 'asc');
+
+        if ($user && ! empty($user->school_id)) {
+            $query->where(function ($q) use ($user) {
+                $q->where('school_id', $user->school_id)
+                    ->orWhereNull('school_id');
+            });
+        }
 
         if (! empty($filters['facility_type'])) {
             $query->where('facility_type', $filters['facility_type']);
         }
 
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $isActive = filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isActive !== null) {
+                $query->where('is_active', $isActive);
+            }
+        }
+
         if (! empty($filters['search'])) {
             $kw = '%'.strtolower($filters['search']).'%';
-            $query->whereRaw('LOWER(name) LIKE ?', [$kw]);
+            $query->where(function ($q) use ($kw) {
+                $q->whereRaw('LOWER(name) LIKE ?', [$kw])
+                    ->orWhereRaw('LOWER(COALESCE(code, "")) LIKE ?', [$kw])
+                    ->orWhereRaw('LOWER(COALESCE(location, "")) LIKE ?', [$kw]);
+            });
         }
 
         return $query->paginate((int) ($filters['per_page'] ?? 15));
@@ -32,9 +55,16 @@ class FacilityService
     /**
      * BE-SAR-01: Ambil detail fasilitas berdasarkan ID.
      */
-    public function getFacility(string $id): Facility
+    public function getFacility(string $id, ?Request $request = null): Facility
     {
-        return Facility::with(['room', 'bookings' => fn ($bq) => $bq->where('end_at', '>=', now())])->findOrFail($id);
+        $facility = Facility::with(['room', 'bookings' => fn ($bq) => $bq->where('end_at', '>=', now())])->findOrFail($id);
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id) && ! empty($facility->school_id) && $facility->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Fasilitas berada di luar sekolah penugasan Anda.');
+        }
+
+        return $facility;
     }
 
     /**
@@ -45,13 +75,20 @@ class FacilityService
         $user = $request->user();
         $this->authorizeManage($user);
 
+        $schoolId = $data['school_id'] ?? $user?->school_id ?? null;
+
         $facility = Facility::create([
-            'school_id' => $data['school_id'] ?? null,
+            'school_id' => $schoolId,
             'room_id' => $data['room_id'] ?? null,
+            'code' => $data['code'] ?? null,
             'name' => $data['name'],
+            'location' => $data['location'] ?? null,
+            'description' => $data['description'] ?? null,
             'facility_type' => $data['facility_type'] ?? 'ruang',
             'capacity' => $data['capacity'] ?? null,
             'requires_approval' => $data['requires_approval'] ?? true,
+            'is_active' => $data['is_active'] ?? true,
+            'status' => $data['status'] ?? 'tersedia',
         ]);
 
         $this->logAudit($user?->id, 'facility.create', 'facilities', $facility->id, null, $facility->toArray(), $request);
@@ -68,8 +105,12 @@ class FacilityService
         $this->authorizeManage($user);
 
         $facility = Facility::findOrFail($id);
-        $oldValues = $facility->toArray();
 
+        if ($user && ! empty($user->school_id) && ! empty($facility->school_id) && $facility->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Fasilitas berada di luar sekolah penugasan Anda.');
+        }
+
+        $oldValues = $facility->toArray();
         $facility->update($data);
 
         $this->logAudit($user?->id, 'facility.update', 'facilities', $facility->id, $oldValues, $facility->fresh()->toArray(), $request);
@@ -86,6 +127,10 @@ class FacilityService
         $this->authorizeManage($user);
 
         $facility = Facility::findOrFail($id);
+
+        if ($user && ! empty($user->school_id) && ! empty($facility->school_id) && $facility->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Fasilitas berada di luar sekolah penugasan Anda.');
+        }
 
         $hasActiveBookings = $facility->bookings()
             ->whereIn('status', ['diajukan', 'disetujui'])

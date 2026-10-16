@@ -671,4 +671,145 @@ class ProgressReportTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['target']);
     }
+
+    /**
+     * BE-GRD-03: Endpoint class-status mengembalikan tinjauan status & kesiapan data per rombel kelas.
+     */
+    public function test_be_grd_03_class_status_endpoint_returns_roster_readiness_and_summary(): void
+    {
+        $response = $this->actingAs($this->walasUser, 'sanctum')
+            ->getJson("/api/v1/progress-reports/class-status?class_id={$this->classA->id}&period_id={$this->periodMonth8->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.class.id', $this->classA->id)
+            ->assertJsonPath('data.period.id', $this->periodMonth8->id)
+            ->assertJsonPath('data.summary.total_students', 2)
+            ->assertJsonPath('data.summary.belum_dibuat_count', 2)
+            ->assertJsonPath('data.summary.ready_to_generate_count', 1); // Student 1 has grades and char note
+
+        // Siswa 1 ready = true, Siswa 2 ready = false
+        $students = $response->json('data.students');
+        $this->assertCount(2, $students);
+        $s1 = collect($students)->firstWhere('student.id', $this->student1->id);
+        $s2 = collect($students)->firstWhere('student.id', $this->student2->id);
+
+        $this->assertTrue($s1['data_readiness']['has_grades']);
+        $this->assertTrue($s1['data_readiness']['has_character_note']);
+        $this->assertTrue($s1['data_readiness']['is_ready_to_generate']);
+
+        $this->assertFalse($s2['data_readiness']['has_grades']);
+        $this->assertFalse($s2['data_readiness']['has_character_note']);
+    }
+
+    /**
+     * BE-GRD-03: Pratinjau (preview) rapor mengembalikan snapshot tanpa menyimpan ke database.
+     */
+    public function test_be_grd_03_preview_endpoint_returns_compiled_snapshot_without_persisting(): void
+    {
+        $response = $this->actingAs($this->walasUser, 'sanctum')
+            ->getJson("/api/v1/progress-reports/preview?student_id={$this->student1->id}&period_id={$this->periodMonth8->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.student.full_name', 'Ahmad Fikri Pratama')
+            ->assertJsonPath('data.student.class_name', 'X-IPA-1')
+            ->assertJsonPath('data.grades.0.subject_name', 'Matematika Wajib');
+
+        // Pastikan tidak ada data yang tersimpan di DB
+        $this->assertDatabaseMissing('progress_reports', [
+            'student_id' => $this->student1->id,
+            'period_id' => $this->periodMonth8->id,
+        ]);
+    }
+
+    /**
+     * BE-GRD-03: Persetujuan massal (bulk-approve) oleh Kepala Sekolah.
+     */
+    public function test_be_grd_03_bulk_approve_updates_status_of_multiple_reports(): void
+    {
+        // Generate rapor untuk kedua siswa
+        $report1 = ProgressReport::create([
+            'student_id' => $this->student1->id,
+            'period_id' => $this->periodMonth8->id,
+            'data_snapshot' => ['student' => ['full_name' => 'Ahmad']],
+            'status' => 'menunggu_acc',
+            'verify_token' => 'tok-bulk-1',
+        ]);
+        $report2 = ProgressReport::create([
+            'student_id' => $this->student2->id,
+            'period_id' => $this->periodMonth8->id,
+            'data_snapshot' => ['student' => ['full_name' => 'Siti']],
+            'status' => 'menunggu_acc',
+            'verify_token' => 'tok-bulk-2',
+        ]);
+
+        // Kepsek menyetujui massal via class_id dan period_id
+        $response = $this->actingAs($this->principalUser, 'sanctum')
+            ->postJson('/api/v1/progress-reports/bulk-approve', [
+                'class_id' => $this->classA->id,
+                'period_id' => $this->periodMonth8->id,
+                'status' => 'disetujui',
+                'note' => 'Disetujui bersama',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.count', 2)
+            ->assertJsonPath('data.status', 'disetujui');
+
+        $this->assertEquals('disetujui', $report1->fresh()->status);
+        $this->assertEquals('disetujui', $report2->fresh()->status);
+        $this->assertEquals($this->principalUser->id, $report1->fresh()->approved_by);
+
+        // Terbitkan massal via report_ids
+        $this->app['auth']->forgetGuards();
+        $responsePublish = $this->actingAs($this->principalUser, 'sanctum')
+            ->postJson('/api/v1/progress-reports/bulk-approve', [
+                'report_ids' => [$report1->id, $report2->id],
+                'status' => 'terbit',
+            ]);
+
+        $responsePublish->assertStatus(200)
+            ->assertJsonPath('data.count', 2)
+            ->assertJsonPath('data.status', 'terbit');
+
+        $this->assertEquals('terbit', $report1->fresh()->status);
+        $this->assertEquals('terbit', $report2->fresh()->status);
+    }
+
+    /**
+     * BE-GRD-03: Guru lain yang bukan walas rombel ditolak (403 IDOR) saat generate rapor.
+     */
+    public function test_be_grd_03_non_walas_teacher_cannot_generate_or_access_class_reports_idor(): void
+    {
+        $roleTeacher = Role::firstOrCreate(['code' => 'teacher'], ['name' => 'Guru', 'is_system' => true]);
+        $nonWalasUser = User::create([
+            'username' => 'guru_asing',
+            'email' => 'guruasing@sekolah.sch.id',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'active',
+        ]);
+        $nonWalasUser->roles()->attach($roleTeacher->id);
+
+        Teacher::create([
+            'user_id' => $nonWalasUser->id,
+            'nip' => '199999999999999999',
+            'full_name' => 'Guru Asing, S.Pd',
+            'status' => 'active',
+        ]);
+
+        // Coba generate untuk classA
+        $response = $this->actingAs($nonWalasUser, 'sanctum')
+            ->postJson('/api/v1/progress-reports/generate', [
+                'period_id' => $this->periodMonth8->id,
+                'class_id' => $this->classA->id,
+            ]);
+
+        $response->assertStatus(403);
+
+        // Coba lihat status classA
+        $this->app['auth']->forgetGuards();
+        $responseStatus = $this->actingAs($nonWalasUser, 'sanctum')
+            ->getJson("/api/v1/progress-reports/class-status?class_id={$this->classA->id}&period_id={$this->periodMonth8->id}");
+
+        $responseStatus->assertStatus(403);
+    }
 }

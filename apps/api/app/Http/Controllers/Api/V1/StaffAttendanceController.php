@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\CheckInStaffAttendanceRequest;
 use App\Http\Requests\Academic\CheckOutStaffAttendanceRequest;
+use App\Http\Requests\Academic\CorrectStaffAttendanceRequest;
 use App\Http\Requests\Academic\ListStaffAttendanceRequest;
+use App\Http\Requests\Academic\ManualStoreStaffAttendanceRequest;
+use App\Http\Requests\Academic\UpdateStaffAttendanceSettingsRequest;
 use App\Services\StaffAttendanceService;
 use App\Traits\ApiResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -126,6 +130,99 @@ class StaffAttendanceController extends Controller
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat mengambil ringkasan presensi staf', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-ACD-05: Manual record presensi staf oleh Admin.
+     * POST /api/v1/staff-attendances
+     */
+    public function store(ManualStoreStaffAttendanceRequest $request): JsonResponse
+    {
+        try {
+            $attendance = $this->service->manualStore($request->validated(), $request);
+
+            return $this->successResponse($attendance, 201);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat mencatat presensi staf', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-ACD-05: Koreksi presensi staf oleh Admin berwenang.
+     * PATCH /api/v1/staff-attendances/{id}
+     */
+    public function correct(string $id, CorrectStaffAttendanceRequest $request): JsonResponse
+    {
+        try {
+            $attendance = $this->service->correct($id, $request->validated(), $request);
+
+            return $this->successResponse($attendance);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Data presensi staf tidak ditemukan', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memperbarui presensi staf', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-ACD-05: Mengambil konfigurasi GPS presensi staf.
+     * GET /api/v1/staff-attendances/settings
+     */
+    public function getSettings(Request $request): JsonResponse
+    {
+        try {
+            $settings = $this->service->getSettings();
+
+            return $this->successResponse($settings);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat mengambil konfigurasi presensi', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-ACD-05: Memperbarui konfigurasi GPS presensi staf (Admin).
+     * PUT /api/v1/staff-attendances/settings
+     */
+    public function updateSettings(UpdateStaffAttendanceSettingsRequest $request): JsonResponse
+    {
+        try {
+            $settings = $this->service->updateSettings($request->validated(), $request);
+
+            return $this->successResponse($settings);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memperbarui konfigurasi presensi', 'INTERNAL_ERROR', 500);
         }
     }
 }

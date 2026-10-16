@@ -12,6 +12,7 @@ class AssignUserRolesRequest extends BaseApiRequest
             'roles' => ['required', 'array', 'min:1'],
             'roles.*.role_id' => ['required', 'string', 'exists:roles,id'],
             'roles.*.scope_class_id' => ['nullable', 'string'],
+            'reason' => ['nullable', 'string', 'max:255'],
         ];
     }
 

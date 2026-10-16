@@ -116,8 +116,9 @@ class ExtracurricularController extends Controller
     {
         try {
             $ekskulId = $request->query('extracurricular_id');
-            if (! $ekskulId) {
-                return $this->errorResponse('Parameter extracurricular_id wajib disertakan.', 'VALIDATION_FAILED', 422);
+            $studentId = $request->query('student_id');
+            if (! $ekskulId && ! $studentId) {
+                return $this->errorResponse('Parameter extracurricular_id atau student_id wajib disertakan.', 'VALIDATION_FAILED', 422);
             }
 
             $paginator = $this->service->listMembers($ekskulId, $request->all());

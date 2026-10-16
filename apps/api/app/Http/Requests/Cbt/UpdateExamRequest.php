@@ -17,7 +17,7 @@ class UpdateExamRequest extends FormRequest
             'subject_id' => ['nullable', 'uuid', 'exists:subjects,id'],
             'parent_exam_id' => ['nullable', 'uuid', 'exists:exams,id'],
             'title' => ['nullable', 'string', 'max:200'],
-            'exam_type' => ['nullable', 'string', 'in:kuis,harian,STS,SAS,remedial,pengayaan'],
+            'exam_type' => ['nullable', 'string', 'in:kuis,harian,STS,SAS,ASAT,remedial,pengayaan'],
             'duration_min' => ['nullable', 'integer', 'min:5', 'max:360'],
             'start_at' => ['nullable', 'date'],
             'end_at' => ['nullable', 'date'],

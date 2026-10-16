@@ -33,6 +33,10 @@ class Exam extends Model
         'sync_node_token',
     ];
 
+    protected $hidden = [
+        'sync_node_token',
+    ];
+
     protected function casts(): array
     {
         return [

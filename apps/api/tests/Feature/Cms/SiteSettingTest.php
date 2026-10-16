@@ -119,7 +119,11 @@ class SiteSettingTest extends TestCase
                     ],
                 ],
             ])
-            ->assertJsonPath('data.identity.name', 'SMA Labschool UM');
+            ->assertJsonPath('data.identity.name', 'SMP Laboratorium UM')
+            ->assertJsonPath('data.identity.tagline', 'Beradab, Kreatif, Berprestasi')
+            ->assertJsonPath('data.contact.phone', '(0341) 588550')
+            ->assertJsonPath('data.contact.email', 'info@smplab-um.sch.id')
+            ->assertJsonPath('data.address.street', 'Jl. Simpang Bogor No. T-7');
     }
 
     /**
@@ -314,5 +318,149 @@ class SiteSettingTest extends TestCase
         $getResp->assertStatus(200)
             ->assertJsonPath('data.identity.name', 'SMA Labschool Awal')
             ->assertJsonPath('data.contact.phone', '0822222222');
+    }
+
+    /**
+     * INT-06: Verified defaults ensure SMP Laboratorium UM identity without any SMA Labschool trace.
+     */
+    public function test_int_06_default_site_profile_uses_smp_laboratorium_um_not_sma_labschool(): void
+    {
+        $response = $this->getJson('/api/v1/public/site');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.identity.name', 'SMP Laboratorium UM')
+            ->assertJsonPath('data.identity.tagline', 'Beradab, Kreatif, Berprestasi')
+            ->assertJsonPath('data.contact.phone', '(0341) 588550')
+            ->assertJsonPath('data.contact.email', 'info@smplab-um.sch.id')
+            ->assertJsonPath('data.contact.whatsapp', '0851-2608-8473')
+            ->assertJsonPath('data.address.street', 'Jl. Simpang Bogor No. T-7')
+            ->assertJsonPath('data.address.city', 'Kota Malang')
+            ->assertJsonPath('data.address.postal_code', '65145')
+            ->assertJsonPath('data.profile.vision', 'Mewujudkan Generasi Beriman, Berkarakter, Berprestasi, dan Berbudaya')
+            ->assertJsonPath('data.profile.principal_greeting.principal_name', 'Bapak Tamyis Suliantoro, M.Pd.')
+            ->assertJsonPath('data.profile.principal_greeting.greeting_text', 'Selamat datang di Portal Resmi Portal Sekolah Satu Pintu SMP Laboratorium UM.');
+
+        // Negative assertion: no mention of SMA Labschool anywhere in identity or greeting
+        $jsonString = $response->getContent();
+        $this->assertStringNotContainsString('SMA Labschool', $jsonString);
+    }
+
+    /**
+     * INT-06: Stored administrator settings take precedence over default fallbacks without being overwritten.
+     */
+    public function test_int_06_stored_admin_settings_take_precedence_over_defaults(): void
+    {
+        // 1. Admin saves custom site identity
+        $this->actingAs($this->adminUser)
+            ->putJson('/api/v1/site-settings', [
+                'identity' => [
+                    'name' => 'SMP Laboratorium Model Inovasi UM',
+                    'tagline' => 'Sekolah Inovasi Riset Unggulan',
+                ],
+                'contact' => [
+                    'phone' => '(0341) 588999',
+                ],
+            ])
+            ->assertStatus(200);
+
+        // 2. Fetch public site profile
+        $response = $this->getJson('/api/v1/public/site');
+
+        $response->assertStatus(200)
+            // Custom admin values must be used
+            ->assertJsonPath('data.identity.name', 'SMP Laboratorium Model Inovasi UM')
+            ->assertJsonPath('data.identity.tagline', 'Sekolah Inovasi Riset Unggulan')
+            ->assertJsonPath('data.contact.phone', '(0341) 588999')
+            // Unset fields must still fall back gracefully to verified SMP Laboratorium defaults
+            ->assertJsonPath('data.contact.email', 'info@smplab-um.sch.id')
+            ->assertJsonPath('data.address.street', 'Jl. Simpang Bogor No. T-7')
+            ->assertJsonPath('data.profile.principal_greeting.principal_name', 'Bapak Tamyis Suliantoro, M.Pd.');
+    }
+
+    /**
+     * INT-06-FIX: Null or empty string on required invariant fields gracefully falls back to default.
+     * Optional fields remain null without forced defaults.
+     * Numeric zero (0 or 0.0) is preserved as a valid numeric value.
+     */
+    public function test_int_06_fix_null_and_empty_string_fallbacks_and_zero_preservation(): void
+    {
+        // 1. Admin deliberately saves null or empty string on invariant fields, null on optional fields, and 0 on numeric fields
+        $this->actingAs($this->adminUser)
+            ->putJson('/api/v1/site-settings', [
+                'identity' => [
+                    'name' => '', // Empty string on name
+                    'tagline' => '   ', // Whitespace string
+                    'logo_url' => null, // Optional field
+                ],
+                'contact' => [
+                    'phone' => '', // Empty string on phone
+                    'email' => null, // Null on email
+                ],
+                'address' => [
+                    'street' => '', // Empty string on street
+                    'latitude' => 0.0, // Valid equator latitude (numeric zero)
+                    'longitude' => 0.0, // Valid prime meridian longitude (numeric zero)
+                ],
+                'social_media' => [
+                    'instagram' => null, // Optional field
+                    'youtube' => '', // Empty string on optional field
+                ],
+                'profile' => [
+                    'accreditation' => [
+                        'score' => 0, // Valid score 0 (numeric zero)
+                    ],
+                ],
+            ])
+            ->assertStatus(200);
+
+        // 2. Fetch public site profile
+        $response = $this->getJson('/api/v1/public/site');
+
+        $response->assertStatus(200)
+            // Invariant fields must fall back to verified SMP Laboratorium UM defaults
+            ->assertJsonPath('data.identity.name', 'SMP Laboratorium UM')
+            ->assertJsonPath('data.identity.tagline', 'Beradab, Kreatif, Berprestasi')
+            ->assertJsonPath('data.contact.phone', '(0341) 588550')
+            ->assertJsonPath('data.contact.email', 'info@smplab-um.sch.id')
+            ->assertJsonPath('data.address.street', 'Jl. Simpang Bogor No. T-7')
+            // Numeric 0 must be preserved, not overwritten by default coordinates or scores
+            ->assertJsonPath('data.address.latitude', 0)
+            ->assertJsonPath('data.address.longitude', 0)
+            ->assertJsonPath('data.profile.accreditation.score', 0)
+            // Optional fields remain null
+            ->assertJsonPath('data.identity.logo_url', null)
+            ->assertJsonPath('data.social_media.instagram', null)
+            ->assertJsonPath('data.social_media.youtube', null);
+    }
+
+    /**
+     * INT-06-FIX: Empty arrays fallback to default list, while custom non-empty arrays are strictly preserved.
+     */
+    public function test_int_06_fix_empty_arrays_vs_non_empty_arrays(): void
+    {
+        // 1. Admin saves an empty array for mission, but non-empty for featured_programs
+        $customProgram = [
+            'title' => 'Program Robotik Eksklusif',
+            'description' => 'Eksplorasi AI dan robotika.',
+            'icon' => 'cpu',
+        ];
+
+        $this->actingAs($this->adminUser)
+            ->putJson('/api/v1/site-settings', [
+                'profile' => [
+                    'mission' => [], // Empty array
+                    'featured_programs' => [$customProgram], // Non-empty custom array
+                ],
+            ])
+            ->assertStatus(200);
+
+        $response = $this->getJson('/api/v1/public/site');
+
+        $response->assertStatus(200);
+        // Empty mission must fall back to 3 default mission items
+        $this->assertCount(3, $response->json('data.profile.mission'));
+        // Custom featured programs must be preserved with exactly 1 item
+        $this->assertCount(1, $response->json('data.profile.featured_programs'));
+        $this->assertEquals('Program Robotik Eksklusif', $response->json('data.profile.featured_programs.0.title'));
     }
 }

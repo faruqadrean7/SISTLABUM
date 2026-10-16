@@ -10,6 +10,7 @@ use App\Services\Bk\EarlyWarningService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -20,6 +21,25 @@ class EarlyWarningController extends Controller
     public function __construct(
         protected EarlyWarningService $service
     ) {}
+
+    /**
+     * BE-BK-02: Ambil ringkasan metrik peringatan dini.
+     * GET /api/v1/early-warnings/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request);
+
+            return $this->successResponse($summary, 200);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan peringatan dini.', 'INTERNAL_ERROR', 500);
+        }
+    }
 
     /**
      * BE-BK-02: Daftar peringatan dini.
@@ -93,7 +113,9 @@ class EarlyWarningController extends Controller
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Data peringatan dini tidak ditemukan.', 'NOT_FOUND', 404);
         } catch (HttpException $e) {
-            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
+            $errorCode = $e->getStatusCode() === 422 ? 'VALIDATION_ERROR' : 'FORBIDDEN';
+
+            return $this->errorResponse($e->getMessage(), $errorCode, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

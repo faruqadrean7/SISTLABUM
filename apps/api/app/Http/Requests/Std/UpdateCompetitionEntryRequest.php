@@ -14,7 +14,8 @@ class UpdateCompetitionEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'result' => ['sometimes', 'required', 'string', 'max:100'],
+            'status' => ['nullable', 'string', 'in:terdaftar,dikonfirmasi,hadir,gugur,selesai,dibatalkan'],
+            'result' => ['nullable', 'string', 'max:100'],
             'achievement_id' => ['nullable', 'uuid', 'exists:achievements,id'],
             'coach_teacher_id' => ['nullable', 'uuid', 'exists:teachers,id'],
             'notes' => ['nullable', 'string', 'max:1000'],

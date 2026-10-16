@@ -36,6 +36,12 @@ class EventService
 
         if ($schoolId = $request->query('school_id')) {
             $query->where('school_id', $schoolId);
+        } elseif ($user = $request->user()) {
+            if (! empty($user->school_id)) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('school_id', $user->school_id)->orWhereNull('school_id');
+                });
+            }
         }
 
         // Filter by Month and Year (Calendar View)
@@ -86,7 +92,7 @@ class EventService
     /**
      * BE-CMS-04: Get single event.
      */
-    public function getEvent(string $id, bool $isPublic = false): SchoolEvent
+    public function getEvent(string $id, bool $isPublic = false, ?Request $request = null): SchoolEvent
     {
         $query = SchoolEvent::query();
 
@@ -94,7 +100,14 @@ class EventService
             $query->publicView();
         }
 
-        return $query->findOrFail($id);
+        $event = $query->findOrFail($id);
+
+        $user = $request?->user();
+        if ($user && ! empty($user->school_id) && ! empty($event->school_id) && $event->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Agenda kegiatan berada di luar sekolah penugasan Anda.');
+        }
+
+        return $event;
     }
 
     /**
@@ -140,6 +153,10 @@ class EventService
     {
         return DB::transaction(function () use ($id, $data, $request) {
             $event = SchoolEvent::findOrFail($id);
+            $user = $request->user();
+            if ($user && ! empty($user->school_id) && ! empty($event->school_id) && $event->school_id !== $user->school_id) {
+                throw new HttpException(403, 'Akses ditolak: Agenda kegiatan berada di luar sekolah penugasan Anda.');
+            }
             $oldValue = $event->toArray();
 
             $startAt = isset($data['start_at']) ? Carbon::parse($data['start_at']) : $event->start_at;

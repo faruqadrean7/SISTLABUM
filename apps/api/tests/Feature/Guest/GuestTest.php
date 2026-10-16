@@ -7,8 +7,11 @@ use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\GuestService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class GuestTest extends TestCase
@@ -311,10 +314,64 @@ class GuestTest extends TestCase
     }
 
     /**
-     * BE-GUEST-01 / Decision #9: Regular teacher without guest.book.read only sees assigned guests.
+     * BE-GUEST-01 / SEC-RBAC-01: Regular teacher without guest.book.read is rejected with 403.
      */
-    public function test_be_guest_01_teacher_only_sees_assigned_guests(): void
+    public function test_be_guest_01_sec_rbac_01_teacher_without_permission_is_denied(): void
     {
+        $response = $this->actingAs($this->teacherUser)
+            ->getJson('/api/v1/guests');
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * BE-GUEST-01 / SEC-RBAC-01: Student user is rejected from guest list with 403.
+     */
+    public function test_be_guest_01_sec_rbac_01_student_is_denied_access(): void
+    {
+        $roleStudent = Role::firstOrCreate(['code' => 'student'], ['name' => 'Siswa', 'is_system' => true]);
+        $studentUser = User::create([
+            'username' => 'siswa1',
+            'email' => 'siswa1@sekolah.sch.id',
+            'password_hash' => bcrypt('password123'),
+            'status' => 'active',
+        ]);
+        $studentUser->roles()->attach($roleStudent->id);
+
+        $response = $this->actingAs($studentUser)
+            ->getJson('/api/v1/guests');
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * BE-GUEST-01 / SEC-RBAC-01: Guardian user is rejected from guest list with 403.
+     */
+    public function test_be_guest_01_sec_rbac_01_guardian_is_denied_access(): void
+    {
+        $roleGuardian = Role::firstOrCreate(['code' => 'guardian'], ['name' => 'Wali Murid', 'is_system' => true]);
+        $guardianUser = User::create([
+            'username' => 'wali1',
+            'email' => 'wali1@sekolah.sch.id',
+            'password_hash' => bcrypt('password123'),
+            'status' => 'active',
+        ]);
+        $guardianUser->roles()->attach($roleGuardian->id);
+
+        $response = $this->actingAs($guardianUser)
+            ->getJson('/api/v1/guests');
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * BE-GUEST-01 / SEC-RBAC-01: Authorized teacher with guest.book.read can view and filter assigned guests.
+     */
+    public function test_be_guest_01_sec_rbac_01_authorized_teacher_can_filter_assigned_guests(): void
+    {
+        $permRead = Permission::where('code', 'guest.book.read')->first();
+        $this->teacherUser->roles()->first()->permissions()->syncWithoutDetaching([$permRead->id]);
+
         // Guest for Budi
         Guest::create([
             'full_name' => 'Tamu untuk Pak Budi',
@@ -334,10 +391,58 @@ class GuestTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->teacherUser)
-            ->getJson('/api/v1/guests');
+            ->getJson('/api/v1/guests?target_user_id='.$this->teacherUser->id);
 
         $response->assertStatus(200)
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.full_name', 'Tamu untuk Pak Budi');
+    }
+
+    /**
+     * BE-GUEST-01 / SEC-RBAC-01: Direct GuestService call throws 403 HttpException when unauthorized.
+     */
+    public function test_be_guest_01_sec_rbac_01_direct_service_call_rejects_unauthorized_user(): void
+    {
+        $service = app(GuestService::class);
+        $request = Request::create('/api/v1/guests', 'GET');
+        $request->setUserResolver(fn () => $this->teacherUser);
+
+        try {
+            $service->listGuests([], $request);
+            $this->fail('Expected HttpException was not thrown');
+        } catch (HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+    }
+
+    /**
+     * BE-GUEST-01 / MULTI-TENANCY: School isolation prevents viewing or checkout across different schools.
+     */
+    public function test_be_guest_01_tenant_isolation_prevents_viewing_or_checkout_across_schools(): void
+    {
+        $schoolAId = '11111111-1111-1111-1111-111111111111';
+        $schoolBId = '22222222-2222-2222-2222-222222222222';
+
+        $this->adminUser->update(['school_id' => $schoolAId]);
+
+        $guestSchoolB = Guest::create([
+            'school_id' => $schoolBId,
+            'full_name' => 'Tamu Sekolah B',
+            'phone' => '089999999999',
+            'purpose' => 'Kunjungan studi banding',
+            'check_in' => Carbon::now(),
+        ]);
+
+        // Attempt get detail
+        $response = $this->actingAs($this->adminUser)
+            ->getJson("/api/v1/guests/{$guestSchoolB->id}");
+
+        $response->assertStatus(403);
+
+        // Attempt checkout
+        $checkoutResponse = $this->actingAs($this->adminUser)
+            ->patchJson("/api/v1/guests/{$guestSchoolB->id}/checkout");
+
+        $checkoutResponse->assertStatus(403);
     }
 }

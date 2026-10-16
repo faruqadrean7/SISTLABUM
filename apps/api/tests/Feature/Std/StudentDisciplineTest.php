@@ -463,4 +463,59 @@ class StudentDisciplineTest extends TestCase
 
         $this->assertDatabaseMissing('student_points', ['id' => $point->id]);
     }
+
+    public function test_be_std_01_filter_points_by_class_and_search_query(): void
+    {
+        $academicYear = \App\Models\AcademicYear::firstOrCreate(
+            ['name' => '2026/2027'],
+            ['start_date' => '2026-07-01', 'end_date' => '2027-06-30', 'is_active' => true]
+        );
+        $gradeLevel = \App\Models\GradeLevel::firstOrCreate(['level' => 10], ['name' => 'Kelas 10']);
+        $classA = \App\Models\SchoolClass::create([
+            'name' => 'X-IPA-1',
+            'academic_year_id' => $academicYear->id,
+            'grade_level_id' => $gradeLevel->id,
+        ]);
+        $classB = \App\Models\SchoolClass::create([
+            'name' => 'X-IPA-2',
+            'academic_year_id' => $academicYear->id,
+            'grade_level_id' => $gradeLevel->id,
+        ]);
+
+        \App\Models\ClassStudent::create(['class_id' => $classA->id, 'student_id' => $this->student->id, 'joined_at' => Carbon::now()->toDateString()]);
+        \App\Models\ClassStudent::create(['class_id' => $classB->id, 'student_id' => $this->otherStudent->id, 'joined_at' => Carbon::now()->toDateString()]);
+
+        $type = PointType::create([
+            'kind' => 'pelanggaran',
+            'name' => 'Atribut Tidak Lengkap',
+            'points' => 5,
+        ]);
+
+        StudentPoint::create([
+            'student_id' => $this->student->id,
+            'point_type_id' => $type->id,
+            'recorded_by' => $this->teacherUser->id,
+            'point_date' => Carbon::now()->toDateString(),
+        ]);
+        StudentPoint::create([
+            'student_id' => $this->otherStudent->id,
+            'point_type_id' => $type->id,
+            'recorded_by' => $this->teacherUser->id,
+            'point_date' => Carbon::now()->toDateString(),
+        ]);
+
+        // Filter by classA -> hanya student 1
+        $resClass = $this->actingAs($this->adminUser)
+            ->getJson("/api/v1/student-points?class_id={$classA->id}");
+        $resClass->assertStatus(200)
+            ->assertJsonPath('data.0.student_id', $this->student->id);
+        $this->assertCount(1, $resClass->json('data'));
+
+        // Search by name "Fajar" -> hanya student 1
+        $resSearch = $this->actingAs($this->adminUser)
+            ->getJson('/api/v1/student-points?search=Fajar');
+        $resSearch->assertStatus(200);
+        $this->assertCount(1, $resSearch->json('data'));
+    }
 }
+

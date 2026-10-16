@@ -368,4 +368,149 @@ class StaffAttendanceTest extends TestCase
             ->assertJsonPath('data.summary.alfa', 1);
         $this->assertEquals(50.0, (float) $resAdminSummary->json('data.attendance_percentage'));
     }
+
+    public function test_be_acd_05_admin_can_manually_record_staff_attendance(): void
+    {
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/staff-attendances', [
+                'user_id' => $this->teacher1User->id,
+                'att_date' => '2026-08-15',
+                'status' => 'izin',
+                'notes' => 'Izin dinas luar MGMP Matematika',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.user_id', $this->teacher1User->id)
+            ->assertJsonPath('data.status', 'izin')
+            ->assertJsonPath('data.notes', 'Izin dinas luar MGMP Matematika');
+
+        $this->assertDatabaseHas('staff_attendances', [
+            'user_id' => $this->teacher1User->id,
+            'status' => 'izin',
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $this->adminUser->id,
+            'action' => 'staff_attendance.manual_recorded',
+        ]);
+    }
+
+    public function test_be_acd_05_non_admin_cannot_manually_record_staff_attendance_403(): void
+    {
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/staff-attendances', [
+                'user_id' => $this->teacher2User->id,
+                'att_date' => '2026-08-16',
+                'status' => 'hadir',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    public function test_be_acd_05_manual_record_fails_if_already_exists_422(): void
+    {
+        StaffAttendance::create([
+            'user_id' => $this->teacher1User->id,
+            'att_date' => '2026-08-17',
+            'status' => 'hadir',
+        ]);
+
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/staff-attendances', [
+                'user_id' => $this->teacher1User->id,
+                'att_date' => '2026-08-17',
+                'status' => 'sakit',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'BUSINESS_RULE_VIOLATION');
+    }
+
+    public function test_be_acd_05_admin_can_correct_staff_attendance_with_reason_and_audit(): void
+    {
+        $att = StaffAttendance::create([
+            'user_id' => $this->teacher1User->id,
+            'att_date' => '2026-08-18',
+            'status' => 'alfa',
+            'notes' => 'Tidak hadir tanpa kabar',
+        ]);
+
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/v1/staff-attendances/{$att->id}", [
+                'status' => 'hadir',
+                'check_in' => '2026-08-18 07:10:00',
+                'reason' => 'Alat scan RFID offline, hadir tepat waktu terkonfirmasi oleh piket',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.status', 'hadir');
+
+        $att->refresh();
+        $this->assertEquals('hadir', $att->status);
+        $this->assertStringContainsString('Koreksi oleh admintu', $att->notes);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $this->adminUser->id,
+            'action' => 'staff_attendance.corrected',
+        ]);
+    }
+
+    public function test_be_acd_05_non_admin_cannot_correct_staff_attendance_403(): void
+    {
+        $att = StaffAttendance::create([
+            'user_id' => $this->teacher1User->id,
+            'att_date' => '2026-08-19',
+            'status' => 'terlambat',
+        ]);
+
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/v1/staff-attendances/{$att->id}", [
+                'status' => 'hadir',
+                'reason' => 'Ingin ubah sendiri jadi hadir',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    public function test_be_acd_05_can_get_and_update_attendance_settings(): void
+    {
+        $token = $this->adminUser->createToken('test')->plainTextToken;
+
+        // Get settings
+        $resGet = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/staff-attendances/settings');
+        $resGet->assertStatus(200)
+            ->assertJsonPath('data.latitude', -7.9625)
+            ->assertJsonPath('data.radius_meters', 150);
+
+        // Update settings
+        $resPut = $this->withHeader('Authorization', "Bearer {$token}")
+            ->putJson('/api/v1/staff-attendances/settings', [
+                'latitude' => -7.9630000,
+                'longitude' => 112.6180000,
+                'radius_meters' => 200,
+                'late_time' => '07:30:00',
+            ]);
+        $resPut->assertStatus(200)
+            ->assertJsonPath('data.radius_meters', 200)
+            ->assertJsonPath('data.late_time', '07:30:00');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $this->adminUser->id,
+            'action' => 'staff_attendance.settings_updated',
+        ]);
+    }
 }
+

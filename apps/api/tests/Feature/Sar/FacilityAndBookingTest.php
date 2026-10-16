@@ -11,6 +11,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class FacilityAndBookingTest extends TestCase
@@ -459,5 +460,201 @@ class FacilityAndBookingTest extends TestCase
 
         $respSarpras->assertStatus(200)
             ->assertJsonPath('meta.total', 2);
+    }
+
+    /**
+     * BE-SAR-01: Validasi kelayakan: Fasilitas nonaktif atau dalam masa pemeliharaan dilarang dipesan (422).
+     */
+    public function test_be_sar_01_booking_ineligible_facility_is_rejected(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $inactiveFacility = Facility::create([
+            'name' => 'Lab Fisika (Perbaikan Lantai)',
+            'facility_type' => 'ruang',
+            'is_active' => false,
+            'status' => 'nonaktif',
+        ]);
+
+        $maintenanceFacility = Facility::create([
+            'name' => 'Lab Biologi (Pemeliharaan Alat)',
+            'facility_type' => 'ruang',
+            'is_active' => true,
+            'status' => 'pemeliharaan',
+        ]);
+
+        $start = Carbon::now()->addDays(5)->setTime(8, 0, 0)->toDateTimeString();
+        $end = Carbon::now()->addDays(5)->setTime(10, 0, 0)->toDateTimeString();
+
+        // 1. Coba pesan fasilitas nonaktif
+        $resInactive = $this->actingAs($this->teacherUser, 'sanctum')
+            ->postJson('/api/v1/bookings', [
+                'facility_id' => $inactiveFacility->id,
+                'start_at' => $start,
+                'end_at' => $end,
+                'purpose' => 'Praktikum Fisika Dasar',
+            ]);
+
+        $resInactive->assertStatus(422)
+            ->assertJsonPath('error.message', 'Fasilitas sedang nonaktif atau dalam masa pemeliharaan sehingga tidak dapat dipesan.');
+
+        // 2. Coba pesan fasilitas dalam status pemeliharaan
+        $resMaint = $this->actingAs($this->teacherUser, 'sanctum')
+            ->postJson('/api/v1/bookings', [
+                'facility_id' => $maintenanceFacility->id,
+                'start_at' => $start,
+                'end_at' => $end,
+                'purpose' => 'Praktikum Biologi Sel',
+            ]);
+
+        $resMaint->assertStatus(422)
+            ->assertJsonPath('error.message', 'Fasilitas sedang nonaktif atau dalam masa pemeliharaan sehingga tidak dapat dipesan.');
+    }
+
+    /**
+     * BE-SAR-01: Multi-tenant & Anti-IDOR: Pengguna dari sekolah berbeda dilarang mengakses fasilitas/booking sekolah lain (403).
+     */
+    public function test_be_sar_01_multi_tenant_cross_school_isolation(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $schoolA = (string) Str::uuid();
+        $schoolB = (string) Str::uuid();
+
+        $this->sarprasUser->school_id = $schoolA;
+        $this->sarprasUser->save();
+
+        $this->teacherUser->school_id = $schoolA;
+        $this->teacherUser->save();
+
+        $facilitySchoolB = Facility::create([
+            'school_id' => $schoolB,
+            'name' => 'Aula Serbaguna Kampus B',
+            'facility_type' => 'ruang',
+            'is_active' => true,
+            'status' => 'tersedia',
+        ]);
+
+        // 1. Guru Sekolah A dilarang memesan fasilitas Sekolah B
+        $start = Carbon::now()->addDays(6)->setTime(9, 0, 0)->toDateTimeString();
+        $end = Carbon::now()->addDays(6)->setTime(11, 0, 0)->toDateTimeString();
+
+        $resCrossBook = $this->actingAs($this->teacherUser, 'sanctum')
+            ->postJson('/api/v1/bookings', [
+                'facility_id' => $facilitySchoolB->id,
+                'start_at' => $start,
+                'end_at' => $end,
+                'purpose' => 'Peminjaman Lintas Kampus Ilegal',
+            ]);
+
+        $resCrossBook->assertStatus(403)
+            ->assertJsonPath('error.message', 'Akses ditolak: Fasilitas berada di luar sekolah penugasan Anda.');
+
+        // 2. Guru Sekolah A dilarang melihat detail fasilitas Sekolah B
+        $resShowCross = $this->actingAs($this->teacherUser, 'sanctum')
+            ->getJson("/api/v1/facilities/{$facilitySchoolB->id}");
+
+        $resShowCross->assertStatus(403);
+    }
+
+    /**
+     * BE-SAR-01: Validasi status transisi & proteksi status terminal (selesai, dibatalkan).
+     */
+    public function test_be_sar_01_terminal_status_transitions(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $booking = Booking::create([
+            'facility_id' => $this->hallFacility->id,
+            'requested_by' => $this->teacherUser->id,
+            'start_at' => Carbon::now()->addDays(7)->setTime(8, 0, 0)->toDateTimeString(),
+            'end_at' => Carbon::now()->addDays(7)->setTime(10, 0, 0)->toDateTimeString(),
+            'purpose' => 'Rapat Evaluasi Triwulan',
+            'status' => 'disetujui',
+        ]);
+
+        // 1. Tandai booking selesai oleh staf sarpras
+        $resSelesai = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->patchJson("/api/v1/bookings/{$booking->id}/decision", [
+                'status' => 'selesai',
+                'decision_notes' => 'Acara telah selesai, kunci dan peralatan telah dikembalikan lengkap.',
+            ]);
+
+        $resSelesai->assertStatus(200)
+            ->assertJsonPath('data.status', 'selesai');
+
+        // 2. Booking berstatus selesai tidak dapat diubah statusnya lagi (terminal)
+        $resReapprove = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->patchJson("/api/v1/bookings/{$booking->id}/decision", [
+                'status' => 'disetujui',
+            ]);
+
+        $resReapprove->assertStatus(422)
+            ->assertJsonPath('error.message', 'Peminjaman dengan status selesai tidak dapat diproses lagi.');
+
+        // 3. Booking berstatus selesai dilarang dibatalkan
+        $resCancel = $this->actingAs($this->teacherUser, 'sanctum')
+            ->deleteJson("/api/v1/bookings/{$booking->id}");
+
+        $resCancel->assertStatus(422)
+            ->assertJsonPath('error.message', 'Peminjaman dengan status selesai tidak dapat dibatalkan.');
+    }
+
+    /**
+     * BE-SAR-01: Endpoint ringkasan metrik peminjaman fasilitas (/bookings/summary).
+     */
+    public function test_be_sar_01_summary_metrics_endpoint(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->actingAs($this->sarprasUser, 'sanctum')
+            ->getJson('/api/v1/bookings/summary');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'total_facilities',
+                    'active_facilities',
+                    'total_bookings',
+                    'pending_bookings',
+                    'approved_bookings',
+                    'rejected_bookings',
+                    'completed_bookings',
+                    'cancelled_bookings',
+                    'today_bookings',
+                ],
+            ]);
+    }
+
+    /**
+     * BE-SAR-01: Privacy masking pada kalender peminjaman bagi pengguna umum.
+     */
+    public function test_be_sar_01_calendar_view_privacy_masking(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $bookingBudiPrivate = Booking::create([
+            'facility_id' => $this->hallFacility->id,
+            'requested_by' => $this->teacherUser->id,
+            'start_at' => Carbon::now()->addDays(8)->setTime(13, 0, 0)->toDateTimeString(),
+            'end_at' => Carbon::now()->addDays(8)->setTime(15, 0, 0)->toDateTimeString(),
+            'purpose' => 'Rapat Rahasia Komite Disiplin Guru',
+            'status' => 'disetujui',
+            'decision_notes' => 'Catatan sensitif internal',
+        ]);
+
+        // Bu Ani (pengguna umum/guru lain) melihat kalender peminjaman
+        $response = $this->actingAs($this->otherTeacherUser, 'sanctum')
+            ->getJson('/api/v1/bookings?view=calendar');
+
+        $response->assertStatus(200);
+
+        $items = $response->json('data');
+        $found = collect($items)->firstWhere('id', $bookingBudiPrivate->id);
+
+        $this->assertNotNull($found);
+        // Detail sensitif harus disamarkan untuk pengguna non-manager yang bukan pemohon
+        $this->assertEquals('[Kegiatan Terjadwal]', $found['purpose']);
+        $this->assertNull($found['decision_notes']);
     }
 }

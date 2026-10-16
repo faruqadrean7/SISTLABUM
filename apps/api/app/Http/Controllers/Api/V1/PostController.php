@@ -94,14 +94,16 @@ class PostController extends Controller
      * BE-CMS-02: Show post detail (Admin)
      * GET /api/v1/posts/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         try {
-            $post = $this->service->getAdminPost($id);
+            $post = $this->service->getAdminPost($id, $request);
 
             return $this->successResponse($post);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Berita tidak ditemukan', 'NOT_FOUND', 404);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -121,6 +123,8 @@ class PostController extends Controller
             return $this->successResponse($post);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Berita tidak ditemukan', 'NOT_FOUND', 404);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -140,6 +144,8 @@ class PostController extends Controller
             return $this->successResponse(['message' => 'Berita berhasil dihapus']);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Berita tidak ditemukan', 'NOT_FOUND', 404);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'FORBIDDEN', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

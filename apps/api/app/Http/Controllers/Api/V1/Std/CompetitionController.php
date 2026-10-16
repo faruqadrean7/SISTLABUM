@@ -25,13 +25,30 @@ class CompetitionController extends Controller
     ) {}
 
     /**
+     * BE-STD-03: Ringkasan statistik lomba & prestasi.
+     * GET /api/v1/competitions/summary
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        try {
+            $summary = $this->service->getSummary($request->user());
+
+            return $this->successResponse($summary);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memuat ringkasan kompetisi.', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
      * BE-STD-03: Daftar kompetisi/lomba.
      * GET /api/v1/competitions
      */
     public function index(ListCompetitionRequest $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listCompetitions($request->validated());
+            $paginator = $this->service->listCompetitions($request->validated(), $request->user());
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {
@@ -45,14 +62,16 @@ class CompetitionController extends Controller
      * BE-STD-03: Detail kompetisi beserta delegasi & prestasi.
      * GET /api/v1/competitions/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         try {
-            $competition = $this->service->getCompetition($id);
+            $competition = $this->service->getCompetition($id, $request->user());
 
             return $this->successResponse($competition);
         } catch (ModelNotFoundException) {
             return $this->errorResponse('Kompetisi tidak ditemukan.', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            return $this->errorResponse($e->getMessage(), 'HTTP_ERROR', $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 
@@ -125,10 +144,10 @@ class CompetitionController extends Controller
      * BE-STD-03: Daftar delegasi peserta kompetisi.
      * GET /api/v1/competitions/{id}/entries
      */
-    public function indexEntries(string $id): JsonResponse
+    public function indexEntries(string $id, Request $request): JsonResponse
     {
         try {
-            $paginator = $this->service->listEntries($id);
+            $paginator = $this->service->listEntries($id, $request->user());
 
             return $this->paginatedResponse($paginator);
         } catch (Throwable $e) {

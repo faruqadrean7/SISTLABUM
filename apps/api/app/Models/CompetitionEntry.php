@@ -16,6 +16,7 @@ class CompetitionEntry extends Model
         'competition_id',
         'student_id',
         'coach_teacher_id',
+        'status',
         'result',
         'achievement_id',
         'notes',

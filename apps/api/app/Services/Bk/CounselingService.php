@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\CounselingCase;
 use App\Models\CounselingReferral;
 use App\Models\CounselingSession;
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -25,6 +26,10 @@ class CounselingService
         $query = CounselingCase::with(['student.classes', 'counselor.teacher'])
             ->withCount('sessions')
             ->orderBy('created_at', 'desc');
+
+        if (! empty($user->school_id)) {
+            $query->whereHas('student', fn ($sq) => $sq->where('school_id', $user->school_id));
+        }
 
         if (! empty($filters['student_id'])) {
             $query->where('student_id', $filters['student_id']);
@@ -48,15 +53,31 @@ class CounselingService
 
         $paginator = $query->paginate((int) ($filters['per_page'] ?? 15));
 
-        // Masking ringkasan kasus jika diakses oleh Kepala Sekolah non-counselor
+        // Masking ringkasan kasus pada tampilan daftar demi prinsip minimisasi data & privasi
         $isPrincipalOnly = $this->isPrincipalOnly($user);
-        if ($isPrincipalOnly) {
-            $paginator->getCollection()->transform(function ($case) {
+        $paginator->getCollection()->transform(function ($case) use ($isPrincipalOnly) {
+            if ($isPrincipalOnly) {
                 $case->summary_enc = '[Ringkasan Sensitif Disamarkan untuk Kepala Sekolah]';
+            } else {
+                $case->summary_enc = '[Tersimpan Terenkripsi - Buka Detail Kasus]';
+            }
 
-                return $case;
-            });
-        }
+            return $case;
+        });
+
+        // Audit log akses daftar kasus BK
+        $this->logAudit(
+            $user->id,
+            'bk_case.list',
+            'counseling_cases',
+            null,
+            null,
+            [
+                'filters' => array_intersect_key($filters, array_flip(['student_id', 'category', 'status', 'search', 'page', 'per_page'])),
+                'total_results' => $paginator->total(),
+            ],
+            $request
+        );
 
         return $paginator;
     }
@@ -68,6 +89,13 @@ class CounselingService
     {
         $user = $request->user();
         $this->authorizeCounselorOrAdmin($user);
+
+        if (! empty($user->school_id)) {
+            $student = Student::findOrFail($data['student_id']);
+            if (! empty($student->school_id) && $student->school_id !== $user->school_id) {
+                throw new HttpException(403, 'Akses ditolak: Siswa tidak terdaftar pada sekolah yang sama.');
+            }
+        }
 
         $case = CounselingCase::create([
             'student_id' => $data['student_id'],
@@ -99,6 +127,10 @@ class CounselingService
         $this->authorizeCounselorOrAdminOrPrincipal($user);
 
         $case = CounselingCase::with(['student.classes', 'counselor.teacher', 'sessions'])->findOrFail($id);
+
+        if (! empty($user->school_id) && ! empty($case->student?->school_id) && $case->student->school_id !== $user->school_id) {
+            throw new HttpException(403, 'Akses ditolak: Kasus konseling ini berada di luar sekolah penugasan Anda.');
+        }
 
         // Security Audit Log: Catat setiap akses baca data privat BK
         $this->logAudit(
@@ -169,6 +201,10 @@ class CounselingService
 
         $case = CounselingCase::findOrFail($caseId);
 
+        if ($case->status === 'selesai') {
+            throw new HttpException(422, 'Tidak dapat menambahkan sesi pada kasus konseling yang telah selesai atau ditutup. Buka kembali kasus (ubah status ke aktif) terlebih dahulu.');
+        }
+
         $session = CounselingSession::create([
             'case_id' => $case->id,
             'session_date' => $data['session_date'],
@@ -222,9 +258,21 @@ class CounselingService
     public function listReferrals(array $filters, Request $request): LengthAwarePaginator
     {
         $user = $request->user();
+        if (! $user) {
+            throw new HttpException(401, 'Unauthenticated');
+        }
+
+        // Siswa dan orang tua tidak berwenang mengakses rujukan internal guru-BK
+        if ($user->hasRole('student') || $user->hasRole('siswa') || $user->hasRole('guardian') || $user->hasRole('wali_murid') || $user->hasRole('ortu')) {
+            throw new HttpException(403, 'Akses ditolak: Siswa dan orang tua tidak memiliki wewenang mengakses rujukan guru BK.');
+        }
 
         $query = CounselingReferral::with(['student.classes', 'referrer.teacher'])
             ->orderBy('created_at', 'desc');
+
+        if (! empty($user->school_id)) {
+            $query->whereHas('student', fn ($sq) => $sq->where('school_id', $user->school_id));
+        }
 
         // Jika guru biasa, hanya tampilkan rujukan yang dia buat sendiri
         if (! $this->isCounselorOrAdmin($user) && ! $this->isPrincipal($user)) {
@@ -235,7 +283,24 @@ class CounselingService
             $query->where('status', $filters['status']);
         }
 
-        return $query->paginate((int) ($filters['per_page'] ?? 15));
+        $paginator = $query->paginate((int) ($filters['per_page'] ?? 15));
+
+        if ($this->isCounselorOrAdmin($user) || $this->isPrincipal($user)) {
+            $this->logAudit(
+                $user->id,
+                'bk_referral.list',
+                'counseling_referrals',
+                null,
+                null,
+                [
+                    'total' => $paginator->total(),
+                    'filters' => array_intersect_key($filters, array_flip(['status', 'page', 'per_page'])),
+                ],
+                $request
+            );
+        }
+
+        return $paginator;
     }
 
     /**
@@ -248,9 +313,26 @@ class CounselingService
             throw new HttpException(401, 'Unauthenticated');
         }
 
-        // Pastikan bukan siswa
-        if ($user->hasRole('siswa') || $user->hasRole('student')) {
-            throw new HttpException(403, 'Siswa tidak memiliki wewenang membuat rujukan kasus BK.');
+        // Pastikan bukan siswa atau orang tua
+        if ($user->hasRole('student') || $user->hasRole('siswa') || $user->hasRole('guardian') || $user->hasRole('wali_murid') || $user->hasRole('ortu')) {
+            throw new HttpException(403, 'Akses ditolak: Siswa dan orang tua tidak memiliki wewenang membuat rujukan kasus BK.');
+        }
+
+        if (! empty($user->school_id)) {
+            $student = Student::findOrFail($data['student_id']);
+            if (! empty($student->school_id) && $student->school_id !== $user->school_id) {
+                throw new HttpException(403, 'Akses ditolak: Siswa tidak terdaftar pada sekolah yang sama.');
+            }
+        }
+
+        // Pencegahan duplikasi rujukan pending serupa
+        $existingPending = CounselingReferral::where('student_id', $data['student_id'])
+            ->where('referred_by', $user->id)
+            ->where('status', 'pending')
+            ->where('reason', $data['reason'])
+            ->first();
+        if ($existingPending) {
+            throw new HttpException(422, 'Rujukan serupa untuk siswa ini masih berstatus pending dan sedang menunggu tindak lanjut BK.');
         }
 
         $referral = CounselingReferral::create([
@@ -282,6 +364,12 @@ class CounselingService
         $this->authorizeCounselorOrAdmin($user);
 
         $referral = CounselingReferral::findOrFail($id);
+
+        if (in_array($referral->status, ['ditolak', 'selesai']) && $data['status'] === 'pending') {
+            throw new HttpException(422, "Status rujukan konseling sudah final ({$referral->status}) dan tidak dapat dikembalikan ke status pending.");
+        }
+
+        $oldStatus = $referral->status;
         $referral->status = $data['status'];
         $referral->save();
 
@@ -290,8 +378,8 @@ class CounselingService
             'bk_referral.update_status',
             'counseling_referrals',
             $referral->id,
-            null,
-            ['status' => $referral->status],
+            ['status' => $oldStatus],
+            ['status' => $referral->status, 'notes' => $data['notes'] ?? null],
             $request
         );
 
@@ -312,7 +400,7 @@ class CounselingService
             return true;
         }
 
-        return $user->hasPermission('bk.counseling.manage');
+        return $user->hasPermission('bk.counseling.manage') || $user->hasPermission('counseling.case.write');
     }
 
     protected function isPrincipal(?User $user): bool
@@ -321,7 +409,7 @@ class CounselingService
             return false;
         }
 
-        return $user->hasRole('kepala_sekolah') || $user->hasRole('principal') || $user->hasPermission('report.principal.approve');
+        return $user->hasRole('kepala_sekolah') || $user->hasRole('principal') || $user->hasPermission('report.principal.approve') || $user->hasPermission('counseling.case.read');
     }
 
     protected function isPrincipalOnly(?User $user): bool

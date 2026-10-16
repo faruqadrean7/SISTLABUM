@@ -14,7 +14,7 @@ class BookingDecisionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', 'in:disetujui,ditolak'],
+            'status' => ['required', 'string', 'in:disetujui,ditolak,selesai'],
             'decision_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

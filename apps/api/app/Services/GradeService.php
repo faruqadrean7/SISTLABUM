@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Assignment;
 use App\Models\AuditLog;
 use App\Models\ClassStudent;
 use App\Models\Grade;
@@ -9,6 +10,7 @@ use App\Models\GradeComponent;
 use App\Models\GradePeriod;
 use App\Models\Guardian;
 use App\Models\SchoolClass;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\User;
@@ -134,6 +136,10 @@ class GradeService
             throw new HttpException(422, 'Komponen nilai tidak dapat dihapus karena sudah memiliki data nilai siswa.');
         }
 
+        if (Assignment::where('grade_component_id', $component->id)->exists()) {
+            throw new HttpException(422, 'Komponen nilai tidak dapat dihapus karena ditautkan pada tugas pembelajaran LMS.');
+        }
+
         return DB::transaction(function () use ($component, $currentUser, $request) {
             $oldData = $component->toArray();
             $component->delete();
@@ -243,6 +249,14 @@ class GradeService
         }
 
         return DB::transaction(function () use ($data, $currentUser, $request) {
+            $existing = Grade::where('student_id', $data['student_id'])
+                ->where('component_id', $data['component_id'])
+                ->where('period_id', $data['period_id'])
+                ->first();
+
+            $isUpdate = $existing !== null;
+            $oldValues = $isUpdate ? $existing->only(['value', 'source', 'entered_by']) : null;
+
             $grade = Grade::updateOrCreate(
                 [
                     'student_id' => $data['student_id'],
@@ -256,14 +270,18 @@ class GradeService
                 ]
             );
 
-            $this->logAudit(
-                $currentUser->id,
-                'grade.entered',
-                'Grade',
-                $grade->id,
-                null,
-                $grade->toArray(),
-                $request
+            $action = $isUpdate ? 'academic.grade.update' : 'grade.entered';
+            $newValues = $grade->only(['value', 'source', 'entered_by']);
+
+            app(\App\Services\AuditLogService::class)->record(
+                action: $action,
+                entity: 'Grade',
+                entityId: $grade->id,
+                oldValues: $oldValues,
+                newValues: $newValues,
+                reason: $data['reason'] ?? null,
+                request: $request,
+                isAuthoritative: true
             );
 
             return $grade->load(['student', 'component', 'period']);
@@ -277,26 +295,37 @@ class GradeService
     {
         /** @var User $currentUser */
         $currentUser = $request->user();
-        $this->authorizeGradeEntry($currentUser, $data['component_id']);
+        $defaultComponentId = $data['component_id'] ?? null;
+        if ($defaultComponentId) {
+            $this->authorizeGradeEntry($currentUser, $defaultComponentId);
+        }
 
         $period = GradePeriod::findOrFail($data['period_id']);
         if ($period->status === 'locked') {
             throw new HttpException(422, 'Periode penilaian telah dikunci. Perubahan nilai massal tidak diizinkan tanpa pembukaan kunci.');
         }
 
-        return DB::transaction(function () use ($data, $currentUser, $request) {
+        return DB::transaction(function () use ($data, $defaultComponentId, $currentUser, $request) {
             $savedGrades = [];
 
             foreach ($data['grades'] as $item) {
+                $componentId = $item['component_id'] ?? $defaultComponentId;
+                if (! $componentId) {
+                    continue;
+                }
+                if (! $defaultComponentId) {
+                    $this->authorizeGradeEntry($currentUser, $componentId);
+                }
+
                 $grade = Grade::updateOrCreate(
                     [
                         'student_id' => $item['student_id'],
-                        'component_id' => $data['component_id'],
+                        'component_id' => $componentId,
                         'period_id' => $data['period_id'],
                     ],
                     [
                         'value' => $item['value'],
-                        'source' => 'manual',
+                        'source' => $item['source'] ?? 'manual',
                         'entered_by' => $currentUser->id,
                     ]
                 );
@@ -304,19 +333,20 @@ class GradeService
                 $savedGrades[] = $grade;
             }
 
-            $this->logAudit(
-                $currentUser->id,
-                'grade.bulk_entered',
-                'Grade',
-                $data['component_id'],
-                null,
-                ['count' => count($savedGrades)],
-                $request
+            app(\App\Services\AuditLogService::class)->record(
+                action: 'grade.bulk_entered',
+                entity: 'Grade',
+                entityId: $defaultComponentId ?? $data['period_id'],
+                oldValues: null,
+                newValues: ['count' => count($savedGrades)],
+                reason: $data['reason'] ?? null,
+                request: $request,
+                isAuthoritative: true
             );
 
             return [
                 'count' => count($savedGrades),
-                'component_id' => $data['component_id'],
+                'component_id' => $defaultComponentId,
                 'period_id' => $data['period_id'],
                 'items' => $savedGrades,
             ];
@@ -371,6 +401,253 @@ class GradeService
 
             return $period->load(['semester', 'locker']);
         });
+    }
+
+    /**
+     * BE-GRD-01: Daftar periode penilaian bulanan per semester.
+     */
+    public function listPeriods(array $filters, Request $request): Collection
+    {
+        $query = GradePeriod::with(['semester.academicYear', 'locker'])
+            ->orderBy('month', 'asc');
+
+        if (! empty($filters['semester_id'])) {
+            $semesterId = $filters['semester_id'];
+            $query->where('semester_id', $semesterId);
+
+            // Jika belum ada periode terdaftar untuk semester ini, inisialisasi otomatis
+            if (! GradePeriod::where('semester_id', $semesterId)->exists()) {
+                $this->ensurePeriodsForSemester($semesterId);
+                $query = GradePeriod::with(['semester.academicYear', 'locker'])
+                    ->where('semester_id', $semesterId)
+                    ->orderBy('month', 'asc');
+            }
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Pastikan periode 1-12 atau periode sesuai kalender semester dibuat.
+     */
+    public function ensurePeriodsForSemester(string $semesterId): Collection
+    {
+        $semester = Semester::findOrFail($semesterId);
+        $months = [];
+
+        if ($semester->start_date && $semester->end_date) {
+            $start = Carbon::parse($semester->start_date);
+            $end = Carbon::parse($semester->end_date);
+            $curr = $start->copy()->startOfMonth();
+            while ($curr->lessThanOrEqualTo($end)) {
+                $months[] = (int) $curr->format('n');
+                $curr->addMonth();
+            }
+        }
+
+        if (empty($months)) {
+            if (stripos($semester->name, 'ganjil') !== false || stripos($semester->name, '1') !== false) {
+                $months = [7, 8, 9, 10, 11, 12];
+            } elseif (stripos($semester->name, 'genap') !== false || stripos($semester->name, '2') !== false) {
+                $months = [1, 2, 3, 4, 5, 6];
+            } else {
+                $months = range(1, 12);
+            }
+        }
+
+        foreach (array_unique($months) as $m) {
+            GradePeriod::firstOrCreate(
+                [
+                    'semester_id' => $semesterId,
+                    'month' => $m,
+                ],
+                [
+                    'status' => 'open',
+                ]
+            );
+        }
+
+        return GradePeriod::with(['semester.academicYear', 'locker'])
+            ->where('semester_id', $semesterId)
+            ->orderBy('month', 'asc')
+            ->get();
+    }
+
+    /**
+     * BE-GRD-01 / ADM-GRD-01: Grid spreadsheet nilai satu kelas (Siswa x Komponen).
+     */
+    public function getClassGradeMatrix(array $filters, Request $request): array
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+
+        if (empty($filters['class_id']) || empty($filters['subject_id']) || empty($filters['period_id'])) {
+            throw new HttpException(422, 'Parameter class_id, subject_id, dan period_id wajib disertakan.');
+        }
+
+        $classId = $filters['class_id'];
+        $subjectId = $filters['subject_id'];
+        $periodId = $filters['period_id'];
+
+        $schoolClass = SchoolClass::with('academicYear')->findOrFail($classId);
+        $period = GradePeriod::with('semester')->findOrFail($periodId);
+        $semesterId = $period->semester_id;
+
+        // Otorisasi IDOR: Jika bukan admin, harus guru pengampu kelas & mapel atau wali kelas
+        if (! $this->checkIsAdmin($currentUser)) {
+            $teacher = Teacher::where('user_id', $currentUser->id)->first();
+            if (! $teacher) {
+                throw new HttpException(403, 'Akses ditolak.');
+            }
+            $isAssigned = $teacher->teachingAssignments()
+                ->where('class_id', $classId)
+                ->where('subject_id', $subjectId)
+                ->exists();
+            $isHomeroom = $schoolClass->homeroom_teacher_id === $teacher->id;
+            if (! $isAssigned && ! $isHomeroom) {
+                throw new HttpException(403, 'Anda tidak memiliki hak akses penilaian untuk kelas dan mata pelajaran ini.');
+            }
+        }
+
+        // Komponen penilaian untuk mapel & semester ini
+        $components = GradeComponent::where('subject_id', $subjectId)
+            ->where('semester_id', $semesterId)
+            ->where(function ($q) use ($classId) {
+                $q->whereNull('class_id')->orWhere('class_id', $classId);
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Siswa aktif di kelas
+        $enrolledStudentIds = ClassStudent::where('class_id', $classId)->pluck('student_id');
+        $students = Student::whereIn('id', $enrolledStudentIds)
+            ->whereIn('status', ['aktif', 'active'])
+            ->orderBy('nisn', 'asc')
+            ->get();
+
+        $componentIds = $components->pluck('id');
+        $studentIds = $students->pluck('id');
+
+        $grades = Grade::where('period_id', $periodId)
+            ->whereIn('component_id', $componentIds)
+            ->whereIn('student_id', $studentIds)
+            ->get();
+
+        $gradeMap = [];
+        foreach ($grades as $g) {
+            $gradeMap[$g->student_id][$g->component_id] = [
+                'id' => $g->id,
+                'value' => (float) $g->value,
+                'source' => $g->source,
+                'entered_by' => $g->entered_by,
+                'updated_at' => $g->updated_at,
+            ];
+        }
+
+        $totalWeight = (float) $components->sum('weight');
+        $studentRows = [];
+        $totalScores = [];
+        $completeCount = 0;
+        $incompleteCount = 0;
+
+        foreach ($students as $stu) {
+            $studentGrades = [];
+            $weightedSum = 0;
+            $studentWeightSum = 0;
+            $filledComponentsCount = 0;
+
+            foreach ($components as $comp) {
+                $g = $gradeMap[$stu->id][$comp->id] ?? null;
+                $studentGrades[$comp->id] = $g;
+                if ($g !== null) {
+                    $filledComponentsCount++;
+                    $weightedSum += ($g['value'] * (float) $comp->weight);
+                    $studentWeightSum += (float) $comp->weight;
+                }
+            }
+
+            $isComplete = ($components->count() > 0) && ($filledComponentsCount === $components->count());
+            if ($isComplete) {
+                $completeCount++;
+            } else {
+                $incompleteCount++;
+            }
+
+            $finalScore = $studentWeightSum > 0 ? round($weightedSum / $studentWeightSum, 2) : null;
+            if ($finalScore !== null) {
+                $totalScores[] = $finalScore;
+            }
+
+            $studentRows[] = [
+                'student' => $stu,
+                'grades' => $studentGrades,
+                'is_complete' => $isComplete,
+                'filled_count' => $filledComponentsCount,
+                'total_components' => $components->count(),
+                'final_score' => $finalScore,
+            ];
+        }
+
+        $classAverage = count($totalScores) > 0 ? round(array_sum($totalScores) / count($totalScores), 2) : 0;
+        $highestScore = count($totalScores) > 0 ? max($totalScores) : 0;
+        $lowestScore = count($totalScores) > 0 ? min($totalScores) : 0;
+
+        return [
+            'class' => $schoolClass,
+            'period' => $period,
+            'components' => $components,
+            'total_weight' => $totalWeight,
+            'students' => $studentRows,
+            'summary' => [
+                'total_students' => $students->count(),
+                'complete_count' => $completeCount,
+                'incomplete_count' => $incompleteCount,
+                'average_score' => $classAverage,
+                'highest_score' => $highestScore,
+                'lowest_score' => $lowestScore,
+            ],
+        ];
+    }
+
+    /**
+     * BE-GRD-01: Hapus nilai satuan siswa.
+     */
+    public function deleteGrade(string $id, Request $request): bool
+    {
+        /** @var User $currentUser */
+        $currentUser = $request->user();
+        $grade = Grade::with(['component', 'period'])->findOrFail($id);
+
+        if ($grade->period && $grade->period->status === 'locked') {
+            throw new HttpException(422, 'Periode penilaian telah dikunci. Nilai tidak dapat dihapus.');
+        }
+
+        $this->authorizeGradeEntry($currentUser, $grade->component_id);
+
+        return DB::transaction(function () use ($grade, $currentUser, $request) {
+            $oldData = $grade->toArray();
+            $grade->delete();
+
+            $this->logAudit(
+                $currentUser->id,
+                'grade.deleted',
+                'Grade',
+                $grade->id,
+                $oldData,
+                null,
+                $request
+            );
+
+            return true;
+        });
+    }
+
+    /**
+     * Public wrapper for checkGradeEntryAuthorization
+     */
+    public function checkGradeEntryAuthorization(User $user, string $componentId): void
+    {
+        $this->authorizeGradeEntry($user, $componentId);
     }
 
     /**

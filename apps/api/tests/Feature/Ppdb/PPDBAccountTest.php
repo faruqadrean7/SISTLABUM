@@ -349,4 +349,140 @@ class PPDBAccountTest extends TestCase
             ->assertJsonPath('data.applications.0.wave.name', 'Gelombang 1')
             ->assertJsonPath('data.applications.0.track.name', 'Jalur Reguler');
     }
+
+    public function test_be_ppdb_02_applicant_can_login_with_email_and_receives_token_and_profile(): void
+    {
+        $user = User::create([
+            'username' => 'applicant_login_test',
+            'email' => 'login.test@example.com',
+            'phone' => '081233334444',
+            'password_hash' => Hash::make('PasswordKu123!'),
+            'status' => 'active',
+        ]);
+        $user->roles()->attach($this->guestRole->id);
+
+        $response = $this->postJson('/api/v1/ppdb/login', [
+            'identifier' => 'login.test@example.com',
+            'password' => 'PasswordKu123!',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'accessToken',
+                    'tokenType',
+                    'expiresIn',
+                    'user' => ['id', 'email', 'phone', 'status'],
+                    'applicant' => ['id', 'email', 'applications'],
+                ],
+            ])
+            ->assertJsonPath('data.user.email', 'login.test@example.com');
+    }
+
+    public function test_be_ppdb_02_applicant_can_login_with_registration_no(): void
+    {
+        $user = User::create([
+            'username' => 'applicant_reg_login',
+            'email' => 'reg.login@example.com',
+            'phone' => '081255556666',
+            'password_hash' => Hash::make('RegSecret123!'),
+            'status' => 'active',
+        ]);
+        $user->roles()->attach($this->guestRole->id);
+
+        $wave = PPDBWave::create([
+            'school_id' => $this->schoolId,
+            'name' => 'Gelombang 1',
+            'open_at' => Carbon::now()->subDays(1),
+            'close_at' => Carbon::now()->addDays(5),
+            'result_publish_at' => Carbon::now()->addDays(10),
+            'status' => 'aktif',
+        ]);
+
+        $track = PPDBTrack::create([
+            'wave_id' => $wave->id,
+            'code' => 'PRESTASI',
+            'name' => 'Jalur Prestasi',
+            'quota' => 25,
+        ]);
+
+        Applicant::create([
+            'wave_id' => $wave->id,
+            'track_id' => $track->id,
+            'user_id' => $user->id,
+            'registration_no' => 'REG-2026-8888',
+            'nik_enc' => '3579012345678888',
+            'full_name' => 'Siswa Jalur Prestasi',
+            'birth_date' => '2010-04-12',
+            'status' => 'draft',
+        ]);
+
+        // Login using registration_no instead of email
+        $response = $this->postJson('/api/v1/ppdb/login', [
+            'identifier' => 'REG-2026-8888',
+            'password' => 'RegSecret123!',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.user.email', 'reg.login@example.com')
+            ->assertJsonPath('data.applicant.applications.0.registration_no', 'REG-2026-8888');
+    }
+
+    public function test_be_ppdb_02_applicant_can_login_with_phone(): void
+    {
+        $user = User::create([
+            'username' => 'applicant_phone_login',
+            'email' => 'phone.login@example.com',
+            'phone' => '081277778888',
+            'password_hash' => Hash::make('PhoneSecret123!'),
+            'status' => 'active',
+        ]);
+        $user->roles()->attach($this->guestRole->id);
+
+        $response = $this->postJson('/api/v1/ppdb/login', [
+            'identifier' => '081277778888',
+            'password' => 'PhoneSecret123!',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.user.email', 'phone.login@example.com');
+    }
+
+    public function test_be_ppdb_02_login_fails_with_invalid_credentials(): void
+    {
+        User::create([
+            'username' => 'applicant_wrong_pw',
+            'email' => 'wrong.pw@example.com',
+            'phone' => '081299990000',
+            'password_hash' => Hash::make('CorrectPassword123!'),
+            'status' => 'active',
+        ]);
+
+        $response = $this->postJson('/api/v1/ppdb/login', [
+            'identifier' => 'wrong.pw@example.com',
+            'password' => 'WrongPassword!',
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJsonPath('error.code', 'INVALID_CREDENTIALS');
+    }
+
+    public function test_be_ppdb_02_login_fails_when_user_is_pending_unverified(): void
+    {
+        User::create([
+            'username' => 'applicant_pending_login',
+            'email' => 'pending.user@example.com',
+            'phone' => '081200001111',
+            'password_hash' => Hash::make('PendingSecret123!'),
+            'status' => 'pending',
+        ]);
+
+        $response = $this->postJson('/api/v1/ppdb/login', [
+            'identifier' => 'pending.user@example.com',
+            'password' => 'PendingSecret123!',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('error.code', 'ACCOUNT_INACTIVE');
+    }
 }

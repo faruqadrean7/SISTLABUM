@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\AuditLog;
+use App\Models\ClassStudent;
 use App\Models\File;
 use App\Models\Guardian;
 use App\Models\Journal;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
 use App\Models\SchoolClass;
+use App\Models\SiteSetting;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\User;
@@ -34,9 +36,44 @@ class AcademicAttendanceService
 
         $journal = Journal::with(['schedule.class'])->findOrFail($data['journal_id']);
 
-        // Otorisasi: Hanya guru penugas jadwal atau admin
+        if (! $journal->schedule || ! $journal->schedule->class_id) {
+            throw new HttpException(422, 'Jurnal tidak memiliki relasi jadwal atau rombel kelas yang valid.');
+        }
+
+        // 1. Otorisasi: Hanya guru penugas jadwal atau admin
         if (! $isAdmin && (! $teacher || $teacher->id !== $journal->teacher_id)) {
             throw new HttpException(403, 'Hanya guru penugas jurnal ini yang dapat menginput presensi sesi kelas.');
+        }
+
+        // 2. Batas waktu edit N hari (default 3 hari, kecuali admin)
+        if (! $isAdmin) {
+            $maxDays = $this->getMaxEditDays($journal->schedule?->class?->school_id);
+            $sessionDateObj = Carbon::parse($journal->session_date)->startOfDay();
+            $today = Carbon::now()->startOfDay();
+            $daysDiff = $sessionDateObj->diffInDays($today, false);
+
+            if ($daysDiff > $maxDays) {
+                throw new HttpException(422, "Batas waktu pengisian/pengubahan presensi sesi telah berakhir (maksimal {$maxDays} hari setelah sesi).");
+            }
+        }
+
+        // 3. Validasi keunikan siswa dalam array payload
+        $submittedStudentIds = array_column($data['attendances'], 'student_id');
+        if (count($submittedStudentIds) !== count(array_unique($submittedStudentIds))) {
+            throw new HttpException(422, 'Terdapat duplikasi data siswa dalam daftar presensi yang dikirimkan.');
+        }
+
+        // 4. Validasi keanggotaan aktif siswa pada kelas rombel sesi tersebut
+        $validStudentIds = ClassStudent::where('class_id', $journal->schedule->class_id)
+            ->whereNull('left_at')
+            ->pluck('student_id')
+            ->toArray();
+
+        foreach ($submittedStudentIds as $studentId) {
+            if (! in_array($studentId, $validStudentIds, true)) {
+                $className = $journal->schedule->class->name ?? 'kelas bersangkutan';
+                throw new HttpException(422, "Siswa dengan ID {$studentId} tidak terdaftar aktif di rombel {$className}.");
+            }
         }
 
         $sessionDate = Carbon::parse($journal->session_date)->format('Y-m-d');
@@ -284,6 +321,11 @@ class AcademicAttendanceService
             }
         }
 
+        // Cegah perubahan status berulang tanpa hak admin
+        if ($leave->status !== 'menunggu' && ! $isAdmin) {
+            throw new HttpException(422, 'Permohonan izin ini sudah diputuskan sebelumnya dan tidak dapat diubah kembali.');
+        }
+
         return DB::transaction(function () use ($leave, $data, $currentUser, $request) {
             $oldData = $leave->toArray();
             $decisionNotes = $data['decision_notes'] ?? ($data['note'] ?? null);
@@ -318,6 +360,16 @@ class AcademicAttendanceService
                         ]
                     );
                 }
+            } elseif ($oldData['status'] === 'disetujui' && $data['status'] === 'ditolak') {
+                // Pembalikan / Revokasi: jika sebelumnya disetujui lalu dibatalkan menjadi ditolak
+                $startDate = Carbon::parse($leave->start_date);
+                $endDate = Carbon::parse($leave->end_date);
+                Attendance::where('student_id', $leave->student_id)
+                    ->where('source', 'gerbang')
+                    ->whereDate('att_date', '>=', $startDate->format('Y-m-d'))
+                    ->whereDate('att_date', '<=', $endDate->format('Y-m-d'))
+                    ->where('note', 'like', "%Pengajuan {$leave->leave_type}%")
+                    ->delete();
             }
 
             // Memicu notifikasi instan ke pemohon jika requested_by tersedia
@@ -367,31 +419,57 @@ class AcademicAttendanceService
     {
         /** @var User $currentUser */
         $currentUser = $request->user();
+        $student = Student::where('user_id', $currentUser->id)->first();
         $guardian = Guardian::where('user_id', $currentUser->id)->first();
         $teacher = Teacher::where('user_id', $currentUser->id)->first();
         $isAdmin = $currentUser->hasRole('super_admin')
             || $currentUser->hasPermission('academic.schedule.manage')
             || $currentUser->roles()->where('code', 'like', 'admin%')->exists();
 
-        $query = LeaveRequest::with(['student', 'attachmentFile', 'decisionMaker']);
+        $query = LeaveRequest::with(['student.classes', 'attachmentFile', 'decisionMaker', 'requester']);
 
         // Scoping
         if (! $isAdmin) {
-            if ($guardian) {
+            if ($student) {
+                $query->where('student_id', $student->id);
+            } elseif ($guardian) {
                 $childIds = $guardian->students()->pluck('students.id');
                 $query->whereIn('student_id', $childIds);
             } elseif ($teacher) {
                 // Guru melihat izin kelas perwaliannya
                 $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
                 $query->whereHas('student.classes', fn ($q) => $q->whereIn('classes.id', $homeroomClassIds));
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 
+        if (! empty($filters['q'])) {
+            $keyword = trim($filters['q']);
+            $query->whereHas('student', function ($sub) use ($keyword) {
+                $sub->where('full_name', 'like', "%{$keyword}%")
+                    ->orWhere('nis', 'like', "%{$keyword}%")
+                    ->orWhere('nisn', 'like', "%{$keyword}%");
+            });
+        }
         if (! empty($filters['student_id'])) {
             $query->where('student_id', $filters['student_id']);
         }
+        if (! empty($filters['class_id'])) {
+            $classId = $filters['class_id'];
+            $query->whereHas('student.classes', fn ($q) => $q->where('classes.id', $classId));
+        }
+        if (! empty($filters['leave_type'])) {
+            $query->where('leave_type', $filters['leave_type']);
+        }
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        }
+        if (! empty($filters['start_date'])) {
+            $query->whereDate('end_date', '>=', $filters['start_date']);
+        }
+        if (! empty($filters['end_date'])) {
+            $query->whereDate('start_date', '<=', $filters['end_date']);
         }
 
         $perPage = min((int) ($filters['per_page'] ?? 20), 100);
@@ -410,7 +488,14 @@ class AcademicAttendanceService
             || $currentUser->hasPermission('academic.schedule.manage')
             || $currentUser->roles()->where('code', 'like', 'admin%')->exists();
 
-        $query = Attendance::with(['student', 'journal.schedule.subject', 'journal.schedule.class', 'recorder']);
+        $query = Attendance::with([
+            'student',
+            'journal.schedule.subject',
+            'journal.schedule.class',
+            'journal.schedule.timeSlot',
+            'journal.schedule.teacher',
+            'recorder',
+        ]);
 
         // Data scoping: Siswa hanya miliknya, wali murid hanya anaknya, guru hanya kelas binaan/ajarannya
         if (! $isGlobalAdmin) {
@@ -437,6 +522,14 @@ class AcademicAttendanceService
             }
         }
 
+        if (! empty($filters['q'])) {
+            $keyword = trim($filters['q']);
+            $query->whereHas('student', function ($sub) use ($keyword) {
+                $sub->where('full_name', 'like', "%{$keyword}%")
+                    ->orWhere('nis', 'like', "%{$keyword}%")
+                    ->orWhere('nisn', 'like', "%{$keyword}%");
+            });
+        }
         if (! empty($filters['student_id'])) {
             $query->where('student_id', $filters['student_id']);
         }
@@ -466,7 +559,7 @@ class AcademicAttendanceService
     }
 
     /**
-     * BE-ACD-03: Attendance recap statistics (by student or class).
+     * BE-ACD-03: Attendance recap statistics (by student, class, or journal).
      */
     public function getAttendanceRecap(array $filters, Request $request): array
     {
@@ -505,6 +598,9 @@ class AcademicAttendanceService
             $classId = $filters['class_id'];
             $query->whereHas('student.classes', fn ($q) => $q->where('classes.id', $classId));
         }
+        if (! empty($filters['journal_id'])) {
+            $query->where('journal_id', $filters['journal_id']);
+        }
         if (! empty($filters['start_date'])) {
             $query->whereDate('att_date', '>=', $filters['start_date']);
         }
@@ -533,6 +629,26 @@ class AcademicAttendanceService
             'attendance_rate' => $percentage,
             'filters' => $filters,
         ];
+    }
+
+    /**
+     * Get maximum allowed edit window days for attendance/journal.
+     */
+    public function getMaxEditDays(?string $schoolId = null): int
+    {
+        $settingQuery = SiteSetting::where('key', 'journal_edit_max_days');
+        if ($schoolId) {
+            $settingQuery->where(function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId)->orWhereNull('school_id');
+            });
+        }
+        $setting = $settingQuery->first();
+
+        if ($setting && is_array($setting->setting_value) && isset($setting->setting_value['days'])) {
+            return max(1, (int) $setting->setting_value['days']);
+        }
+
+        return 3; // Default standar sekolah: 3 hari kalender
     }
 
     /**

@@ -535,4 +535,119 @@ class LmsTest extends TestCase
         $this->assertCount(1, $response->json('data'));
         $this->assertEquals('Tugas Rumah Matematika', $response->json('data.0.title'));
     }
+
+    public function test_be_acd_07_teacher_can_update_assignment_and_other_teacher_forbidden(): void
+    {
+        $assignment = Assignment::create([
+            'class_id' => $this->classA->id,
+            'subject_id' => $this->subjectMath->id,
+            'teacher_id' => $this->teacher1->id,
+            'title' => 'Judul Tugas Awal',
+            'description' => 'Deskripsi lama',
+            'due_at' => Carbon::now()->addDays(5),
+            'max_score' => 100,
+        ]);
+
+        $tokenTeacher1 = $this->teacher1User->createToken('test')->plainTextToken;
+        $tokenTeacher2 = $this->teacher2User->createToken('test')->plainTextToken;
+
+        // Guru 2 mencoba mengedit -> 403
+        $resForbidden = $this->withHeader('Authorization', "Bearer {$tokenTeacher2}")
+            ->putJson("/api/v1/assignments/{$assignment->id}", [
+                'title' => 'Judul Diubah Hacker',
+            ]);
+        $resForbidden->assertStatus(403)
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+
+        // Guru 1 (pembuat) mengedit -> 200 OK
+        $this->app['auth']->forgetGuards();
+        $resSuccess = $this->withHeader('Authorization', "Bearer {$tokenTeacher1}")
+            ->putJson("/api/v1/assignments/{$assignment->id}", [
+                'title' => 'Judul Tugas Diperbarui',
+                'description' => 'Deskripsi baru yang direvisi',
+                'max_score' => 90,
+            ]);
+        $resSuccess->assertStatus(200)
+            ->assertJsonPath('data.title', 'Judul Tugas Diperbarui')
+            ->assertJsonPath('data.max_score', '90.00');
+
+        $this->assertDatabaseHas('assignments', [
+            'id' => $assignment->id,
+            'title' => 'Judul Tugas Diperbarui',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $this->teacher1User->id,
+            'action' => 'assignment.updated',
+        ]);
+    }
+
+    public function test_be_acd_07_teacher_can_update_learning_material(): void
+    {
+        $material = LearningMaterial::create([
+            'class_id' => $this->classA->id,
+            'subject_id' => $this->subjectMath->id,
+            'teacher_id' => $this->teacher1->id,
+            'title' => 'Materi Awal',
+            'description' => 'Penjelasan awal',
+        ]);
+
+        $tokenTeacher1 = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$tokenTeacher1}")
+            ->putJson("/api/v1/materials/{$material->id}", [
+                'title' => 'Materi Bab 2 (Revisi)',
+                'description' => 'Penjelasan lengkap materi bab 2',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.title', 'Materi Bab 2 (Revisi)')
+            ->assertJsonPath('data.description', 'Penjelasan lengkap materi bab 2');
+
+        $this->assertDatabaseHas('learning_materials', [
+            'id' => $material->id,
+            'title' => 'Materi Bab 2 (Revisi)',
+        ]);
+    }
+
+    public function test_be_acd_07_late_submission_is_flagged_correctly(): void
+    {
+        // Tugas yang tenggat waktunya sudah lewat kemarin
+        $assignment = Assignment::create([
+            'class_id' => $this->classA->id,
+            'subject_id' => $this->subjectMath->id,
+            'teacher_id' => $this->teacher1->id,
+            'title' => 'Tugas Tenggat Kemarin',
+            'due_at' => Carbon::now()->subDay(),
+        ]);
+
+        $tokenStudent1 = $this->student1User->createToken('test')->plainTextToken;
+        $file = UploadedFile::fake()->create('tugas-telat.pdf', 512, 'application/pdf');
+
+        $response = $this->withHeader('Authorization', "Bearer {$tokenStudent1}")
+            ->post("/api/v1/assignments/{$assignment->id}/submissions", [
+                'file' => $file,
+                'notes' => 'Maaf terlambat mengumpulkan Pak',
+            ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.is_late', true)
+            ->assertJsonPath('data.submission_timing', 'terlambat')
+            ->assertJsonPath('data.status', 'menunggu_penilaian');
+
+        $submissionId = $response->json('data.id');
+
+        // Guru menilai tugas tersebut
+        $this->app['auth']->forgetGuards();
+        $tokenTeacher = $this->teacher1User->createToken('test')->plainTextToken;
+        $resGrade = $this->withHeader('Authorization', "Bearer {$tokenTeacher}")
+            ->patchJson("/api/v1/assignments/{$assignment->id}/submissions/{$submissionId}/grade", [
+                'score' => 75,
+                'feedback' => 'Dikurangi poin karena telat mengumpulkan.',
+            ]);
+
+        $resGrade->assertStatus(200)
+            ->assertJsonPath('data.status', 'dinilai')
+            ->assertJsonPath('data.is_late', true)
+            ->assertJsonPath('data.submission_timing', 'terlambat');
+    }
 }

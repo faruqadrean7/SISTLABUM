@@ -15,6 +15,8 @@ class ListStudentPointRequest extends FormRequest
     {
         return [
             'student_id' => ['nullable', 'uuid', 'exists:students,id'],
+            'class_id' => ['nullable', 'uuid', 'exists:classes,id'],
+            'search' => ['nullable', 'string', 'max:100'],
             'kind' => ['nullable', 'string', 'in:pelanggaran,prestasi'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],

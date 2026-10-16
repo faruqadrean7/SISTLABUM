@@ -15,6 +15,7 @@ class UpdateCounselingReferralStatusRequest extends FormRequest
     {
         return [
             'status' => ['required', 'string', 'in:pending,diterima,ditolak,selesai'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

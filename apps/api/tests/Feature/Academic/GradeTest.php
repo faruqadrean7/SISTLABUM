@@ -3,6 +3,7 @@
 namespace Tests\Feature\Academic;
 
 use App\Models\AcademicYear;
+use App\Models\Assignment;
 use App\Models\ClassStudent;
 use App\Models\Grade;
 use App\Models\GradeComponent;
@@ -558,5 +559,174 @@ class GradeTest extends TestCase
             ->assertJsonPath('error.code', 'BUSINESS_RULE_VIOLATION');
 
         $this->assertDatabaseHas('grade_components', ['id' => $component->id]);
+    }
+
+    public function test_be_grd_01_cannot_delete_component_linked_to_lms_assignment_422(): void
+    {
+        $component = GradeComponent::create([
+            'subject_id' => $this->subjectMath->id,
+            'semester_id' => $this->semester1->id,
+            'class_id' => $this->classA->id,
+            'code' => 'TUGAS_LMS',
+            'name' => 'Tugas Integrasi LMS',
+            'weight' => 15.0,
+        ]);
+
+        Assignment::create([
+            'class_id' => $this->classA->id,
+            'subject_id' => $this->subjectMath->id,
+            'teacher_id' => $this->teacher1->id,
+            'title' => 'Tugas Matematika 1',
+            'due_at' => Carbon::now()->addDays(7),
+            'grade_component_id' => $component->id,
+        ]);
+
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->deleteJson("/api/v1/grade-components/{$component->id}");
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'BUSINESS_RULE_VIOLATION')
+            ->assertJsonPath('error.message', 'Komponen nilai tidak dapat dihapus karena ditautkan pada tugas pembelajaran LMS.');
+
+        $this->assertDatabaseHas('grade_components', ['id' => $component->id]);
+    }
+
+    public function test_be_grd_01_list_grade_periods_and_auto_initialization(): void
+    {
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson("/api/v1/grade-periods?semester_id={$this->semester1->id}");
+
+        $response->assertStatus(200);
+
+        $data = $response->json('data');
+        $this->assertNotEmpty($data);
+        $this->assertArrayHasKey('month_name', $data[0]);
+    }
+
+    public function test_be_grd_01_get_class_grade_matrix_spreadsheet(): void
+    {
+        $component = GradeComponent::create([
+            'subject_id' => $this->subjectMath->id,
+            'semester_id' => $this->semester1->id,
+            'class_id' => $this->classA->id,
+            'code' => 'UH_MATRIX',
+            'name' => 'Ulangan Matriks',
+            'weight' => 25.0,
+        ]);
+
+        Grade::create([
+            'student_id' => $this->student1->id,
+            'component_id' => $component->id,
+            'period_id' => $this->periodMonth8->id,
+            'value' => 92.50,
+        ]);
+
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson("/api/v1/grades/matrix?class_id={$this->classA->id}&subject_id={$this->subjectMath->id}&period_id={$this->periodMonth8->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.summary.total_students', 2)
+            ->assertJsonPath('data.summary.complete_count', 1)
+            ->assertJsonPath('data.summary.incomplete_count', 1);
+
+        $this->assertEquals(92.5, $response->json('data.students.0.grades.' . $component->id . '.value'));
+    }
+
+    public function test_be_grd_01_batch_grades_input_matrix(): void
+    {
+        $comp1 = GradeComponent::create([
+            'subject_id' => $this->subjectMath->id,
+            'semester_id' => $this->semester1->id,
+            'class_id' => $this->classA->id,
+            'code' => 'B_UH1',
+            'name' => 'Batch UH 1',
+            'weight' => 20.0,
+        ]);
+        $comp2 = GradeComponent::create([
+            'subject_id' => $this->subjectMath->id,
+            'semester_id' => $this->semester1->id,
+            'class_id' => $this->classA->id,
+            'code' => 'B_UH2',
+            'name' => 'Batch UH 2',
+            'weight' => 30.0,
+        ]);
+
+        $token = $this->teacher1User->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/grades/batch', [
+                'period_id' => $this->periodMonth8->id,
+                'grades' => [
+                    [
+                        'student_id' => $this->student1->id,
+                        'component_id' => $comp1->id,
+                        'value' => 88.0,
+                    ],
+                    [
+                        'student_id' => $this->student2->id,
+                        'component_id' => $comp2->id,
+                        'value' => 79.5,
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.count', 2);
+
+        $this->assertDatabaseHas('grades', [
+            'student_id' => $this->student1->id,
+            'component_id' => $comp1->id,
+            'period_id' => $this->periodMonth8->id,
+            'value' => 88.00,
+        ]);
+    }
+
+    public function test_be_grd_01_delete_grade_and_locked_period_restriction(): void
+    {
+        $component = GradeComponent::create([
+            'subject_id' => $this->subjectMath->id,
+            'semester_id' => $this->semester1->id,
+            'class_id' => $this->classA->id,
+            'code' => 'UH_DEL',
+            'name' => 'Ulangan Hapus',
+            'weight' => 10.0,
+        ]);
+
+        $grade = Grade::create([
+            'student_id' => $this->student1->id,
+            'component_id' => $component->id,
+            'period_id' => $this->periodMonth8->id,
+            'value' => 75.00,
+        ]);
+
+        $tokenTeacher = $this->teacher1User->createToken('test')->plainTextToken;
+
+        // Kunci periode penilaian
+        $this->periodMonth8->update(['status' => 'locked']);
+
+        // Hapus saat terkunci harus gagal 422
+        $responseLocked = $this->withHeader('Authorization', "Bearer {$tokenTeacher}")
+            ->deleteJson("/api/v1/grades/{$grade->id}");
+
+        $responseLocked->assertStatus(422)
+            ->assertJsonPath('error.code', 'BUSINESS_RULE_VIOLATION');
+
+        // Buka kunci
+        $this->periodMonth8->update(['status' => 'open']);
+
+        // Hapus saat terbuka harus berhasil 200
+        $responseOpen = $this->withHeader('Authorization', "Bearer {$tokenTeacher}")
+            ->deleteJson("/api/v1/grades/{$grade->id}");
+
+        $responseOpen->assertStatus(200)
+            ->assertJsonPath('data.deleted', true);
+
+        $this->assertDatabaseMissing('grades', ['id' => $grade->id]);
     }
 }

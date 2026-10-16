@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\GradeSubmissionRequest;
 use App\Http\Requests\Academic\StoreAssignmentRequest;
 use App\Http\Requests\Academic\SubmitAssignmentRequest;
+use App\Http\Requests\Academic\UpdateAssignmentRequest;
 use App\Services\LmsService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -82,6 +83,33 @@ class AssignmentController extends Controller
             report($e);
 
             return $this->errorResponse('Terjadi kesalahan saat mengambil detail tugas', 'INTERNAL_ERROR', 500);
+        }
+    }
+
+    /**
+     * BE-ACD-07: Perbarui tugas kelas.
+     * PUT /api/v1/assignments/{id}
+     */
+    public function update(string $id, UpdateAssignmentRequest $request): JsonResponse
+    {
+        try {
+            $assignment = $this->service->updateAssignment($id, $request->validated(), $request);
+
+            return $this->successResponse($assignment);
+        } catch (ModelNotFoundException) {
+            return $this->errorResponse('Tugas tidak ditemukan', 'NOT_FOUND', 404);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                403 => 'FORBIDDEN',
+                422 => 'BUSINESS_RULE_VIOLATION',
+                default => 'BAD_REQUEST',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat memperbarui tugas', 'INTERNAL_ERROR', 500);
         }
     }
 

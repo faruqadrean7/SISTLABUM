@@ -8,6 +8,7 @@ use App\Services\GradeService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -18,6 +19,23 @@ class GradePeriodController extends Controller
     public function __construct(
         protected GradeService $service
     ) {}
+
+    /**
+     * BE-GRD-01: Daftar periode penilaian bulanan.
+     * GET /api/v1/grade-periods
+     */
+    public function index(Request $request): JsonResponse
+    {
+        try {
+            $periods = $this->service->listPeriods($request->all(), $request);
+
+            return $this->successResponse($periods);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Terjadi kesalahan saat mengambil daftar periode penilaian', 'INTERNAL_ERROR', 500);
+        }
+    }
 
     /**
      * BE-GRD-01: Kunci / buka kunci periode penilaian.

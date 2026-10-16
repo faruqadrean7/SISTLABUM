@@ -57,6 +57,14 @@ class GuestController extends Controller
             $paginator = $this->service->listGuests($request->validated(), $request);
 
             return $this->paginatedResponse($paginator);
+        } catch (HttpException $e) {
+            $code = match ($e->getStatusCode()) {
+                401 => 'UNAUTHENTICATED',
+                403 => 'FORBIDDEN',
+                default => 'BUSINESS_RULE_VIOLATION',
+            };
+
+            return $this->errorResponse($e->getMessage(), $code, $e->getStatusCode());
         } catch (Throwable $e) {
             report($e);
 

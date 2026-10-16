@@ -3,11 +3,83 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AuditLogService
 {
+    /**
+     * GAP-06: Record authoritative or telemetry audit log entry.
+     */
+    public function record(
+        string $action,
+        string $entity,
+        ?string $entityId = null,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?string $reason = null,
+        ?Request $request = null,
+        bool $isAuthoritative = true,
+        ?User $actor = null,
+        ?string $schoolId = null
+    ): AuditLog {
+        $request = $request ?? request();
+        $actor = $actor ?? $request?->user();
+
+        $actorId = $actor?->id;
+        $actorRole = null;
+        if ($actor) {
+            $actor->loadMissing('roles');
+            $actorRole = $actor->roles->pluck('code')->first();
+        }
+
+        $ip = $request?->ip();
+        $userAgent = $request?->userAgent();
+        $requestId = $request?->header('X-Request-Id') ?? (string) Str::uuid();
+        $schoolId = $schoolId ?? $actor?->school_id;
+
+        $redactedOld = $oldValues !== null ? $this->redactSensitive($oldValues) : null;
+        $redactedNew = $newValues !== null ? $this->redactSensitive($newValues) : null;
+
+        return AuditLog::create([
+            'school_id' => $schoolId,
+            'actor_id' => $actorId,
+            'actor_role' => $actorRole,
+            'action' => $action,
+            'entity' => $entity,
+            'entity_type' => $entity,
+            'entity_id' => $entityId,
+            'old_value' => $redactedOld,
+            'new_value' => $redactedNew,
+            'reason' => $reason,
+            'ip' => $ip,
+            'user_agent' => $userAgent,
+            'request_id' => $requestId,
+            'is_authoritative' => $isAuthoritative,
+            'created_at' => now(),
+        ]);
+    }
+
+    /**
+     * Recursively mask sensitive fields (passwords, tokens, keys).
+     */
+    public function redactSensitive(array $data): array
+    {
+        $sensitivePattern = '/(password|password_hash|token|access_token|refresh_token|fcm_token|nik|secret|api_key)/i';
+
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->redactSensitive($value);
+            } elseif (is_string($key) && preg_match($sensitivePattern, $key)) {
+                $data[$key] = '[REDACTED]';
+            }
+        }
+
+        return $data;
+    }
+
     /**
      * BE-AUTH-05: List audit logs with comprehensive filtering and pagination.
      */

@@ -276,6 +276,33 @@ class PPDBAccountService
     }
 
     /**
+     * BE-PPDB-02: Applicant login by identifier (email, phone, registration_no) and password.
+     */
+    public function login(string $identifier, string $password, Request $request): array
+    {
+        /** @var \App\Services\AuthService $authService */
+        $authService = app(\App\Services\AuthService::class);
+        $authResult = $authService->login([
+            'identifier' => $identifier,
+            'password' => $password,
+            'platform' => 'web_ppdb',
+        ], $request);
+
+        /** @var User $user */
+        $user = User::findOrFail($authResult['user']['id']);
+        $applicantProfile = $this->getApplicantProfile($user);
+
+        return [
+            'accessToken' => $authResult['tokens']['accessToken'],
+            'tokenType' => $authResult['tokens']['tokenType'] ?? 'Bearer',
+            'expiresIn' => $authResult['tokens']['expiresIn'] ?? 900,
+            'refreshToken' => $authResult['tokens']['refreshToken'] ?? null,
+            'user' => $authResult['user'],
+            'applicant' => $applicantProfile,
+        ];
+    }
+
+    /**
      * BE-PPDB-02: Get current applicant profile & applications.
      */
     public function getApplicantProfile(User $user): array
@@ -283,7 +310,9 @@ class PPDBAccountService
         $user->loadMissing([
             'roles.permissions',
             'applicants.wave',
-            'applicants.track',
+            'applicants.track.requirements',
+            'applicants.parents',
+            'applicants.documents',
         ]);
 
         return [
@@ -303,6 +332,7 @@ class PPDBAccountService
                     'score' => $applicant->score,
                     'rank' => $applicant->rank,
                     'decision' => $applicant->decision,
+                    'step_data' => $applicant->step_data,
                     'wave' => $applicant->wave ? [
                         'id' => $applicant->wave->id,
                         'name' => $applicant->wave->name,
@@ -312,7 +342,34 @@ class PPDBAccountService
                         'id' => $applicant->track->id,
                         'code' => $applicant->track->code,
                         'name' => $applicant->track->name,
+                        'requirements' => $applicant->track->requirements->map(function ($r) {
+                            return [
+                                'id' => $r->id,
+                                'document_type' => $r->document_type,
+                                'is_required' => (bool) $r->is_required,
+                                'description' => $r->description,
+                            ];
+                        }),
                     ] : null,
+                    'parents' => $applicant->parents->map(function ($p) {
+                        return [
+                            'id' => $p->id,
+                            'parent_type' => $p->parent_type,
+                            'name' => $p->name,
+                            'occupation' => $p->occupation,
+                            'income_range' => $p->income_range,
+                            'phone' => $p->phone,
+                        ];
+                    }),
+                    'documents' => $applicant->documents->map(function ($d) {
+                        return [
+                            'id' => $d->id,
+                            'document_type' => $d->document_type,
+                            'file_id' => $d->file_id,
+                            'status' => $d->status,
+                            'reject_reason' => $d->reject_reason,
+                        ];
+                    }),
                 ];
             })->all(),
         ];
