@@ -154,33 +154,36 @@ export default function GuruTugasPage() {
   const needsGrading = assignments.reduce((acc, curr) => acc + ((curr.submissions_count || 0) - (curr.reviewed_count || 0)), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-3 max-w-full xl:h-[calc(100vh-112px)] xl:overflow-hidden text-slate-900">
       {/* ─── PAGE HEADER & CTA ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-300">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <nav className="text-xs text-slate-600 font-bold mb-1 flex items-center gap-1.5">
-            <span>PORTAL PENGAJARAN</span>
-            <span className="text-slate-400">/</span>
-            <span className="text-blue-900">TUGAS & PENILAIAN LMS</span>
-          </nav>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Manajemen Penugasan Siswa</h2>
-          <p className="text-sm text-slate-600 font-medium mt-0.5">
-            Terbitkan tugas KBM, pantau kepatuhan pengumpulan rombel, dan lakukan penilaian formatif Kurikulum Merdeka.
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
+              Tugas & Penilaian LMS
+            </span>
+            <span className="text-xs text-slate-500 font-semibold">• BE-LMS-01 & BE-GRD-01</span>
+          </div>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+            Manajemen Penugasan Siswa
+          </h1>
+          <p className="text-xs text-slate-600 mt-0.5 line-clamp-1 max-w-2xl">
+            Terbitkan tugas KBM, pantau kepatuhan pengumpulan rombel, dan lakukan penilaian formatif terintegrasi rapor.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleExportCSV}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs font-bold hover:bg-slate-50 shadow-xs cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 shadow-xs cursor-pointer"
           >
-            <Download className="w-4 h-4 text-slate-600" />
+            <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>Ekspor CSV</span>
           </button>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-900 text-white text-xs font-bold hover:bg-blue-950 transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-900 text-white text-xs font-black hover:bg-blue-950 transition-all shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>+ Terbitkan Tugas Baru</span>
@@ -188,97 +191,97 @@ export default function GuruTugasPage() {
         </div>
       </div>
 
-      {/* ─── 3 SUMMARY METRIC CARDS (SOLID HIGHLIGHTS) ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ─── 3 SUMMARY METRIC CARDS (SOLID HIGHLIGHTS WITH BORDER-L-4) ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 shrink-0">
         {/* Metric 1 */}
-        <div className="school-card p-5 flex items-center justify-between border-l-4 border-l-blue-900">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3 flex items-center justify-between border-l-4 border-l-blue-900 shadow-xs">
           <div>
-            <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Tugas Aktif Berjalan</p>
-            <p className="text-3xl font-extrabold text-blue-900 mt-1">{totalActive}</p>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Semester Ganjil 2026/2027</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tugas Aktif Berjalan</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{totalActive} <span className="text-xs font-bold text-slate-500">Tugas</span></p>
+            <p className="text-[10px] text-slate-500 font-medium mt-0.5">Semester Ganjil 2026/2027</p>
           </div>
-          <div className="w-12 h-12 rounded-lg bg-blue-900 text-white flex items-center justify-center shadow-xs">
-            <FileText className="w-6 h-6" />
+          <div className="w-9 h-9 rounded-lg bg-blue-900 text-white flex items-center justify-center shadow-xs">
+            <FileText className="w-4 h-4" />
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div className="school-card p-5 flex items-center justify-between border-l-4 border-l-emerald-700">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3 flex items-center justify-between border-l-4 border-l-emerald-700 shadow-xs">
           <div>
-            <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Tingkat Kepatuhan</p>
-            <p className="text-3xl font-extrabold text-emerald-800 mt-1">{complianceRate}%</p>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">{totalSubmissions} dari {totalExpected} tugas terkumpul</p>
+            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Tingkat Kepatuhan</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{complianceRate}%</p>
+            <p className="text-[10px] text-slate-500 font-medium mt-0.5">{totalSubmissions} dari {totalExpected} tugas terkumpul</p>
           </div>
-          <div className="w-12 h-12 rounded-lg bg-emerald-700 text-white flex items-center justify-center shadow-xs">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="w-9 h-9 rounded-lg bg-emerald-800 text-white flex items-center justify-center shadow-xs">
+            <CheckCircle2 className="w-4 h-4" />
           </div>
         </div>
 
         {/* Metric 3 */}
-        <div className="school-card p-5 flex items-center justify-between border-l-4 border-l-amber-600">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3 flex items-center justify-between border-l-4 border-l-amber-600 shadow-xs">
           <div>
-            <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Menunggu Penilaian Guru</p>
-            <p className="text-3xl font-extrabold text-amber-700 mt-1">{needsGrading}</p>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Berkas siap dikoreksi</p>
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Menunggu Penilaian Guru</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{needsGrading} <span className="text-xs font-bold text-slate-500">Berkas</span></p>
+            <p className="text-[10px] text-slate-500 font-medium mt-0.5">Siap dikoreksi di Meja Penilaian</p>
           </div>
-          <div className="w-12 h-12 rounded-lg bg-amber-600 text-white flex items-center justify-center shadow-xs">
-            <Clock className="w-6 h-6" />
+          <div className="w-9 h-9 rounded-lg bg-amber-600 text-white flex items-center justify-center shadow-xs">
+            <Clock className="w-4 h-4" />
           </div>
         </div>
       </div>
 
       {/* ─── SEARCH & STATUS TABS ─── */}
-      <div className="school-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
         {/* Search Field */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari judul tugas atau materi..."
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 font-medium"
+            className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
           />
         </div>
 
         {/* Status Tab Filters - Solid Style */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto">
+        <div className="flex items-center gap-1 self-start sm:self-auto bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all cursor-pointer ${
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
               statusFilter === 'all'
-                ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                ? 'bg-blue-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Semua ({assignments.length})
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all cursor-pointer ${
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
               statusFilter === 'active'
-                ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                ? 'bg-blue-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Sedang Berjalan
           </button>
           <button
             onClick={() => setStatusFilter('completed')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all cursor-pointer ${
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
               statusFilter === 'completed'
-                ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                ? 'bg-blue-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Selesai
           </button>
           <button
             onClick={() => setStatusFilter('locked')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all cursor-pointer ${
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
               statusFilter === 'locked'
-                ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                ? 'bg-rose-700 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Terkunci
@@ -287,11 +290,11 @@ export default function GuruTugasPage() {
       </div>
 
       {/* ─── ASSIGNMENTS DATA TABLE (SOLID HIGH CONTRAST) ─── */}
-      <div className="school-card overflow-hidden">
+      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden flex-1 min-h-0 flex flex-col">
         {isLoading ? (
           <div className="p-8 space-y-4">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="flex items-center justify-between animate-pulse">
+              <div key={n} className="flex items-center justify-between">
                 <div className="space-y-2 flex-1">
                   <div className="h-4 bg-slate-200 rounded w-1/3"></div>
                   <div className="h-3 bg-slate-200 rounded w-1/2"></div>
@@ -314,8 +317,8 @@ export default function GuruTugasPage() {
           </div>
         ) : filteredAssignments.length === 0 ? (
           <div className="p-12 text-center space-y-4">
-            <div className="w-16 h-16 rounded-xl bg-blue-900 text-white flex items-center justify-center mx-auto shadow-xs">
-              <FileCheck2 className="w-8 h-8" />
+            <div className="w-14 h-14 rounded-xl bg-blue-900 text-white flex items-center justify-center mx-auto shadow-xs">
+              <FileCheck2 className="w-7 h-7" />
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Belum ada tugas dalam filter ini</h3>
@@ -334,15 +337,15 @@ export default function GuruTugasPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto flex-1 h-full">
             <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-300 bg-slate-100 text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                  <th className="py-3.5 px-6">Judul Tugas & Komponen Rapor</th>
-                  <th className="py-3.5 px-4">Tenggat Waktu</th>
-                  <th className="py-3.5 px-4 text-center">Pengumpulan</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-6 text-right">Aksi</th>
+              <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-300 shadow-xs">
+                <tr className="border-b border-slate-300 bg-slate-100 text-[10px] font-extrabold uppercase tracking-wider text-slate-700">
+                  <th className="py-3 px-5">Judul Tugas & Komponen Rapor</th>
+                  <th className="py-3 px-4">Tenggat Waktu</th>
+                  <th className="py-3 px-4 text-center">Pengumpulan</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-5 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 text-sm">
@@ -574,7 +577,7 @@ export default function GuruTugasPage() {
 
               {/* Tautkan ke Komponen Nilai Rapor (PRD BE-GRD-01 Integration) */}
               <div>
-                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                   <span>Komponen Buku Nilai Rapor <span className="text-rose-600">*</span></span>
                   <span className="text-[10px] font-normal text-blue-900">Kurikulum Merdeka</span>
                 </label>

@@ -97,53 +97,56 @@ export default function GuruMateriPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-3 max-w-full xl:h-[calc(100vh-112px)] xl:overflow-hidden text-slate-900">
       {/* ─── PAGE HEADER & CTA ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-300">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <nav className="text-xs text-slate-600 font-bold mb-1 flex items-center gap-1.5">
-            <span>PORTAL PENGAJARAN</span>
-            <span className="text-slate-400">/</span>
-            <span className="text-teal-900">BANK MODUL AJAR</span>
-          </nav>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Bank Modul Ajar & Perangkat KBM</h2>
-          <p className="text-sm text-slate-600 font-medium mt-0.5">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-teal-800 text-white shadow-2xs">
+              Bank Modul Ajar
+            </span>
+            <span className="text-xs text-slate-500 font-semibold">• BE-LMS-03</span>
+          </div>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+            Bank Modul Ajar & Perangkat KBM
+          </h1>
+          <p className="text-xs text-slate-600 mt-0.5 line-clamp-1 max-w-2xl">
             Repositori resmi Modul Ajar, ATP, modul Proyek P5, dan bahan tayang Kurikulum Merdeka Labschool UM.
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-teal-800 text-white text-xs font-bold hover:bg-teal-900 transition-all shadow-xs cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-teal-800 text-white text-xs font-black hover:bg-teal-900 transition-all shadow-xs cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Unggah Perangkat Ajar Baru</span>
+          <span>+ Unggah Perangkat Ajar</span>
         </button>
       </div>
 
       {/* ─── SEARCH & CATEGORY FILTER TABS ─── */}
-      <div className="school-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5 shrink-0">
         {/* Search Field */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari materi, ATP, bab, atau kata kunci modul..."
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-800 font-medium"
+            className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-teal-800 font-medium"
           />
         </div>
 
         {/* Filters: Category & Class */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Category Filter */}
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-slate-700">Kategori:</span>
             <select
               value={selectedCategoryFilter}
               onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs font-bold bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-800 cursor-pointer"
+              className="px-2.5 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-teal-800 cursor-pointer"
             >
               <option value="all">Semua Kategori</option>
               <option value="modul_ajar">Modul Ajar RPP</option>
@@ -159,7 +162,7 @@ export default function GuruMateriPage() {
             <select
               value={selectedClassFilter}
               onChange={(e) => setSelectedClassFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs font-bold bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-800 cursor-pointer"
+              className="px-2.5 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-teal-800 cursor-pointer"
             >
               <option value="all">Semua Kelas</option>
               {MOCK_CLASSES.map((c) => (
@@ -170,38 +173,39 @@ export default function GuruMateriPage() {
         </div>
       </div>
 
-      {/* ─── MATERIALS GRID (SOLID HIGH CONTRAST) ─── */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="school-card p-5 space-y-3 animate-pulse">
-              <div className="h-4 bg-slate-200 rounded w-2/3"></div>
-              <div className="h-16 bg-slate-200 rounded"></div>
-              <div className="h-8 bg-slate-200 rounded"></div>
+      {/* ─── MATERIALS GRID CONTAINER (SCROLLABLE INSIDE VIEWPORT) ─── */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="bg-white border border-slate-200/90 rounded-xl p-5 space-y-3">
+                <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+                <div className="h-16 bg-slate-200 rounded"></div>
+                <div className="h-8 bg-slate-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredMaterials.length === 0 ? (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
+            <div className="w-14 h-14 rounded-xl bg-teal-800 text-white flex items-center justify-center mx-auto shadow-xs">
+              <FolderOpen className="w-7 h-7" />
             </div>
-          ))}
-        </div>
-      ) : filteredMaterials.length === 0 ? (
-        <div className="school-card p-12 text-center space-y-4">
-          <div className="w-16 h-16 rounded-xl bg-teal-800 text-white flex items-center justify-center mx-auto shadow-xs">
-            <FolderOpen className="w-8 h-8" />
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Belum ada perangkat ajar dalam filter ini</h3>
+              <p className="text-sm text-slate-600 max-w-md mx-auto mt-1 font-medium">
+                Unggah modul ajar, ATP, atau silabus Kurikulum Merdeka untuk dibagikan ke siswa dan guru serumpun.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-teal-800 text-white hover:bg-teal-900 shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Unggah Perangkat Ajar</span>
+            </button>
           </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Belum ada perangkat ajar dalam filter ini</h3>
-            <p className="text-sm text-slate-600 max-w-md mx-auto mt-1 font-medium">
-              Unggah modul ajar, ATP, atau silabus Kurikulum Merdeka untuk dibagikan ke siswa dan guru serumpun.
-            </p>
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-teal-800 text-white hover:bg-teal-900 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Unggah Perangkat Ajar</span>
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredMaterials.map((mat) => {
             const dateStr = new Date(mat.created_at).toLocaleDateString('id-ID', {
               day: 'numeric',
@@ -209,19 +213,28 @@ export default function GuruMateriPage() {
               year: 'numeric',
             });
 
+            const borderAccent = mat.category === 'atp' 
+              ? 'border-l-blue-900' 
+              : mat.category === 'p5' 
+              ? 'border-l-purple-900' 
+              : 'border-l-teal-800';
+
             return (
-              <div key={mat.id} className="school-card p-5 flex flex-col justify-between group hover:border-teal-800 transition-all border-slate-300">
+              <div 
+                key={mat.id} 
+                className={`bg-white border border-slate-200/90 rounded-xl p-5 flex flex-col justify-between group hover:border-teal-800 transition-all shadow-xs border-l-4 ${borderAccent}`}
+              >
                 <div>
                   {/* Top Category & Version Badge */}
                   <div className="flex items-center justify-between gap-2 mb-3">
                     {getCategoryBadge(mat.category)}
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-900 border border-slate-300">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-900 border border-slate-200">
                       {mat.version || 'v1.0'}
                     </span>
                   </div>
 
                   {/* Title & Description */}
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-teal-900 transition-colors line-clamp-2 leading-snug">
+                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-teal-900 transition-colors line-clamp-2 leading-snug">
                     {mat.title}
                   </h3>
                   <p className="text-xs text-slate-600 font-medium line-clamp-3 mt-2 leading-relaxed">
@@ -229,7 +242,7 @@ export default function GuruMateriPage() {
                   </p>
 
                   <div className="mt-3 flex items-center gap-2 text-[11px] font-bold text-slate-700">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-300">
+                    <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
                       {mat.subject?.name || 'Informatika'}
                     </span>
                     <span>•</span>
@@ -238,8 +251,8 @@ export default function GuruMateriPage() {
                 </div>
 
                 {/* File Attachment & Actions */}
-                <div className="mt-5 pt-4 border-t border-slate-200 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-700 font-bold truncate max-w-[160px]">
+                <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-slate-700 font-bold truncate max-w-40">
                     <FileText className="w-4 h-4 text-blue-900 shrink-0" />
                     <span className="truncate">
                       {mat.file?.filename || 'Modul_Ajar.pdf'}
@@ -259,6 +272,7 @@ export default function GuruMateriPage() {
           })}
         </div>
       )}
+      </div>
 
       {/* ─── MODAL UNGGAH MODUL AJAR ─── */}
       {isModalOpen && (

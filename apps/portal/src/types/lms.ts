@@ -110,6 +110,7 @@ export interface StudentRosterItem {
   gender: 'L' | 'P';
   status: AttendanceStatus;
   note?: string;
+  avatar_url?: string;
 }
 
 export interface TeachingJournal {
@@ -171,6 +172,7 @@ export interface StudentGradeRow {
   nis: string;
   name: string;
   gender: 'L' | 'P';
+  avatar_url?: string;
   scores: Record<string, number | null>;
   final_score: number;
   is_tuntas: boolean;

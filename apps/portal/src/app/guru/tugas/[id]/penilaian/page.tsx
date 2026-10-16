@@ -253,7 +253,7 @@ export default function SpeedGraderPage({ params }: { params: Promise<{ id: stri
           {/* Interactive Document Page Render Area */}
           <div className="flex-1 overflow-auto p-6 flex justify-center items-start">
             <div 
-              className="bg-white shadow-lg rounded-lg border-2 border-slate-300 p-8 w-full max-w-2xl min-h-[700px] transition-transform duration-150 origin-top"
+              className="bg-white shadow-lg rounded-lg border-2 border-slate-300 p-8 w-full max-w-2xl min-h-175 transition-transform duration-150 origin-top"
               style={{ transform: `scale(${zoomLevel / 100})` }}
             >
               {/* Header Dokumen Siswa */}
@@ -309,9 +309,17 @@ export default function SpeedGraderPage({ params }: { params: Promise<{ id: stri
           {/* Student Profile Card - SOLID */}
           <div className="p-5 border-b border-slate-300 bg-slate-50">
             <div className="flex items-start gap-3">
-              <div className="w-11 h-11 rounded-lg bg-blue-900 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-xs">
-                {currentSubmission?.student.name.slice(0, 2).toUpperCase() || 'SW'}
-              </div>
+              {currentSubmission?.student.avatar_url ? (
+                <img
+                  src={currentSubmission.student.avatar_url}
+                  alt={currentSubmission.student.name}
+                  className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0 shadow-xs"
+                />
+              ) : (
+                <div className="w-11 h-11 rounded-lg bg-blue-900 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-xs">
+                  {currentSubmission?.student.name.slice(0, 2).toUpperCase() || 'SW'}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <h3 className="font-extrabold text-sm text-slate-900 truncate">
                   {currentSubmission?.student.name}

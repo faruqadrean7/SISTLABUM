@@ -1,3 +1,14 @@
+export interface ChildScheduleItem {
+  id: string;
+  timeRange: string;
+  subject: string;
+  teacher: string;
+  room: string;
+  status: 'completed' | 'current' | 'upcoming';
+  statusLabel: string;
+  topic: string;
+}
+
 export interface GuardianChildProfile {
   id: string;
   name: string;
@@ -5,12 +16,17 @@ export interface GuardianChildProfile {
   nisn: string;
   class_name: string;
   grade_level: string;
+  curriculum_phase: string;
   homeroom_teacher: string;
+  homeroom_nip: string;
   homeroom_phone: string;
+  homeroom_avatar?: string;
+  avatar_url?: string;
   initials: string;
   gender: 'L' | 'P';
   gate_attendance_today: {
     status: 'hadir' | 'terlambat' | 'sakit' | 'izin' | 'alpa';
+    status_label: string;
     tap_time: string;
     location: string;
     note: string;
@@ -27,12 +43,22 @@ export interface GuardianChildProfile {
   points_balance: number;
   points_prestasi: number;
   points_pelanggaran: number;
-  admin_fee_status: 'Lunas / Bebas Tanggungan' | 'Menunggu Verifikasi TU';
+  admin_fee_status: 'Lunas / Bebas Tanggungan' | 'Menunggu Pembayaran' | 'Menunggu Verifikasi TU';
+  fee_summary: {
+    title: string;
+    period: string;
+    amount: string;
+    status: 'Lunas' | 'Menunggu Pembayaran' | 'Verifikasi TU';
+    detail_note: string;
+    receipt_or_due: string;
+    officer: string;
+  };
 }
 
 export interface GuardianProfile {
   id: string;
   name: string;
+  avatar_url?: string;
   phone: string;
   email: string;
   address: string;
@@ -43,6 +69,7 @@ export interface GuardianProfile {
 export const CURRENT_GUARDIAN: GuardianProfile = {
   id: 'grd-001',
   name: 'H. Ir. Bambang Maulana',
+  avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
   phone: '0812-3456-7890',
   email: 'bambang.maulana@gmail.com',
   address: 'Jl. Ijen No. 42, Klojen, Kota Malang',
@@ -51,16 +78,21 @@ export const CURRENT_GUARDIAN: GuardianProfile = {
     {
       id: 'std-240901',
       name: 'Ahmad Fauzan Maulana',
+      avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=256',
       nis: '240901',
       nisn: '0089123451',
       class_name: 'Kelas IX-A',
-      grade_level: 'Tingkat IX (Sembilan)',
+      grade_level: 'Tingkat IX (Sembilan SMP)',
+      curriculum_phase: 'Kurikulum Merdeka Fase D',
       homeroom_teacher: 'Dra. Hj. Siti Aminah, M.Pd.',
+      homeroom_nip: 'NIP. 19780415 200501 2 004',
       homeroom_phone: '0813-3456-7891',
+      homeroom_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
       initials: 'AF',
       gender: 'L',
       gate_attendance_today: {
         status: 'hadir',
+        status_label: 'Tepat Waktu',
         tap_time: '06:48 WIB',
         location: 'Gerbang Utama RFID Siswa (Gate 1)',
         note: 'Tepat waktu, berseragam batik resmi Labschool lengkap',
@@ -78,37 +110,105 @@ export const CURRENT_GUARDIAN: GuardianProfile = {
       points_prestasi: 55,
       points_pelanggaran: 10,
       admin_fee_status: 'Lunas / Bebas Tanggungan',
+      fee_summary: {
+        title: 'SPP & Biaya Operasional (BOP)',
+        period: 'Bulan Oktober 2026',
+        amount: 'Rp 650.000',
+        status: 'Lunas',
+        detail_note: 'Bebas Tanggungan SPP & Praktikum Gasal',
+        receipt_or_due: 'KW-TU/2026/10/0189',
+        officer: 'Siti Rohmah (Kasir TU)',
+      },
     },
     {
       id: 'std-260715',
       name: 'Nabila Putri Andini',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
       nis: '260715',
       nisn: '0098765432',
       class_name: 'Kelas VII-B',
-      grade_level: 'Tingkat VII (Tujuh)',
+      grade_level: 'Tingkat VII (Tujuh SMP)',
+      curriculum_phase: 'Kurikulum Merdeka Fase D',
       homeroom_teacher: 'Drs. Hendra Wijaya, M.Pd.',
+      homeroom_nip: 'NIP. 19740921 200103 1 002',
       homeroom_phone: '0813-3456-7892',
+      homeroom_avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=256',
       initials: 'NA',
       gender: 'P',
       gate_attendance_today: {
-        status: 'hadir',
-        tap_time: '06:55 WIB',
-        location: 'Gerbang Utama RFID Siswa (Gate 2)',
-        note: 'Tepat waktu, berseragam putih-biru lengkap berikat pinggang standar',
+        status: 'sakit',
+        status_label: 'Izin Sakit',
+        tap_time: 'Surat Terverifikasi',
+        location: 'Rumah (Istirahat Pemulihan)',
+        note: 'Izin Sakit (Demam Flu) - Surat Dokter RS Lavalette disetujui Walas',
       },
       attendance_recap: {
-        hadir: 70,
-        sakit: 0,
-        izin: 0,
+        hadir: 64,
+        sakit: 4,
+        izin: 2,
         alpa: 0,
         terlambat: 0,
-        rate: 100.0,
+        rate: 91.4,
       },
-      grade_average: 92.4,
-      points_balance: 60,
-      points_prestasi: 60,
+      grade_average: 82.8,
+      points_balance: 25,
+      points_prestasi: 25,
       points_pelanggaran: 0,
-      admin_fee_status: 'Lunas / Bebas Tanggungan',
+      admin_fee_status: 'Menunggu Pembayaran',
+      fee_summary: {
+        title: 'SPP & Biaya Operasional (BOP)',
+        period: 'Bulan Oktober 2026',
+        amount: 'Rp 650.000',
+        status: 'Menunggu Pembayaran',
+        detail_note: 'Jatuh tempo 20 Oktober 2026',
+        receipt_or_due: 'Invoice #SPP-2026/10/772',
+        officer: 'Loket Keuangan TU',
+      },
+    },
+    {
+      id: 'std-231108',
+      name: 'Muhammad Farhan Maulana',
+      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256',
+      nis: '231108',
+      nisn: '0078901234',
+      class_name: 'Kelas X-IPA 2',
+      grade_level: 'Tingkat X (Sepuluh SMA)',
+      curriculum_phase: 'Kurikulum Merdeka Fase E',
+      homeroom_teacher: 'Drs. Bambang Sutrisno, M.Pd.',
+      homeroom_nip: 'NIP. 19691210 199512 1 003',
+      homeroom_phone: '0812-7890-1234',
+      homeroom_avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256',
+      initials: 'MF',
+      gender: 'L',
+      gate_attendance_today: {
+        status: 'terlambat',
+        status_label: 'Terlambat Masuk',
+        tap_time: '07:18 WIB',
+        location: 'Gerbang Barat RFID SMA',
+        note: 'Terlambat 18 menit (Kendala transportasi KA) - Pembinaan kedisiplinan piket',
+      },
+      attendance_recap: {
+        hadir: 60,
+        sakit: 2,
+        izin: 2,
+        alpa: 1,
+        terlambat: 5,
+        rate: 85.7,
+      },
+      grade_average: 84.8,
+      points_balance: -5,
+      points_prestasi: 15,
+      points_pelanggaran: 20,
+      admin_fee_status: 'Menunggu Verifikasi TU',
+      fee_summary: {
+        title: 'SPP & Biaya Pembelajaran SMA',
+        period: 'Bulan Oktober 2026',
+        amount: 'Rp 750.000',
+        status: 'Verifikasi TU',
+        detail_note: 'Bukti transfer Mandiri sedang diverifikasi kasir',
+        receipt_or_due: 'Ref #TRX-99824',
+        officer: 'Ahmad Muzakki (Kasir TU)',
+      },
     },
   ],
 };
@@ -152,10 +252,25 @@ export const MOCK_GUARDIAN_ATTENDANCE: Record<string, AttendanceCalendarDay[]> =
     { date: '2026-10-08', day_number: 8, day_name: 'Kamis', status: 'hadir', tap_in: '06:48 WIB', tap_out: '15:05 WIB' },
     { date: '2026-10-09', day_number: 9, day_name: 'Jumat', status: 'hadir', tap_in: '06:51 WIB', tap_out: '11:40 WIB' },
     { date: '2026-10-10', day_number: 10, day_name: 'Sabtu', status: 'libur', note: 'Libur Akhir Pekan' },
-    { date: '2026-10-11', day_number: 11, day_name: 'Minggu', status: 'libur', note: 'Libur Akhir Pekan' },
     { date: '2026-10-12', day_number: 12, day_name: 'Senin', status: 'hadir', tap_in: '06:46 WIB', tap_out: '15:10 WIB' },
-    { date: '2026-10-13', day_number: 13, day_name: 'Selasa', status: 'hadir', tap_in: '06:50 WIB', tap_out: '15:05 WIB' },
-    { date: '2026-10-14', day_number: 14, day_name: 'Rabu', status: 'hadir', tap_in: '06:55 WIB', tap_out: 'Dalam KBM', note: 'Hari ini aktif KBM' },
+    { date: '2026-10-13', day_number: 13, day_name: 'Selasa', status: 'sakit', note: 'Demam flu - Surat dokter RS terlampir' },
+    { date: '2026-10-14', day_number: 14, day_name: 'Rabu', status: 'sakit', note: 'Izin Sakit (Demam Flu) - Disetujui Walas' },
+  ],
+  'std-231108': [
+    { date: '2026-10-01', day_number: 1, day_name: 'Kamis', status: 'hadir', tap_in: '06:40 WIB', tap_out: '15:20 WIB' },
+    { date: '2026-10-02', day_number: 2, day_name: 'Jumat', status: 'hadir', tap_in: '06:42 WIB', tap_out: '11:45 WIB' },
+    { date: '2026-10-03', day_number: 3, day_name: 'Sabtu', status: 'libur', note: 'Libur Akhir Pekan' },
+    { date: '2026-10-04', day_number: 4, day_name: 'Minggu', status: 'libur', note: 'Libur Akhir Pekan' },
+    { date: '2026-10-05', day_number: 5, day_name: 'Senin', status: 'hadir', tap_in: '06:45 WIB', tap_out: '15:20 WIB' },
+    { date: '2026-10-06', day_number: 6, day_name: 'Selasa', status: 'terlambat', tap_in: '07:14 WIB', tap_out: '15:15 WIB', note: 'Terlambat 14 menit' },
+    { date: '2026-10-07', day_number: 7, day_name: 'Rabu', status: 'hadir', tap_in: '06:48 WIB', tap_out: '15:20 WIB' },
+    { date: '2026-10-08', day_number: 8, day_name: 'Kamis', status: 'hadir', tap_in: '06:45 WIB', tap_out: '15:15 WIB' },
+    { date: '2026-10-09', day_number: 9, day_name: 'Jumat', status: 'hadir', tap_in: '06:50 WIB', tap_out: '11:45 WIB' },
+    { date: '2026-10-10', day_number: 10, day_name: 'Sabtu', status: 'libur', note: 'Libur Akhir Pekan' },
+    { date: '2026-10-11', day_number: 11, day_name: 'Minggu', status: 'libur', note: 'Libur Akhir Pekan' },
+    { date: '2026-10-12', day_number: 12, day_name: 'Senin', status: 'hadir', tap_in: '06:46 WIB', tap_out: '15:15 WIB' },
+    { date: '2026-10-13', day_number: 13, day_name: 'Selasa', status: 'hadir', tap_in: '06:44 WIB', tap_out: '15:20 WIB' },
+    { date: '2026-10-14', day_number: 14, day_name: 'Rabu', status: 'terlambat', tap_in: '07:18 WIB', tap_out: 'Dalam KBM', note: 'Terlambat 18 menit (Gerbang Barat) - Pembinaan tata tertib piket' },
   ],
 };
 
@@ -208,15 +323,15 @@ export const MOCK_LEAVE_REQUESTS: LeaveRequestItem[] = [
     id: 'lr-2026-003',
     student_id: 'std-260715',
     student_name: 'Nabila Putri Andini',
-    leave_type: 'izin',
-    start_date: '18 September 2026',
-    end_date: '18 September 2026',
-    reason: 'Menghadiri prosesi wisuda sarjana kakak kandung di Graha Cakrawala UM bersama orang tua.',
-    attachment_name: 'Surat_Permohonan_Izin_Keluarga_Bambang.pdf',
+    leave_type: 'sakit',
+    start_date: '13 Oktober 2026',
+    end_date: '14 Oktober 2026',
+    reason: 'Demam flu dan radang tenggorokan berdasarkan surat dokter RS Lavalette Malang.',
+    attachment_name: 'Surat_Dokter_RS_Lavalette_Nabila.pdf',
     status: 'disetujui',
-    submitted_at: '16 Sep 2026, 19:30 WIB',
+    submitted_at: '13 Okt 2026, 07:05 WIB',
     approved_by: 'Drs. Hendra Wijaya, M.Pd. (Wali Kelas VII-B)',
-    approval_note: 'Disetujui untuk izin acara keluarga.',
+    approval_note: 'Surat dokter telah diverifikasi, ananda diizinkan beristirahat.',
   },
 ];
 
@@ -230,7 +345,7 @@ export interface ChildSubjectGrade {
   summative_avg: number;
   sts_score: number;
   final_score: number;
-  predicate: 'A' | 'B+' | 'B' | 'C';
+  predicate: 'A' | 'B+' | 'B' | 'C' | 'D';
   status: 'Tuntas' | 'Perlu Pendampingan';
   competency_desc: string;
 }
@@ -335,24 +450,24 @@ export const MOCK_CHILD_GRADES: Record<string, ChildSubjectGrade[]> = {
       subject_name: 'Matematika Dasar',
       teacher_name: 'Rahmat Subagyo, M.Pd.',
       kktp: 75,
-      formative_avg: 94.0,
-      summative_avg: 92.5,
-      sts_score: 95,
-      final_score: 93.8,
-      predicate: 'A',
-      status: 'Tuntas',
-      competency_desc: 'Sangat menguasai operasi bilangan bulat, pecahan, dan aljabar dasar.',
+      formative_avg: 68.0,
+      summative_avg: 67.0,
+      sts_score: 70,
+      final_score: 68.5,
+      predicate: 'C',
+      status: 'Perlu Pendampingan',
+      competency_desc: 'Memerlukan bimbingan remedial pada operasi aljabar pecahan dan persamaan linear satu variabel.',
     },
     {
       subject_code: 'IPA-07',
       subject_name: 'Ilmu Pengetahuan Alam (IPA)',
       teacher_name: 'Dra. Endang Lestari',
       kktp: 75,
-      formative_avg: 92.0,
-      summative_avg: 91.0,
-      sts_score: 94,
-      final_score: 92.3,
-      predicate: 'A',
+      formative_avg: 88.0,
+      summative_avg: 89.0,
+      sts_score: 90,
+      final_score: 88.8,
+      predicate: 'B+',
       status: 'Tuntas',
       competency_desc: 'Sangat teliti dalam pengamatan mikroskop dan klasifikasi makhluk hidup.',
     },
@@ -374,13 +489,67 @@ export const MOCK_CHILD_GRADES: Record<string, ChildSubjectGrade[]> = {
       subject_name: 'Bahasa Indonesia',
       teacher_name: 'Sri Wahyuni, S.Pd.',
       kktp: 75,
-      formative_avg: 93.0,
-      summative_avg: 92.0,
-      sts_score: 93,
-      final_score: 92.7,
-      predicate: 'A',
+      formative_avg: 83.0,
+      summative_avg: 82.0,
+      sts_score: 84,
+      final_score: 82.7,
+      predicate: 'B',
       status: 'Tuntas',
-      competency_desc: 'Mampu menulis puisi dan cerita fantasi dengan daya imajinasi tinggi.',
+      competency_desc: 'Mampu menyusun teks deskripsi lingkungan sekolah dengan diksi yang rapi.',
+    },
+  ],
+  'std-231108': [
+    {
+      subject_code: 'FIS-10',
+      subject_name: 'Fisika Kinematika & Mekanika',
+      teacher_name: 'Dr. Hendra Wijaya, M.Si.',
+      kktp: 75,
+      formative_avg: 85.0,
+      summative_avg: 86.0,
+      sts_score: 88,
+      final_score: 86.2,
+      predicate: 'B+',
+      status: 'Tuntas',
+      competency_desc: 'Sangat baik dalam pengolahan data praktikum gerak lurus dan dinamika partikel.',
+    },
+    {
+      subject_code: 'KIM-10',
+      subject_name: 'Kimia Dasar & Stoikiometri',
+      teacher_name: 'Dra. Siti Aminah, M.Pd.',
+      kktp: 75,
+      formative_avg: 84.0,
+      summative_avg: 85.0,
+      sts_score: 86,
+      final_score: 85.0,
+      predicate: 'B+',
+      status: 'Tuntas',
+      competency_desc: 'Memahami konsep mol, rumus kimia, serta tata nama senyawa anorganik.',
+    },
+    {
+      subject_code: 'BIO-10',
+      subject_name: 'Biologi Sel & Genetika',
+      teacher_name: 'Drs. Bambang Sutrisno, M.Pd.',
+      kktp: 75,
+      formative_avg: 84.5,
+      summative_avg: 83.0,
+      sts_score: 85,
+      final_score: 84.1,
+      predicate: 'B',
+      status: 'Tuntas',
+      competency_desc: 'Aktif menganalisis perbedaan struktur sel prokariotik dan eukariotik.',
+    },
+    {
+      subject_code: 'MAT-10',
+      subject_name: 'Matematika Peminatan MIPA',
+      teacher_name: 'Dra. Siti Rahayu, M.Pd.',
+      kktp: 75,
+      formative_avg: 83.0,
+      summative_avg: 84.0,
+      sts_score: 85,
+      final_score: 83.8,
+      predicate: 'B',
+      status: 'Tuntas',
+      competency_desc: 'Mampu menyelesaikan sistem persamaan linear tiga variabel dan pertidaksamaan.',
     },
   ],
 };
@@ -442,20 +611,144 @@ export const MOCK_CHILD_POINTS: Record<string, ChildPointItem[]> = {
       kind: 'prestasi',
       title: 'Juara 1 Lomba Story Telling Bahasa Inggris Tingkat SMP/MTs',
       category: 'Prestasi Bahasa & Seni',
-      points: 35,
+      points: 25,
       recorder_name: 'Nurul Hidayati, M.Ed.',
       note: 'Penampilan memukau bertema cerita rakyat nusantara dalam bahasa Inggris.',
     },
+  ],
+  'std-231108': [
     {
       id: 'pt-05',
-      student_id: 'std-260715',
-      point_date: '25 September 2026',
+      student_id: 'std-231108',
+      point_date: '09 Oktober 2026',
       kind: 'prestasi',
-      title: 'Aktif Sebagai Petugas Upacara Hari Kesaktian Pancasila',
-      category: 'Karakter & Kepemimpinan',
-      points: 25,
-      recorder_name: 'Drs. Hendra Wijaya, M.Pd.',
-      note: 'Menjalankan tugas pembacaan UUD 1945 dengan khidmat dan disiplin.',
+      title: 'Juara 2 Futsal Piala Rektor UM Antar SMA',
+      category: 'Prestasi Olahraga & Bakat',
+      points: 15,
+      recorder_name: 'Drs. Bambang Sutrisno, M.Pd.',
+      note: 'Penjaga gawang utama tim Labschool UM.',
+    },
+    {
+      id: 'pt-06',
+      student_id: 'std-231108',
+      point_date: '14 Oktober 2026',
+      kind: 'pelanggaran',
+      title: 'Keterlambatan Pintu Gerbang (>15 Menit)',
+      category: 'Kedisiplinan Waktu',
+      points: -10,
+      recorder_name: 'Petugas Piket Gerbang Barat',
+      note: 'Terlambat 18 menit saat bel masuk berbunyi.',
+    },
+    {
+      id: 'pt-07',
+      student_id: 'std-231108',
+      point_date: '30 September 2026',
+      kind: 'pelanggaran',
+      title: 'Kelengkapan Seragam (Kaos Kaki Non-Standar)',
+      category: 'Kerapian Berbusana',
+      points: -10,
+      recorder_name: 'Tim Tatib Kesiswaan SMA',
+      note: 'Peringatan pertama kerapian atribut upacara.',
+    },
+  ],
+};
+
+// ─── JADWAL PELAJARAN HARI INI SESUAI ANAK ──────────────────
+export const MOCK_CHILD_SCHEDULES: Record<string, ChildScheduleItem[]> = {
+  'std-240901': [
+    {
+      id: 'sch-01',
+      timeRange: '07:30 - 09:00 WIB',
+      subject: 'Informatika & Pemrograman Web',
+      teacher: 'Budi Santoso, S.Kom., M.T.',
+      room: 'Lab Komputer 1 (Gedung B)',
+      status: 'completed',
+      statusLabel: 'Selesai',
+      topic: 'Praktikum CSS Flexbox & Validasi Form Web',
+    },
+    {
+      id: 'sch-02',
+      timeRange: '09:15 - 10:45 WIB',
+      subject: 'Matematika Terapan',
+      teacher: 'Dra. Siti Rahayu, M.Pd.',
+      room: 'Ruang Kelas IX-A',
+      status: 'current',
+      statusLabel: 'Sedang Berlangsung',
+      topic: 'Statistika Distribusi Frekuensi & Diagram Batang',
+    },
+    {
+      id: 'sch-03',
+      timeRange: '11:00 - 12:30 WIB',
+      subject: 'Bahasa Indonesia',
+      teacher: 'Agus Subekti, S.Pd.',
+      room: 'Ruang Kelas IX-A',
+      status: 'upcoming',
+      statusLabel: 'Berikutnya',
+      topic: 'Penyusunan Teks Laporan Hasil Observasi (LHO)',
+    },
+  ],
+  'std-260715': [
+    {
+      id: 'sch-04',
+      timeRange: '07:30 - 09:00 WIB',
+      subject: 'Bahasa Inggris Komunikatif',
+      teacher: 'Nurul Hidayati, M.Ed.',
+      room: 'Ruang Kelas VII-B (Daring/Mandiri)',
+      status: 'completed',
+      statusLabel: 'Selesai',
+      topic: 'Tugas Mandiri: Describing People & Daily Routines',
+    },
+    {
+      id: 'sch-05',
+      timeRange: '09:15 - 10:45 WIB',
+      subject: 'Ilmu Pengetahuan Alam (IPA)',
+      teacher: 'Dra. Endang Lestari',
+      room: 'Lab Sains Terpadu (Daring/Mandiri)',
+      status: 'current',
+      statusLabel: 'Sedang Berlangsung',
+      topic: 'Membaca E-Modul Pengamatan Sel Jaringan Tumbuhan',
+    },
+    {
+      id: 'sch-06',
+      timeRange: '11:00 - 12:30 WIB',
+      subject: 'Pendidikan Pancasila & Seni',
+      teacher: 'Sri Wahyuni, S.Pd.',
+      room: 'Ruang Kelas VII-B',
+      status: 'upcoming',
+      statusLabel: 'Berikutnya',
+      topic: 'Perancangan Sketsa Kolase Seni Tradisional',
+    },
+  ],
+  'std-231108': [
+    {
+      id: 'sch-07',
+      timeRange: '07:30 - 09:00 WIB',
+      subject: 'Fisika Kinematika & Mekanika',
+      teacher: 'Dr. Hendra Wijaya, M.Si.',
+      room: 'Lab Fisika Modern (Lt. 3)',
+      status: 'completed',
+      statusLabel: 'Selesai',
+      topic: 'Eksperimen Gerak Parabola & Analisis Vektor',
+    },
+    {
+      id: 'sch-08',
+      timeRange: '09:15 - 10:45 WIB',
+      subject: 'Kimia Dasar & Stoikiometri',
+      teacher: 'Dra. Siti Aminah, M.Pd.',
+      room: 'Lab Kimia Gedung A',
+      status: 'current',
+      statusLabel: 'Sedang Berlangsung',
+      topic: 'Praktikum Titrasi Asam-Basa & Derajat Keasaman (pH)',
+    },
+    {
+      id: 'sch-09',
+      timeRange: '11:00 - 12:30 WIB',
+      subject: 'Matematika Peminatan MIPA',
+      teacher: 'Drs. Bambang Sutrisno, M.Pd.',
+      room: 'Ruang Kelas X-IPA 2',
+      status: 'upcoming',
+      statusLabel: 'Berikutnya',
+      topic: 'Persamaan Eksponen & Logaritma Terapan',
     },
   ],
 };
@@ -520,23 +813,49 @@ export const MOCK_GUARDIAN_FEES: Record<string, SchoolFeeItem[]> = {
       item_name: 'SPP & Biaya Operasional Pembelajaran (BOP) - Oktober 2026',
       period_label: 'Bulan Oktober 2026',
       nominal_text: 'Rp 650.000',
-      status: 'Lunas / Bebas Tanggungan',
-      verified_date: '02 Okt 2026',
-      receipt_number: 'KW-TU/2026/10/0190',
-      cashier_name: 'Siti Rohmah (Bag. Keuangan TU)',
-      notes: 'Pembayaran rutin bulanan terverifikasi lunas.',
+      status: 'Dalam Proses Administrasi TU',
+      verified_date: 'Jatuh Tempo: 20 Okt 2026',
+      receipt_number: 'TAGIHAN-SPP/2026/10/772',
+      cashier_name: 'Loket Keuangan TU',
+      notes: 'Tagihan bulan berjalan. Pembayaran dapat dilakukan via transfer Bank Mandiri/BSI.',
     },
     {
       id: 'fee-05',
       student_id: 'std-260715',
-      item_name: 'Iuran Masa Pengenalan Lingkungan Sekolah (MPLS) & Atribut Resmi',
-      period_label: 'T.A. 2026/2027',
-      nominal_text: 'Rp 450.000',
+      item_name: 'SPP & Biaya Operasional Pembelajaran (BOP) - September 2026',
+      period_label: 'Bulan September 2026',
+      nominal_text: 'Rp 650.000',
       status: 'Lunas / Bebas Tanggungan',
-      verified_date: '15 Jul 2026',
-      receipt_number: 'KW-TU/2026/07/0012',
+      verified_date: '02 Sep 2026',
+      receipt_number: 'KW-TU/2026/09/0188',
+      cashier_name: 'Siti Rohmah (Bag. Keuangan TU)',
+      notes: 'Pembayaran rutin bulanan terverifikasi lunas.',
+    },
+  ],
+  'std-231108': [
+    {
+      id: 'fee-06',
+      student_id: 'std-231108',
+      item_name: 'SPP & BOP SMA Labschool UM - Oktober 2026',
+      period_label: 'Bulan Oktober 2026',
+      nominal_text: 'Rp 750.000',
+      status: 'Dalam Proses Administrasi TU',
+      verified_date: '13 Okt 2026 (Menunggu Rekonsiliasi)',
+      receipt_number: 'REF-TRX/2026/10/99824',
       cashier_name: 'Ahmad Muzakki (Kasir TU)',
-      notes: 'Seragam batik, rompi, topi, dasi, dan kartu RFID siswa lunas.',
+      notes: 'Bukti transfer via Bank Mandiri telah diterima dan dalam proses cetak kuitansi.',
+    },
+    {
+      id: 'fee-07',
+      student_id: 'std-231108',
+      item_name: 'SPP & BOP SMA Labschool UM - September 2026',
+      period_label: 'Bulan September 2026',
+      nominal_text: 'Rp 750.000',
+      status: 'Lunas / Bebas Tanggungan',
+      verified_date: '04 Sep 2026',
+      receipt_number: 'KW-TU/2026/09/0201',
+      cashier_name: 'Siti Rohmah (Bag. Keuangan TU)',
+      notes: 'Lunas terverifikasi.',
     },
   ],
 };
@@ -572,13 +891,25 @@ export const MOCK_GUARDIAN_COUNSELING: GuardianCounselingItem[] = [
     id: 'g-csl-02',
     student_id: 'std-260715',
     student_name: 'Nabila Putri Andini',
-    topic: 'Evaluasi Adaptasi Belajar Siswa Baru & Program Bilingual',
+    topic: 'Konsultasi Program Remedial & Pendampingan Belajar Matematika',
     target_role: 'Wali Kelas',
     target_name: 'Drs. Hendra Wijaya, M.Pd. (Wali Kelas VII-B)',
-    requested_date: 'Senin, 05 Oktober 2026 - 10:00 WIB',
-    status: 'selesai',
+    requested_date: 'Kamis, 15 Oktober 2026 - 11:00 WIB',
+    status: 'terjadwal',
     location: 'Ruang Guru Gedung B',
-    notes: 'Pertemuan berjalan lancar. Ananda Nabila sangat proaktif, bersosialisasi baik, dan berprestasi membanggakan.',
+    notes: 'Pembahasan modul remedial STS Matematika dan panduan belajar di rumah bersama orang tua.',
+  },
+  {
+    id: 'g-csl-03',
+    student_id: 'std-231108',
+    student_name: 'Muhammad Farhan Maulana',
+    topic: 'Evaluasi Pembinaan Kedisiplinan & Waktu Masuk Gerbang',
+    target_role: 'Wali Kelas',
+    target_name: 'Drs. Bambang Sutrisno, M.Pd.',
+    requested_date: 'Jumat, 16 Oktober 2026 - 08:30 WIB',
+    status: 'menunggu',
+    location: 'Ruang Guru Gedung A (Lt. 1)',
+    notes: 'Diskusi suportif bersama wali murid perihal manajemen waktu transportasi ananda.',
   },
 ];
 
@@ -599,7 +930,7 @@ export const MOCK_GUARDIAN_ANNOUNCEMENTS: GuardianAnnouncement[] = [
     title: 'Undangan Rapat Pleno Komite Sekolah & Pembagian E-Progress Report Gasal',
     date_str: '14 Oktober 2026',
     category: 'Pertemuan Komite',
-    content: 'Diberitahukan kepada seluruh orang tua/wali murid Kelas VII, VIII, dan IX bahwa Rapat Pleno Semester Gasal akan diselenggarakan pada Sabtu, 24 Oktober 2026 pukul 08:30 WIB di Graha Pancasila Labschool UM.',
+    content: 'Diberitahukan kepada seluruh orang tua/wali murid Kelas VII, VIII, IX, dan X bahwa Rapat Pleno Semester Gasal akan diselenggarakan pada Sabtu, 24 Oktober 2026 pukul 08:30 WIB di Graha Pancasila Labschool UM.',
     badge_color: 'bg-blue-900 text-white',
     is_pinned: true,
   },
@@ -620,3 +951,4 @@ export const MOCK_GUARDIAN_ANNOUNCEMENTS: GuardianAnnouncement[] = [
     badge_color: 'bg-amber-600 text-white',
   },
 ];
+

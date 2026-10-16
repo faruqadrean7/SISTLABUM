@@ -19,7 +19,7 @@ export const CURRENT_TEACHER: TeacherProfile = {
   id: 'tch-001',
   name: 'Budi Santoso, S.Kom., M.T.',
   nip: '19880415 201402 1 002',
-  avatar_url: '',
+  avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
   subjects: ['Informatika', 'Pemrograman Web']
 };
 
@@ -79,38 +79,38 @@ export const MOCK_SCHEDULES: TeachingSchedule[] = [
 ];
 
 export const MOCK_STUDENTS_ROSTER: StudentRosterItem[] = [
-  { id: 'std-240901', nis: '240901', name: 'Ahmad Fauzan Maulana', gender: 'L', status: 'hadir' },
-  { id: 'std-240902', nis: '240902', name: 'Nabila Putri Andini', gender: 'P', status: 'hadir' },
-  { id: 'std-240903', nis: '240903', name: 'Rizky Pratama Wijaya', gender: 'L', status: 'terlambat', note: 'Terlambat 10 menit gerbang' },
-  { id: 'std-240904', nis: '240904', name: 'Siti Aisyah Rahmawati', gender: 'P', status: 'hadir' },
-  { id: 'std-240905', nis: '240905', name: 'Bima Aditya Nugraha', gender: 'L', status: 'hadir' },
-  { id: 'std-240906', nis: '240906', name: 'Citra Dewi Lestari', gender: 'P', status: 'hadir' },
-  { id: 'std-240907', nis: '240907', name: 'Dimas Anggara Putra', gender: 'L', status: 'sakit', note: 'Surat dokter terlampir di ortu' },
-  { id: 'std-240908', nis: '240908', name: 'Eka Nur Azizah', gender: 'P', status: 'hadir' },
-  { id: 'std-240909', nis: '240909', name: 'Fajar Hidayat', gender: 'L', status: 'hadir' },
-  { id: 'std-240910', nis: '240910', name: 'Gita Permatasari', gender: 'P', status: 'hadir' },
-  { id: 'std-240911', nis: '240911', name: 'Hafiz Syahputra', gender: 'L', status: 'hadir' },
-  { id: 'std-240912', nis: '240912', name: 'Indah Kusuma Wardani', gender: 'P', status: 'hadir' },
-  { id: 'std-240913', nis: '240913', name: 'Joko Prasetyo', gender: 'L', status: 'hadir' },
-  { id: 'std-240914', nis: '240914', name: 'Karina Safitri', gender: 'P', status: 'izin', note: 'Dispensasi lomba OSN Informatika' },
-  { id: 'std-240915', nis: '240915', name: 'Lukman Hakim', gender: 'L', status: 'hadir' },
-  { id: 'std-240916', nis: '240916', name: 'Mega Utami', gender: 'P', status: 'hadir' },
-  { id: 'std-240917', nis: '240917', name: 'Naufal Al-Ghifari', gender: 'L', status: 'hadir' },
-  { id: 'std-240918', nis: '240918', name: 'Olivia Clarissa', gender: 'P', status: 'hadir' },
-  { id: 'std-240919', nis: '240919', name: 'Panji Gumilang', gender: 'L', status: 'hadir' },
-  { id: 'std-240920', nis: '240920', name: 'Qonita Rahmania', gender: 'P', status: 'hadir' },
-  { id: 'std-240921', nis: '240921', name: 'Rendra Setiawan', gender: 'L', status: 'hadir' },
-  { id: 'std-240922', nis: '240922', name: 'Salma Nuraini', gender: 'P', status: 'hadir' },
-  { id: 'std-240923', nis: '240923', name: 'Taufik Hidayatullah', gender: 'L', status: 'hadir' },
-  { id: 'std-240924', nis: '240924', name: 'Ulya Rahmawati', gender: 'P', status: 'hadir' },
-  { id: 'std-240925', nis: '240925', name: 'Vino Bastian', gender: 'L', status: 'hadir' },
-  { id: 'std-240926', nis: '240926', name: 'Widya Astuti', gender: 'P', status: 'hadir' },
-  { id: 'std-240927', nis: '240927', name: 'Xavier Ardiansyah', gender: 'L', status: 'hadir' },
-  { id: 'std-240928', nis: '240928', name: 'Yasmin Zahra', gender: 'P', status: 'hadir' },
-  { id: 'std-240929', nis: '240929', name: 'Zaki Mubarak', gender: 'L', status: 'hadir' },
-  { id: 'std-240930', nis: '240930', name: 'Ananda Bagus', gender: 'L', status: 'hadir' },
-  { id: 'std-240931', nis: '240931', name: 'Bella Cantika', gender: 'P', status: 'hadir' },
-  { id: 'std-240932', nis: '240932', name: 'Cahya Ramadhan', gender: 'L', status: 'hadir' },
+  { id: 'std-240901', nis: '240901', name: 'Ahmad Fauzan Maulana', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240902', nis: '240902', name: 'Nabila Putri Andini', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240903', nis: '240903', name: 'Rizky Pratama Wijaya', gender: 'L', status: 'terlambat', note: 'Terlambat 10 menit gerbang', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240904', nis: '240904', name: 'Siti Aisyah Rahmawati', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240905', nis: '240905', name: 'Bima Aditya Nugraha', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240906', nis: '240906', name: 'Citra Dewi Lestari', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240907', nis: '240907', name: 'Dimas Anggara Putra', gender: 'L', status: 'sakit', note: 'Surat dokter terlampir di ortu', avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240908', nis: '240908', name: 'Eka Nur Azizah', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240909', nis: '240909', name: 'Fajar Hidayat', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240910', nis: '240910', name: 'Gita Permatasari', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240911', nis: '240911', name: 'Hafiz Syahputra', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240912', nis: '240912', name: 'Indah Kusuma Wardani', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240913', nis: '240913', name: 'Joko Prasetyo', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240914', nis: '240914', name: 'Karina Safitri', gender: 'P', status: 'izin', note: 'Dispensasi lomba OSN Informatika', avatar_url: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240915', nis: '240915', name: 'Lukman Hakim', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240916', nis: '240916', name: 'Mega Utami', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240917', nis: '240917', name: 'Naufal Al-Ghifari', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240918', nis: '240918', name: 'Olivia Clarissa', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240919', nis: '240919', name: 'Panji Gumilang', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240920', nis: '240920', name: 'Qonita Rahmania', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240921', nis: '240921', name: 'Rendra Setiawan', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1530268729831-4b0b9e170218?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240922', nis: '240922', name: 'Salma Nuraini', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240923', nis: '240923', name: 'Taufik Hidayatullah', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1528892952291-009c663ce843?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240924', nis: '240924', name: 'Ulya Rahmawati', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240925', nis: '240925', name: 'Vino Bastian', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240926', nis: '240926', name: 'Widya Astuti', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240927', nis: '240927', name: 'Xavier Ardiansyah', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240928', nis: '240928', name: 'Yasmin Zahra', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240929', nis: '240929', name: 'Zaki Mubarak', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240930', nis: '240930', name: 'Ananda Bagus', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240931', nis: '240931', name: 'Bella Cantika', gender: 'P', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150' },
+  { id: 'std-240932', nis: '240932', name: 'Cahya Ramadhan', gender: 'L', status: 'hadir', avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=150' },
 ];
 
 export const MOCK_JOURNALS: TeachingJournal[] = [
@@ -353,6 +353,7 @@ export const MOCK_SUBMISSIONS: Record<string, AssignmentSubmission[]> = {
         name: 'Ahmad Fauzan Maulana',
         nis: '240901',
         nisn: '0089123451',
+        avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=150',
         class_id: 'cls-9a',
       },
       file: {
@@ -378,6 +379,7 @@ export const MOCK_SUBMISSIONS: Record<string, AssignmentSubmission[]> = {
         name: 'Nabila Putri Andini',
         nis: '240902',
         nisn: '0089123452',
+        avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
         class_id: 'cls-9a',
       },
       file: {
@@ -403,6 +405,7 @@ export const MOCK_SUBMISSIONS: Record<string, AssignmentSubmission[]> = {
         name: 'Rizky Pratama Wijaya',
         nis: '240903',
         nisn: '0089123453',
+        avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
         class_id: 'cls-9a',
       },
       file: {
@@ -428,6 +431,7 @@ export const MOCK_SUBMISSIONS: Record<string, AssignmentSubmission[]> = {
         name: 'Siti Aisyah Rahmawati',
         nis: '240904',
         nisn: '0089123454',
+        avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
         class_id: 'cls-9a',
       },
       file: {
@@ -453,6 +457,7 @@ export const MOCK_SUBMISSIONS: Record<string, AssignmentSubmission[]> = {
         name: 'Bima Aditya Nugraha',
         nis: '240905',
         nisn: '0089123455',
+        avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150',
         class_id: 'cls-9a',
       },
       file: {
@@ -486,7 +491,7 @@ export const MOCK_GRADEBOOK_PERIOD: GradebookPeriod = {
   locked_by: null,
 };
 
-export const MOCK_STUDENT_GRADES: StudentGradeRow[] = [
+const MOCK_STUDENT_GRADES_RAW: Omit<StudentGradeRow, 'avatar_url'>[] = [
   { student_id: 'std-240901', nis: '240901', name: 'Ahmad Fauzan Maulana', gender: 'L', scores: { 'gc-f1': 88, 'gc-f2': 85, 'gc-f3': 90, 'gc-sm': 86, 'gc-sts': 84 }, final_score: 86.1, is_tuntas: true },
   { student_id: 'std-240902', nis: '240902', name: 'Nabila Putri Andini', gender: 'P', scores: { 'gc-f1': 95, 'gc-f2': 92, 'gc-f3': 94, 'gc-sm': 96, 'gc-sts': 90 }, final_score: 93.1, is_tuntas: true },
   { student_id: 'std-240903', nis: '240903', name: 'Rizky Pratama Wijaya', gender: 'L', scores: { 'gc-f1': 70, 'gc-f2': 68, 'gc-f3': 72, 'gc-sm': 65, 'gc-sts': 70 }, final_score: 68.8, is_tuntas: false, notes: 'Perlu bimbingan remedial sintaks CSS Grid' },
@@ -520,6 +525,11 @@ export const MOCK_STUDENT_GRADES: StudentGradeRow[] = [
   { student_id: 'std-240931', nis: '240931', name: 'Bella Cantika', gender: 'P', scores: { 'gc-f1': 88, 'gc-f2': 89, 'gc-f3': 87, 'gc-sm': 90, 'gc-sts': 86 }, final_score: 87.8, is_tuntas: true },
   { student_id: 'std-240932', nis: '240932', name: 'Cahya Ramadhan', gender: 'L', scores: { 'gc-f1': 83, 'gc-f2': 81, 'gc-f3': 84, 'gc-sm': 82, 'gc-sts': 80 }, final_score: 81.7, is_tuntas: true },
 ];
+
+export const MOCK_STUDENT_GRADES: StudentGradeRow[] = MOCK_STUDENT_GRADES_RAW.map(g => ({
+  ...g,
+  avatar_url: MOCK_STUDENTS_ROSTER.find(s => s.id === g.student_id)?.avatar_url,
+}));
 
 // ─── BE-CBT-01 & BE-CBT-02: Bank Soal & Pelaksanaan CBT ───
 export const MOCK_CBT_QUESTIONS: CBTQuestion[] = [

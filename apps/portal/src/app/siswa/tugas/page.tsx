@@ -9,11 +9,13 @@ import {
   FileText, 
   Link as LinkIcon, 
   CheckCircle2, 
-  AlertTriangle, 
   Download, 
-  ExternalLink,
-  MessageSquare,
-  Award
+  MessageSquare, 
+  Award,
+  Calendar,
+  Layers,
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { MOCK_STUDENT_TASKS, StudentTaskItem } from '@/lib/mock-student-data';
 import { MOCK_MATERIALS } from '@/lib/mock-lms-data';
@@ -62,42 +64,42 @@ export default function StudentTugasPage() {
   };
 
   return (
-    <div className="space-y-6 text-slate-900">
-      {/* ─── HEADER TITLE ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-300">
+    <div className="space-y-5 text-slate-900">
+      {/* ─── HEADER CARD (COMPACT & PROPORTIONED) ─── */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-900 text-white shadow-xs">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
               LMS Portal Siswa
             </span>
-            <span className="text-xs text-slate-500 font-semibold">Tugas Mandiri & Modul Ajar</span>
+            <span className="text-xs text-slate-500 font-semibold">• Tugas Mandiri & Modul Ajar</span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
             Penugasan & Repositori Modul Ajar
           </h1>
-          <p className="text-xs text-slate-600 font-medium mt-1">
-            Kumpulkan tugas sekolah, pantau nilai dan umpan balik guru, serta unduh bahan ajar Kurikulum Merdeka.
+          <p className="text-xs text-slate-500 font-normal mt-0.5 max-w-2xl">
+            Kumpulkan berkas tugas sekolah, pantau nilai dan umpan balik guru, serta unduh bahan ajar Kurikulum Merdeka.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center bg-slate-200 p-1 rounded-lg border border-slate-300 self-start md:self-auto shadow-xs">
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 self-start md:self-auto shadow-2xs shrink-0">
           <button
             onClick={() => setActiveTab('tugas')}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'tugas'
                 ? 'bg-blue-900 text-white shadow-xs'
-                : 'text-slate-700 hover:text-slate-900'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Tugas & Proyek ({MOCK_STUDENT_TASKS.length})
           </button>
           <button
             onClick={() => setActiveTab('modul')}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'modul'
-                ? 'bg-teal-800 text-white shadow-xs'
-                : 'text-slate-700 hover:text-slate-900'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Modul Ajar ({MOCK_MATERIALS.length})
@@ -108,48 +110,54 @@ export default function StudentTugasPage() {
       {/* ─── TAB 1: TUGAS & PROYEK ─── */}
       {activeTab === 'tugas' && (
         <div className="space-y-4">
-          {/* Status Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <button
-              onClick={() => setStatusFilter('semua')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
-                statusFilter === 'semua'
-                  ? 'bg-blue-900 text-white'
-                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Semua ({MOCK_STUDENT_TASKS.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('aktif')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
-                statusFilter === 'aktif'
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Perlu Dikerjakan ({MOCK_STUDENT_TASKS.filter(t => t.status === 'aktif').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('dikumpulkan')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
-                statusFilter === 'dikumpulkan'
-                  ? 'bg-blue-900 text-white'
-                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Menunggu Penilaian ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dikumpulkan').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('dinilai')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs ${
-                statusFilter === 'dinilai'
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Sudah Dinilai ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dinilai').length})
-            </button>
+          {/* Status Filters Bar */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between flex-wrap gap-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-600">Filter Status:</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              <button
+                onClick={() => setStatusFilter('semua')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'semua'
+                    ? 'bg-blue-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                }`}
+              >
+                Semua ({MOCK_STUDENT_TASKS.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('aktif')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'aktif'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                }`}
+              >
+                Perlu Dikerjakan ({MOCK_STUDENT_TASKS.filter(t => t.status === 'aktif').length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('dikumpulkan')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'dikumpulkan'
+                    ? 'bg-blue-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                }`}
+              >
+                Menunggu Penilaian ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dikumpulkan').length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('dinilai')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'dinilai'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                }`}
+              >
+                Sudah Dinilai ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dinilai').length})
+              </button>
+            </div>
           </div>
 
           {/* Task List Cards */}
@@ -157,46 +165,46 @@ export default function StudentTugasPage() {
             {filteredTasks.map((task) => (
               <div
                 key={task.id}
-                className="school-card p-6 bg-white border border-slate-300 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs hover:border-slate-400 transition-colors"
+                className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs hover:border-slate-300 transition-all"
               >
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-300">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
                       {task.subject_name}
                     </span>
 
                     {task.status === 'dinilai' && (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-700 text-white shadow-xs">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
                         Sudah Dinilai • Skor {task.submission?.score}/100
                       </span>
                     )}
                     {task.status === 'dikumpulkan' && (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-900 text-white shadow-xs">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-200 shadow-2xs">
                         Terkumpul • Menunggu Koreksi
                       </span>
                     )}
                     {task.status === 'aktif' && (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-600 text-white shadow-xs">
-                        Deadline: {task.days_left} Hari Lagi
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                        Tenggat: {task.days_left} Hari Lagi
                       </span>
                     )}
                   </div>
 
-                  <h3 className="font-extrabold text-base text-slate-900">{task.title}</h3>
+                  <h3 className="font-extrabold text-base text-slate-900 leading-snug">{task.title}</h3>
 
-                  <p className="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-3">
-                    <span>Guru: <strong className="text-slate-800">{task.teacher_name}</strong></span>
-                    <span>•</span>
+                  <p className="text-xs text-slate-500 font-normal flex flex-wrap items-center gap-2.5">
+                    <span>Guru Pengampu: <strong className="text-slate-800 font-semibold">{task.teacher_name}</strong></span>
+                    <span className="text-slate-300">•</span>
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-blue-900" />
-                      Tenggat: <strong className="text-slate-800">{task.due_date_str}</strong>
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      Tenggat: <strong className="text-slate-800 font-semibold">{task.due_date_str}</strong>
                     </span>
                   </p>
 
                   {/* Submission info snippet */}
                   {task.submission && (
-                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex flex-wrap items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5 font-bold text-slate-700">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs flex flex-wrap items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 font-semibold text-slate-700">
                         <FileText className="w-4 h-4 text-blue-900" />
                         {task.submission.file_name}
                       </span>
@@ -212,9 +220,9 @@ export default function StudentTugasPage() {
                   {task.status === 'aktif' && (
                     <button
                       onClick={() => handleOpenSubmit(task)}
-                      className="px-4 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Upload className="w-4 h-4 text-white" />
+                      <Upload className="w-3.5 h-3.5 text-white" />
                       <span>Kumpulkan Tugas</span>
                     </button>
                   )}
@@ -222,7 +230,7 @@ export default function StudentTugasPage() {
                   {task.status === 'dikumpulkan' && (
                     <button
                       onClick={() => handleOpenSubmit(task)}
-                      className="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors shadow-xs"
+                      className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors shadow-xs cursor-pointer"
                     >
                       Perbarui Berkas
                     </button>
@@ -231,9 +239,9 @@ export default function StudentTugasPage() {
                   {task.status === 'dinilai' && (
                     <button
                       onClick={() => setFeedbackTask(task)}
-                      className="px-4 py-2.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
-                      <MessageSquare className="w-4 h-4 text-white" />
+                      <MessageSquare className="w-3.5 h-3.5 text-white" />
                       <span>Lihat Ulasan Nilai</span>
                     </button>
                   )}
@@ -251,32 +259,32 @@ export default function StudentTugasPage() {
             {MOCK_MATERIALS.map((mat) => (
               <div
                 key={mat.id}
-                className="school-card p-5 bg-white border border-slate-300 flex flex-col justify-between space-y-4 shadow-xs"
+                className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xs hover:border-slate-300 transition-all"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-teal-800 text-white">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-200">
                       {mat.category}
                     </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
                       {mat.version}
                     </span>
                   </div>
 
                   <h3 className="font-extrabold text-sm text-slate-900 leading-snug">{mat.title}</h3>
-                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-medium">
+                  <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed font-normal">
                     {mat.description}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-semibold truncate max-w-[140px]">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium truncate max-w-35">
                     {mat.file?.filename || 'Dokumen PDF'}
                   </span>
 
                   <button
                     onClick={() => alert(`Mengunduh berkas materi resmi: ${mat.file?.filename}`)}
-                    className="px-3 py-1.5 rounded-md bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                    className="px-3 py-1.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Unduh PDF</span>
@@ -291,8 +299,8 @@ export default function StudentTugasPage() {
       {/* ─── MODAL PENGUMPULAN TUGAS (SPEEDSUBMIT) ─── */}
       {selectedTask && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border-2 border-slate-300 max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="font-extrabold text-base text-slate-900">Form Pengumpulan Tugas</h3>
                 <p className="text-xs text-slate-500 font-medium">{selectedTask.title}</p>
@@ -300,25 +308,25 @@ export default function StudentTugasPage() {
 
               <button
                 onClick={() => setSelectedTask(null)}
-                className="w-7 h-7 rounded-md border border-slate-300 flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold"
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {isSuccessSubmit ? (
               <div className="p-8 text-center space-y-2">
                 <CheckCircle2 className="w-12 h-12 text-emerald-700 mx-auto" />
-                <h4 className="font-black text-lg text-slate-900">Tugas Berhasil Dikumpulkan!</h4>
+                <h4 className="font-extrabold text-lg text-slate-900">Tugas Berhasil Dikumpulkan!</h4>
                 <p className="text-xs text-slate-600 font-medium">Berkas Anda telah terunggah dan tercatat di buku kerja guru.</p>
               </div>
             ) : (
               <form onSubmit={handleConfirmSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                     1. Unggah Berkas Dokumen Tugas:
                   </label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:bg-slate-50 transition-colors">
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:bg-slate-50 transition-colors">
                     <Upload className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
                     <p className="text-xs font-bold text-slate-800">
                       {uploadedFileName ? `Berkas terpilih: ${uploadedFileName}` : 'Klik untuk memilih berkas atau seret ke sini'}
@@ -336,7 +344,7 @@ export default function StudentTugasPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                     2. Atau Tautan Proyek Online (Google Drive / GitHub / Figma):
                   </label>
                   <input
@@ -344,12 +352,12 @@ export default function StudentTugasPage() {
                     placeholder="https://drive.google.com/file/d/..."
                     value={driveLink}
                     onChange={(e) => setDriveLink(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-900 shadow-xs"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-900 shadow-2xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                     3. Catatan Tambahan untuk Guru (Opsional):
                   </label>
                   <textarea
@@ -357,21 +365,21 @@ export default function StudentTugasPage() {
                     placeholder="Tuliskan catatan penjelasan hasil karya atau kendala praktikum..."
                     value={studentNote}
                     onChange={(e) => setStudentNote(e.target.value)}
-                    className="w-full p-3 rounded-lg border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-900 shadow-xs leading-relaxed"
+                    className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-900 shadow-2xs leading-relaxed"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setSelectedTask(null)}
-                    className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs"
+                    className="px-5 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
                   >
                     Kirim Tugas Sekarang ➔
                   </button>
@@ -385,11 +393,11 @@ export default function StudentTugasPage() {
       {/* ─── MODAL PENAMPIL ULASAN NILAI & FEEDBACK GURU ─── */}
       {feedbackTask && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border-2 border-slate-300 max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold">
-                  <Award className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center font-bold">
+                  <Award className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-extrabold text-sm text-slate-900">Ulasan & Nilai Guru</h3>
@@ -399,35 +407,35 @@ export default function StudentTugasPage() {
 
               <button
                 onClick={() => setFeedbackTask(null)}
-                className="w-7 h-7 rounded-md border border-slate-300 flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold"
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-3">
-              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-300 flex items-center justify-between">
+              <div className="p-4 bg-emerald-50/60 rounded-xl border border-emerald-200 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Capaian Skor Akhir</span>
-                  <p className="text-3xl font-black text-emerald-800 mt-1">
-                    {feedbackTask.submission?.score} <span className="text-sm font-semibold text-emerald-600">/ 100</span>
+                  <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Capaian Skor Akhir</span>
+                  <p className="text-3xl font-black text-emerald-800 mt-1 font-mono">
+                    {feedbackTask.submission?.score} <span className="text-sm font-semibold text-emerald-600 font-sans">/ 100</span>
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded text-xs font-black bg-emerald-700 text-white shadow-xs">
+                <span className="px-3 py-1 rounded-lg text-xs font-black bg-emerald-700 text-white shadow-2xs">
                   TUNTAS KKTP (75)
                 </span>
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                   Umpan Balik Pedagogis Guru:
                 </span>
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-300 text-xs text-slate-800 font-medium leading-relaxed italic">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 font-medium leading-relaxed italic">
                   "{feedbackTask.submission?.feedback}"
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1 text-slate-600">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1 text-slate-600">
                 <p><strong>Pemeriksa:</strong> {feedbackTask.teacher_name}</p>
                 <p><strong>Berkas Dikirim:</strong> {feedbackTask.submission?.file_name}</p>
               </div>
@@ -437,7 +445,7 @@ export default function StudentTugasPage() {
               <button
                 type="button"
                 onClick={() => setFeedbackTask(null)}
-                className="w-full py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs"
+                className="w-full py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
               >
                 Tutup Ulasan
               </button>

@@ -12,7 +12,9 @@ import {
   ChildSubjectGrade,
   AttendanceCalendarDay,
   ChildPointItem,
-  SchoolFeeItem
+  SchoolFeeItem,
+  ChildScheduleItem,
+  MOCK_CHILD_SCHEDULES
 } from './mock-guardian-data';
 
 interface GuardianContextType {
@@ -24,6 +26,7 @@ interface GuardianContextType {
   activeAttendance: AttendanceCalendarDay[];
   activePoints: ChildPointItem[];
   activeFees: SchoolFeeItem[];
+  activeSchedule: ChildScheduleItem[];
 }
 
 const GuardianContext = createContext<GuardianContextType | undefined>(undefined);
@@ -53,6 +56,7 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
   const activeAttendance = MOCK_GUARDIAN_ATTENDANCE[activeChild.id] || [];
   const activePoints = MOCK_CHILD_POINTS[activeChild.id] || [];
   const activeFees = MOCK_GUARDIAN_FEES[activeChild.id] || [];
+  const activeSchedule = MOCK_CHILD_SCHEDULES[activeChild.id] || [];
 
   return (
     <GuardianContext.Provider
@@ -65,6 +69,7 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
         activeAttendance,
         activePoints,
         activeFees,
+        activeSchedule,
       }}
     >
       {children}

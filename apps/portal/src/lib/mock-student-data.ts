@@ -9,6 +9,15 @@ export interface StudentProfile {
   guardian_name: string;
   guardian_phone: string;
   gender: 'L' | 'P';
+  avatar_url?: string;
+  homeroom_teacher: string;
+  homeroom_nip: string;
+  homeroom_phone: string;
+  homeroom_avatar?: string;
+  counselor_name?: string;
+  counselor_nip?: string;
+  counselor_phone?: string;
+  counselor_avatar?: string;
   gate_attendance_today: {
     status: 'hadir' | 'terlambat' | 'sakit' | 'izin' | 'alpa';
     tap_time: string;
@@ -27,6 +36,15 @@ export const CURRENT_STUDENT: StudentProfile = {
   guardian_name: 'H. Ir. Bambang Maulana',
   guardian_phone: '081234567890',
   gender: 'L',
+  avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
+  homeroom_teacher: 'Budi Santoso, S.Kom., M.T.',
+  homeroom_nip: '19870512 201201 1 003',
+  homeroom_phone: '081234567812',
+  homeroom_avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
+  counselor_name: 'Dra. Hj. Nurul Hidayati, M.Pd.',
+  counselor_nip: '19760815 200501 2 004',
+  counselor_phone: '081298765432',
+  counselor_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150',
   gate_attendance_today: {
     status: 'hadir',
     tap_time: '06:48 WIB',
@@ -42,33 +60,177 @@ export interface StudentScheduleItem {
   subject_name: string;
   subject_code: string;
   teacher_name: string;
+  teacher_avatar_url?: string;
   room_name: string;
   is_active_today?: boolean;
 }
 
 export const MOCK_STUDENT_SCHEDULES: StudentScheduleItem[] = [
-  // Senin
-  { id: 'sch-s-01', day: 'Senin', period: 'JP 1-2', time_range: '07:30 - 09:00 WIB', subject_name: 'Informatika & Pemrograman Web', subject_code: 'INF-09', teacher_name: 'Budi Santoso, S.Kom., M.T.', room_name: 'Lab Komputer 1', is_active_today: true },
-  { id: 'sch-s-02', day: 'Senin', period: 'JP 3-4', time_range: '09:15 - 10:45 WIB', subject_name: 'Matematika Terapan', subject_code: 'MAT-09', teacher_name: 'Dra. Siti Rahayu, M.Pd.', room_name: 'Ruang Kelas IX-A', is_active_today: true },
-  { id: 'sch-s-03', day: 'Senin', period: 'JP 5-6', time_range: '11:00 - 12:30 WIB', subject_name: 'Bahasa Indonesia', subject_code: 'BIN-09', teacher_name: 'Agus Subekti, S.Pd.', room_name: 'Ruang Kelas IX-A' },
+  // Senin (Hari Ini)
+  { 
+    id: 'sch-s-01', 
+    day: 'Senin', 
+    period: 'JP 1-2', 
+    time_range: '07:30 - 09:00 WIB', 
+    subject_name: 'Informatika & Pemrograman Web', 
+    subject_code: 'INF-09', 
+    teacher_name: 'Budi Santoso, S.Kom., M.T.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Lab Komputer 1', 
+    is_active_today: true 
+  },
+  { 
+    id: 'sch-s-02', 
+    day: 'Senin', 
+    period: 'JP 3-4', 
+    time_range: '09:15 - 10:45 WIB', 
+    subject_name: 'Matematika Terapan', 
+    subject_code: 'MAT-09', 
+    teacher_name: 'Dra. Siti Rahayu, M.Pd.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A', 
+    is_active_today: true 
+  },
+  { 
+    id: 'sch-s-03', 
+    day: 'Senin', 
+    period: 'JP 5-6', 
+    time_range: '11:00 - 12:30 WIB', 
+    subject_name: 'Bahasa Indonesia', 
+    subject_code: 'BIN-09', 
+    teacher_name: 'Agus Subekti, S.Pd.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A' 
+  },
   
   // Selasa
-  { id: 'sch-s-04', day: 'Selasa', period: 'JP 1-2', time_range: '07:30 - 09:00 WIB', subject_name: 'Ilmu Pengetahuan Alam (IPA)', subject_code: 'IPA-09', teacher_name: 'Dr. Hendra Wijaya, M.Si.', room_name: 'Lab Sains Terpadu' },
-  { id: 'sch-s-05', day: 'Selasa', period: 'JP 3-4', time_range: '09:15 - 10:45 WIB', subject_name: 'Bahasa Inggris', subject_code: 'ENG-09', teacher_name: 'Nurul Hidayati, M.Ed.', room_name: 'Lab Bahasa' },
-  { id: 'sch-s-06', day: 'Selasa', period: 'JP 5-6', time_range: '11:00 - 12:30 WIB', subject_name: 'Pendidikan Pancasila & PKn', subject_code: 'PKN-09', teacher_name: 'Wahyu Hidayat, S.Pd.', room_name: 'Ruang Kelas IX-A' },
+  { 
+    id: 'sch-s-04', 
+    day: 'Selasa', 
+    period: 'JP 1-2', 
+    time_range: '07:30 - 09:00 WIB', 
+    subject_name: 'Ilmu Pengetahuan Alam (IPA)', 
+    subject_code: 'IPA-09', 
+    teacher_name: 'Dr. Hendra Wijaya, M.Si.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Lab Sains Terpadu' 
+  },
+  { 
+    id: 'sch-s-05', 
+    day: 'Selasa', 
+    period: 'JP 3-4', 
+    time_range: '09:15 - 10:45 WIB', 
+    subject_name: 'Bahasa Inggris', 
+    subject_code: 'ENG-09', 
+    teacher_name: 'Nurul Hidayati, M.Ed.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Lab Bahasa' 
+  },
+  { 
+    id: 'sch-s-06', 
+    day: 'Selasa', 
+    period: 'JP 5-6', 
+    time_range: '11:00 - 12:30 WIB', 
+    subject_name: 'Pendidikan Pancasila & PKn', 
+    subject_code: 'PKN-09', 
+    teacher_name: 'Wahyu Hidayat, S.Pd.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A' 
+  },
 
   // Rabu
-  { id: 'sch-s-07', day: 'Rabu', period: 'JP 1-2', time_range: '07:30 - 09:00 WIB', subject_name: 'Praktikum Desain Grafis & Multimedia', subject_code: 'TIK-09', teacher_name: 'Budi Santoso, S.Kom., M.T.', room_name: 'Lab Multimedia' },
-  { id: 'sch-s-08', day: 'Rabu', period: 'JP 3-4', time_range: '09:15 - 10:45 WIB', subject_name: 'Pendidikan Jasmani (PJOK)', subject_code: 'PJK-09', teacher_name: 'Rudi Hartono, S.Pd.', room_name: 'Lapangan Olahraga Utama' },
-  { id: 'sch-s-09', day: 'Rabu', period: 'JP 5-6', time_range: '11:00 - 12:30 WIB', subject_name: 'Ilmu Pengetahuan Sosial (IPS)', subject_code: 'IPS-09', teacher_name: 'Dewi Lestari, S.Pd.', room_name: 'Ruang Kelas IX-A' },
+  { 
+    id: 'sch-s-07', 
+    day: 'Rabu', 
+    period: 'JP 1-2', 
+    time_range: '07:30 - 09:00 WIB', 
+    subject_name: 'Praktikum Desain Grafis & Multimedia', 
+    subject_code: 'TIK-09', 
+    teacher_name: 'Budi Santoso, S.Kom., M.T.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Lab Multimedia' 
+  },
+  { 
+    id: 'sch-s-08', 
+    day: 'Rabu', 
+    period: 'JP 3-4', 
+    time_range: '09:15 - 10:45 WIB', 
+    subject_name: 'Pendidikan Jasmani (PJOK)', 
+    subject_code: 'PJK-09', 
+    teacher_name: 'Rudi Hartono, S.Pd.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Lapangan Olahraga Utama' 
+  },
+  { 
+    id: 'sch-s-09', 
+    day: 'Rabu', 
+    period: 'JP 5-6', 
+    time_range: '11:00 - 12:30 WIB', 
+    subject_name: 'Ilmu Pengetahuan Sosial (IPS)', 
+    subject_code: 'IPS-09', 
+    teacher_name: 'Dewi Lestari, S.Pd.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A' 
+  },
 
   // Kamis
-  { id: 'sch-s-10', day: 'Kamis', period: 'JP 1-2', time_range: '07:30 - 09:00 WIB', subject_name: 'Pendidikan Agama & Budi Pekerti', subject_code: 'PAB-09', teacher_name: 'Ust. M. Ridwan, M.Ag.', room_name: 'Ruang Kelas IX-A' },
-  { id: 'sch-s-11', day: 'Kamis', period: 'JP 3-4', time_range: '09:15 - 10:45 WIB', subject_name: 'Projek Penguatan Profil Pancasila (P5)', subject_code: 'P5-09', teacher_name: 'Tim Fasilitator P5', room_name: 'Aula Serbaguna' },
+  { 
+    id: 'sch-s-10', 
+    day: 'Kamis', 
+    period: 'JP 1-2', 
+    time_range: '07:30 - 09:00 WIB', 
+    subject_name: 'Pendidikan Agama & Budi Pekerti', 
+    subject_code: 'PAB-09', 
+    teacher_name: 'Ust. M. Ridwan, M.Ag.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A' 
+  },
+  { 
+    id: 'sch-s-11', 
+    day: 'Kamis', 
+    period: 'JP 3-4', 
+    time_range: '09:15 - 10:45 WIB', 
+    subject_name: 'Projek Penguatan Profil Pancasila (P5)', 
+    subject_code: 'P5-09', 
+    teacher_name: 'Tim Fasilitator P5', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Aula Serbaguna' 
+  },
+  { 
+    id: 'sch-s-11b', 
+    day: 'Kamis', 
+    period: 'JP 5-6', 
+    time_range: '11:00 - 12:30 WIB', 
+    subject_name: 'Bahasa Jawa & Muatan Lokal', 
+    subject_code: 'MLK-09', 
+    teacher_name: 'Dra. Siti Rahayu, M.Pd.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A' 
+  },
 
   // Jumat
-  { id: 'sch-s-12', day: 'Jumat', period: 'JP 1-2', time_range: '07:30 - 08:50 WIB', subject_name: 'Seni Budaya & Prakarya', subject_code: 'SBP-09', teacher_name: 'Yuni Astuti, S.Sn.', room_name: 'Studio Seni' },
-  { id: 'sch-s-13', day: 'Jumat', period: 'JP 3', time_range: '09:05 - 10:15 WIB', subject_name: 'Literasi Digital & Bimbingan Walas', subject_code: 'WLS-09', teacher_name: 'Budi Santoso, S.Kom., M.T.', room_name: 'Ruang Kelas IX-A' },
+  { 
+    id: 'sch-s-12', 
+    day: 'Jumat', 
+    period: 'JP 1-2', 
+    time_range: '07:30 - 08:50 WIB', 
+    subject_name: 'Seni Budaya & Prakarya', 
+    subject_code: 'SBP-09', 
+    teacher_name: 'Yuni Astuti, S.Sn.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Studio Seni' 
+  },
+  { 
+    id: 'sch-s-13', 
+    day: 'Jumat', 
+    period: 'JP 3', 
+    time_range: '09:05 - 10:15 WIB', 
+    subject_name: 'Literasi Digital & Bimbingan Walas', 
+    subject_code: 'WLS-09', 
+    teacher_name: 'Budi Santoso, S.Kom., M.T.', 
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
+    room_name: 'Ruang Kelas IX-A' 
+  },
 ];
 
 export interface StudentCBTExamItem {
@@ -77,6 +239,7 @@ export interface StudentCBTExamItem {
   subject_name: string;
   subject_code: string;
   teacher_name: string;
+  teacher_avatar_url?: string;
   date_str: string;
   time_range: string;
   duration_minutes: number;
@@ -96,6 +259,7 @@ export const MOCK_STUDENT_EXAMS: StudentCBTExamItem[] = [
     subject_name: 'Informatika',
     subject_code: 'INF-09',
     teacher_name: 'Budi Santoso, S.Kom., M.T.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
     date_str: 'Hari Ini, 14 Oktober 2026',
     time_range: '08:00 - 09:30 WIB',
     duration_minutes: 90,
@@ -112,6 +276,7 @@ export const MOCK_STUDENT_EXAMS: StudentCBTExamItem[] = [
     subject_name: 'Matematika Terapan',
     subject_code: 'MAT-09',
     teacher_name: 'Dra. Siti Rahayu, M.Pd.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
     date_str: 'Senin, 19 Oktober 2026',
     time_range: '09:15 - 10:45 WIB',
     duration_minutes: 90,
@@ -128,6 +293,7 @@ export const MOCK_STUDENT_EXAMS: StudentCBTExamItem[] = [
     subject_name: 'Informatika',
     subject_code: 'INF-09',
     teacher_name: 'Budi Santoso, S.Kom., M.T.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
     date_str: '28 September 2026',
     time_range: '08:00 - 08:45 WIB',
     duration_minutes: 45,
@@ -145,6 +311,7 @@ export const MOCK_STUDENT_EXAMS: StudentCBTExamItem[] = [
     subject_name: 'Ilmu Pengetahuan Alam (IPA)',
     subject_code: 'IPA-09',
     teacher_name: 'Dr. Hendra Wijaya, M.Si.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150',
     date_str: '15 September 2026',
     time_range: '07:30 - 08:30 WIB',
     duration_minutes: 60,
@@ -267,6 +434,7 @@ export interface StudentTaskItem {
   title: string;
   subject_name: string;
   teacher_name: string;
+  teacher_avatar_url?: string;
   due_date_str: string;
   days_left: number;
   max_score: number;
@@ -287,6 +455,7 @@ export const MOCK_STUDENT_TASKS: StudentTaskItem[] = [
     title: 'Tugas Mandiri 03: Desain Web Portofolio Siswa Responsif',
     subject_name: 'Informatika & Pemrograman Web',
     teacher_name: 'Budi Santoso, S.Kom., M.T.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
     due_date_str: '24 Oktober 2026, 23:59 WIB',
     days_left: 10,
     max_score: 100,
@@ -305,6 +474,7 @@ export const MOCK_STUDENT_TASKS: StudentTaskItem[] = [
     title: 'Lembar Kerja 04: Perancangan Skema ERD Perpustakaan Sekolah',
     subject_name: 'Informatika',
     teacher_name: 'Budi Santoso, S.Kom., M.T.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
     due_date_str: '30 Oktober 2026, 23:59 WIB',
     days_left: 16,
     max_score: 100,
@@ -315,6 +485,7 @@ export const MOCK_STUDENT_TASKS: StudentTaskItem[] = [
     title: 'Latihan Soal Matematika: SPLDV dengan Metode Eliminasi & Substitusi',
     subject_name: 'Matematika Terapan',
     teacher_name: 'Dra. Siti Rahayu, M.Pd.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
     due_date_str: '16 Oktober 2026, 17:00 WIB',
     days_left: 2,
     max_score: 100,
@@ -325,6 +496,7 @@ export const MOCK_STUDENT_TASKS: StudentTaskItem[] = [
     title: 'Essay Refleksi: Etika dan Dampak Positif Perkembangan Teknologi Informasi',
     subject_name: 'Bahasa Indonesia',
     teacher_name: 'Agus Subekti, S.Pd.',
+    teacher_avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=150',
     due_date_str: '12 Oktober 2026, 20:00 WIB',
     days_left: 0,
     max_score: 100,
@@ -384,6 +556,7 @@ export interface StudentCounselingItem {
   request_date: string;
   preferred_schedule: string;
   counselor_name: string;
+  counselor_avatar_url?: string;
   status: 'menunggu' | 'terjadwal' | 'selesai';
   location?: string;
   notes?: string;
@@ -397,6 +570,7 @@ export const MOCK_STUDENT_COUNSELING: StudentCounselingItem[] = [
     request_date: '10 Oktober 2026',
     preferred_schedule: 'Jumat, 16 Oktober 2026 - 13:30 WIB',
     counselor_name: 'Ibu Ratna Dewi, S.Pd., Kons.',
+    counselor_avatar_url: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&q=80&w=150',
     status: 'terjadwal',
     location: 'Ruang Bimbingan & Konseling (Lantai 2 Gedung A)',
     notes: 'Membahas hasil asesmen minat bakat psikologi dan rekomendasi peminatan sains teknologi.',
@@ -408,8 +582,40 @@ export const MOCK_STUDENT_COUNSELING: StudentCounselingItem[] = [
     request_date: '12 September 2026',
     preferred_schedule: 'Kamis, 17 September 2026',
     counselor_name: 'Ibu Ratna Dewi, S.Pd., Kons.',
+    counselor_avatar_url: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&q=80&w=150',
     status: 'selesai',
     location: 'Ruang BK',
     notes: 'Telah diberikan rekomendasi dispensasi praktikum terjadwal yang dikoordinasikan dengan wali kelas.',
+  },
+];
+
+export interface StudentAnnouncementItem {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  content: string;
+  author: string;
+  author_avatar_url?: string;
+}
+
+export const MOCK_STUDENT_ANNOUNCEMENTS: StudentAnnouncementItem[] = [
+  {
+    id: 'ann-s-01',
+    title: 'Pelaksanaan Sumatif Tengah Semester (STS) Gasal di Lab Komputer',
+    date: '14 Oktober 2026',
+    category: 'Asesmen CBT',
+    content: 'Seluruh peserta wajib hadir 10 menit sebelum jam 08:00 WIB dan menitipkan tas/ponsel di loker lab.',
+    author: 'Budi Santoso, S.Kom., M.T.',
+    author_avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
+  },
+  {
+    id: 'ann-s-02',
+    title: 'Pendaftaran Ekstrakurikuler Pilihan & Gelar Karya P5 "Rekayasa Teknologi"',
+    date: '12 Oktober 2026',
+    category: 'Kesiswaan',
+    content: 'Pengumpulan proposal prototipe karya teknologi kelompok dibuka hingga 25 Oktober 2026.',
+    author: 'Dra. Siti Rahayu, M.Pd.',
+    author_avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
   },
 ];

@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { 
-  Users, 
   CalendarCheck, 
   FileSpreadsheet, 
   Award, 
@@ -11,422 +10,564 @@ import {
   Clock, 
   ArrowRight, 
   CheckCircle2, 
-  AlertCircle, 
-  School,
-  Bell, 
-  Download, 
-  Phone, 
+  AlertCircle,
   HeartHandshake, 
   BookOpen, 
-  ChevronRight,
-  ShieldAlert,
-  Info
+  ChevronRight, 
+  FileCheck, 
+  MessageCircle, 
+  School
 } from 'lucide-react';
 import { useGuardian } from '@/lib/guardian-context';
 import { MOCK_GUARDIAN_ANNOUNCEMENTS } from '@/lib/mock-guardian-data';
-import { MOCK_STUDENT_SCHEDULES } from '@/lib/mock-student-data';
 
 export default function GuardianDashboardPage() {
-  const { guardian, activeChild, setActiveChildId, activeGrades } = useGuardian();
+  const { guardian, activeChild, setActiveChildId, activeGrades, activeSchedule } = useGuardian();
 
-  // Filter today's schedule for active child (Senin / Rabu schedules)
-  const todaySchedules = MOCK_STUDENT_SCHEDULES.filter(s => s.day === 'Senin' || s.is_active_today).slice(0, 3);
+  // Dynamic calculations derived from active child's data
+  const totalSubjects = activeGrades.length;
+  const tuntasSubjects = activeGrades.filter(g => g.status === 'Tuntas').length;
+  const remedialSubjects = activeGrades.filter(g => g.status !== 'Tuntas').length;
+  const isPositivePoints = activeChild.points_balance >= 0;
+
+  // Presence status configuration
+  const presenceConfig = {
+    hadir: {
+      badgeBg: 'bg-emerald-800 text-white',
+      badgeText: 'Tepat Waktu',
+      icon: CheckCircle2,
+      textColor: 'text-emerald-800',
+      labelColor: 'text-emerald-900',
+      statLabel: 'Tertib & Konsisten',
+      statBadgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    },
+    sakit: {
+      badgeBg: 'bg-amber-600 text-white',
+      badgeText: 'Izin Sakit',
+      icon: Clock,
+      textColor: 'text-amber-800',
+      labelColor: 'text-amber-900',
+      statLabel: 'Surat Dokter Terverifikasi',
+      statBadgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+    },
+    terlambat: {
+      badgeBg: 'bg-rose-700 text-white',
+      badgeText: 'Terlambat Masuk',
+      icon: AlertCircle,
+      textColor: 'text-rose-800',
+      labelColor: 'text-rose-900',
+      statLabel: 'Catatan Kedisiplinan',
+      statBadgeClass: 'bg-rose-50 text-rose-800 border-rose-200',
+    },
+    izin: {
+      badgeBg: 'bg-blue-800 text-white',
+      badgeText: 'Izin Resmi',
+      icon: CheckCircle2,
+      textColor: 'text-blue-800',
+      labelColor: 'text-blue-900',
+      statLabel: 'Izin Disetujui',
+      statBadgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+    },
+    alpa: {
+      badgeBg: 'bg-rose-800 text-white',
+      badgeText: 'Tanpa Keterangan',
+      icon: AlertCircle,
+      textColor: 'text-rose-800',
+      labelColor: 'text-rose-900',
+      statLabel: 'Peringatan Kehadiran',
+      statBadgeClass: 'bg-rose-50 text-rose-800 border-rose-200',
+    },
+  }[activeChild.gate_attendance_today.status] || {
+    badgeBg: 'bg-slate-800 text-white',
+    badgeText: 'Terdata',
+    icon: CheckCircle2,
+    textColor: 'text-slate-800',
+    labelColor: 'text-slate-900',
+    statLabel: 'Status Terdata',
+    statBadgeClass: 'bg-slate-50 text-slate-800 border-slate-200',
+  };
+
+  const PresenceIcon = presenceConfig.icon;
 
   return (
-    <div className="space-y-6">
-      {/* ─── HERO GREETING & MULTI-CHILD CARDS BANNER ─── */}
-      <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-          <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-emerald-800 text-white text-xs font-bold mb-2">
-              <School className="w-3.5 h-3.5 text-white" />
-              <span>Portal Terpadu Orang Tua & Wali Murid</span>
+    <div className="flex flex-col gap-3.5 max-w-full xl:h-[calc(100vh-112px)] xl:overflow-hidden">
+      {/* ─── 1. INTEGRATED CHILD PROFILE & REALTIME STATUS HERO BANNER ─── */}
+      <div className="bg-white border border-slate-200/90 rounded-xl p-3 px-4 shadow-xs shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left: Active Child Identity & Presence */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            {/* Avatar */}
+            {activeChild.avatar_url ? (
+              <img
+                src={activeChild.avatar_url}
+                alt={activeChild.name}
+                className="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 shadow-xs shrink-0"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-emerald-800 text-white font-bold text-base flex items-center justify-center shadow-xs shrink-0">
+                {activeChild.initials}
+              </div>
+            )}
+
+            {/* Name, Class, NIS and Presence status */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-extrabold text-slate-900 tracking-tight truncate">
+                  {activeChild.name}
+                </h1>
+                <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-800 text-white shadow-2xs font-mono">
+                  {activeChild.class_name.replace('Kelas ', '')}
+                </span>
+                <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-300 text-slate-700 font-mono">
+                  NIS: {activeChild.nis}
+                </span>
+                <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold shadow-2xs ${presenceConfig.badgeBg}`}>
+                  {presenceConfig.badgeText}
+                </span>
+              </div>
+
+              {/* Status Presensi & Info Walas */}
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-slate-600">
+                <div className={`inline-flex items-center gap-1 font-semibold ${presenceConfig.textColor}`}>
+                  <PresenceIcon className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    Presensi: {activeChild.gate_attendance_today.status_label}
+                    {activeChild.gate_attendance_today.tap_time !== '-' && ` (${activeChild.gate_attendance_today.tap_time})`}
+                  </span>
+                </div>
+                <span className="text-slate-300 hidden sm:inline">•</span>
+                <div>
+                  <span>Wali Kelas: </span>
+                  <strong className="text-slate-900 font-semibold">{activeChild.homeroom_teacher}</strong>
+                </div>
+              </div>
             </div>
-            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Selamat Datang, {guardian.name}
-            </h1>
-            <p className="text-xs text-slate-600 mt-1">
-              Pantau kehadiran presensi gerbang, perkembangan kurikulum merdeka, dan prestasi ananda secara transparan.
-            </p>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Right: Child Switcher & Quick Action */}
+          <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+            {guardian.children.length > 1 && (
+              <div className="p-1 bg-slate-100 border border-slate-200 rounded-xl flex items-center gap-1">
+                {guardian.children.map((child) => {
+                  const isSelected = child.id === activeChild.id;
+                  return (
+                    <button
+                      key={child.id}
+                      onClick={() => setActiveChildId(child.id)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        isSelected
+                          ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                      }`}
+                    >
+                      {child.avatar_url ? (
+                        <img
+                          src={child.avatar_url}
+                          alt={child.name}
+                          className={`w-4 h-4 rounded-full object-cover border ${isSelected ? 'border-emerald-600' : 'border-slate-300'}`}
+                        />
+                      ) : (
+                        <div className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ${isSelected ? 'bg-emerald-800 text-white' : 'bg-slate-300 text-slate-700'}`}>
+                          {child.initials}
+                        </div>
+                      )}
+                      <span>{child.name.split(' ')[0]}</span>
+                      <span className="text-[10px] text-slate-500 font-mono font-medium">({child.class_name.replace('Kelas ', '')})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <Link
               href="/ortu/presensi"
-              className="px-3.5 py-2 rounded-lg bg-emerald-800 text-white text-xs font-bold hover:bg-emerald-900 transition-colors shadow-xs flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
             >
               <CalendarCheck className="w-4 h-4 text-white" />
               <span>Ajukan Surat Izin</span>
             </Link>
-            <Link
-              href="/ortu/nilai"
-              className="px-3.5 py-2 rounded-lg bg-blue-900 text-white text-xs font-bold hover:bg-blue-950 transition-colors shadow-xs flex items-center gap-2"
-            >
-              <Download className="w-4 h-4 text-white" />
-              <span>Unduh E-Rapor</span>
-            </Link>
-            <Link
-              href="/ortu/konseling"
-              className="px-3.5 py-2 rounded-lg bg-slate-800 text-white text-xs font-bold hover:bg-slate-900 transition-colors shadow-xs flex items-center gap-2"
-            >
-              <HeartHandshake className="w-4 h-4 text-white" />
-              <span>Janji Temu Walas</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Multi-Child Selector Ribbon Cards */}
-        <div className="pt-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-            Pilih Profil Siswa Untuk Memantau:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {guardian.children.map((child) => {
-              const isSelected = child.id === activeChild.id;
-              return (
-                <button
-                  key={child.id}
-                  onClick={() => setActiveChildId(child.id)}
-                  className={`text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between ${
-                    isSelected
-                      ? 'border-emerald-700 bg-emerald-50/60 shadow-sm'
-                      : 'border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className={`w-12 h-12 rounded-lg font-black text-sm flex items-center justify-center text-white shrink-0 ${
-                      isSelected ? 'bg-emerald-800 ring-2 ring-emerald-500' : 'bg-slate-700'
-                    }`}>
-                      {child.initials}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-sm font-extrabold text-slate-900 truncate">
-                          {child.name}
-                        </h2>
-                        {isSelected && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-700 text-white">
-                            Aktif
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-600 font-medium">
-                        {child.class_name} • NIS: <span className="font-mono font-bold">{child.nis}</span>
-                      </p>
-                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                        Wali Kelas: <span className="font-bold text-slate-700">{child.homeroom_teacher}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0 pl-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-800 text-white shadow-2xs">
-                      <CheckCircle2 className="w-3 h-3 text-white" />
-                      {child.gate_attendance_today.status === 'hadir' ? 'Hadir di Sekolah' : 'Izin'}
-                    </span>
-                    <p className="text-[10px] text-slate-600 font-mono mt-1 font-bold">
-                      Tap: {child.gate_attendance_today.tap_time}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
 
-      {/* ─── REALTIME GATE & ATTENDANCE BANNER ─── */}
-      <div className="bg-emerald-900 text-white rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-lg bg-emerald-800 border border-emerald-700 flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6 text-emerald-200" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-emerald-700 text-white rounded text-[10px] uppercase font-black tracking-wider">
-                Presensi RFID Gerbang Hari Ini
-              </span>
-              <span className="text-xs text-emerald-200 font-medium">
-                Rabu, 14 Oktober 2026
-              </span>
+      {/* ─── 2. REIMAGINED VISUAL METRICS (4 EQUAL CARDS STRIP) ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 shrink-0">
+        {/* Metric 1: Kehadiran Siswa */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Kehadiran Semester</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center shrink-0">
+              <CalendarCheck className="w-3.5 h-3.5" />
             </div>
-            <h3 className="text-base font-bold text-white mt-1">
-              {activeChild.name} tercatat <span className="text-emerald-300 font-black">HADIR</span> pada pukul {activeChild.gate_attendance_today.tap_time}
-            </h3>
-            <p className="text-xs text-emerald-100 mt-0.5">
-              Lokasi: {activeChild.gate_attendance_today.location} • Catatan: {activeChild.gate_attendance_today.note}
-            </p>
           </div>
-        </div>
-
-        <Link
-          href="/ortu/presensi"
-          className="px-4 py-2 rounded-lg bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-extrabold transition-colors shrink-0 flex items-center gap-1.5 self-start md:self-auto"
-        >
-          <span>Buka Kalender Presensi</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-
-      {/* ─── 4 KPI SUMMARY CARDS (SOLID BADGES, ZERO SLOP) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Kehadiran */}
-        <div className="bg-white border border-slate-300 rounded-xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Tingkat Kehadiran
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-800">
-              <CalendarCheck className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">
+          <div className="my-1.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
                 {activeChild.attendance_recap.rate}%
               </span>
-              <span className="text-xs font-bold text-emerald-700">
-                Sangat Baik
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-800 text-white shadow-2xs">
+                Target 95%
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-1 font-medium">
-              {activeChild.attendance_recap.hadir} Hadir • {activeChild.attendance_recap.sakit} Sakit • {activeChild.attendance_recap.izin} Izin
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {activeChild.attendance_recap.hadir} Hadir • {activeChild.attendance_recap.sakit} Sakit • {activeChild.attendance_recap.izin} Izin • {activeChild.attendance_recap.alpa} Alpa
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <Link 
+          <div className="pt-2 border-t border-slate-100">
+            <Link
               href="/ortu/presensi"
-              className="text-xs font-bold text-emerald-800 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-slate-700 hover:text-emerald-800 flex items-center justify-between group transition-colors"
             >
-              <span>Riwayat & Surat Izin</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>Buka Presensi & Izin</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-800 group-hover:translate-x-0.5 transition-all" />
             </Link>
           </div>
         </div>
 
-        {/* Card 2: Rerata Nilai */}
-        <div className="bg-white border border-slate-300 rounded-xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Rerata Akademik
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-900">
-              <FileSpreadsheet className="w-4 h-4" />
-            </span>
+        {/* Metric 2: Capaian Nilai & KKTP */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Rerata Capaian Nilai</span>
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">
-                {activeChild.grade_average}
-              </span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-black bg-blue-900 text-white">
-                KKTP: 75
+          <div className="my-1.5">
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {activeChild.grade_average}
+                </span>
+                <span className="text-xs font-semibold text-slate-500 font-mono">/ 100</span>
+              </div>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md shadow-2xs ${
+                remedialSubjects > 0 ? 'bg-amber-600 text-white' : 'bg-blue-800 text-white'
+              }`}>
+                {remedialSubjects > 0 ? `${remedialSubjects} Remedial` : 'Semua Tuntas'}
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-1 font-medium">
-              Seluruh kompetensi tuntas di atas ambang minimal
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Batas KKTP 75.0 • {tuntasSubjects} dari {totalSubjects} Mapel Tuntas
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <Link 
+          <div className="pt-2 border-t border-slate-100">
+            <Link
               href="/ortu/nilai"
-              className="text-xs font-bold text-blue-900 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-slate-700 hover:text-blue-800 flex items-center justify-between group transition-colors"
             >
-              <span>Lihat Rincian Rapor</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>Rincian Nilai & E-Rapor</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-800 group-hover:translate-x-0.5 transition-all" />
             </Link>
           </div>
         </div>
 
-        {/* Card 3: Poin Karakter */}
-        <div className="bg-white border border-slate-300 rounded-xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Buku Poin Karakter
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-800">
-              <Award className="w-4 h-4" />
-            </span>
+        {/* Metric 3: Buku Poin Karakter */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Buku Poin Karakter</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0">
+              <Award className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">
-                +{activeChild.points_balance}
+          <div className="my-1.5">
+            <div className="flex items-baseline justify-between">
+              <span className={`text-3xl font-extrabold tracking-tight ${isPositivePoints ? 'text-slate-900' : 'text-rose-700'}`}>
+                {isPositivePoints ? `+${activeChild.points_balance}` : activeChild.points_balance}
               </span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-800 text-white">
-                Status Aman
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md shadow-2xs ${
+                isPositivePoints ? 'bg-emerald-800 text-white' : 'bg-rose-700 text-white'
+              }`}>
+                {isPositivePoints ? 'Disiplin Baik' : 'Catatan Tatib'}
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-1 font-medium">
-              +{activeChild.points_prestasi} Prestasi • -{activeChild.points_pelanggaran} Disiplin
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Prestasi +{activeChild.points_prestasi} • Pelanggaran {activeChild.points_pelanggaran} Poin
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <Link 
+          <div className="pt-2 border-t border-slate-100">
+            <Link
               href="/ortu/poin"
-              className="text-xs font-bold text-amber-800 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-slate-700 hover:text-amber-800 flex items-center justify-between group transition-colors"
             >
-              <span>Riwayat Buku Poin</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>Catatan Prestasi & Tatib</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-800 group-hover:translate-x-0.5 transition-all" />
             </Link>
           </div>
         </div>
 
-        {/* Card 4: Administrasi TU */}
-        <div className="bg-white border border-slate-300 rounded-xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Administrasi Sekolah
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-800">
-              <Receipt className="w-4 h-4" />
-            </span>
+        {/* Metric 4: Administrasi SPP & Biaya */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Administrasi Sekolah</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center shrink-0">
+              <Receipt className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-extrabold text-slate-900">
-                Bebas Tanggungan
+          <div className="my-1.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-2xl font-extrabold text-slate-900 tracking-tight truncate">
+                {activeChild.fee_summary.amount}
+              </span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md shadow-2xs ${
+                activeChild.fee_summary.status === 'Lunas'
+                  ? 'bg-emerald-800 text-white'
+                  : activeChild.fee_summary.status === 'Verifikasi TU'
+                  ? 'bg-blue-800 text-white'
+                  : 'bg-amber-600 text-white'
+              }`}>
+                {activeChild.fee_summary.status}
               </span>
             </div>
-            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[11px] font-black bg-emerald-800 text-white">
-              SPP Okt 2026 Lunas
-            </span>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Catatan resmi Bagian Tata Usaha
+            <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+              {activeChild.fee_summary.title} • {activeChild.fee_summary.receipt_or_due}
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <Link 
+          <div className="pt-2 border-t border-slate-100">
+            <Link
               href="/ortu/biaya"
-              className="text-xs font-bold text-emerald-800 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-slate-700 hover:text-emerald-800 flex items-center justify-between group transition-colors"
             >
-              <span>Rincian Kwitansi TU</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>Riwayat Pembayaran TU</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-800 group-hover:translate-x-0.5 transition-all" />
             </Link>
           </div>
         </div>
       </div>
 
-      {/* ─── TWO COLUMN MAIN SECTION: SCHEDULE & ANNOUNCEMENTS ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Today's Class Timetable for Selected Child */}
-        <div className="lg:col-span-2 bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <div className="flex items-center gap-2.5">
-              <BookOpen className="w-5 h-5 text-emerald-800" />
-              <div>
-                <h3 className="text-sm font-extrabold text-slate-900">
-                  Jadwal Pembelajaran Hari Ini ({activeChild.name.split(' ')[0]} - {activeChild.class_name})
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Mata pelajaran aktif yang diikuti ananda pada hari ini
-                </p>
-              </div>
-            </div>
-            <span className="px-2 py-1 rounded bg-slate-100 border border-slate-300 text-xs font-bold text-slate-700">
-              3 Mata Pelajaran
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {todaySchedules.map((item, idx) => (
-              <div 
-                key={item.id}
-                className="flex items-center justify-between p-3.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100/70 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-md bg-emerald-800 text-white font-black text-xs flex items-center justify-center shrink-0">
-                    0{idx + 1}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-slate-900">
-                      {item.subject_name}
-                    </h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">
-                      Guru: <span className="font-semibold text-slate-800">{item.teacher_name}</span> • Ruang: <span className="font-semibold text-slate-800">{item.room_name}</span>
-                    </p>
-                  </div>
+      {/* ─── 3. DUA KOLOM UTAMA: ALUR BELAJAR vs KOMUNIKASI & AGENDA (VIEWPORT OPTIMIZED) ─── */}
+      <div className="xl:flex-1 xl:min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+        {/* Kolom Kiri: Alur Pembelajaran Hari Ini & Dokumen Rapor (7 Col) */}
+        <div className="lg:col-span-7 flex flex-col gap-3 h-full overflow-hidden">
+          {/* Timeline Jadwal Hari Ini */}
+          <div className="flex-1 min-h-0 bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex flex-col overflow-hidden">
+            <div className="shrink-0 flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center border border-slate-200 shrink-0">
+                  <Clock className="w-4 h-4 text-slate-800" />
                 </div>
-
-                <div className="text-right shrink-0">
-                  <span className="px-2 py-0.5 rounded bg-blue-900 text-white font-mono text-[11px] font-bold">
-                    {item.time_range}
-                  </span>
-                  <p className="text-[10px] text-slate-500 mt-1 font-bold">
-                    {item.period}
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+                    Alur Pembelajaran Hari Ini
+                  </h2>
+                  <p className="text-xs text-slate-500 font-normal">
+                    Rabu, 14 Oktober 2026 • {activeChild.curriculum_phase}
                   </p>
                 </div>
               </div>
-            ))}
+
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-white shadow-2xs">
+                {activeSchedule.length} Sesi KBM
+              </span>
+            </div>
+
+            {/* Timeline Stream with internal scroll */}
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 mt-3">
+              {activeSchedule.map((item) => {
+                const isCurrent = item.status === 'current';
+                const isCompleted = item.status === 'completed';
+
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`p-3 rounded-xl border transition-all ${
+                      isCurrent
+                        ? 'border-emerald-300 bg-emerald-50/40 border-l-4 border-l-emerald-800 shadow-xs'
+                        : isCompleted
+                        ? 'border-slate-200/80 bg-slate-50/50 hover:bg-slate-50'
+                        : 'border-slate-200/80 bg-white hover:bg-slate-50/60'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-slate-900">
+                          {item.timeRange}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${
+                            isCompleted
+                              ? 'bg-slate-200 text-slate-700'
+                              : isCurrent
+                              ? 'bg-emerald-800 text-white shadow-2xs'
+                              : 'bg-slate-100 text-slate-700 border border-slate-300'
+                          }`}
+                        >
+                          {item.statusLabel}
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-600 font-semibold bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 w-fit">
+                        {item.room}
+                      </span>
+                    </div>
+
+                    <div className="mt-2">
+                      <h4 className="text-sm font-bold text-slate-900">
+                        {item.subject}
+                      </h4>
+                      <p className="text-xs text-slate-600 mt-0.5 font-medium">
+                        Materi: <span className="font-semibold text-slate-800">{item.topic}</span>
+                      </p>
+                      <p className="text-xs text-slate-500 font-normal mt-0.5">
+                        Pengampu: <span className="font-medium text-slate-700">{item.teacher}</span>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Quick Notice to Contact Homeroom Teacher */}
-          <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          {/* Quick E-Progress Report Banner */}
+          <div className="shrink-0 bg-white border border-blue-200 rounded-xl p-3 px-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-blue-900">
             <div className="flex items-center gap-3">
-              <Phone className="w-4 h-4 text-blue-900 shrink-0" />
-              <div>
-                <p className="text-xs font-bold text-blue-950">
-                  Wali Kelas: {activeChild.homeroom_teacher}
-                </p>
-                <p className="text-[11px] text-blue-800">
-                  Hubungi nomor resmi atau jadwalkan janji temu konsultasi pendampingan belajar ananda.
+              <div className="w-10 h-10 rounded-xl bg-blue-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <FileCheck className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-md bg-blue-900 text-white text-[11px] font-bold shadow-2xs">
+                    Dokumen Resmi
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500 font-mono">
+                    STS Gasal 2026/2027
+                  </span>
+                </div>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5 truncate">
+                  E-Progress Report Sumatif Tengah Semester Telah Terbit
+                </h3>
+                <p className="text-xs text-slate-500 hidden sm:block">
+                  Telah disahkan Kepala Sekolah & Walas dengan validasi QR Code resmi.
                 </p>
               </div>
             </div>
-            <a
-              href={`https://wa.me/${activeChild.homeroom_phone.replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="px-3 py-1.5 rounded bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shrink-0 transition-colors"
+
+            <Link
+              href="/ortu/nilai"
+              className="px-3.5 py-2 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shrink-0 transition-colors flex items-center justify-center gap-1.5 shadow-xs self-start sm:self-auto"
             >
-              WhatsApp Walas
-            </a>
+              <span>Buka E-Rapor</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white" />
+            </Link>
           </div>
         </div>
 
-        {/* Right: Announcements & School Agenda for Guardians */}
-        <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-emerald-800" />
-              <h3 className="text-sm font-extrabold text-slate-900">
-                Agenda & Pengumuman Sekolah
-              </h3>
-            </div>
-            <span className="text-[11px] font-bold text-slate-500">
-              Terbaru
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {MOCK_GUARDIAN_ANNOUNCEMENTS.map((ann) => (
-              <div 
-                key={ann.id}
-                className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white transition-colors space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black ${ann.badge_color}`}>
-                    {ann.category}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    {ann.date_str}
-                  </span>
+        {/* Kolom Kanan: Kontak Walas & Pengumuman Agenda (5 Col) */}
+        <div className="lg:col-span-5 flex flex-col gap-3 h-full overflow-hidden">
+          {/* 1. Homeroom Teacher Direct Connect Card */}
+          <div className="shrink-0 bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 border border-slate-200">
+                  <School className="w-3.5 h-3.5" />
                 </div>
-                <h4 className="text-xs font-extrabold text-slate-900 leading-snug">
-                  {ann.title}
+                <span className="text-xs font-bold text-slate-800">Wali Kelas Ananda</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-800 text-white font-mono shadow-2xs">
+                {activeChild.class_name}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {activeChild.homeroom_avatar ? (
+                <img
+                  src={activeChild.homeroom_avatar}
+                  alt={activeChild.homeroom_teacher}
+                  className="w-11 h-11 rounded-xl object-cover shadow-xs border border-slate-200 shrink-0"
+                />
+              ) : (
+                <div className="w-11 h-11 rounded-xl bg-emerald-800 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                  {activeChild.homeroom_teacher.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-bold text-slate-900 truncate">
+                  {activeChild.homeroom_teacher}
                 </h4>
-                <p className="text-[11px] text-slate-600 line-clamp-3">
-                  {ann.content}
+                <p className="text-xs text-slate-500 font-mono font-medium truncate">
+                  {activeChild.homeroom_nip}
+                </p>
+                <p className="text-xs text-emerald-800 font-semibold truncate">
+                  Konsultasi Belajar & Presensi Siswa
                 </p>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
+              <a
+                href={`https://wa.me/${activeChild.homeroom_phone.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold text-center transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-white" />
+                <span>WhatsApp</span>
+              </a>
+
+              <Link
+                href="/ortu/konseling"
+                className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold text-center transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <HeartHandshake className="w-3.5 h-3.5 text-white" />
+                <span>Janji Temu</span>
+              </Link>
+            </div>
           </div>
 
-          <div className="p-3 bg-slate-100 rounded-lg text-center">
-            <p className="text-[11px] text-slate-600 font-medium">
-              Informasi resmi diterbitkan oleh Humas & Tata Usaha Labschool UM.
-            </p>
+          {/* 2. Pengumuman & Agenda Penting (Scrollable List with Distinct Border Accents) */}
+          <div className="flex-1 min-h-0 bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex flex-col overflow-hidden">
+            <div className="shrink-0 flex items-center justify-between pb-2.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200">
+                  <BookOpen className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800">Pengumuman & Agenda</h3>
+                  <p className="text-[11px] text-slate-500 font-normal">Informasi Resmi Sekolah</p>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-800 text-white shadow-2xs">
+                Labschool UM
+              </span>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 mt-2.5">
+              {MOCK_GUARDIAN_ANNOUNCEMENTS.map((ann) => {
+                const accentBorder = 
+                  ann.category === 'Pertemuan Komite' 
+                    ? 'border-l-blue-900' 
+                    : ann.category === 'Akademik'
+                    ? 'border-l-emerald-800'
+                    : 'border-l-amber-600';
+
+                const badgeBg = 
+                  ann.category === 'Pertemuan Komite' 
+                    ? 'bg-blue-900 text-white' 
+                    : ann.category === 'Akademik'
+                    ? 'bg-emerald-800 text-white'
+                    : 'bg-amber-600 text-white';
+
+                return (
+                  <div 
+                    key={ann.id} 
+                    className={`p-3 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 transition-colors border-l-4 ${accentBorder} shadow-2xs space-y-1.5`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-500 font-mono">
+                        {ann.date_str}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold shadow-2xs ${badgeBg}`}>
+                        {ann.category}
+                      </span>
+                    </div>
+                    <h5 className="text-xs font-bold text-slate-900 leading-snug">
+                      {ann.title}
+                    </h5>
+                    <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                      {ann.content}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

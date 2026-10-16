@@ -174,148 +174,151 @@ export default function BukuNilaiPage() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="flex flex-col gap-3 max-w-full xl:h-[calc(100vh-112px)] xl:overflow-hidden text-slate-900">
       {/* ─── HEADER ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-300 rounded-xl p-6 shadow-xs">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
               Buku Nilai & Asesmen
             </span>
-            <span className="text-xs text-slate-500 font-semibold">• BE-GRD-01 (P0)</span>
+            <span className="text-xs text-slate-500 font-semibold">• Kelas IX-A (Informatika)</span>
           </div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
             Ledger Buku Nilai Guru & Ketercapaian KKTP
           </h1>
-          <p className="text-xs text-slate-600 mt-1 max-w-3xl">
-            Input akumulasi nilai formatif dan sumatif, kalkulasi nilai akhir otomatis berbobot, dan pantau status ketuntasan siswa berdasarkan kriteria KKTP (75).
+          <p className="text-xs text-slate-600 mt-0.5 line-clamp-1 max-w-2xl">
+            Input akumulasi nilai formatif & sumatif, kalkulasi otomatis berbobot, dan pantau status KKTP (75).
           </p>
         </div>
 
-        {/* Main Tab Switcher (Solid Buttons) */}
-        <div className="flex flex-wrap items-center bg-slate-100 p-1 rounded-lg border border-slate-300 shrink-0">
-          <button
-            type="button"
-            onClick={() => setMainTab('akademik')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              mainTab === 'akademik'
-                ? 'bg-blue-900 text-white shadow-xs'
-                : 'text-slate-700 hover:text-slate-900'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Ledger Nilai Kognitif</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setMainTab('karakter')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              mainTab === 'karakter'
-                ? 'bg-blue-900 text-white shadow-xs'
-                : 'text-slate-700 hover:text-slate-900'
-            }`}
-          >
-            <Award className="w-3.5 h-3.5" />
-            <span>Catatan Karakter P5</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setMainTab('progress_report')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              mainTab === 'progress_report'
-                ? 'bg-blue-900 text-white shadow-xs'
-                : 'text-slate-700 hover:text-slate-900'
-            }`}
-          >
-            <FileCheck className="w-3.5 h-3.5" />
-            <span>E-Progress Report</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-600 text-white font-black uppercase">
-              Walas
-            </span>
-          </button>
-        </div>
-
-        {/* Action Buttons */}
+        {/* Controls: Tab Switcher & Actions */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {mainTab === 'akademik' && (
-            <>
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Ekspor CSV / Excel</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={lockMutation.isPending}
-                onClick={() => lockMutation.mutate()}
-                className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer transition-all ${
-                  period?.is_locked
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                    : 'bg-slate-800 hover:bg-slate-900 text-white'
-                }`}
-              >
-                {period?.is_locked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                <span>{period?.is_locked ? 'Buka Kunci Nilai' : 'Kunci Buku Nilai'}</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={saveMutation.isPending || period?.is_locked}
-                onClick={() => saveMutation.mutate()}
-                className="px-4 py-2 rounded-lg text-xs font-black bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{saveMutation.isPending ? 'Menyimpan...' : 'Simpan Semua Nilai'}</span>
-              </button>
-            </>
-          )}
-
-          {mainTab === 'karakter' && (
+          {/* Main Tab Switcher */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
             <button
               type="button"
-              onClick={() => {
-                setSuccessToast('Seluruh catatan karakter Profil Pelajar Pancasila berhasil disimpan!');
-                setTimeout(() => setSuccessToast(null), 3000);
-              }}
-              className="px-4 py-2 rounded-lg text-xs font-black bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+              onClick={() => setMainTab('akademik')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mainTab === 'akademik'
+                  ? 'bg-blue-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>Simpan Catatan Karakter</span>
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Ledger Nilai</span>
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => setMainTab('karakter')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mainTab === 'karakter'
+                  ? 'bg-blue-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5" />
+              <span>Karakter P5</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMainTab('progress_report')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mainTab === 'progress_report'
+                  ? 'bg-blue-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>E-Progress Report</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-600 text-white font-black uppercase">
+                Walas
+              </span>
+            </button>
+          </div>
 
-          {mainTab === 'progress_report' && (
-            <>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {mainTab === 'akademik' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">CSV</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={lockMutation.isPending}
+                  onClick={() => lockMutation.mutate()}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer transition-all ${
+                    period?.is_locked
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                      : 'bg-slate-800 hover:bg-slate-900 text-white'
+                  }`}
+                >
+                  {period?.is_locked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                  <span>{period?.is_locked ? 'Buka Kunci' : 'Kunci'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={saveMutation.isPending || period?.is_locked}
+                  onClick={() => saveMutation.mutate()}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{saveMutation.isPending ? 'Menyimpan...' : 'Simpan Nilai'}</span>
+                </button>
+              </>
+            )}
+
+            {mainTab === 'karakter' && (
               <button
                 type="button"
                 onClick={() => {
-                  setSuccessToast('Dokumen E-Progress Report kelas IX-A dikirim ke antrean cetak massal PDF.');
+                  setSuccessToast('Seluruh catatan karakter Profil Pelajar Pancasila berhasil disimpan!');
                   setTimeout(() => setSuccessToast(null), 3000);
                 }}
-                className="px-3.5 py-2 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Cetak Massal PDF</span>
+                <Save className="w-3.5 h-3.5" />
+                <span>Simpan Catatan</span>
               </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setApprovalStatus('menunggu_acc');
-                  setSuccessToast('Permohonan ACC E-Progress Report berhasil diajukan ke Kepala Sekolah!');
-                  setTimeout(() => setSuccessToast(null), 3000);
-                }}
-                className="px-4 py-2 rounded-lg text-xs font-black bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Ajukan ACC Kepala Sekolah</span>
-              </button>
-            </>
-          )}
+            )}
+
+            {mainTab === 'progress_report' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccessToast('Dokumen E-Progress Report kelas IX-A dikirim ke antrean cetak massal PDF.');
+                    setTimeout(() => setSuccessToast(null), 3000);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Cetak PDF</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setApprovalStatus('menunggu_acc');
+                    setSuccessToast('Permohonan ACC E-Progress Report berhasil diajukan ke Kepala Sekolah!');
+                    setTimeout(() => setSuccessToast(null), 3000);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Ajukan ACC</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -346,57 +349,57 @@ export default function BukuNilaiPage() {
             </div>
           )}
 
-          {/* ─── KPI SUMMARY CARDS (SOLID HIGH-CONTRAST) ─── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* ─── KPI SUMMARY CARDS (SOLID HIGH-CONTRAST WITH BORDER-L-4) ─── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 shrink-0">
             {/* Rata-rata Kelas */}
-            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rata-Rata Kelas</span>
-                <Calculator className="w-4 h-4 text-blue-900" />
+            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xs border-l-4 border-l-blue-900">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rata-Rata Kelas</span>
+                <Calculator className="w-3.5 h-3.5 text-blue-900" />
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1">{classAverage}</div>
-              <p className="text-[11px] text-slate-500 mt-1 font-medium">Berdasarkan 5 komponen asesmen</p>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{classAverage}</div>
+              <p className="text-[10px] text-slate-600 mt-0.5 font-medium">Berdasarkan 5 komponen asesmen</p>
             </div>
 
             {/* Tuntas KKTP */}
-            <div className="bg-emerald-800 text-white border border-emerald-900 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-emerald-200 uppercase tracking-wider">Tuntas KKTP (≥ 75)</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xs border-l-4 border-l-emerald-700">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Tuntas KKTP (≥ 75)</span>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-800" />
               </div>
-              <div className="text-2xl font-black text-white mt-1">
-                {tuntasCount} <span className="text-sm font-semibold text-emerald-200">/ {totalStudents} Siswa</span>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
+                {tuntasCount} <span className="text-xs font-semibold text-slate-500">/ {totalStudents} Siswa</span>
               </div>
-              <p className="text-[11px] text-emerald-200 mt-1 font-medium">
+              <p className="text-[10px] text-emerald-800 mt-0.5 font-semibold">
                 {totalStudents > 0 ? Math.round((tuntasCount / totalStudents) * 100) : 0}% Tingkat Ketuntasan
               </p>
             </div>
 
             {/* Perlu Remedial */}
-            <div className="bg-rose-800 text-white border border-rose-900 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-rose-200 uppercase tracking-wider">Perlu Remedial (&lt; 75)</span>
-                <AlertTriangle className="w-4 h-4 text-rose-200" />
+            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xs border-l-4 border-l-rose-700">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">Perlu Remedial (&lt; 75)</span>
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
               </div>
-              <div className="text-2xl font-black text-white mt-1">
-                {remedialCount} <span className="text-sm font-semibold text-rose-200">Siswa</span>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
+                {remedialCount} <span className="text-xs font-semibold text-slate-500">Siswa</span>
               </div>
-              <p className="text-[11px] text-rose-200 mt-1 font-medium">Perlu program tindak lanjut/tugas remedial</p>
+              <p className="text-[10px] text-rose-700 mt-0.5 font-semibold">Perlu program tindak lanjut / tugas</p>
             </div>
 
             {/* Ambang Batas KKTP */}
-            <div className="bg-slate-900 text-white border border-slate-800 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Kriteria KKTP</span>
-                <Award className="w-4 h-4 text-amber-400" />
+            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xs border-l-4 border-l-slate-800">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kriteria KKTP</span>
+                <Award className="w-3.5 h-3.5 text-amber-600" />
               </div>
-              <div className="text-2xl font-black text-white mt-1">75.0</div>
-              <p className="text-[11px] text-slate-300 mt-1 font-medium">SK Kepala Sekolah Labschool UM</p>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">75.0</div>
+              <p className="text-[10px] text-slate-600 mt-0.5 font-medium">SK Kepala Sekolah Labschool UM</p>
             </div>
           </div>
 
           {/* ─── CONTROLS & FILTER BAR ─── */}
-          <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5 shrink-0">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -405,19 +408,19 @@ export default function BukuNilaiPage() {
                 placeholder="Cari siswa berdasarkan nama atau NIS..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
               />
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-300 shrink-0">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
               <button
                 type="button"
                 onClick={() => setFilterStatus('all')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                   filterStatus === 'all'
-                    ? 'bg-blue-900 text-white shadow-xs'
-                    : 'text-slate-700 hover:text-slate-900'
+                    ? 'bg-blue-900 text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Semua Siswa ({localGrades.length})
@@ -425,10 +428,10 @@ export default function BukuNilaiPage() {
               <button
                 type="button"
                 onClick={() => setFilterStatus('remedial')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                   filterStatus === 'remedial'
-                    ? 'bg-rose-800 text-white shadow-xs'
-                    : 'text-slate-700 hover:text-slate-900'
+                    ? 'bg-rose-700 text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Remedial ({remedialCount})
@@ -436,10 +439,10 @@ export default function BukuNilaiPage() {
               <button
                 type="button"
                 onClick={() => setFilterStatus('tuntas')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                   filterStatus === 'tuntas'
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'text-slate-700 hover:text-slate-900'
+                    ? 'bg-emerald-800 text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Tuntas ({tuntasCount})
@@ -448,15 +451,15 @@ export default function BukuNilaiPage() {
           </div>
 
           {/* ─── SPREADSHEET LEDGER TABLE ─── */}
-          <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
+          <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs flex-1 min-h-0 flex flex-col">
+            <div className="overflow-x-auto overflow-y-auto flex-1 h-full">
               <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
-                    <th className="py-3 px-3 w-12 text-center sticky left-0 bg-slate-100 z-10">No</th>
-                    <th className="py-3 px-3 w-24 sticky left-12 bg-slate-100 z-10">NIS</th>
-                    <th className="py-3 px-3 min-w-56 sticky left-36 bg-slate-100 z-10">Nama Siswa</th>
-                    <th className="py-3 px-2 w-14 text-center">L/P</th>
+                <thead className="sticky top-0 bg-slate-100 z-20 border-b border-slate-300 shadow-xs">
+                  <tr className="text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
+                    <th className="py-3 px-3 w-12 text-center sticky left-0 bg-slate-100 z-30">No</th>
+                    <th className="py-3 px-3 w-24 sticky left-12 bg-slate-100 z-30">NIS</th>
+                    <th className="py-3 px-3 min-w-56 sticky left-36 bg-slate-100 z-30">Nama Siswa</th>
+                    <th className="py-3 px-2 w-14 text-center bg-slate-100">L/P</th>
                     
                     {/* Dynamic Component Columns */}
                     {components.map((comp) => (
@@ -498,7 +501,20 @@ export default function BukuNilaiPage() {
                           {student.nis}
                         </td>
                         <td className="py-2.5 px-3 font-bold text-slate-900 sticky left-36 bg-white truncate">
-                          {student.name}
+                          <div className="flex items-center gap-2.5">
+                            {student.avatar_url ? (
+                              <img
+                                src={student.avatar_url}
+                                alt={student.name}
+                                className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                {student.name.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="truncate">{student.name}</span>
+                          </div>
                         </td>
                         <td className="py-2.5 px-2 text-center">
                           <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
@@ -576,92 +592,103 @@ export default function BukuNilaiPage() {
 
       {/* ─── TAB 2: CATATAN KARAKTER PROFIL PELAJAR PANCASILA (BE-GRD-02) ─── */}
       {mainTab === 'karakter' && (
-        <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex-1 min-h-0 flex flex-col overflow-hidden space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-2.5 shrink-0">
             <div>
-              <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+              <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">
                 Catatan Karakter Profil Pelajar Pancasila (P5) Bulanan
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-[11px] text-slate-500 font-medium">
                 Skala capaian: MB (Mulai Berkembang), SB (Sedang Berkembang), BSH (Berkembang Sesuai Harapan), SAB (Sangat Berkembang).
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded bg-slate-100 border border-slate-300 text-slate-700">
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded bg-slate-100 border border-slate-200/90 text-slate-700">
                 Kelas IX-A • Oktober 2026
               </span>
             </div>
           </div>
 
           {/* Character Table */}
-          <div className="border border-slate-300 rounded-lg overflow-hidden bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
-                    <th className="py-2.5 px-3 w-12 text-center">No</th>
-                    <th className="py-2.5 px-3 w-24">NIS</th>
-                    <th className="py-2.5 px-3 min-w-48">Nama Siswa</th>
-                    <th className="py-2.5 px-2 w-28 text-center">Beriman &amp; Bertakwa</th>
-                    <th className="py-2.5 px-2 w-28 text-center">Gotong Royong</th>
-                    <th className="py-2.5 px-2 w-28 text-center">Mandiri</th>
-                    <th className="py-2.5 px-2 w-28 text-center">Bernalar Kritis</th>
-                    <th className="py-2.5 px-2 w-28 text-center">Kreatif</th>
-                    <th className="py-2.5 px-3 min-w-64">Catatan Observasi Wali Kelas</th>
+          <div className="border border-slate-200/90 rounded-xl overflow-hidden bg-white shadow-xs flex-1 min-h-0 overflow-y-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-300 shadow-xs">
+                <tr className="text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
+                  <th className="py-3 px-3 w-12 text-center bg-slate-100">No</th>
+                  <th className="py-3 px-3 w-24 bg-slate-100">NIS</th>
+                  <th className="py-3 px-3 min-w-48 bg-slate-100">Nama Siswa</th>
+                  <th className="py-3 px-2 w-28 text-center bg-slate-100">Beriman &amp; Bertakwa</th>
+                  <th className="py-3 px-2 w-28 text-center bg-slate-100">Gotong Royong</th>
+                  <th className="py-3 px-2 w-28 text-center bg-slate-100">Mandiri</th>
+                  <th className="py-3 px-2 w-28 text-center bg-slate-100">Bernalar Kritis</th>
+                  <th className="py-3 px-2 w-28 text-center bg-slate-100">Kreatif</th>
+                  <th className="py-3 px-3 min-w-64 bg-slate-100">Catatan Observasi Wali Kelas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {localGrades.map((s, idx) => (
+                  <tr key={s.student_id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-2.5 px-3 text-center font-bold text-slate-500">
+                      {idx + 1}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-slate-700">
+                      {s.nis}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900 truncate">
+                      <div className="flex items-center gap-2.5">
+                        {s.avatar_url ? (
+                          <img
+                            src={s.avatar_url}
+                            alt={s.name}
+                            className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {s.name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="truncate">{s.name}</span>
+                      </div>
+                    </td>
+                    {['beriman', 'gotongRoyong', 'mandiri', 'bernalarKritis', 'kreatif'].map((dim) => (
+                      <td key={dim} className="py-1 px-1.5 text-center">
+                        <select 
+                          defaultValue="BSH"
+                          className="w-full px-1.5 py-1 rounded text-xs font-bold bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-blue-900"
+                        >
+                          <option value="MB">MB</option>
+                          <option value="SB">SB</option>
+                          <option value="BSH">BSH</option>
+                          <option value="SAB">SAB</option>
+                        </select>
+                      </td>
+                    ))}
+                    <td className="py-1.5 px-3">
+                      <input
+                        type="text"
+                        placeholder="Observasi pembiasaan dan akhlak..."
+                        defaultValue={idx === 0 ? "Menunjukkan kepemimpinan positif dalam kerja tim lab." : ""}
+                        className="w-full px-2 py-1 text-xs bg-white border border-slate-200 rounded focus:border-blue-900 focus:outline-none"
+                      />
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {localGrades.map((s, idx) => (
-                    <tr key={s.student_id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-2 px-3 text-center font-bold text-slate-500">
-                        {idx + 1}
-                      </td>
-                      <td className="py-2 px-3 font-mono font-semibold text-slate-700">
-                        {s.nis}
-                      </td>
-                      <td className="py-2 px-3 font-bold text-slate-900 truncate">
-                        {s.name}
-                      </td>
-                      {['beriman', 'gotongRoyong', 'mandiri', 'bernalarKritis', 'kreatif'].map((dim) => (
-                        <td key={dim} className="py-1 px-1.5 text-center">
-                          <select 
-                            defaultValue="BSH"
-                            className="w-full px-1.5 py-1 rounded text-xs font-bold bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-blue-900"
-                          >
-                            <option value="MB">MB</option>
-                            <option value="SB">SB</option>
-                            <option value="BSH">BSH</option>
-                            <option value="SAB">SAB</option>
-                          </select>
-                        </td>
-                      ))}
-                      <td className="py-1.5 px-3">
-                        <input
-                          type="text"
-                          placeholder="Observasi pembiasaan dan akhlak..."
-                          defaultValue={idx === 0 ? "Menunjukkan kepemimpinan positif dalam kerja tim lab." : ""}
-                          className="w-full px-2 py-1 text-xs bg-white border border-slate-200 rounded focus:border-blue-900 focus:outline-none"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
       {/* ─── TAB 3: E-PROGRESS REPORT & E-RAPOR BULANAN (BE-GRD-03 & BE-GRD-04) ─── */}
       {mainTab === 'progress_report' && (
-        <div className="space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3.5 pr-1">
           {/* Status & Lifecycle Banner */}
-          <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-3.5">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-800 text-white">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-800 text-white shadow-xs">
                     SIAP DITERBITKAN
                   </span>
                   <span className="text-xs font-bold text-slate-500">
@@ -711,12 +738,12 @@ export default function BukuNilaiPage() {
                 <span className="font-bold text-white text-xs mt-0.5 block">2. Ajukan ACC Kepsek</span>
                 <span className="text-[10px] text-blue-100 mt-1 block">Dalam Antrean Verifikasi</span>
               </div>
-              <div className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
+              <div className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200/90">
                 <span className="font-extrabold block text-slate-400 text-[10px] uppercase">Langkah 3</span>
                 <span className="font-bold text-slate-800 text-xs mt-0.5 block">3. Pengesahan Digital</span>
                 <span className="text-[10px] text-slate-500 mt-1 block">Tanda Tangan QR Resmi</span>
               </div>
-              <div className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
+              <div className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200/90">
                 <span className="font-extrabold block text-slate-400 text-[10px] uppercase">Langkah 4</span>
                 <span className="font-bold text-slate-800 text-xs mt-0.5 block">4. Terbit ke Ortu/Siswa</span>
                 <span className="text-[10px] text-slate-500 mt-1 block">Tampil di Portal & Unduh PDF</span>
@@ -725,21 +752,21 @@ export default function BukuNilaiPage() {
           </div>
 
           {/* KPI Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-blue-900">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Siswa Terdaftar</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs border-l-4 border-l-blue-900">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Siswa Terdaftar</span>
               <span className="text-2xl font-black text-slate-900 block mt-1">32 Siswa</span>
               <span className="text-[10px] font-bold text-emerald-700 mt-0.5 block">100% Data Lengkap</span>
             </div>
 
-            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-emerald-800">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Rata-rata Kelas</span>
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs border-l-4 border-l-emerald-800">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Rata-rata Kelas</span>
               <span className="text-2xl font-black text-emerald-800 block mt-1">{classAverage}</span>
               <span className="text-[10px] font-bold text-slate-600 mt-0.5 block">Target KKTP: 75.0</span>
             </div>
 
-            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-teal-800">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Ketuntasan Belajar</span>
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs border-l-4 border-l-teal-800">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Ketuntasan Belajar</span>
               <span className="text-2xl font-black text-teal-800 block mt-1">
                 {totalStudents > 0 ? Math.round((tuntasCount / totalStudents) * 100) : 0}%
               </span>
@@ -748,15 +775,15 @@ export default function BukuNilaiPage() {
               </span>
             </div>
 
-            <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs border-l-4 border-l-purple-900">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Kehadiran Rata-rata</span>
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs border-l-4 border-l-purple-900">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Kehadiran Rata-rata</span>
               <span className="text-2xl font-black text-purple-900 block mt-1">96.8%</span>
               <span className="text-[10px] font-bold text-emerald-700 mt-0.5 block">Sangat Baik</span>
             </div>
           </div>
 
           {/* Student Progress Report Table */}
-          <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-xs">
+          <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">Daftar E-Progress Report Siswa Kelas IX-A</h3>

@@ -33,6 +33,7 @@ interface StudentDetailedProfile {
   attendanceRate: number;
   totalPoints: number;
   status: 'aktif' | 'mutasi' | 'alumni';
+  avatar_url?: string;
 }
 
 interface PointRecord {
@@ -114,7 +115,8 @@ export default function DirektoriSiswaPage() {
     parentPhone: `08123456${7000 + idx}`,
     attendanceRate: idx === 2 ? 88.5 : idx === 6 ? 90.0 : 96.5,
     totalPoints: idx === 1 ? 25 : idx === 2 ? -10 : idx === 13 ? 35 : 0,
-    status: 'aktif'
+    status: 'aktif',
+    avatar_url: std.avatar_url
   }));
 
   const [pointRecords, setPointRecords] = useState<PointRecord[]>([
@@ -232,32 +234,32 @@ export default function DirektoriSiswaPage() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="flex flex-col gap-3 max-w-full xl:h-[calc(100vh-112px)] xl:overflow-hidden text-slate-900">
       {/* ─── HEADER ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-300 rounded-xl p-6 shadow-xs">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
               Data Siswa & Wali Kelas
             </span>
-            <span className="text-xs text-slate-500 font-semibold">• ADM-MST-04 & BE-STD-01 (P0)</span>
+            <span className="text-xs text-slate-500 font-semibold">• Kelas IX-A (32 Siswa)</span>
           </div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">
-            Direktori Peserta Didik & Poin Karakter Kelas IX-A
+          <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+            Direktori Peserta Didik & Poin Karakter
           </h1>
-          <p className="text-xs text-slate-600 mt-1 max-w-3xl">
-            Kelola data pokok siswa binaan, kontak orang tua/wali untuk koordinasi langsung, dan pencatatan poin pelanggaran serta apresiasi prestasi.
+          <p className="text-xs text-slate-600 mt-0.5 line-clamp-1 max-w-2xl">
+            Kelola data pokok siswa binaan, kontak WhatsApp orang tua/wali, dan pencatatan poin pelanggaran & prestasi.
           </p>
         </div>
 
         {/* Tab Switcher & Actions */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-300">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('direktori')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'direktori' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-700 hover:text-slate-900'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'direktori' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
@@ -266,8 +268,8 @@ export default function DirektoriSiswaPage() {
             <button
               type="button"
               onClick={() => setActiveTab('poin')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'poin' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-700 hover:text-slate-900'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'poin' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Award className="w-3.5 h-3.5" />
@@ -276,8 +278,8 @@ export default function DirektoriSiswaPage() {
             <button
               type="button"
               onClick={() => setActiveTab('rujukan_bk')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'rujukan_bk' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-700 hover:text-slate-900'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'rujukan_bk' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <HeartHandshake className="w-3.5 h-3.5" />
@@ -289,7 +291,7 @@ export default function DirektoriSiswaPage() {
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-3.5 py-2 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Ekspor CSV</span>
@@ -300,7 +302,7 @@ export default function DirektoriSiswaPage() {
             <button
               type="button"
               onClick={() => setIsPointModalOpen(true)}
-              className="px-4 py-2 rounded-lg text-xs font-black bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-blue-900 hover:bg-blue-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Catat Poin Siswa</span>
@@ -314,10 +316,10 @@ export default function DirektoriSiswaPage() {
                 setReferralStudent(students[0]);
                 setIsReferralModalOpen(true);
               }}
-              className="px-4 py-2 rounded-lg text-xs font-black bg-purple-900 hover:bg-purple-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-purple-900 hover:bg-purple-950 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Buat Rujukan BK Baru</span>
+              <span>Buat Rujukan BK</span>
             </button>
           )}
         </div>
@@ -325,9 +327,9 @@ export default function DirektoriSiswaPage() {
 
       {/* ─── TAB 1: DIREKTORI SISWA & KONTAK ORTU ─── */}
       {activeTab === 'direktori' && (
-        <div className="space-y-4">
+        <div className="flex-1 min-h-0 flex flex-col gap-2.5 overflow-hidden">
           {/* Controls Bar */}
-          <div className="bg-white border border-slate-300 rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5 shrink-0">
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -335,16 +337,16 @@ export default function DirektoriSiswaPage() {
                 placeholder="Cari siswa berdasarkan nama, NIS, atau NISN..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-300 shrink-0">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
               <button
                 type="button"
                 onClick={() => setGenderFilter('ALL')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  genderFilter === 'ALL' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-700 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  genderFilter === 'ALL' ? 'bg-blue-900 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Semua ({students.length})
@@ -352,8 +354,8 @@ export default function DirektoriSiswaPage() {
               <button
                 type="button"
                 onClick={() => setGenderFilter('L')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  genderFilter === 'L' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-700 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  genderFilter === 'L' ? 'bg-blue-900 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Laki-Laki ({students.filter(s => s.gender === 'L').length})
@@ -361,8 +363,8 @@ export default function DirektoriSiswaPage() {
               <button
                 type="button"
                 onClick={() => setGenderFilter('P')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  genderFilter === 'P' ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-700 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  genderFilter === 'P' ? 'bg-blue-900 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Perempuan ({students.filter(s => s.gender === 'P').length})
@@ -370,104 +372,117 @@ export default function DirektoriSiswaPage() {
             </div>
           </div>
 
-          {/* Students Roster Table */}
-          <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
-                    <th className="py-3 px-3 w-12 text-center">No</th>
-                    <th className="py-3 px-3 w-24">NIS</th>
-                    <th className="py-3 px-3 w-28">NISN</th>
-                    <th className="py-3 px-3 min-w-52">Nama Siswa</th>
-                    <th className="py-3 px-2 w-14 text-center">L/P</th>
-                    <th className="py-3 px-3 min-w-44">Orang Tua / Wali</th>
-                    <th className="py-3 px-3 w-40">Kontak WhatsApp</th>
-                    <th className="py-3 px-3 w-28 text-center">Kehadiran</th>
-                    <th className="py-3 px-3 w-28 text-center">Poin Disiplin</th>
-                    <th className="py-3 px-3 w-28 text-center">Aksi Walas</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {filteredStudents.map((std, idx) => (
-                    <tr key={std.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-2.5 px-3 text-center font-bold text-slate-500">
-                        {idx + 1}
-                      </td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-700">
-                        {std.nis}
-                      </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-500">
-                        {std.nisn}
-                      </td>
-                      <td className="py-2.5 px-3 font-bold text-slate-900">
-                        {std.name}
-                      </td>
-                      <td className="py-2.5 px-2 text-center">
-                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                          std.gender === 'L' ? 'bg-slate-200 text-slate-800' : 'bg-slate-300 text-slate-900'
-                        }`}>
-                          {std.gender}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 font-medium text-slate-700">
-                        {std.parentName}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <a
-                          href={`https://wa.me/62${std.parentPhone.slice(1)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-800 text-white shadow-xs hover:bg-emerald-900 transition-colors"
-                        >
-                          <MessageSquare className="w-3 h-3" />
-                          <span>{std.parentPhone}</span>
-                        </a>
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span className="font-extrabold text-slate-800">
-                          {std.attendanceRate}%
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        {std.totalPoints > 0 ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-900 text-white shadow-xs">
-                            +{std.totalPoints} Poin
-                          </span>
-                        ) : std.totalPoints < 0 ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-800 text-white shadow-xs">
-                            {std.totalPoints} Poin
-                          </span>
+          {/* Students Roster Table with Sticky Header */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs flex-1 min-h-0 flex flex-col">
+            <div className="overflow-x-auto overflow-y-auto flex-1 h-full">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-300 shadow-xs">
+                <tr className="text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
+                  <th className="py-3 px-3 w-12 text-center bg-slate-100">No</th>
+                  <th className="py-3 px-3 w-24 bg-slate-100">NIS</th>
+                  <th className="py-3 px-3 w-28 bg-slate-100">NISN</th>
+                  <th className="py-3 px-3 min-w-52 bg-slate-100">Nama Siswa</th>
+                  <th className="py-3 px-2 w-14 text-center bg-slate-100">L/P</th>
+                  <th className="py-3 px-3 min-w-44 bg-slate-100">Orang Tua / Wali</th>
+                  <th className="py-3 px-3 w-40 bg-slate-100">Kontak WhatsApp</th>
+                  <th className="py-3 px-3 w-28 text-center bg-slate-100">Kehadiran</th>
+                  <th className="py-3 px-3 w-28 text-center bg-slate-100">Poin Disiplin</th>
+                  <th className="py-3 px-3 w-28 text-center bg-slate-100">Aksi Walas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filteredStudents.map((std, idx) => (
+                  <tr key={std.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-2.5 px-3 text-center font-bold text-slate-500">
+                      {idx + 1}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-slate-700">
+                      {std.nis}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-slate-500">
+                      {std.nisn}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900">
+                      <div className="flex items-center gap-2.5">
+                        {std.avatar_url ? (
+                          <img
+                            src={std.avatar_url}
+                            alt={std.name}
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                          />
                         ) : (
-                          <span className="text-slate-400 font-bold">-</span>
+                          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-900 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            {std.name.slice(0, 2).toUpperCase()}
+                          </div>
                         )}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => toast.info(`Membuka berkas profil komprehensif untuk ${std.name}`)}
-                            className="px-2 py-1 rounded text-[11px] font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 cursor-pointer"
-                          >
-                            Profil
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setReferralStudent(std);
-                              setIsReferralModalOpen(true);
-                            }}
-                            className="px-2 py-1 rounded text-[11px] font-bold bg-purple-900 hover:bg-purple-950 text-white shadow-xs cursor-pointer"
-                            title="Rujuk Siswa ke Guru BK"
-                          >
-                            Rujuk BK
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <span className="truncate">{std.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-2 text-center">
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                        std.gender === 'L' ? 'bg-slate-200 text-slate-800' : 'bg-slate-300 text-slate-900'
+                      }`}>
+                        {std.gender}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 font-medium text-slate-700">
+                      {std.parentName}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <a
+                        href={`https://wa.me/62${std.parentPhone.slice(1)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-800 text-white shadow-xs hover:bg-emerald-900 transition-colors"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                        <span>{std.parentPhone}</span>
+                      </a>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="font-extrabold text-slate-800">
+                        {std.attendanceRate}%
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      {std.totalPoints > 0 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-900 text-white shadow-xs">
+                          +{std.totalPoints} Poin
+                        </span>
+                      ) : std.totalPoints < 0 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-700 text-white shadow-xs">
+                          {std.totalPoints} Poin
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-bold">-</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => toast.info(`Membuka berkas profil komprehensif untuk ${std.name}`)}
+                          className="px-2.5 py-1 rounded text-[11px] font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 cursor-pointer shadow-xs"
+                        >
+                          Profil
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReferralStudent(std);
+                            setIsReferralModalOpen(true);
+                          }}
+                          className="px-2.5 py-1 rounded text-[11px] font-bold bg-purple-900 hover:bg-purple-950 text-white shadow-xs cursor-pointer"
+                          title="Rujuk Siswa ke Guru BK"
+                        >
+                          Rujuk BK
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             </div>
           </div>
         </div>
@@ -475,8 +490,8 @@ export default function DirektoriSiswaPage() {
 
       {/* ─── TAB 2: POIN KEDISIPLINAN & PRESTASI SISWA (BE-STD-01) ─── */}
       {activeTab === 'poin' && (
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3.5 pr-1">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
               <div>
                 <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
@@ -497,25 +512,42 @@ export default function DirektoriSiswaPage() {
               </button>
             </div>
 
-            {/* List Records */}
+            {/* List Records with border-l-4 */}
             <div className="space-y-3">
               {pointRecords.map((rec) => (
                 <div
                   key={rec.id}
-                  className="p-4 rounded-xl border border-slate-300 bg-white flex flex-col md:flex-row md:items-center justify-between gap-3"
+                  className={`p-4 rounded-xl border border-slate-200/90 bg-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 border-l-4 ${
+                    rec.type === 'prestasi' ? 'border-l-blue-900' : 'border-l-rose-700'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs ${
-                      rec.type === 'prestasi' ? 'bg-blue-900' : 'bg-rose-800'
-                    }`}>
-                      {rec.type === 'prestasi' ? '🏆' : '⚠️'}
-                    </div>
+                    {students.find(s => s.id === rec.studentId)?.avatar_url ? (
+                      <div className="relative shrink-0">
+                        <img
+                          src={students.find(s => s.id === rec.studentId)?.avatar_url}
+                          alt={rec.studentName}
+                          className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-2xs"
+                        />
+                        <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white shadow-xs ${
+                          rec.type === 'prestasi' ? 'bg-blue-900' : 'bg-rose-700'
+                        }`}>
+                          {rec.type === 'prestasi' ? '🏆' : '⚠️'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className={`w-10 h-10 rounded-lg text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs ${
+                        rec.type === 'prestasi' ? 'bg-blue-900' : 'bg-rose-700'
+                      }`}>
+                        {rec.type === 'prestasi' ? '🏆' : '⚠️'}
+                      </div>
+                    )}
 
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-extrabold text-sm text-slate-900">{rec.studentName}</h3>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-                          rec.type === 'prestasi' ? 'bg-blue-900 text-white' : 'bg-rose-800 text-white'
+                          rec.type === 'prestasi' ? 'bg-blue-900 text-white' : 'bg-rose-700 text-white'
                         }`}>
                           {rec.points > 0 ? `+${rec.points} Poin` : `${rec.points} Poin`}
                         </span>
@@ -630,8 +662,8 @@ export default function DirektoriSiswaPage() {
 
       {/* ─── TAB 3: RUJUKAN BIMBINGAN KONSELING / BK (BE-BK-01 & ADM-BK-01) ─── */}
       {activeTab === 'rujukan_bk' && (
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3.5 pr-1">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -649,10 +681,10 @@ export default function DirektoriSiswaPage() {
               </div>
             </div>
 
-            <div className="border border-slate-300 rounded-lg overflow-hidden bg-white">
+            <div className="border border-slate-200/90 rounded-xl overflow-x-auto bg-white shadow-xs max-h-160 overflow-y-auto">
               <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
+                <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-200">
+                  <tr className="text-slate-800 font-extrabold uppercase text-[10px] tracking-wider">
                     <th className="py-2.5 px-3 w-12 text-center">No</th>
                     <th className="py-2.5 px-3 w-28">NIS</th>
                     <th className="py-2.5 px-3 min-w-44">Nama Siswa</th>
@@ -663,17 +695,32 @@ export default function DirektoriSiswaPage() {
                     <th className="py-2.5 px-3 min-w-64">Catatan Tindak Lanjut Guru BK</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-200/80">
                   {referrals.map((ref, idx) => (
-                    <tr key={ref.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={ref.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-2.5 px-3 text-center font-bold text-slate-500">{idx + 1}</td>
                       <td className="py-2.5 px-3 font-mono font-semibold text-slate-700">{ref.nis}</td>
-                      <td className="py-2.5 px-3 font-bold text-slate-900">{ref.studentName}</td>
+                      <td className="py-2.5 px-3 font-bold text-slate-900">
+                        <div className="flex items-center gap-2.5">
+                          {students.find(s => s.id === ref.studentId)?.avatar_url ? (
+                            <img
+                              src={students.find(s => s.id === ref.studentId)?.avatar_url}
+                              alt={ref.studentName}
+                              className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-900 font-bold text-[10px] flex items-center justify-center shrink-0">
+                              {ref.studentName.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="truncate">{ref.studentName}</span>
+                        </div>
+                      </td>
                       <td className="py-2.5 px-3 font-mono text-slate-600">{ref.date}</td>
                       <td className="py-2.5 px-3 font-medium text-slate-800">{ref.reason}</td>
                       <td className="py-2.5 px-2 text-center">
                         {ref.priority === 'segera' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-800 text-white shadow-xs">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-700 text-white shadow-xs">
                             SEGERA
                           </span>
                         ) : (
