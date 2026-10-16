@@ -49,8 +49,8 @@ class UatStagingSeeder extends Seeder
 
         if (! app()->environment('testing')) {
             $optIn = filter_var(env('UAT_SEED_ENABLED', false), FILTER_VALIDATE_BOOLEAN);
-            if (! app()->environment('staging') || ! $optIn) {
-                throw new \RuntimeException('UatStagingSeeder hanya boleh dijalankan di lingkungan staging dengan opt-in UAT_SEED_ENABLED=true atau lingkungan testing.');
+            if (! in_array(app()->environment(), ['staging', 'local'], true) || ! $optIn) {
+                throw new \RuntimeException('UatStagingSeeder hanya boleh dijalankan di lingkungan staging/local dengan opt-in UAT_SEED_ENABLED=true atau lingkungan testing.');
             }
         }
     }
@@ -79,7 +79,7 @@ class UatStagingSeeder extends Seeder
         $schoolId = $configuredSchoolId ?: $existingSiteSettingSchoolId;
 
         if (empty($schoolId)) {
-            if (app()->environment('testing')) {
+            if (app()->environment(['testing', 'local'])) {
                 $schoolId = self::DEFAULT_SCHOOL_ID;
             } else {
                 throw new \RuntimeException(
@@ -129,7 +129,7 @@ class UatStagingSeeder extends Seeder
         }
 
         if (empty($password)) {
-            if (app()->environment('testing')) {
+            if (app()->environment(['testing', 'local'])) {
                 $password = 'SistLabUM2026!UAT';
             } else {
                 throw new \RuntimeException('Kata sandi UAT belum dikonfigurasikan.');
