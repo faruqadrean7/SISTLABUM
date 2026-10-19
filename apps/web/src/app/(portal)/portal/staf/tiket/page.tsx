@@ -43,9 +43,10 @@ export default function StaffTicketsPage() {
   const [priority, setPriority] = useState<TicketPriority>('sedang');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   React.useEffect(() => {
-    if (initialTickets.length > 0) {
+    if (Array.isArray(initialTickets) && initialTickets.length > 0) {
       setTickets(initialTickets);
     }
   }, [initialTickets]);
@@ -55,6 +56,7 @@ export default function StaffTicketsPage() {
     if (!title.trim() || !location.trim() || !description.trim()) return;
 
     setIsSubmitting(true);
+    setModalError(null);
     try {
       const created = await stafApi.createTicket({
         title,
@@ -71,15 +73,17 @@ export default function StaffTicketsPage() {
       setLocation('');
       setDescription('');
       setPriority('sedang');
+      setModalError(null);
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      setModalError(err?.message || 'Gagal menerbitkan tiket aduan sarpras. Silakan periksa kembali formulir.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const filteredTickets = tickets.filter((t) => {
+  const safeTickets = Array.isArray(tickets) ? tickets : [];
+  const filteredTickets = safeTickets.filter((t) => {
     if (filterStatus === 'all') return true;
     return t.status === filterStatus;
   });
@@ -299,6 +303,12 @@ export default function StaffTicketsPage() {
 
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4 pt-4">
+                {modalError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-status-danger text-xs rounded-lg flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>{modalError}</span>
+                  </div>
+                )}
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">
                     Judul Masalah / Kerusakan

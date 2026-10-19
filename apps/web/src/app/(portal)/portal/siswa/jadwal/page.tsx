@@ -34,7 +34,8 @@ export default function StudentSchedulePage() {
     return today >= 1 && today <= 5 ? today : 1;
   });
 
-  const filteredSchedules = schedules.filter((s) => s.dayOfWeek === selectedDay);
+  const safeSchedules = Array.isArray(schedules) ? schedules : [];
+  const filteredSchedules = safeSchedules.filter((s) => s.dayOfWeek === selectedDay);
 
   return (
     <div className="space-y-6">
@@ -69,7 +70,7 @@ export default function StudentSchedulePage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
         {DAYS.map((d) => {
           const isSelected = selectedDay === d.id;
-          const count = schedules.filter((s) => s.dayOfWeek === d.id).length;
+          const count = safeSchedules.filter((s) => s.dayOfWeek === d.id).length;
           return (
             <button
               key={d.id}

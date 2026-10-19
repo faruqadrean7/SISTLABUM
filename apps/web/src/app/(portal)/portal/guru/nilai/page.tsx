@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  useTeacherClasses,
+  useTeacherAssignmentsSummary,
   useTeacherGradeComponents,
   useTeacherStudentGrades,
   guruApi,
@@ -23,28 +23,59 @@ import {
   Award,
   Layers,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function TeacherGradesPage() {
-  const { data: classes = [] } = useTeacherClasses();
+  const {
+    subjects,
+    getClassesForSubject,
+    isLoading: isLoadingAssignments,
+  } = useTeacherAssignmentsSummary();
+
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
 
-  useEffect(() => {
-    if (classes.length > 0 && !selectedClassId) {
-      setSelectedClassId(classes[0].id);
-    }
-  }, [classes, selectedClassId]);
+  // Available classes for selected subject
+  const availableClasses = React.useMemo(() => {
+    return getClassesForSubject(selectedSubjectId);
+  }, [getClassesForSubject, selectedSubjectId]);
 
-  const { data: components = [], isLoading: isLoadingComponents } = useTeacherGradeComponents(selectedClassId, 'sub-mat');
-  const { data: initialGrades = [], isLoading: isLoadingGrades } = useTeacherStudentGrades(selectedClassId, 'sub-mat');
+  // Auto-select subject if 1 or not yet selected
+  useEffect(() => {
+    if (subjects.length > 0) {
+      if (!selectedSubjectId || !subjects.some((s) => s.id === selectedSubjectId)) {
+        setSelectedSubjectId(subjects[0].id);
+      }
+    } else {
+      setSelectedSubjectId('');
+    }
+  }, [subjects, selectedSubjectId]);
+
+  // Keep class aligned with availableClasses for this subject
+  useEffect(() => {
+    if (availableClasses.length > 0) {
+      if (!selectedClassId || !availableClasses.some((c) => c.id === selectedClassId)) {
+        setSelectedClassId(availableClasses[0].id);
+      }
+    } else {
+      setSelectedClassId('');
+    }
+  }, [availableClasses, selectedClassId]);
+
+  const { data: components = [], isLoading: isLoadingComponents } = useTeacherGradeComponents(selectedClassId, selectedSubjectId);
+  const { data: initialGrades = [], isLoading: isLoadingGrades } = useTeacherStudentGrades(selectedClassId, selectedSubjectId);
 
   const [grades, setGrades] = useState<TeacherStudentGrade[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialGrades.length > 0) {
       setGrades(initialGrades);
+    } else {
+      setGrades([]);
     }
   }, [initialGrades]);
 
@@ -74,20 +105,24 @@ export default function TeacherGradesPage() {
   };
 
   const handleSaveBulk = async () => {
+    if (!selectedClassId || !selectedSubjectId || grades.length === 0) return;
     setIsSaving(true);
     setSuccessMessage(null);
+    setErrorMessage(null);
     try {
-      const res = await guruApi.updateBulkGrades(selectedClassId, 'sub-mat', grades);
+      const res = await guruApi.updateBulkGrades(selectedClassId, selectedSubjectId, grades);
       setSuccessMessage(res.message);
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan buku nilai.';
+      setErrorMessage(msg);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const activeClass = classes.find((c) => c.id === selectedClassId) || classes[0];
+  const activeSubject = subjects.find((s) => s.id === selectedSubjectId);
+  const activeClass = availableClasses.find((c) => c.id === selectedClassId);
 
   return (
     <div className="space-y-6">
@@ -112,7 +147,13 @@ export default function TeacherGradesPage() {
           </p>
         </div>
 
-        <Button onClick={handleSaveBulk} isLoading={isSaving} size="sm" className="gap-2 font-bold px-5">
+        <Button
+          onClick={handleSaveBulk}
+          isLoading={isSaving}
+          disabled={!selectedSubjectId || !selectedClassId || grades.length === 0}
+          size="sm"
+          className="gap-2 font-bold px-5"
+        >
           <Save className="h-4 w-4" />
           <span>Simpan Perubahan Nilai</span>
         </Button>
@@ -125,21 +166,67 @@ export default function TeacherGradesPage() {
         </div>
       )}
 
-      {/* Class Selector & Components Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-status-danger text-xs sm:text-sm font-bold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 shrink-0 rotate-45 text-red-500" />
+            <span>{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-700">
+            ×
+          </button>
+        </div>
+      )}
+
+      {!isLoadingAssignments && subjects.length === 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs sm:text-sm font-medium flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+          <span>Anda belum memiliki penugasan jadwal mengajar aktif. Buku nilai tidak dapat diakses atau diubah.</span>
+        </div>
+      )}
+
+      {/* Subject & Class Selectors & Components Info */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-slate-200">
           <CardHeader className="pb-3">
-            <CardDescription className="text-xs font-bold">Pilih Kelas</CardDescription>
+            <CardDescription className="text-xs font-bold">Mata Pelajaran <span className="text-red-500">*</span></CardDescription>
+            <select
+              value={selectedSubjectId}
+              onChange={(e) => setSelectedSubjectId(e.target.value)}
+              disabled={isLoadingAssignments || subjects.length === 0}
+              className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue mt-1 disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              {subjects.length === 0 ? (
+                <option value="">Tidak ada mata pelajaran</option>
+              ) : (
+                subjects.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </CardHeader>
+        </Card>
+
+        <Card className="border-slate-200">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-xs font-bold">Pilih Kelas <span className="text-red-500">*</span></CardDescription>
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue mt-1"
+              disabled={!selectedSubjectId || availableClasses.length === 0}
+              className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue mt-1 disabled:bg-slate-100 disabled:text-slate-400"
             >
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.studentCount} Siswa)
-                </option>
-              ))}
+              {availableClasses.length === 0 ? (
+                <option value="">Tidak ada kelas untuk mapel ini</option>
+              ) : (
+                availableClasses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))
+              )}
             </select>
           </CardHeader>
         </Card>
@@ -148,11 +235,15 @@ export default function TeacherGradesPage() {
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-bold">Komponen Penilaian & Bobot Nilai</CardDescription>
             <div className="flex items-center gap-2 flex-wrap pt-1">
-              {components.map((comp) => (
-                <Badge key={comp.id} variant="outline" className="px-2.5 py-1 text-xs bg-slate-50 text-slate-700">
-                  <span className="font-bold">{comp.name} ({comp.code})</span>: {comp.weight}%
-                </Badge>
-              ))}
+              {components.length === 0 ? (
+                <span className="text-xs text-slate-400">Tidak ada komponen penilaian</span>
+              ) : (
+                components.map((comp) => (
+                  <Badge key={comp.id} variant="outline" className="px-2.5 py-1 text-xs bg-slate-50 text-slate-700">
+                    <span className="font-bold">{comp.name} ({comp.code})</span>: {comp.weight}%
+                  </Badge>
+                ))
+              )}
               <Badge className="bg-blue-50 text-brand-blue border-blue-200 text-xs px-2.5 py-1 font-bold">
                 KKTP: 75
               </Badge>
@@ -162,7 +253,7 @@ export default function TeacherGradesPage() {
       </div>
 
       {/* Grade Table */}
-      {isLoadingGrades || isLoadingComponents ? (
+      {isLoadingGrades || isLoadingComponents || isLoadingAssignments ? (
         <div className="min-h-[250px] flex items-center justify-center bg-white rounded-2xl border border-slate-200">
           <LoadingSpinner label="Memuat buku nilai..." size="lg" />
         </div>

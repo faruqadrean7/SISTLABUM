@@ -29,6 +29,23 @@ const loadSharedMock =
     ? () => import('./shared-portal-mock-data')
     : null;
 
+function unwrapList<T>(res: any): T[] {
+  if (!res) return [];
+  const payload = res.data !== undefined ? res.data : res;
+  if (Array.isArray(payload)) return payload as T[];
+  if (payload && Array.isArray(payload.data)) return payload.data as T[];
+  return [];
+}
+
+function unwrapItem<T>(res: any, fallback: T): T {
+  if (!res) return fallback;
+  const payload = res.data !== undefined ? res.data : res;
+  if (payload && typeof payload === 'object' && 'data' in payload && payload.data !== undefined) {
+    return payload.data as T;
+  }
+  return (payload as T) ?? fallback;
+}
+
 const resolvePortalPath = (portalType: 'guru' | 'staf'): string => {
   return portalType === 'guru' ? 'teacher' : 'staff';
 };
@@ -40,7 +57,7 @@ export const sharedPortalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<SharedSelfAttendance>(`/me/${prefix}/self-attendance`);
-        return res.data;
+        return unwrapItem<SharedSelfAttendance>(res, {} as SharedSelfAttendance);
       },
       loadSharedMock ? () => loadSharedMock().then((m) => m.MOCK_SHARED_SELF_ATTENDANCE) : undefined
     );
@@ -66,7 +83,7 @@ export const sharedPortalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<SharedLeaveRequest[]>(`/me/${prefix}/leave-requests`);
-        return res.data;
+        return unwrapList<SharedLeaveRequest>(res);
       },
       loadSharedMock ? () => loadSharedMock().then((m) => m.MOCK_SHARED_LEAVE_REQUESTS) : undefined
     );

@@ -6,6 +6,7 @@ import { teachersApi } from '@/features/master/teachers-api';
 import { TeacherSalarySlipDialog } from '@/features/master/teacher-salary-slip-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import {
   X,
   GraduationCap,
@@ -138,9 +139,14 @@ export function TeacherDetailDialog({
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-brand-teal">
-                <GraduationCap className="h-6 w-6" />
-              </div>
+              <Avatar
+                src={teacher.photo_file?.url || (teacher as any).photo_url}
+                name={teacher.full_name}
+                size="lg"
+                shape="rounded"
+                alt={`Foto ${teacher.full_name}`}
+                className="border border-slate-200 shadow-2xs"
+              />
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold text-slate-900">{teacher.full_name}</h2>

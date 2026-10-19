@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   useTeacherAssignments,
   useAssignmentSubmissions,
-  useTeacherClasses,
+  useTeacherAssignmentsSummary,
   guruApi,
   TeacherAssignmentItem,
   TeacherAssignmentSubmission,
@@ -29,11 +29,16 @@ import {
   Save,
   X,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function TeacherAssignmentsPage() {
   const { data: initialAssignments = [], isLoading } = useTeacherAssignments();
-  const { data: classes = [] } = useTeacherClasses();
+  const {
+    subjects,
+    getClassesForSubject,
+    isLoading: isLoadingAssignments,
+  } = useTeacherAssignmentsSummary();
 
   const [assignments, setAssignments] = useState<TeacherAssignmentItem[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -41,17 +46,47 @@ export default function TeacherAssignmentsPage() {
 
   // Form Buat Tugas Baru
   const [title, setTitle] = useState('');
-  const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || 'cls-7a');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [createModalError, setCreateModalError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (initialAssignments.length > 0) {
       setAssignments(initialAssignments);
     }
   }, [initialAssignments]);
+
+  // Available classes for selected subject
+  const availableClasses = React.useMemo(() => {
+    return getClassesForSubject(selectedSubjectId);
+  }, [getClassesForSubject, selectedSubjectId]);
+
+  // Auto-select subject if 1 or not yet selected
+  React.useEffect(() => {
+    if (subjects.length > 0) {
+      if (!selectedSubjectId || !subjects.some((s) => s.id === selectedSubjectId)) {
+        setSelectedSubjectId(subjects[0].id);
+      }
+    } else {
+      setSelectedSubjectId('');
+    }
+  }, [subjects, selectedSubjectId]);
+
+  // Keep class aligned with availableClasses for this subject
+  React.useEffect(() => {
+    if (availableClasses.length > 0) {
+      if (!selectedClassId || !availableClasses.some((c) => c.id === selectedClassId)) {
+        setSelectedClassId(availableClasses[0].id);
+      }
+    } else {
+      setSelectedClassId('');
+    }
+  }, [availableClasses, selectedClassId]);
 
   const { data: initialSubmissions = [], isLoading: isLoadingSubmissions } = useAssignmentSubmissions(
     selectedAssignmentId || ''
@@ -66,17 +101,20 @@ export default function TeacherAssignmentsPage() {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !dueDate) return;
+    if (!title.trim() || !dueDate || !selectedSubjectId || !selectedClassId) return;
 
     setIsSubmitting(true);
+    setCreateModalError(null);
+    setErrorMessage(null);
     try {
-      const activeClass = classes.find((c) => c.id === selectedClassId);
+      const activeSubject = subjects.find((s) => s.id === selectedSubjectId);
+      const activeClass = availableClasses.find((c) => c.id === selectedClassId);
       const newAsg = await guruApi.createAssignment({
         title,
-        subjectId: 'sub-mat',
-        subjectName: 'Matematika',
+        subjectId: selectedSubjectId,
+        subjectName: activeSubject?.name || 'Mata Pelajaran',
         classId: selectedClassId,
-        className: activeClass?.name || '7-A Unggulan',
+        className: activeClass?.name || 'Kelas',
         dueDate,
         description,
       });
@@ -87,8 +125,10 @@ export default function TeacherAssignmentsPage() {
       setDueDate('');
       setDescription('');
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menerbitkan tugas KBM.';
+      setCreateModalError(msg);
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,8 +156,9 @@ export default function TeacherAssignmentsPage() {
       );
       setSuccessMessage(`Nilai untuk ${submission.studentName} berhasil disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch {
-      // Fallback
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan nilai tugas.';
+      setErrorMessage(msg);
     }
   };
 
@@ -146,7 +187,12 @@ export default function TeacherAssignmentsPage() {
           </p>
         </div>
 
-        <Button onClick={() => setIsCreateModalOpen(true)} size="sm" className="gap-1.5 font-bold">
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          disabled={!isLoadingAssignments && subjects.length === 0}
+          size="sm"
+          className="gap-1.5 font-bold"
+        >
           <Plus className="h-4 w-4" />
           <span>Buat Tugas Baru</span>
         </Button>
@@ -159,8 +205,27 @@ export default function TeacherAssignmentsPage() {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-status-danger text-xs sm:text-sm font-bold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 shrink-0 rotate-45 text-red-500" />
+            <span>{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-700">
+            ×
+          </button>
+        </div>
+      )}
+
+      {!isLoadingAssignments && subjects.length === 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs sm:text-sm font-medium flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+          <span>Anda belum memiliki penugasan jadwal mengajar aktif. Anda tidak dapat membuat tugas KBM baru.</span>
+        </div>
+      )}
+
       {/* Assignments List */}
-      {isLoading ? (
+      {isLoading || isLoadingAssignments ? (
         <div className="min-h-[250px] flex items-center justify-center bg-white rounded-2xl border border-slate-200">
           <LoadingSpinner label="Memuat daftar tugas..." size="lg" />
         </div>
@@ -252,8 +317,40 @@ export default function TeacherAssignmentsPage() {
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
+              {createModalError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-status-danger text-xs font-bold flex items-center gap-2">
+                  <X className="h-4 w-4 shrink-0" />
+                  <span>{createModalError}</span>
+                </div>
+              )}
+
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Judul Tugas</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Mata Pelajaran <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedSubjectId}
+                  onChange={(e) => setSelectedSubjectId(e.target.value)}
+                  disabled={subjects.length === 0}
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue disabled:bg-slate-100 disabled:text-slate-400"
+                  required
+                >
+                  {subjects.length === 0 ? (
+                    <option value="">Tidak ada mata pelajaran</option>
+                  ) : (
+                    subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Judul Tugas <span className="text-red-500">*</span>
+                </label>
                 <Input
                   type="text"
                   placeholder="Contoh: Lembar Kerja Mandiri 4: Penerapan Teorema Pythagoras"
@@ -266,19 +363,29 @@ export default function TeacherAssignmentsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Kelas Target</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kelas Target <span className="text-red-500">*</span>
+                  </label>
                   <select
                     value={selectedClassId}
                     onChange={(e) => setSelectedClassId(e.target.value)}
-                    className="w-full h-9 px-2.5 rounded-lg border border-slate-300 text-xs bg-white"
+                    disabled={!selectedSubjectId || availableClasses.length === 0}
+                    className="w-full h-9 px-2.5 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-brand-blue disabled:bg-slate-100 disabled:text-slate-400"
+                    required
                   >
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {availableClasses.length === 0 ? (
+                      <option value="">Tidak ada kelas untuk mapel ini</option>
+                    ) : (
+                      availableClasses.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Batas Waktu (Deadline)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Batas Waktu (Deadline) <span className="text-red-500">*</span>
+                  </label>
                   <Input
                     type="datetime-local"
                     value={dueDate}
@@ -290,7 +397,9 @@ export default function TeacherAssignmentsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Instruksi & Kriteria Penilaian</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Instruksi & Kriteria Penilaian <span className="text-red-500">*</span>
+                </label>
                 <Textarea
                   placeholder="Tuliskan petunjuk pengerjaan tugas, format berkas yang diperbolehkan..."
                   value={description}
@@ -304,7 +413,13 @@ export default function TeacherAssignmentsPage() {
                 <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateModalOpen(false)}>
                   Batal
                 </Button>
-                <Button type="submit" size="sm" isLoading={isSubmitting} className="font-bold">
+                <Button
+                  type="submit"
+                  size="sm"
+                  isLoading={isSubmitting}
+                  disabled={!title.trim() || !dueDate || !selectedSubjectId || !selectedClassId}
+                  className="font-bold"
+                >
                   Terbitkan Tugas
                 </Button>
               </div>

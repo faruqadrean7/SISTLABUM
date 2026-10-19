@@ -7,6 +7,7 @@ import { useChildren } from '@/features/portal';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import {
   Users,
@@ -83,9 +84,14 @@ export default function ParentChildrenSelectorPage() {
                 <div>
                   <div className="h-2 bg-gradient-to-r from-blue-600 to-indigo-600 w-full" />
                   <CardHeader className="flex flex-row items-start gap-4 pb-3">
-                    <div className="h-14 w-14 rounded-2xl bg-blue-100 flex items-center justify-center text-brand-blue font-black text-xl shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                      {child.name.charAt(0)}
-                    </div>
+                    <Avatar
+                      src={(child as any).photo_url || (child as any).photoUrl}
+                      name={child.name}
+                      size="xl"
+                      shape="rounded"
+                      alt={`Foto ${child.name}`}
+                      className="shrink-0 group-hover:scale-105 transition-transform shadow-xs"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <CardTitle className="text-lg font-black text-slate-900 group-hover:text-brand-blue transition-colors truncate">

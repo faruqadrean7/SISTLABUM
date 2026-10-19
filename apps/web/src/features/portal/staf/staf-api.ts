@@ -28,7 +28,7 @@ export const stafApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<StaffDashboardSummary>('/me/staff/dashboard');
-        return res.data;
+        return (res.data as any)?.data ?? res.data;
       },
       loadStafMock ? () => loadStafMock().then((m) => m.MOCK_STAFF_DASHBOARD) : undefined
     );
@@ -38,23 +38,26 @@ export const stafApi = {
   async getMyTickets(): Promise<StaffTicketItem[]> {
     return executeWithMockFallback(
       async () => {
-        const res = await apiClient.get<{ data?: BackendTicketItem[] }>('/me/staff/tickets');
-        if (res.data?.data && Array.isArray(res.data.data)) {
-          return res.data.data.map((item) => ({
-            id: item.id,
-            code: item.code || `TCK-${item.id}`,
-            title: item.title,
-            category: item.category || 'Sarpras',
-            location: item.location || 'Area Sekolah',
-            description: item.description || '',
-            priority: item.priority || 'sedang',
-            status: item.status || 'pending',
-            reportedAt: item.created_at || new Date().toISOString(),
-            updatedAt: item.updated_at,
-            resolutionNotes: item.resolution_notes,
-          }));
-        }
-        return [];
+        const res = await apiClient.get<any>('/me/staff/tickets');
+        const payload = res.data;
+        const list: BackendTicketItem[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+        return list.map((item) => ({
+          id: item.id,
+          code: item.code || `TCK-${item.id}`,
+          title: item.title,
+          category: item.category || 'Sarpras',
+          location: item.location || 'Area Sekolah',
+          description: item.description || '',
+          priority: item.priority || 'sedang',
+          status: item.status || 'pending',
+          reportedAt: item.created_at || new Date().toISOString(),
+          updatedAt: item.updated_at,
+          resolutionNotes: item.resolution_notes,
+        }));
       },
       loadStafMock ? () => loadStafMock().then((m) => m.MOCK_STAFF_TICKETS) : undefined
     );

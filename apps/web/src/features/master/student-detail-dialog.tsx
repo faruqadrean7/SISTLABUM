@@ -4,6 +4,7 @@ import React from 'react';
 import { StudentItem } from '@/types/master';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import { X, User, BookOpen, Users, Clock, MapPin, Calendar } from 'lucide-react';
 
 export interface StudentDetailDialogProps {
@@ -32,10 +33,15 @@ export function StudentDetailDialog({ isOpen, onClose, student }: StudentDetailD
     >
       <div className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-elevated border border-slate-200 my-8">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-brand-teal">
-              <User className="h-5 w-5" />
-            </div>
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={student.photo_file?.url || (student as any).photo_url}
+              name={student.full_name}
+              size="lg"
+              shape="rounded"
+              alt={`Foto ${student.full_name}`}
+              className="border border-slate-200 shadow-2xs"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-slate-900">{student.full_name}</h2>

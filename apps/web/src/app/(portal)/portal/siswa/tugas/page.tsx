@@ -39,6 +39,7 @@ export default function StudentTugasPage() {
   const [driveLink, setDriveLink] = useState<string>('');
   const [studentNote, setStudentNote] = useState<string>('');
   const [feedbackTask, setFeedbackTask] = useState<StudentTaskItem | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Query real data from portalApi
   const { data: tasks = [], isLoading, isError, refetch } = useQuery({
@@ -55,18 +56,24 @@ export default function StudentTugasPage() {
       setUploadedFileName('');
       setDriveLink('');
       setStudentNote('');
+      setSubmitError(null);
+    },
+    onError: (err: any) => {
+      setSubmitError(err?.message || 'Gagal mengumpulkan tugas. Silakan periksa berkas atau tautan pengerjaan Anda.');
     },
   });
 
-  const filteredTasks = statusFilter === 'semua' 
-    ? tasks 
-    : tasks.filter((t) => t.status === statusFilter);
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const filteredTasks = statusFilter === 'semua'
+    ? safeTasks
+    : safeTasks.filter((t) => t.status === statusFilter);
 
   const handleOpenSubmit = (task: StudentTaskItem) => {
     setSelectedTask(task);
     setUploadedFileName('');
     setDriveLink('');
     setStudentNote('');
+    setSubmitError(null);
   };
 
   const handleConfirmSubmit = (e: React.FormEvent) => {
@@ -324,6 +331,13 @@ export default function StudentTugasPage() {
             </div>
 
             <form onSubmit={handleConfirmSubmit} className="space-y-4">
+              {submitError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-status-danger text-xs rounded-lg flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{submitError}</span>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">Nama File / Dokumen Lampiran:</label>
                 <Input

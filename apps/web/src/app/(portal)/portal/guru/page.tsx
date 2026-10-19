@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/providers/auth-provider';
 import {
@@ -25,9 +25,13 @@ import {
   Bell,
   Award,
   Layers,
-  DollarSign,
   UserCheck,
+  Camera,
+  X,
+  ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
+import { Avatar } from '@/components/ui/avatar';
 
 export default function TeacherDashboardPage() {
   const { user } = useAuth();
@@ -42,28 +46,58 @@ export default function TeacherDashboardPage() {
     'Bapak/Ibu Guru';
 
   const todayDayOfWeek = new Date().getDay(); // 0 is Sunday, 1 is Monday, etc.
-  const todaySchedules = schedules.filter((s) => s.dayOfWeek === (todayDayOfWeek || 1));
+  const safeSchedules = Array.isArray(schedules) ? schedules : [];
+  const todaySchedules = safeSchedules.filter((s) => s.dayOfWeek === (todayDayOfWeek || 1));
   const unrecordedSchedules = todaySchedules.filter((s) => !s.isAttendanceRecorded);
-  const pendingAssignments = assignments.filter((a) => a.submittedCount > a.gradedCount);
+  const safeAssignments = Array.isArray(assignments) ? assignments : [];
+  const pendingAssignments = safeAssignments.filter((a) => a.submittedCount > a.gradedCount);
+
+  // Modal & Pengaturan Foto Profil Guru
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [photoValidationMsg, setPhotoValidationMsg] = useState<string | null>(null);
+  const [photoValidationSuccess, setPhotoValidationSuccess] = useState<boolean>(false);
 
   return (
     <div className="space-y-6">
       {/* Welcome & Profile Banner */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-brand-blue rounded-full text-xs font-semibold mb-2">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Portal KBM Guru • Semester Gasal 2024/2025</span>
+        <div className="flex items-center gap-4">
+          <div className="relative group shrink-0">
+            <Avatar
+              src={(user?.profile?.photo_url as string) || (user?.profile?.photoUrl as string) || (user?.profile?.avatarUrl as string)}
+              name={teacherName}
+              size="xl"
+              shape="rounded"
+              alt={`Foto ${teacherName}`}
+              className="border-2 border-slate-100 shadow-xs"
+            />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Selamat Pagi, {teacherName} 👋
-          </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Siap menginspirasi siswa hari ini? Berikut ringkasan agenda mengajar dan tugas KBM Anda.
-          </p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-brand-blue rounded-full text-xs font-semibold mb-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Portal KBM Guru • Semester Gasal 2024/2025</span>
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Selamat Pagi, {teacherName} 👋
+            </h1>
+            <p className="text-sm text-slate-600 mt-1">
+              Siap menginspirasi siswa hari ini? Berikut ringkasan agenda mengajar dan tugas KBM Anda.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsPhotoModalOpen(true)}
+            className="gap-1.5 text-xs text-slate-700 border-slate-200"
+          >
+            <Camera className="h-3.5 w-3.5 text-brand-blue" />
+            <span>Foto Profil</span>
+          </Button>
+
           <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-right">
             <span className="text-[10px] text-slate-400 font-bold block uppercase">Presensi Kerja</span>
             <span className="text-xs font-bold text-status-success flex items-center justify-end gap-1">
@@ -310,6 +344,152 @@ export default function TeacherDashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Modal Pengaturan & Pratinjau Foto Profil Pendidik */}
+      {isPhotoModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-elevated border border-slate-200 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-brand-blue">
+                  <Camera className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Foto Profil Resmi Pendidik</h3>
+                  <p className="text-xs text-slate-500">Standar Kepegawaian & Dokumen Resmi</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPhotoModalOpen(false);
+                  setPhotoPreviewUrl(null);
+                  setPhotoValidationMsg(null);
+                }}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="py-5 space-y-4 text-center">
+              <div className="flex justify-center">
+                <Avatar
+                  src={photoPreviewUrl || (user?.profile?.photo_url as string) || (user?.profile?.photoUrl as string) || (user?.profile?.avatarUrl as string)}
+                  name={teacherName}
+                  size="2xl"
+                  shape="rounded"
+                  alt={`Pasfoto ${teacherName}`}
+                  className="border-2 border-slate-200 shadow-md"
+                />
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">{teacherName}</h4>
+                <p className="text-xs text-slate-500 font-mono">
+                  {user?.profile?.position ? `${user.profile.position} • ` : ''}NIP: {(user?.profile?.nip as string) || '-'}
+                </p>
+              </div>
+
+              {/* Status Informasi Kebijakan Foto Profil Guru */}
+              <div className="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200/60 text-left text-xs text-blue-900 space-y-2">
+                <div className="flex items-center gap-2 font-semibold text-brand-blue">
+                  <ShieldCheck className="h-4 w-4 shrink-0" />
+                  <span>Kebijakan Foto Pendidik & Kepegawaian</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-blue-800">
+                  Pasfoto resmi pendidik digunakan pada instrumen raport elektronik, jadwal mengajar, dan buku profil sekolah. Pengkinian data berkas resmi dilakukan secara tersentral melalui Bagian Tata Usaha.
+                </p>
+                <div className="text-[10px] text-blue-700 font-medium pt-1 border-t border-blue-200/50">
+                  Status API: Endpoint unggah mandiri dinonaktifkan demi integritas data; hubungi Tata Usaha untuk pembaruan foto.
+                </div>
+              </div>
+
+              {/* Uji Kelayakan Format Pasfoto (Client-Side Verification) */}
+              <div className="pt-2 text-left space-y-2">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Uji Pratinjau Kesesuaian Pasfoto:
+                </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!allowed.includes(file.type.toLowerCase())) {
+                      setPhotoValidationMsg('Format tidak didukung. Harap pilih JPEG, PNG, atau WebP.');
+                      setPhotoValidationSuccess(false);
+                      setPhotoPreviewUrl(null);
+                      return;
+                    }
+
+                    if (file.size > 2 * 1024 * 1024) {
+                      setPhotoValidationMsg('Ukuran melebihi batas maksimal 2 MB.');
+                      setPhotoValidationSuccess(false);
+                      setPhotoPreviewUrl(null);
+                      return;
+                    }
+
+                    setPhotoPreviewUrl(URL.createObjectURL(file));
+                    setPhotoValidationMsg('Format dan ukuran pasfoto valid (Memenuhi standar 2 MB).');
+                    setPhotoValidationSuccess(true);
+                  }}
+                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-brand-blue hover:file:bg-blue-100 cursor-pointer"
+                />
+
+                {photoValidationMsg && (
+                  <div className={`p-2 rounded-lg text-xs flex items-center gap-1.5 ${
+                    photoValidationSuccess ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}>
+                    {photoValidationSuccess ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
+                    )}
+                    <span>{photoValidationMsg}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              {photoPreviewUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setPhotoPreviewUrl(null);
+                    setPhotoValidationMsg(null);
+                  }}
+                  className="text-xs text-slate-500 hover:text-red-600"
+                >
+                  Reset Pratinjau
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsPhotoModalOpen(false);
+                  setPhotoPreviewUrl(null);
+                  setPhotoValidationMsg(null);
+                }}
+                className="ml-auto text-xs"
+              >
+                Tutup
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

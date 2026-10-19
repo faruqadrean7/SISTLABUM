@@ -23,15 +23,16 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     if (isLoading || !isAuthenticated || !user) return;
 
-    let targetPortal: 'siswa' | 'ortu' | 'guru' | 'staf' | null = null;
+    let targetPortal: 'siswa' | 'ortu' | 'guru' | 'staf' | 'kepsek' | null = null;
     if (pathname.startsWith('/portal/siswa')) targetPortal = 'siswa';
     else if (pathname.startsWith('/portal/ortu')) targetPortal = 'ortu';
     else if (pathname.startsWith('/portal/guru')) targetPortal = 'guru';
     else if (pathname.startsWith('/portal/staf')) targetPortal = 'staf';
+    else if (pathname.startsWith('/portal/kepsek')) targetPortal = 'kepsek';
 
     if (targetPortal && activeRole !== targetPortal) {
       if (canAccessShell(user.roles, targetPortal)) {
-        setActiveRole(targetPortal);
+        setActiveRole(targetPortal as any);
       }
     }
   }, [isLoading, isAuthenticated, user, pathname, activeRole, setActiveRole]);

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  useTeacherClasses,
+  useTeacherAssignmentsSummary,
   useAttendanceStudents,
   guruApi,
   TeacherAttendanceStudent,
@@ -28,21 +28,50 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function TeacherAttendanceSessionPage() {
-  const { data: classes = [], isLoading: isLoadingClasses } = useTeacherClasses();
+  const {
+    subjects,
+    getClassesForSubject,
+    schedules,
+    isLoading: isLoadingAssignments,
+  } = useTeacherAssignmentsSummary();
+
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [sessionDate, setSessionDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [sessionTopic, setSessionTopic] = useState<string>('');
 
+  // Available classes for currently selected subject
+  const availableClasses = React.useMemo(() => {
+    return getClassesForSubject(selectedSubjectId);
+  }, [getClassesForSubject, selectedSubjectId]);
+
+  // Auto-select subject if 1 or if not yet selected
   useEffect(() => {
-    if (classes.length > 0 && !selectedClassId) {
-      setSelectedClassId(classes[0].id);
+    if (subjects.length > 0) {
+      if (!selectedSubjectId || !subjects.some((s) => s.id === selectedSubjectId)) {
+        setSelectedSubjectId(subjects[0].id);
+      }
+    } else {
+      setSelectedSubjectId('');
     }
-  }, [classes, selectedClassId]);
+  }, [subjects, selectedSubjectId]);
+
+  // Keep class aligned with availableClasses for this subject
+  useEffect(() => {
+    if (availableClasses.length > 0) {
+      if (!selectedClassId || !availableClasses.some((c) => c.id === selectedClassId)) {
+        setSelectedClassId(availableClasses[0].id);
+      }
+    } else {
+      setSelectedClassId('');
+    }
+  }, [availableClasses, selectedClassId]);
 
   const { data: initialStudents = [], isLoading: isLoadingStudents } = useAttendanceStudents(selectedClassId);
   const [students, setStudents] = useState<TeacherAttendanceStudent[]>([]);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialStudents.length > 0) {
@@ -68,14 +97,19 @@ export default function TeacherAttendanceSessionPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedClassId) return;
+    if (!selectedClassId || !selectedSubjectId) return;
 
     setIsSaving(true);
     setSuccessMessage(null);
+    setErrorMessage(null);
     try {
+      const matchedSchedule = schedules.find(
+        (s) => s.subjectId === selectedSubjectId && s.classId === selectedClassId
+      );
       const res = await guruApi.recordAttendanceSession({
         classId: selectedClassId,
-        subjectId: 'sub-mat',
+        subjectId: selectedSubjectId,
+        scheduleId: matchedSchedule?.id,
         sessionDate,
         sessionTopic,
         attendees: students.map((s) => ({
@@ -86,14 +120,16 @@ export default function TeacherAttendanceSessionPage() {
       });
       setSuccessMessage(res.message);
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan presensi KBM.';
+      setErrorMessage(msg);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const activeClass = classes.find((c) => c.id === selectedClassId) || classes[0];
+  const activeSubject = subjects.find((s) => s.id === selectedSubjectId);
+  const activeClass = availableClasses.find((c) => c.id === selectedClassId);
   const presentCount = students.filter((s) => s.status === 'present').length;
   const sickCount = students.filter((s) => s.status === 'sick').length;
   const permissionCount = students.filter((s) => s.status === 'permission').length;
@@ -148,24 +184,70 @@ export default function TeacherAttendanceSessionPage() {
         </div>
       )}
 
-      {/* Class Selector & Controls */}
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-status-danger text-xs sm:text-sm font-bold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 shrink-0 rotate-45 text-red-500" />
+            <span>{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-700">
+            ×
+          </button>
+        </div>
+      )}
+
+      {!isLoadingAssignments && subjects.length === 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs sm:text-sm font-medium flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+          <span>Anda belum memiliki penugasan jadwal mengajar aktif. Presensi KBM tidak dapat disimpan.</span>
+        </div>
+      )}
+
+      {/* Class & Subject Selector Controls */}
       <Card className="border-slate-200">
         <CardContent className="pt-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Pilih Kelas KBM
+                Mata Pelajaran <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedSubjectId}
+                onChange={(e) => setSelectedSubjectId(e.target.value)}
+                disabled={isLoadingAssignments || subjects.length === 0}
+                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                {subjects.length === 0 ? (
+                  <option value="">Tidak ada mata pelajaran</option>
+                ) : (
+                  subjects.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Pilih Kelas KBM <span className="text-red-500">*</span>
               </label>
               <select
                 value={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                disabled={!selectedSubjectId || availableClasses.length === 0}
+                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue disabled:bg-slate-100 disabled:text-slate-400"
               >
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.studentCount} Siswa)
-                  </option>
-                ))}
+                {availableClasses.length === 0 ? (
+                  <option value="">Tidak ada kelas untuk mapel ini</option>
+                ) : (
+                  availableClasses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -197,13 +279,14 @@ export default function TeacherAttendanceSessionPage() {
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
             <span className="text-xs text-slate-500 font-medium">
-              Kelas aktif: <strong className="text-slate-800">{activeClass?.name}</strong> • Mapel: <strong className="text-slate-800">Matematika</strong>
+              Kelas aktif: <strong className="text-slate-800">{activeClass?.name || '-'}</strong> • Mapel: <strong className="text-slate-800">{activeSubject?.name || '-'}</strong>
             </span>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleSetAllPresent}
+              disabled={students.length === 0}
               className="gap-1.5 text-xs text-brand-blue border-blue-200 hover:bg-blue-50"
             >
               <Check className="h-4 w-4" />
@@ -214,7 +297,7 @@ export default function TeacherAttendanceSessionPage() {
       </Card>
 
       {/* Student Attendance Roster */}
-      {isLoadingClasses || isLoadingStudents ? (
+      {isLoadingAssignments || isLoadingStudents ? (
         <div className="min-h-[250px] flex items-center justify-center bg-white rounded-2xl border border-slate-200">
           <LoadingSpinner label="Memuat daftar siswa..." size="lg" />
         </div>
@@ -283,7 +366,13 @@ export default function TeacherAttendanceSessionPage() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button type="submit" size="md" isLoading={isSaving} className="gap-2 font-bold px-6">
+            <Button
+              type="submit"
+              size="md"
+              isLoading={isSaving}
+              disabled={!selectedSubjectId || !selectedClassId || students.length === 0}
+              className="gap-2 font-bold px-6"
+            >
               <Save className="h-4 w-4" />
               <span>Simpan Presensi KBM</span>
             </Button>

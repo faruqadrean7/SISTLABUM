@@ -15,6 +15,7 @@ import { TeacherDialog } from '@/features/master/teacher-dialog';
 import { TeacherDetailDialog } from '@/features/master/teacher-detail-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import {
   GraduationCap,
   ArrowLeft,
@@ -125,9 +126,17 @@ export default function TeachersMasterPage() {
       key: 'full_name',
       header: 'Nama Guru & Jabatan',
       render: (item) => (
-        <div>
-          <div className="font-semibold text-slate-900">{item.full_name}</div>
-          <div className="text-[11px] text-slate-500">{item.position || 'Tenaga Pendidik'}</div>
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={item.photo_file?.url || (item as any).photo_url}
+            name={item.full_name}
+            size="sm"
+            alt={`Foto ${item.full_name}`}
+          />
+          <div>
+            <div className="font-semibold text-slate-900">{item.full_name}</div>
+            <div className="text-[11px] text-slate-500">{item.position || 'Tenaga Pendidik'}</div>
+          </div>
         </div>
       ),
     },

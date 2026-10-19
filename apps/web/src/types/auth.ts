@@ -67,4 +67,4 @@ export interface LoginResponseData {
   tokens: AuthTokens;
 }
 
-export type PortalDestination = 'admin' | 'siswa' | 'ortu' | 'guru' | 'staf';
+export type PortalDestination = 'admin' | 'siswa' | 'ortu' | 'guru' | 'staf' | 'kepsek' | 'portal';

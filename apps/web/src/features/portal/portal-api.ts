@@ -42,6 +42,23 @@ const loadPortalMock =
   process.env.NODE_ENV !== 'production'
     ? () => import('./portal-mock-data')
     : null;
+
+function unwrapList<T>(res: any): T[] {
+  if (!res) return [];
+  const payload = res.data !== undefined ? res.data : res;
+  if (Array.isArray(payload)) return payload as T[];
+  if (payload && Array.isArray(payload.data)) return payload.data as T[];
+  return [];
+}
+
+function unwrapItem<T>(res: any, fallback: T): T {
+  if (!res) return fallback;
+  const payload = res.data !== undefined ? res.data : res;
+  if (payload && typeof payload === 'object' && 'data' in payload && payload.data !== undefined) {
+    return payload.data as T;
+  }
+  return (payload as T) ?? fallback;
+}
 /**
  * Mapper aman respons GET /api/v1/student-points (COND-02)
  * Menangani:
@@ -147,7 +164,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<PortalChildSummary[]>('/me/children');
-        return res.data || [];
+        return unwrapList<PortalChildSummary>(res.data);
       },
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_CHILDREN) : undefined
     );
@@ -167,7 +184,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<PortalChildSummary>(`/me/children/${childId}`);
-        return res.data;
+        return unwrapItem<PortalChildSummary>(res.data, {} as PortalChildSummary);
       },
       loadPortalMock
         ? () =>
@@ -196,7 +213,15 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<ChildAttendanceSummary>(`/me/children/${childId}/attendance`);
-        return res.data;
+        return unwrapItem<ChildAttendanceSummary>(res.data, {
+          presentDays: 0,
+          sickDays: 0,
+          leaveDays: 0,
+          unexcusedDays: 0,
+          totalDays: 0,
+          percentage: 100,
+          history: [],
+        });
       },
       loadPortalMock
         ? () =>
@@ -230,7 +255,15 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<ChildReportCardSummary>(`/me/children/${childId}/report-cards`);
-        return res.data;
+        return unwrapItem<ChildReportCardSummary>(res.data, {
+          periodId: 'none',
+          periodName: 'Semester Berjalan',
+          academicYear: '2024/2025',
+          semester: 'Ganjil',
+          totalScore: 0,
+          averageScore: 0,
+          grades: [],
+        });
       },
       loadPortalMock
         ? () =>
@@ -267,7 +300,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<ChildCharacterNoteSummary>(`/me/children/${childId}/character-notes`);
-        return res.data;
+        return unwrapItem<ChildCharacterNoteSummary | null>(res.data, null);
       },
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_CHILD_CHARACTER[childId] || null) : undefined
     );
@@ -287,7 +320,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<ChildProgressReportItem[]>(`/me/children/${childId}/progress-reports`);
-        return res.data;
+        return unwrapList<ChildProgressReportItem>(res.data);
       },
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_CHILD_PROGRESS[childId] || []) : undefined
     );
@@ -302,7 +335,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<StudentDashboardSummary>('/me/student-dashboard');
-        return res.data;
+        return unwrapItem<StudentDashboardSummary>(res.data, {} as StudentDashboardSummary);
       },
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_DASHBOARD) : undefined
     );
@@ -315,7 +348,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<StudentScheduleItem[]>('/me/schedule');
-        return res.data;
+        return unwrapList<StudentScheduleItem>(res.data);
       },
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_SCHEDULES) : undefined
     );
@@ -328,7 +361,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<StudentExamItem[]>('/me/exams');
-        return res.data;
+        return unwrapList<StudentExamItem>(res.data);
       },
       loadPortalMock ? () => loadPortalMock().then((m) => m.MOCK_STUDENT_EXAMS) : undefined
     );
@@ -340,8 +373,54 @@ export const portalApi = {
   async getStudentTasks(): Promise<StudentTaskItem[]> {
     return executeWithMockFallback(
       async () => {
-        const res = await apiClient.get<StudentTaskItem[]>('/assignments');
-        return res.data;
+        let rawList: any[] = [];
+        try {
+          const res = await apiClient.get<any>('/me/tasks');
+          rawList = unwrapList<any>(res.data);
+        } catch {
+          const res = await apiClient.get<any>('/assignments');
+          rawList = unwrapList<any>(res.data);
+        }
+
+        return rawList.map((item: any) => {
+          const submission = item.my_submission || item.submission;
+          let status: 'aktif' | 'dikumpulkan' | 'dinilai' = item.status || 'aktif';
+          if (!item.status && submission) {
+            status = submission.score !== null && submission.score !== undefined ? 'dinilai' : 'dikumpulkan';
+          }
+
+          const dueDateStr = item.due_at || item.dueDate || '';
+          let dueDate = dueDateStr;
+          let dueTime = item.dueTime || '';
+          if (dueDateStr.includes('T') || dueDateStr.includes(' ')) {
+            const parts = dueDateStr.split(/[T ]/);
+            dueDate = parts[0];
+            if (!dueTime && parts[1]) {
+              dueTime = parts[1].substring(0, 5);
+            }
+          }
+
+          return {
+            id: item.id,
+            title: item.title,
+            subjectName: item.subjectName || item.subject?.name || 'Mata Pelajaran',
+            dueDate: dueDate || 'Segera',
+            dueTime: dueTime || undefined,
+            status,
+            description: item.description || '',
+            teacherName: item.teacherName || item.teacher?.full_name || 'Guru Pengampu',
+            maxScore: Number(item.maxScore ?? item.max_score ?? 100),
+            score: item.score !== null && item.score !== undefined ? Number(item.score) : (submission?.score !== null && submission?.score !== undefined ? Number(submission.score) : undefined),
+            teacherFeedback: item.teacherFeedback || submission?.feedback,
+            submission: submission ? {
+              id: submission.id,
+              file_name: submission.file_name || (submission.file?.object_key ? submission.file.object_key.split('/').pop() : 'Berkas Terlampir'),
+              submitted_at: submission.submitted_at || submission.created_at || '',
+              drive_link: submission.drive_link,
+              notes: submission.notes,
+            } : undefined,
+          };
+        });
       },
       loadPortalMock ? () => loadPortalMock().then((m) => (m as any).MOCK_STUDENT_TASKS || []) : undefined
     );
@@ -356,11 +435,19 @@ export const portalApi = {
   ): Promise<{ success: boolean; message: string }> {
     return executeWithMockFallback(
       async () => {
-        const res = await apiClient.post<{ success: boolean; message: string }>(
-          `/assignments/${taskId}/submissions`,
-          payload
-        );
-        return res.data;
+        try {
+          const res = await apiClient.post<{ success: boolean; message: string }>(
+            `/me/tasks/${taskId}/submit`,
+            payload
+          );
+          return unwrapItem<{ success: boolean; message: string }>(res.data, { success: true, message: 'Tugas berhasil dikumpulkan.' });
+        } catch {
+          const res = await apiClient.post<{ success: boolean; message: string }>(
+            `/assignments/${taskId}/submissions`,
+            payload
+          );
+          return unwrapItem<{ success: boolean; message: string }>(res.data, { success: true, message: 'Tugas berhasil dikumpulkan.' });
+        }
       },
       async () => ({ success: true, message: 'Tugas berhasil dikumpulkan.' })
     );
@@ -372,8 +459,43 @@ export const portalApi = {
   async getStudentCounseling(): Promise<StudentCounselingItem[]> {
     return executeWithMockFallback(
       async () => {
-        const res = await apiClient.get<StudentCounselingItem[]>('/counseling/requests');
-        return res.data;
+        let rawList: any[] = [];
+        try {
+          const res = await apiClient.get<any>('/me/counseling-requests');
+          rawList = unwrapList<any>(res.data);
+        } catch {
+          const res = await apiClient.get<any>('/counseling/requests');
+          rawList = unwrapList<any>(res.data);
+        }
+
+        return rawList.map((item: any) => {
+          let mappedStatus: 'menunggu' | 'dijadwalkan' | 'selesai' | 'ditolak' = 'menunggu';
+          if (item.status === 'scheduled' || item.status === 'dijadwalkan') {
+            mappedStatus = 'dijadwalkan';
+          } else if (item.status === 'completed' || item.status === 'selesai') {
+            mappedStatus = 'selesai';
+          } else if (item.status === 'rejected' || item.status === 'cancelled' || item.status === 'ditolak') {
+            mappedStatus = 'ditolak';
+          }
+
+          const prefSchedule = item.preferredSchedule || (
+            (item.preferred_date ? item.preferred_date.substring(0, 10) : '') +
+            (item.preferred_time ? ` ${item.preferred_time}` : '')
+          );
+
+          return {
+            id: item.id,
+            topic: item.topic || 'Bimbingan Konseling',
+            category: item.category || 'Pengembangan Diri',
+            requestDate: item.requestDate || (item.created_at ? item.created_at.substring(0, 10) : 'Hari Ini'),
+            preferredSchedule: prefSchedule.trim() || 'Fleksibel',
+            counselorName: item.counselorName || item.counselor?.name || item.preferred_counselor?.name || 'Guru BK',
+            status: mappedStatus,
+            notes: item.notes || item.reason,
+            scheduledTime: item.scheduledTime || item.scheduled_at,
+            roomName: item.roomName || 'Ruang BK',
+          };
+        });
       },
       loadPortalMock ? () => loadPortalMock().then((m) => (m as any).MOCK_STUDENT_COUNSELING || []) : undefined
     );
@@ -392,7 +514,7 @@ export const portalApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.post<StudentCounselingItem>('/me/counseling-requests', payload);
-        return res.data;
+        return unwrapItem<StudentCounselingItem>(res.data, {} as StudentCounselingItem);
       },
       async () => ({
         id: `csl-${Date.now()}`,

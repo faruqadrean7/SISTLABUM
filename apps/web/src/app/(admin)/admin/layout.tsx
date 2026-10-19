@@ -41,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <AccessDenied
           title="Akses Dibatasi"
-          description="Akun Anda terdaftar sebagai Siswa atau Orang Tua. Halaman manajemen ini hanya dapat diakses oleh staf sekolah dan guru."
+          description="Akun Anda terdaftar sebagai Siswa atau Orang Tua (atau guru/staf non-administratif). Halaman manajemen back-office ini hanya dapat diakses oleh staf administrator sekolah."
         />
       </div>
     );

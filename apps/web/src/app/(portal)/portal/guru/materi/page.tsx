@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   useTeacherMaterials,
-  useTeacherClasses,
+  useTeacherAssignmentsSummary,
   guruApi,
   TeacherMaterialItem,
 } from '@/features/portal/guru';
@@ -25,26 +25,62 @@ import {
   CheckCircle2,
   X,
   BookOpen,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function TeacherMaterialsPage() {
   const { data: initialMaterials = [], isLoading } = useTeacherMaterials();
-  const { data: classes = [] } = useTeacherClasses();
+  const {
+    subjects,
+    getClassesForSubject,
+    isLoading: isLoadingAssignments,
+  } = useTeacherAssignmentsSummary();
 
   const [materials, setMaterials] = useState<TeacherMaterialItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
-  const [selectedClassIds, setSelectedClassIds] = useState<string[]>(['cls-7a']);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [fileUrl, setFileUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (initialMaterials.length > 0) {
       setMaterials(initialMaterials);
     }
   }, [initialMaterials]);
+
+  // Available classes for selected subject
+  const availableClasses = React.useMemo(() => {
+    return getClassesForSubject(selectedSubjectId);
+  }, [getClassesForSubject, selectedSubjectId]);
+
+  // Auto-select subject if 1 or not yet selected
+  React.useEffect(() => {
+    if (subjects.length > 0) {
+      if (!selectedSubjectId || !subjects.some((s) => s.id === selectedSubjectId)) {
+        setSelectedSubjectId(subjects[0].id);
+      }
+    } else {
+      setSelectedSubjectId('');
+    }
+  }, [subjects, selectedSubjectId]);
+
+  // Keep selectedClassIds aligned with availableClasses for this subject
+  React.useEffect(() => {
+    if (availableClasses.length > 0) {
+      setSelectedClassIds((prev) => {
+        const valid = prev.filter((id) => availableClasses.some((c) => c.id === id));
+        return valid.length > 0 ? valid : [availableClasses[0].id];
+      });
+    } else {
+      setSelectedClassIds([]);
+    }
+  }, [availableClasses]);
 
   const handleClassToggle = (classId: string) => {
     setSelectedClassIds((prev) =>
@@ -54,18 +90,21 @@ export default function TeacherMaterialsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || selectedClassIds.length === 0) return;
+    if (!title.trim() || !selectedSubjectId || selectedClassIds.length === 0) return;
 
     setIsSubmitting(true);
+    setModalError(null);
+    setErrorMessage(null);
     try {
-      const classNames = classes
+      const activeSubject = subjects.find((s) => s.id === selectedSubjectId);
+      const classNames = availableClasses
         .filter((c) => selectedClassIds.includes(c.id))
         .map((c) => c.name);
 
       const newMat = await guruApi.createMaterial({
         title,
-        subjectId: 'sub-mat',
-        subjectName: 'Matematika',
+        subjectId: selectedSubjectId,
+        subjectName: activeSubject?.name || 'Mata Pelajaran',
         classIds: selectedClassIds,
         classNames,
         description,
@@ -78,8 +117,10 @@ export default function TeacherMaterialsPage() {
       setDescription('');
       setFileUrl('');
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal mengunggah materi pembelajaran.';
+      setModalError(msg);
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +149,12 @@ export default function TeacherMaterialsPage() {
           </p>
         </div>
 
-        <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-1.5 font-bold">
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          disabled={!isLoadingAssignments && subjects.length === 0}
+          size="sm"
+          className="gap-1.5 font-bold"
+        >
           <Plus className="h-4 w-4" />
           <span>Tambah Materi Baru</span>
         </Button>
@@ -121,8 +167,27 @@ export default function TeacherMaterialsPage() {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-status-danger text-xs sm:text-sm font-bold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 shrink-0 rotate-45 text-red-500" />
+            <span>{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-700">
+            ×
+          </button>
+        </div>
+      )}
+
+      {!isLoadingAssignments && subjects.length === 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs sm:text-sm font-medium flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+          <span>Anda belum memiliki penugasan jadwal mengajar aktif. Anda tidak dapat mengunggah materi ajar baru.</span>
+        </div>
+      )}
+
       {/* Materials List */}
-      {isLoading ? (
+      {isLoading || isLoadingAssignments ? (
         <div className="min-h-[250px] flex items-center justify-center bg-white rounded-2xl border border-slate-200">
           <LoadingSpinner label="Memuat materi ajar..." size="lg" />
         </div>
@@ -206,8 +271,40 @@ export default function TeacherMaterialsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {modalError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-status-danger text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 rotate-45 text-red-500" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Judul Materi / Modul</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Mata Pelajaran <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedSubjectId}
+                  onChange={(e) => setSelectedSubjectId(e.target.value)}
+                  disabled={subjects.length === 0}
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue disabled:bg-slate-100 disabled:text-slate-400"
+                  required
+                >
+                  {subjects.length === 0 ? (
+                    <option value="">Tidak ada mata pelajaran</option>
+                  ) : (
+                    subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Judul Materi / Modul <span className="text-red-500">*</span>
+                </label>
                 <Input
                   type="text"
                   placeholder="Contoh: Modul Ajar Bab 3: Bangun Ruang Sisi Datar"
@@ -219,26 +316,32 @@ export default function TeacherMaterialsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Target Kelas Pembaca</label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {classes.map((c) => {
-                    const isChecked = selectedClassIds.includes(c.id);
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => handleClassToggle(c.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                          isChecked
-                            ? 'bg-blue-50 text-brand-blue border-brand-blue'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        {c.name}
-                      </button>
-                    );
-                  })}
-                </div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Target Kelas Pembaca <span className="text-red-500">*</span>
+                </label>
+                {availableClasses.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Tidak ada kelas yang tersedia untuk mata pelajaran ini.</p>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {availableClasses.map((c) => {
+                      const isChecked = selectedClassIds.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => handleClassToggle(c.id)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                            isChecked
+                              ? 'bg-blue-50 text-brand-blue border-brand-blue'
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {c.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -266,7 +369,13 @@ export default function TeacherMaterialsPage() {
                 <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
                   Batal
                 </Button>
-                <Button type="submit" size="sm" isLoading={isSubmitting} className="font-bold">
+                <Button
+                  type="submit"
+                  size="sm"
+                  isLoading={isSubmitting}
+                  disabled={!title.trim() || !selectedSubjectId || selectedClassIds.length === 0}
+                  className="font-bold"
+                >
                   Unggah Materi
                 </Button>
               </div>

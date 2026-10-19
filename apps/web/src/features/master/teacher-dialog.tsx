@@ -8,6 +8,7 @@ import { TeacherFormValues, TeacherItem, TeacherEmploymentStatus } from '@/types
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, UserPlus, Save } from 'lucide-react';
+import { ProfilePhotoUploader } from '@/components/ui/profile-photo-uploader';
 
 export const teacherSchema = z.object({
   full_name: z.string().min(1, 'Nama lengkap guru wajib diisi').max(200, 'Maksimal 200 karakter'),
@@ -17,6 +18,7 @@ export const teacherSchema = z.object({
   status: z.enum(['tetap', 'honorer', 'kontrak'], {
     required_error: 'Pilih status kepegawaian',
   }),
+  photo_file_id: z.string().nullable().optional(),
 });
 
 export interface TeacherDialogProps {
@@ -40,6 +42,8 @@ export function TeacherDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<TeacherFormValues>({
     resolver: zodResolver(teacherSchema),
@@ -49,6 +53,7 @@ export function TeacherDialog({
       nuptk: '',
       position: '',
       status: 'tetap',
+      photo_file_id: null,
     },
   });
 
@@ -60,6 +65,7 @@ export function TeacherDialog({
         nuptk: initialData.nuptk || '',
         position: initialData.position || '',
         status: initialData.status || 'tetap',
+        photo_file_id: initialData.photo_file_id || null,
       });
     } else {
       reset({
@@ -68,6 +74,7 @@ export function TeacherDialog({
         nuptk: '',
         position: '',
         status: 'tetap',
+        photo_file_id: null,
       });
     }
   }, [initialData, reset, isOpen]);
@@ -107,6 +114,16 @@ export function TeacherDialog({
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+          {/* Komponen Unggah Foto Profil Guru */}
+          <ProfilePhotoUploader
+            label="Pasfoto Resmi Pendidik"
+            name={watch('full_name') || initialData?.full_name}
+            currentPhotoUrl={initialData?.photo_file?.url || initialData?.photo_url}
+            value={watch('photo_file_id')}
+            onChange={(fileId) => setValue('photo_file_id', fileId, { shouldDirty: true })}
+            disabled={isLoading || isSubmitting}
+            helperText="Format: JPG, PNG, atau WebP (Maks. 2 MB)"
+          />
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Nama Lengkap & Gelar <span className="text-status-danger">*</span>

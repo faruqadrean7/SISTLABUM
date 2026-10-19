@@ -33,7 +33,7 @@ export default function StudentPoinPage() {
     queryFn: () => portalApi.getStudentPoints(),
   });
 
-  const logs = pointsData?.logs || [];
+  const logs = Array.isArray(pointsData?.logs) ? pointsData.logs : [];
   const totalPrestasi = pointsData?.totalPrestasi ?? 0;
   const totalPelanggaran = pointsData?.totalPelanggaran ?? 0;
   const balancePoints = pointsData?.balancePoints ?? (totalPrestasi - totalPelanggaran);

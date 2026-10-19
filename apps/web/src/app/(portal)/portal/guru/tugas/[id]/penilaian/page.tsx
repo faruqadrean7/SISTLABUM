@@ -37,11 +37,12 @@ export default function TeacherSpeedGraderPage({ params }: { params: { id: strin
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
   // Fetch submissions
-  const { data: submissions = [], isLoading, isError, refetch } = useQuery({
+  const { data: rawSubmissions = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['assignment-submissions', assignmentId],
     queryFn: () => guruApi.getAssignmentSubmissions(assignmentId),
   });
 
+  const submissions = Array.isArray(rawSubmissions) ? rawSubmissions : [];
   const currentSubmission: TeacherAssignmentSubmission | undefined = submissions[activeStudentIndex];
 
   // Sync inputs when active student changes

@@ -8,6 +8,7 @@ import { StudentFormValues, StudentItem } from '@/types/master';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, UserPlus, Save } from 'lucide-react';
+import { ProfilePhotoUploader } from '@/components/ui/profile-photo-uploader';
 
 export const studentSchema = z.object({
   nis: z.string().min(1, 'NIS wajib diisi').max(30, 'Maksimal 30 karakter'),
@@ -24,6 +25,7 @@ export const studentSchema = z.object({
   address: z.string().optional(),
   entry_date: z.string().min(1, 'Tanggal masuk wajib diisi'),
   status: z.enum(['aktif', 'lulus', 'pindah', 'keluar']).optional(),
+  photo_file_id: z.string().nullable().optional(),
 });
 
 export interface StudentDialogProps {
@@ -47,6 +49,8 @@ export function StudentDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
@@ -62,6 +66,7 @@ export function StudentDialog({
       address: '',
       entry_date: new Date().toISOString().split('T')[0],
       status: 'aktif',
+      photo_file_id: null,
     },
   });
 
@@ -79,6 +84,7 @@ export function StudentDialog({
         address: initialData.address || '',
         entry_date: initialData.entry_date ? initialData.entry_date.split('T')[0] : '',
         status: initialData.status || 'aktif',
+        photo_file_id: initialData.photo_file_id || null,
       });
     } else {
       reset({
@@ -93,6 +99,7 @@ export function StudentDialog({
         address: '',
         entry_date: new Date().toISOString().split('T')[0],
         status: 'aktif',
+        photo_file_id: null,
       });
     }
   }, [initialData, reset, isOpen]);
@@ -132,6 +139,16 @@ export function StudentDialog({
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+          {/* Komponen Unggah Foto Profil Siswa */}
+          <ProfilePhotoUploader
+            label="Pasfoto Resmi Siswa"
+            name={watch('full_name') || initialData?.full_name}
+            currentPhotoUrl={initialData?.photo_file?.url || initialData?.photo_url}
+            value={watch('photo_file_id')}
+            onChange={(fileId) => setValue('photo_file_id', fileId, { shouldDirty: true })}
+            disabled={isLoading || isSubmitting}
+            helperText="Format: JPG, PNG, atau WebP (Maks. 2 MB)"
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">

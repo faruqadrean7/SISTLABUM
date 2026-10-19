@@ -37,6 +37,7 @@ export default function StudentKonselingPage() {
   const [preferredTime, setPreferredTime] = useState('Sepulang Sekolah (13:30 WIB)');
   const [reason, setReason] = useState('');
   const [isSuccessAlert, setIsSuccessAlert] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch riwayat permohonan konseling
   const { data: requests = [], isLoading, isError, refetch } = useQuery({
@@ -52,8 +53,12 @@ export default function StudentKonselingPage() {
       setTopic('');
       setReason('');
       setPreferredDate('');
+      setSubmitError(null);
       setIsSuccessAlert(true);
       setTimeout(() => setIsSuccessAlert(false), 4000);
+    },
+    onError: (err: any) => {
+      setSubmitError(err?.message || 'Gagal mengajukan janji temu konseling. Silakan periksa kembali formulir.');
     },
   });
 
@@ -128,6 +133,13 @@ export default function StudentKonselingPage() {
             </CardHeader>
             <CardContent className="pt-4">
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                {submitError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-status-danger text-xs rounded-lg flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>{submitError}</span>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <label className="font-semibold text-slate-700">Topik Pembahasan:</label>
                   <Input

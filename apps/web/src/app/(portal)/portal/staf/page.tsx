@@ -7,6 +7,7 @@ import { useStaffDashboard } from '@/features/portal/staf';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
 import {
@@ -52,17 +53,27 @@ export default function StaffPortalDashboardPage() {
     <div className="space-y-6">
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-white via-slate-50 to-amber-50/40 p-6 rounded-2xl border border-slate-200 shadow-2xs">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100/75 text-amber-800 rounded-full text-xs font-bold mb-2">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Portal Tenaga Kependidikan & Tata Usaha</span>
+        <div className="flex items-center gap-4">
+          <Avatar
+            src={(user?.profile?.photo_url as string) || (user?.profile?.avatarUrl as string)}
+            name={staffName}
+            size="xl"
+            shape="rounded"
+            alt={`Foto ${staffName}`}
+            className="border-2 border-white shadow-xs shrink-0"
+          />
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100/75 text-amber-800 rounded-full text-xs font-bold mb-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Portal Tenaga Kependidikan & Tata Usaha</span>
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Selamat Datang, {staffName}
+            </h1>
+            <p className="text-sm text-slate-600 mt-1">
+              {dashboard.department} &bull; SMP Laboratorium Universitas Negeri Malang
+            </p>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Selamat Datang, {staffName}
-          </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            {dashboard.department} &bull; SMP Laboratorium Universitas Negeri Malang
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

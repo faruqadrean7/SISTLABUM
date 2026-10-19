@@ -77,6 +77,12 @@ export interface StudentItem {
   religion?: string | null;
   address?: string | null;
   photo_file_id?: string | null;
+  photo_file?: {
+    id: string;
+    url?: string | null;
+    object_key?: string;
+  } | null;
+  photo_url?: string | null;
   status: StudentStatus;
   entry_date: string;
   graduated_at?: string | null;
@@ -123,6 +129,7 @@ export interface StudentFormValues {
   address?: string;
   entry_date: string;
   status?: StudentStatus;
+  photo_file_id?: string | null;
 }
 
 export interface ChangeStudentStatusFormValues {
@@ -199,6 +206,12 @@ export interface TeacherItem {
   position?: string | null;
   status: TeacherEmploymentStatus;
   photo_file_id?: string | null;
+  photo_file?: {
+    id: string;
+    url?: string | null;
+    object_key?: string;
+  } | null;
+  photo_url?: string | null;
   total_teaching_hours?: number;
   totalTeachingHours?: number;
   salarySlips?: TeacherSalarySlipItem[];
@@ -237,6 +250,7 @@ export interface TeacherFormValues {
   position?: string;
   status: TeacherEmploymentStatus;
   user_id?: string;
+  photo_file_id?: string | null;
 }
 
 export interface TeacherSalarySlipFormValues {

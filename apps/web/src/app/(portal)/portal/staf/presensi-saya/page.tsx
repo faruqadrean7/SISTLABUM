@@ -27,6 +27,7 @@ export default function StaffSelfAttendancePage() {
   const [attendance, setAttendance] = useState<SharedSelfAttendance | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (initialData) {
@@ -37,6 +38,7 @@ export default function StaffSelfAttendancePage() {
   const handleClockAction = async (action: 'check_in' | 'check_out') => {
     setIsSubmitting(true);
     setFeedback(null);
+    setErrorMessage(null);
     try {
       const res = await sharedPortalApi.recordSelfAttendance(action, 'staf');
       setAttendance((prev) => {
@@ -50,8 +52,9 @@ export default function StaffSelfAttendancePage() {
       });
       setFeedback(res.message);
       setTimeout(() => setFeedback(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Gagal mencatat presensi mandiri staf. Silakan periksa koneksi Anda.');
+      setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -98,6 +101,13 @@ export default function StaffSelfAttendancePage() {
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-status-success text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in duration-200">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <span>{feedback}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-status-danger text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in duration-200">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 

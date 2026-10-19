@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
 import { RoleSwitcher } from '../shared/role-switcher';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import {
   GraduationCap,
@@ -29,6 +30,7 @@ import {
   Clock,
   ShieldCheck,
   Wrench,
+  Building,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -46,6 +48,7 @@ export function PortalShell({ children }: PortalShellProps) {
   const isParentPortal = pathname.startsWith('/portal/ortu');
   const isTeacherPortal = pathname.startsWith('/portal/guru');
   const isStaffPortal = pathname.startsWith('/portal/staf');
+  const isKepsekPortal = pathname.startsWith('/portal/kepsek');
   const isNotificationPortal = pathname.startsWith('/portal/notifikasi');
 
   let portalTitle = 'Portal Personal';
@@ -68,6 +71,10 @@ export function PortalShell({ children }: PortalShellProps) {
     portalTitle = 'Portal Staf & TU';
     portalSubtitle = 'Operasional & Administrasi';
     PortalIcon = Briefcase;
+  } else if (isKepsekPortal) {
+    portalTitle = 'Portal Pimpinan';
+    portalSubtitle = 'Kepala Sekolah & Wakasek';
+    PortalIcon = Building;
   } else if (isNotificationPortal) {
     portalTitle = 'Notifikasi & Pengumuman';
     portalSubtitle = 'Pusat Informasi Terpadu';
@@ -125,6 +132,14 @@ export function PortalShell({ children }: PortalShellProps) {
         { title: 'Izin & Cuti', href: '/portal/staf/izin-cuti', icon: CalendarDays },
         { title: 'Slip Gaji', href: '/portal/staf/slip-gaji', icon: DollarSign },
         { title: 'Tiket Sarpras', href: '/portal/staf/tiket', icon: Wrench },
+        { title: 'Notifikasi', href: '/portal/notifikasi', icon: Bell },
+      ];
+    }
+    if (isKepsekPortal) {
+      return [
+        { title: 'Dashboard KPI', href: '/portal/kepsek', icon: Home },
+        { title: 'Antrean Persetujuan', href: '/portal/kepsek/approvals', icon: CheckSquare },
+        { title: 'Pusat Laporan', href: '/admin/reports', icon: FileText },
         { title: 'Notifikasi', href: '/portal/notifikasi', icon: Bell },
       ];
     }
@@ -199,13 +214,21 @@ export function PortalShell({ children }: PortalShellProps) {
 
             {/* User Info & Logout Button */}
             <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
-              <div className="hidden lg:flex flex-col text-right">
-                <span className="text-xs font-bold text-slate-900 truncate max-w-[140px]">
-                  {userName}
-                </span>
-                <span className="text-[10px] text-slate-500 capitalize">
-                  {user?.roles?.[0] || 'User'}
-                </span>
+              <div className="hidden lg:flex items-center gap-2.5">
+                <Avatar
+                  src={(user?.profile?.photo_url as string) || (user?.profile?.avatarUrl as string)}
+                  name={userName}
+                  size="sm"
+                  alt={userName}
+                />
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-bold text-slate-900 truncate max-w-[140px]">
+                    {userName}
+                  </span>
+                  <span className="text-[10px] text-slate-500 capitalize">
+                    {user?.roles?.[0] || 'User'}
+                  </span>
+                </div>
               </div>
 
               <button
@@ -232,10 +255,13 @@ export function PortalShell({ children }: PortalShellProps) {
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 shadow-lg animate-in slide-in-from-top duration-200">
-            <div className="mb-3 pb-3 border-b border-slate-100 flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-brand-blue font-bold text-xs">
-                {userName.charAt(0).toUpperCase()}
-              </div>
+            <div className="mb-3 pb-3 border-b border-slate-100 flex items-center gap-2.5">
+              <Avatar
+                src={(user?.profile?.photo_url as string) || (user?.profile?.avatarUrl as string)}
+                name={userName}
+                size="sm"
+                alt={userName}
+              />
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-slate-900">{userName}</span>
                 <span className="text-[10px] text-slate-500 capitalize">{user?.roles?.join(', ')}</span>

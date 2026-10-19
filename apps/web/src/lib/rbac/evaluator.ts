@@ -8,8 +8,6 @@ export const ADMIN_SHELL_ROLES: RoleCode[] = [
   'admin_tu',
   'principal',
   'vice_principal',
-  'teacher',
-  'homeroom',
   'counselor',
   'facility_staff',
   'ppdb_committee',
@@ -18,8 +16,6 @@ export const ADMIN_SHELL_ROLES: RoleCode[] = [
   'student_affairs',
   'public_relations',
   'operator_cms',
-  'committee',
-  'supervisor',
 ];
 
 /**
@@ -32,11 +28,10 @@ export const READ_ONLY_ROLES: RoleCode[] = ['committee', 'supervisor'];
  */
 export function isReadOnlyRole(roles: unknown): boolean {
   const safeRoles = sanitizeRoles(roles);
+  if (safeRoles.length === 0) return false;
   const hasReadOnly = safeRoles.some((r) => READ_ONLY_ROLES.includes(r as RoleCode));
-  const hasWriteAdminRole = safeRoles.some(
-    (r) => ADMIN_SHELL_ROLES.includes(r as RoleCode) && !READ_ONLY_ROLES.includes(r as RoleCode)
-  );
-  return hasReadOnly && !hasWriteAdminRole;
+  const hasWriteRole = safeRoles.some((r) => !READ_ONLY_ROLES.includes(r as RoleCode));
+  return hasReadOnly && !hasWriteRole;
 }
 
 /**
@@ -76,36 +71,78 @@ export function sanitizeRoles(roles: unknown): string[] {
 
 /**
  * Tentukan destinasi portal utama pengguna berdasarkan hierarki peran
+ * Mencegah fallback universal ke /admin dan mengarahkan non-admin ke portal persona yang tepat
  */
 export function resolveUserDestination(roles: unknown): PortalDestination {
   const safeRoles = sanitizeRoles(roles);
 
   if (safeRoles.length === 0) {
-    return 'admin';
+    return 'portal';
   }
 
-  // Jika memiliki role siswa murni (tanpa peran manajerial)
-  if (safeRoles.includes('student') && !safeRoles.some((r) => ADMIN_SHELL_ROLES.includes(r as RoleCode))) {
+  // 1. Siswa murni -> Portal Siswa
+  if (safeRoles.includes('student')) {
     return 'siswa';
   }
 
-  // Jika memiliki role orang tua / wali murid (tanpa peran manajerial)
-  if (safeRoles.includes('guardian') && !safeRoles.some((r) => ADMIN_SHELL_ROLES.includes(r as RoleCode))) {
+  // 2. Orang Tua / Wali Murid -> Portal Orang Tua
+  if (safeRoles.includes('guardian')) {
     return 'ortu';
   }
 
-  // Jika memiliki peran admin/guru/staf
-  if (safeRoles.some((r) => ADMIN_SHELL_ROLES.includes(r as RoleCode))) {
+  // 3. Pimpinan Sekolah (Kepala Sekolah & Wakasek) -> Portal Pimpinan
+  if (safeRoles.some((r) => r === 'principal' || r === 'vice_principal')) {
+    return 'kepsek';
+  }
+
+  // 4. Guru Mata Pelajaran & Wali Kelas -> Portal Guru
+  if (safeRoles.some((r) => r === 'teacher' || r === 'homeroom')) {
+    const hasExecutiveRole = safeRoles.some(
+      (r) => r === 'super_admin' || r === 'principal' || r === 'vice_principal'
+    );
+    if (!hasExecutiveRole) {
+      return 'guru';
+    }
+  }
+
+  // 5. Staf TU, Sarpras & Pustakawan -> Portal Staf
+  if (safeRoles.some((r) => r === 'admin_tu' || r === 'facility_staff' || r === 'librarian')) {
+    const hasExecutiveRole = safeRoles.some(
+      (r) => r === 'super_admin' || r === 'principal' || r === 'vice_principal'
+    );
+    if (!hasExecutiveRole) {
+      return 'staf';
+    }
+  }
+
+  // 6. Super Admin & Staf Administrasi Sistem -> Shell Admin
+  if (
+    safeRoles.some(
+      (r) =>
+        r === 'super_admin' ||
+        r === 'operator_cms' ||
+        r === 'ppdb_committee' ||
+        r === 'treasurer' ||
+        r === 'student_affairs' ||
+        r === 'public_relations' ||
+        r === 'counselor'
+    )
+  ) {
     return 'admin';
   }
 
-  return 'admin';
+  // 7. Role Komite & Pengawas (Mitra) -> Tidak diarahkan ke Admin secara otomatis; arahkan ke Portal Hub
+  if (safeRoles.some((r) => r === 'committee' || r === 'supervisor')) {
+    return 'portal';
+  }
+
+  return 'portal';
 }
 
 /**
  * Dapatkan rute awal untuk portal yang dituju
  */
-export function getDestinationPath(destination: PortalDestination): string {
+export function getDestinationPath(destination: PortalDestination | string | null | undefined): string {
   switch (destination) {
     case 'siswa':
       return '/portal/siswa';
@@ -115,43 +152,23 @@ export function getDestinationPath(destination: PortalDestination): string {
       return '/portal/guru';
     case 'staf':
       return '/portal/staf';
+    case 'kepsek':
+      return '/portal/kepsek';
     case 'admin':
-    default:
       return '/admin';
+    case 'portal':
+      return '/portal';
+    default:
+      return '/masuk';
   }
 }
 
 /**
  * Tentukan destinasi sub-portal (/portal/*) pengguna berdasarkan hierarki peran
+ * Menggunakan Single Source of Truth yang sama dengan resolveUserDestination
  */
 export function resolvePortalDestination(roles: unknown): PortalDestination {
-  const safeRoles = sanitizeRoles(roles);
-
-  if (safeRoles.length === 0) {
-    return 'admin';
-  }
-
-  // Jika memiliki peran siswa
-  if (safeRoles.includes('student')) {
-    return 'siswa';
-  }
-
-  // Jika memiliki peran orang tua / wali murid
-  if (safeRoles.includes('guardian')) {
-    return 'ortu';
-  }
-
-  // Jika memiliki peran guru atau wali kelas
-  if (safeRoles.some((r) => r === 'teacher' || r === 'homeroom')) {
-    return 'guru';
-  }
-
-  // Jika memiliki peran staf TU, sarpras, perpustakaan
-  if (safeRoles.some((r) => r === 'admin_tu' || r === 'facility_staff' || r === 'librarian')) {
-    return 'staf';
-  }
-
-  return 'admin';
+  return resolveUserDestination(roles);
 }
 
 /**
@@ -172,15 +189,36 @@ export function getAccessiblePortals(roles: unknown): Array<{
   }> = [];
 
   const hasAdmin = safeRoles.some((r) => ADMIN_SHELL_ROLES.includes(r as RoleCode));
+  const hasTeacher = safeRoles.some((r) => r === 'teacher' || r === 'homeroom');
+  const hasStaff = safeRoles.some((r) => r === 'facility_staff' || r === 'librarian' || r === 'admin_tu');
   const hasStudent = safeRoles.includes('student');
   const hasGuardian = safeRoles.includes('guardian');
+  const hasKepsek = safeRoles.some((r) => r === 'principal' || r === 'vice_principal');
 
-  if (hasAdmin) {
+  if (hasKepsek) {
     result.push({
-      portal: 'admin',
-      label: 'Portal Manajemen & Guru',
-      href: '/admin',
-      iconName: 'Shield',
+      portal: 'kepsek',
+      label: 'Portal Pimpinan',
+      href: '/portal/kepsek',
+      iconName: 'Building',
+    });
+  }
+
+  if (hasTeacher) {
+    result.push({
+      portal: 'guru',
+      label: 'Portal Guru',
+      href: '/portal/guru',
+      iconName: 'BookOpen',
+    });
+  }
+
+  if (hasStaff) {
+    result.push({
+      portal: 'staf',
+      label: 'Portal Staf & TU',
+      href: '/portal/staf',
+      iconName: 'Briefcase',
     });
   }
 
@@ -199,6 +237,15 @@ export function getAccessiblePortals(roles: unknown): Array<{
       label: 'Portal Orang Tua',
       href: '/portal/ortu',
       iconName: 'Users',
+    });
+  }
+
+  if (hasAdmin) {
+    result.push({
+      portal: 'admin',
+      label: 'Panel Admin & Manajemen',
+      href: '/admin',
+      iconName: 'Shield',
     });
   }
 
@@ -235,7 +282,7 @@ export function hasPermission(
 
 export function canAccessShell(
   roles: unknown,
-  shell: 'admin' | 'siswa' | 'ortu' | 'guru' | 'staf'
+  shell: 'admin' | 'siswa' | 'ortu' | 'guru' | 'staf' | 'kepsek'
 ): boolean {
   const safeRoles = sanitizeRoles(roles);
 
@@ -258,6 +305,8 @@ export function canAccessShell(
       return safeRoles.some((r) => r === 'teacher' || r === 'homeroom');
     case 'staf':
       return safeRoles.some((r) => r === 'admin_tu' || r === 'facility_staff' || r === 'librarian');
+    case 'kepsek':
+      return safeRoles.some((r) => r === 'principal' || r === 'vice_principal');
     default:
       return false;
   }
@@ -283,6 +332,16 @@ export function getPortalRoleOptions(roles: unknown): Array<{
   }> = [];
 
   const isSuperAdmin = safeRoles.includes('super_admin');
+
+  if (isSuperAdmin || safeRoles.some((r) => r === 'principal' || r === 'vice_principal')) {
+    result.push({
+      portal: 'kepsek',
+      label: 'Portal Pimpinan',
+      href: '/portal/kepsek',
+      description: 'Dashboard KPI sekolah, ringkasan akademik, dan antrean persetujuan pimpinan',
+      iconName: 'Building',
+    });
+  }
 
   if (isSuperAdmin || safeRoles.includes('student')) {
     result.push({
@@ -324,15 +383,19 @@ export function getPortalRoleOptions(roles: unknown): Array<{
     });
   }
 
-  if (isReadOnlyRole(safeRoles)) {
-    result.push({
-      portal: 'admin',
-      label: 'Panel Supervisi & Laporan',
-      href: '/admin/reports',
-      description: 'Pusat pemantauan capaian agregat, presensi, dan evaluasi eksekutif sekolah',
-      iconName: 'Shield',
-    });
-  } else if (isSuperAdmin || safeRoles.some((r) => ADMIN_SHELL_ROLES.includes(r as RoleCode))) {
+  if (
+    isSuperAdmin ||
+    safeRoles.some(
+      (r) =>
+        r === 'super_admin' ||
+        r === 'operator_cms' ||
+        r === 'ppdb_committee' ||
+        r === 'treasurer' ||
+        r === 'student_affairs' ||
+        r === 'public_relations' ||
+        r === 'counselor'
+    )
+  ) {
     result.push({
       portal: 'admin',
       label: 'Panel Admin & Manajemen',

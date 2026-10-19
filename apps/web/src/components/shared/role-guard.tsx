@@ -7,7 +7,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { AccessDenied } from '@/components/shared/access-denied';
 
 export interface RoleGuardProps {
-  portal: 'siswa' | 'ortu' | 'guru' | 'staf' | 'admin';
+  portal: 'siswa' | 'ortu' | 'guru' | 'staf' | 'admin' | 'kepsek';
   loadingMessage?: string;
   deniedTitle?: string;
   deniedDescription?: string;
@@ -34,6 +34,11 @@ const DEFAULT_PORTAL_LABELS: Record<string, { loading: string; title: string; de
     loading: 'Memverifikasi hak akses tenaga kependidikan...',
     title: 'Akses Portal Staf Ditolak',
     description: 'Halaman ini hanya dapat diakses oleh staf kependidikan, tata usaha, dan sarpras SMP Laboratorium UM.',
+  },
+  kepsek: {
+    loading: 'Memverifikasi hak akses pimpinan sekolah...',
+    title: 'Akses Portal Pimpinan Ditolak',
+    description: 'Halaman ini hanya dapat diakses oleh Kepala Sekolah dan Wakil Kepala Sekolah SMP Laboratorium UM.',
   },
   admin: {
     loading: 'Memverifikasi hak akses manajemen administrator...',

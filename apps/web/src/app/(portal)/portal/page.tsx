@@ -21,6 +21,7 @@ import {
   Shield,
   ArrowRight,
   Sparkles,
+  Building,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -29,11 +30,12 @@ const ICON_MAP = {
   BookOpen,
   Briefcase,
   Shield,
+  Building,
 };
 
 export default function PortalIndexPage() {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
 
   const portalOptions = React.useMemo(() => {
     return user ? getPortalRoleOptions(user.roles) : [];
@@ -48,10 +50,12 @@ export default function PortalIndexPage() {
       return;
     }
 
-    // Jika tidak memiliki opsi khusus (misal fallback), gunakan resolver standar
+    // Jika tidak memiliki opsi khusus, cek apakah ada destinasi eksplisit selain portal
     if (portalOptions.length === 0) {
       const dest = resolvePortalDestination(user.roles);
-      router.replace(getDestinationPath(dest));
+      if (dest !== 'portal') {
+        router.replace(getDestinationPath(dest));
+      }
     }
   }, [isLoading, isAuthenticated, user, portalOptions, router]);
 
@@ -59,6 +63,35 @@ export default function PortalIndexPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <LoadingSpinner label="Memeriksa peran dan hak akses..." size="lg" />
+      </div>
+    );
+  }
+
+  // Tampilkan pesan aman jika role tidak memiliki portal operasional aktif (misal Mitra / Komite / Pengawas)
+  if (portalOptions.length === 0) {
+    const isMitra = user?.roles?.some((r) => r === 'committee' || r === 'supervisor');
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 text-center">
+        <Card className="border-slate-200 shadow-sm p-6">
+          <div className="mx-auto w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-4">
+            <Shield className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">
+            {isMitra
+              ? 'Peran Pengawas / Komite Sekolah Terdeteksi'
+              : 'Status Hak Akses Portal'}
+          </h2>
+          <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
+            {isMitra
+              ? 'Portal mitra khusus untuk Komite Sekolah dan Pengawas saat ini sedang dalam persiapan (backlog rilis mendatang). Akun Anda tidak dialihkan ke modul operasional harian. Silakan koordinasikan dengan administrator sekolah apabila memerlukan akses laporan eksekutif.'
+              : 'Akun Anda belum memiliki penugasan portal operasional aktif. Silakan hubungi administrator sekolah untuk pengaturan hak akses peran Anda.'}
+          </p>
+          <div className="flex justify-center gap-3">
+            <Button variant="outline" onClick={() => logout()}>
+              Keluar Akun
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }

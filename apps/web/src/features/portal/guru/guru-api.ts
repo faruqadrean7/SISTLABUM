@@ -24,13 +24,30 @@ const loadGuruMock =
     ? () => import('./guru-mock-data')
     : null;
 
+function unwrapList<T>(res: any): T[] {
+  if (!res) return [];
+  const payload = res.data !== undefined ? res.data : res;
+  if (Array.isArray(payload)) return payload as T[];
+  if (payload && Array.isArray(payload.data)) return payload.data as T[];
+  return [];
+}
+
+function unwrapItem<T>(res: any, fallback: T): T {
+  if (!res) return fallback;
+  const payload = res.data !== undefined ? res.data : res;
+  if (payload && typeof payload === 'object' && 'data' in payload && payload.data !== undefined) {
+    return payload.data as T;
+  }
+  return (payload as T) ?? fallback;
+}
+
 export const guruApi = {
   // === JADWAL & KELAS BINAAN ===
   async getTeacherClasses(): Promise<TeacherClass[]> {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherClass[]>('/me/teacher/classes');
-        return res.data;
+        return unwrapList<TeacherClass>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_CLASSES) : undefined
     );
@@ -40,7 +57,7 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherScheduleItem[]>('/me/teacher/schedules');
-        return res.data;
+        return unwrapList<TeacherScheduleItem>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_SCHEDULES) : undefined
     );
@@ -51,15 +68,34 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherAttendanceStudent[]>(`/me/teacher/classes/${classId}/students`);
-        return res.data;
+        return unwrapList<TeacherAttendanceStudent>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_CLASS_STUDENTS[classId] || m.MOCK_CLASS_STUDENTS['cls-7a']) : undefined
     );
   },
 
   async recordAttendanceSession(payload: TeacherAttendanceSessionPayload): Promise<{ success: boolean; message: string }> {
-    const res = await apiClient.post<{ message: string }>('/me/teacher/attendance/sessions', payload);
-    return { success: true, message: res.data?.message || 'Presensi KBM berhasil disimpan.' };
+    const body = {
+      class_id: payload.classId,
+      classId: payload.classId,
+      subject_id: payload.subjectId,
+      subjectId: payload.subjectId,
+      session_date: payload.sessionDate,
+      sessionDate: payload.sessionDate,
+      session_topic: payload.sessionTopic,
+      sessionTopic: payload.sessionTopic,
+      schedule_id: payload.scheduleId,
+      scheduleId: payload.scheduleId,
+      attendees: payload.attendees.map((a) => ({
+        student_id: a.studentId,
+        studentId: a.studentId,
+        status: a.status,
+        notes: a.notes,
+      })),
+    };
+    const res = await apiClient.post<{ message: string }>('/me/teacher/attendance/sessions', body);
+    const data = unwrapItem<{ message?: string }>(res, {});
+    return { success: true, message: data.message || 'Presensi KBM berhasil disimpan.' };
   },
 
   // === JURNAL MENGAJAR ===
@@ -67,15 +103,35 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherJournalItem[]>('/me/teacher/journals');
-        return res.data;
+        return unwrapList<TeacherJournalItem>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_JOURNALS) : undefined
     );
   },
 
   async createJournal(payload: Partial<TeacherJournalItem>): Promise<TeacherJournalItem> {
-    const res = await apiClient.post<TeacherJournalItem>('/me/teacher/journals', payload);
-    return res.data;
+    const body = {
+      schedule_id: payload.scheduleId,
+      scheduleId: payload.scheduleId,
+      class_id: payload.classId,
+      classId: payload.classId,
+      subject_id: payload.subjectId,
+      subjectId: payload.subjectId,
+      session_date: payload.date,
+      date: payload.date,
+      topic: payload.lessonTopic,
+      lesson_topic: payload.lessonTopic,
+      lessonTopic: payload.lessonTopic,
+      competence_indicator: payload.competenceIndicator,
+      competenceIndicator: payload.competenceIndicator,
+      notes: payload.competenceIndicator,
+      learning_obstacles: payload.learningObstacles,
+      learningObstacles: payload.learningObstacles,
+      time_slot: payload.timeSlot,
+      timeSlot: payload.timeSlot,
+    };
+    const res = await apiClient.post<TeacherJournalItem>('/me/teacher/journals', body);
+    return unwrapItem<TeacherJournalItem>(res, res.data);
   },
 
   // === BUKU NILAI ===
@@ -85,7 +141,7 @@ export const guruApi = {
         const res = await apiClient.get<TeacherGradeComponent[]>('/me/teacher/grade-components', {
           params: { class_id: classId, subject_id: subjectId },
         });
-        return res.data;
+        return unwrapList<TeacherGradeComponent>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_GRADE_COMPONENTS) : undefined
     );
@@ -97,7 +153,7 @@ export const guruApi = {
         const res = await apiClient.get<TeacherStudentGrade[]>('/me/teacher/grades', {
           params: { class_id: classId, subject_id: subjectId },
         });
-        return res.data;
+        return unwrapList<TeacherStudentGrade>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_STUDENT_GRADES[classId] || m.MOCK_STUDENT_GRADES['cls-7a']) : undefined
     );
@@ -108,12 +164,19 @@ export const guruApi = {
     subjectId: string,
     grades: TeacherStudentGrade[]
   ): Promise<{ success: boolean; message: string }> {
-    await apiClient.post('/me/teacher/grades/bulk', {
+    const res = await apiClient.post<{ message: string }>('/me/teacher/grades/bulk', {
       class_id: classId,
+      classId,
       subject_id: subjectId,
-      grades,
+      subjectId,
+      grades: grades.map((g) => ({
+        student_id: g.studentId,
+        studentId: g.studentId,
+        scores: g.scores,
+      })),
     });
-    return { success: true, message: 'Buku nilai berhasil disimpan.' };
+    const data = unwrapItem<{ message?: string }>(res, {});
+    return { success: true, message: data.message || 'Buku nilai berhasil disimpan.' };
   },
 
   // === MATERI & MODUL AJAR ===
@@ -121,15 +184,23 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherMaterialItem[]>('/me/teacher/materials');
-        return res.data;
+        return unwrapList<TeacherMaterialItem>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_MATERIALS) : undefined
     );
   },
 
   async createMaterial(payload: Partial<TeacherMaterialItem>): Promise<TeacherMaterialItem> {
-    const res = await apiClient.post<TeacherMaterialItem>('/me/teacher/materials', payload);
-    return res.data;
+    const body = {
+      title: payload.title,
+      subject_id: payload.subjectId,
+      subjectId: payload.subjectId,
+      description: payload.description,
+      file_id: (payload as Record<string, unknown>).fileId,
+      fileId: (payload as Record<string, unknown>).fileId,
+    };
+    const res = await apiClient.post<TeacherMaterialItem>('/me/teacher/materials', body);
+    return unwrapItem<TeacherMaterialItem>(res, res.data);
   },
 
   // === TUGAS KBM ===
@@ -137,22 +208,32 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherAssignmentItem[]>('/me/teacher/assignments');
-        return res.data;
+        return unwrapList<TeacherAssignmentItem>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_ASSIGNMENTS) : undefined
     );
   },
 
   async createAssignment(payload: Partial<TeacherAssignmentItem>): Promise<TeacherAssignmentItem> {
-    const res = await apiClient.post<TeacherAssignmentItem>('/me/teacher/assignments', payload);
-    return res.data;
+    const body = {
+      title: payload.title,
+      class_id: payload.classId,
+      classId: payload.classId,
+      subject_id: payload.subjectId,
+      subjectId: payload.subjectId,
+      description: payload.description,
+      due_at: payload.dueDate,
+      dueDate: payload.dueDate,
+    };
+    const res = await apiClient.post<TeacherAssignmentItem>('/me/teacher/assignments', body);
+    return unwrapItem<TeacherAssignmentItem>(res, res.data);
   },
 
   async getAssignmentSubmissions(assignmentId: string): Promise<TeacherAssignmentSubmission[]> {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherAssignmentSubmission[]>(`/me/teacher/assignments/${assignmentId}/submissions`);
-        return res.data;
+        return unwrapList<TeacherAssignmentSubmission>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_ASSIGNMENT_SUBMISSIONS[assignmentId] || m.MOCK_ASSIGNMENT_SUBMISSIONS['asg-1']) : undefined
     );
@@ -172,7 +253,7 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherExamItem[]>('/me/teacher/exams');
-        return res.data;
+        return unwrapList<TeacherExamItem>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_EXAMS) : undefined
     );
@@ -183,7 +264,7 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherLeaveRequest[]>('/me/teacher/leave-requests');
-        return res.data;
+        return unwrapList<TeacherLeaveRequest>(res);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_LEAVE) : undefined
     );
@@ -205,22 +286,20 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<{ data: any[] }>('/salary-slips');
-        if (res.data?.data && Array.isArray(res.data.data)) {
-          return res.data.data.map((item) => ({
-            id: item.id,
-            slipNumber: item.slip_number || `SLIP-${item.id}`,
-            periodMonth: item.period_month || item.period || 'Periode Berjalan',
-            basicSalary: Number(item.basic_salary || 0),
-            teachingAllowance: Number(item.teaching_allowance || 0),
-            functionalAllowance: Number(item.functional_allowance || 0),
-            deduction: Number(item.deduction || 0),
-            totalNetSalary: Number(item.total_net_salary || item.net_salary || 0),
-            paymentDate: item.payment_date || item.created_at,
-            isPaid: Boolean(item.is_paid ?? true),
-            downloadUrl: `/api/v1/salary-slips/${item.id}/download`,
-          }));
-        }
-        return [];
+        const rawList = unwrapList<any>(res);
+        return rawList.map((item) => ({
+          id: item.id,
+          slipNumber: item.slip_number || `SLIP-${item.id}`,
+          periodMonth: item.period_month || item.period || 'Periode Berjalan',
+          basicSalary: Number(item.basic_salary || 0),
+          teachingAllowance: Number(item.teaching_allowance || 0),
+          functionalAllowance: Number(item.functional_allowance || 0),
+          deduction: Number(item.deduction || 0),
+          totalNetSalary: Number(item.total_net_salary || item.net_salary || 0),
+          paymentDate: item.payment_date || item.created_at,
+          isPaid: Boolean(item.is_paid ?? true),
+          downloadUrl: `/api/v1/salary-slips/${item.id}/download`,
+        }));
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_SALARY_SLIPS) : undefined
     );
@@ -231,7 +310,7 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherSelfAttendance>('/me/teacher/self-attendance');
-        return res.data;
+        return unwrapItem<TeacherSelfAttendance>(res, {} as TeacherSelfAttendance);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_SELF_ATTENDANCE) : undefined
     );
@@ -248,7 +327,7 @@ export const guruApi = {
     return executeWithMockFallback(
       async () => {
         const res = await apiClient.get<TeacherHomeroomData>('/me/teacher/homeroom');
-        return res.data;
+        return unwrapItem<TeacherHomeroomData>(res, {} as TeacherHomeroomData);
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_HOMEROOM_DATA) : undefined
     );

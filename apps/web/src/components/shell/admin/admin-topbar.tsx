@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { RoleSwitcher } from '../shared/role-switcher';
 import { Menu, LogOut, ChevronDown, Calendar, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export function AdminTopbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
@@ -87,9 +88,12 @@ export function AdminTopbar({ onToggleSidebar }: { onToggleSidebar?: () => void 
             aria-haspopup="true"
             aria-expanded={userMenuOpen}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-white font-bold text-xs">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
+            <Avatar
+              src={(user?.profile?.photo_url as string) || (user?.profile?.avatarUrl as string)}
+              name={displayName}
+              size="sm"
+              alt={displayName}
+            />
             <div className="hidden md:block text-left">
               <div className="text-xs font-semibold text-slate-900 leading-tight">{displayName}</div>
               <div className="text-[10px] font-medium text-slate-500 leading-tight">{roleLabel}</div>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   useTeacherJournals,
-  useTeacherClasses,
+  useTeacherAssignmentsSummary,
   guruApi,
   TeacherJournalItem,
 } from '@/features/portal/guru';
@@ -26,15 +26,22 @@ import {
   Edit2,
   X,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function TeacherJournalPage() {
   const { data: initialJournals = [], isLoading } = useTeacherJournals();
-  const { data: classes = [] } = useTeacherClasses();
+  const {
+    subjects,
+    getClassesForSubject,
+    schedules,
+    isLoading: isLoadingAssignments,
+  } = useTeacherAssignmentsSummary();
 
   const [journals, setJournals] = useState<TeacherJournalItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || 'cls-7a');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [journalDate, setJournalDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [timeSlot, setTimeSlot] = useState('08:00 - 09:20');
   const [lessonTopic, setLessonTopic] = useState('');
@@ -42,6 +49,8 @@ export default function TeacherJournalPage() {
   const [learningObstacles, setLearningObstacles] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (initialJournals.length > 0) {
@@ -49,18 +58,53 @@ export default function TeacherJournalPage() {
     }
   }, [initialJournals]);
 
+  // Available classes for currently selected subject
+  const availableClasses = React.useMemo(() => {
+    return getClassesForSubject(selectedSubjectId);
+  }, [getClassesForSubject, selectedSubjectId]);
+
+  // Auto-select subject if 1 or if not yet selected
+  React.useEffect(() => {
+    if (subjects.length > 0) {
+      if (!selectedSubjectId || !subjects.some((s) => s.id === selectedSubjectId)) {
+        setSelectedSubjectId(subjects[0].id);
+      }
+    } else {
+      setSelectedSubjectId('');
+    }
+  }, [subjects, selectedSubjectId]);
+
+  // Keep class aligned with availableClasses for this subject
+  React.useEffect(() => {
+    if (availableClasses.length > 0) {
+      if (!selectedClassId || !availableClasses.some((c) => c.id === selectedClassId)) {
+        setSelectedClassId(availableClasses[0].id);
+      }
+    } else {
+      setSelectedClassId('');
+    }
+  }, [availableClasses, selectedClassId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lessonTopic.trim() || !competenceIndicator.trim()) return;
+    if (!selectedSubjectId || !selectedClassId || !lessonTopic.trim() || !competenceIndicator.trim()) return;
 
     setIsSubmitting(true);
+    setModalError(null);
+    setErrorMessage(null);
     try {
-      const activeClass = classes.find((c) => c.id === selectedClassId);
+      const activeSubject = subjects.find((s) => s.id === selectedSubjectId);
+      const activeClass = availableClasses.find((c) => c.id === selectedClassId);
+      const matchedSchedule = schedules.find(
+        (s) => s.subjectId === selectedSubjectId && s.classId === selectedClassId
+      );
+
       const newJrn = await guruApi.createJournal({
+        scheduleId: matchedSchedule?.id,
         classId: selectedClassId,
-        className: activeClass?.name || '7-A Unggulan',
-        subjectId: 'sub-mat',
-        subjectName: 'Matematika',
+        className: activeClass?.name || 'Kelas',
+        subjectId: selectedSubjectId,
+        subjectName: activeSubject?.name || 'Mata Pelajaran',
         date: journalDate,
         timeSlot,
         lessonTopic,
@@ -75,8 +119,10 @@ export default function TeacherJournalPage() {
       setCompetenceIndicator('');
       setLearningObstacles('');
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch {
-      // Fallback
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan jurnal mengajar.';
+      setModalError(msg);
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -115,6 +161,18 @@ export default function TeacherJournalPage() {
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-status-success text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in duration-200">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <span>{successMessage}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-status-danger text-xs sm:text-sm font-bold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <X className="h-5 w-5 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-700">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
@@ -205,29 +263,75 @@ export default function TeacherJournalPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              {modalError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-status-danger text-xs font-bold flex items-center gap-2">
+                  <X className="h-4 w-4 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
+              {subjects.length === 0 && !isLoadingAssignments && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>Anda belum memiliki penugasan mata pelajaran aktif di jadwal KBM.</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Mata Pelajaran</label>
+                  {subjects.length === 0 ? (
+                    <div className="h-9 px-2.5 flex items-center rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-500">
+                      {isLoadingAssignments ? 'Memuat mapel...' : 'Tidak ada mapel'}
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedSubjectId}
+                      onChange={(e) => setSelectedSubjectId(e.target.value)}
+                      className="w-full h-9 px-2.5 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                      disabled={subjects.length === 0}
+                    >
+                      {subjects.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Kelas</label>
-                  <select
-                    value={selectedClassId}
-                    onChange={(e) => setSelectedClassId(e.target.value)}
-                    className="w-full h-9 px-2.5 rounded-lg border border-slate-300 text-xs bg-white"
-                  >
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  {availableClasses.length === 0 ? (
+                    <div className="h-9 px-2.5 flex items-center rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-500">
+                      {isLoadingAssignments ? 'Memuat kelas...' : 'Tidak ada kelas'}
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedClassId}
+                      onChange={(e) => setSelectedClassId(e.target.value)}
+                      className="w-full h-9 px-2.5 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                      disabled={availableClasses.length === 0}
+                    >
+                      {availableClasses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal KBM</label>
-                  <Input
-                    type="date"
-                    value={journalDate}
-                    onChange={(e) => setJournalDate(e.target.value)}
-                    className="h-9 text-xs"
-                    required
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal KBM</label>
+                <Input
+                  type="date"
+                  value={journalDate}
+                  onChange={(e) => setJournalDate(e.target.value)}
+                  className="h-9 text-xs"
+                  required
+                />
               </div>
 
               <div>
@@ -279,8 +383,13 @@ export default function TeacherJournalPage() {
                 <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
                   Batal
                 </Button>
-                <Button type="submit" size="sm" isLoading={isSubmitting} className="font-bold">
-                  Simpan Jurnal
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSubmitting || !selectedSubjectId || !selectedClassId || !lessonTopic.trim() || !competenceIndicator.trim()}
+                  className="font-bold"
+                >
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Jurnal'}
                 </Button>
               </div>
             </form>

@@ -17,6 +17,7 @@ import { StudentStatusDialog } from '@/features/master/student-status-dialog';
 import { StudentDetailDialog } from '@/features/master/student-detail-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import {
   Users,
   ArrowLeft,
@@ -146,10 +147,18 @@ export default function StudentsMasterPage() {
       key: 'full_name',
       header: 'Nama Siswa & Kelamin',
       render: (item) => (
-        <div>
-          <div className="font-semibold text-slate-900">{item.full_name}</div>
-          <div className="text-[11px] text-slate-400">
-            {item.gender === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'}
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={item.photo_file?.url || (item as any).photo_url}
+            name={item.full_name}
+            size="sm"
+            alt={`Foto ${item.full_name}`}
+          />
+          <div>
+            <div className="font-semibold text-slate-900">{item.full_name}</div>
+            <div className="text-[11px] text-slate-400">
+              {item.gender === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'}
+            </div>
           </div>
         </div>
       ),

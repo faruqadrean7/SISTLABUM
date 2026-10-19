@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { guruApi } from './guru-api';
 import {
@@ -7,6 +8,16 @@ import {
   TeacherAssignmentItem,
   TeacherStudentGrade,
 } from './types';
+
+export interface TeacherAssignedSubject {
+  id: string;
+  name: string;
+}
+
+export interface TeacherAssignedClass {
+  id: string;
+  name: string;
+}
 
 export function useTeacherClasses() {
   return useQuery({
@@ -22,6 +33,56 @@ export function useTeacherSchedules() {
     queryFn: () => guruApi.getTeacherSchedules(),
     staleTime: 1000 * 60 * 10,
   });
+}
+
+/**
+ * Hook untuk mengekstrak mata pelajaran dan kelas yang diampu guru dari jadwal mengajar aktual (SSOT).
+ * Mendukung pengelompokan kelas per mata pelajaran dan auto-selection tanpa fallback dummy.
+ */
+export function useTeacherAssignmentsSummary() {
+  const { data: schedules = [], isLoading, isError, error, refetch } = useTeacherSchedules();
+
+  const subjects = useMemo<TeacherAssignedSubject[]>(() => {
+    const map = new Map<string, TeacherAssignedSubject>();
+    schedules.forEach((s) => {
+      if (s.subjectId && !map.has(s.subjectId)) {
+        map.set(s.subjectId, {
+          id: s.subjectId,
+          name: s.subjectName || 'Mata Pelajaran',
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [schedules]);
+
+  const getClassesForSubject = useCallback(
+    (subjectId?: string): TeacherAssignedClass[] => {
+      if (!subjectId) return [];
+      const map = new Map<string, TeacherAssignedClass>();
+      schedules
+        .filter((s) => s.subjectId === subjectId)
+        .forEach((s) => {
+          if (s.classId && !map.has(s.classId)) {
+            map.set(s.classId, {
+              id: s.classId,
+              name: s.className || 'Kelas',
+            });
+          }
+        });
+      return Array.from(map.values());
+    },
+    [schedules]
+  );
+
+  return {
+    schedules,
+    subjects,
+    getClassesForSubject,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  };
 }
 
 export function useAttendanceStudents(classId: string) {
