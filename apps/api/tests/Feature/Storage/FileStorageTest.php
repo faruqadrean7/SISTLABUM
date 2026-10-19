@@ -412,4 +412,94 @@ class FileStorageTest extends TestCase
         $tamperedResponse = $this->get($tamperedUrl);
         $tamperedResponse->assertStatus(403);
     }
+
+    public function test_be_photo_sec_avatar_rejects_non_image_mime_or_extension(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Non-image MIME
+        $res1 = $this->postJson('/api/v1/files/presign', [
+            'filename' => 'avatar.jpg',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 50000,
+            'visibility' => 'publik',
+            'purpose' => 'avatar',
+        ]);
+        $res1->assertStatus(400)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+
+        // Non-image extension
+        $res2 = $this->postJson('/api/v1/files/presign', [
+            'filename' => 'dokumen.pdf',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 50000,
+            'visibility' => 'publik',
+            'purpose' => 'avatar',
+        ]);
+        $res2->assertStatus(400)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    public function test_be_photo_sec_avatar_rejects_oversized_file_above_2mb(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // 3 MB file with purpose avatar
+        $res = $this->postJson('/api/v1/files/presign', [
+            'filename' => 'foto_besar.jpg',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 3 * 1024 * 1024,
+            'visibility' => 'publik',
+            'purpose' => 'avatar',
+        ]);
+        $res->assertStatus(400)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    public function test_be_photo_sec_avatar_accepts_valid_image_and_completes_upload(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $presignRes = $this->postJson('/api/v1/files/presign', [
+            'filename' => 'pasfoto_resmi.jpg',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 200000, // 200 KB
+            'visibility' => 'publik',
+            'purpose' => 'avatar',
+        ]);
+        $presignRes->assertStatus(200);
+
+        $token = $presignRes->json('data.token');
+        $uploadUrl = $presignRes->json('data.upload_url');
+
+        $fakeImage = UploadedFile::fake()->image('pasfoto_resmi.jpg', 200, 200);
+        $uploadRes = $this->post($uploadUrl, [
+            'file' => $fakeImage,
+        ]);
+        $uploadRes->assertStatus(200);
+
+        $confirmRes = $this->postJson('/api/v1/files/confirm', [
+            'token' => $token,
+            'checksum' => $uploadRes->json('data.checksum'),
+        ]);
+        $confirmRes->assertStatus(201)
+            ->assertJsonPath('data.visibility', 'publik')
+            ->assertJsonPath('data.mime_type', 'image/jpeg');
+
+        $fileId = $confirmRes->json('data.id');
+        $this->assertNotEmpty($fileId);
+    }
+
+    public function test_be_photo_sec_student_cannot_assign_photo_to_student_master(): void
+    {
+        // Student user tries to call PUT /api/v1/students/{id}
+        Sanctum::actingAs($this->studentUser1);
+
+        $res = $this->putJson('/api/v1/students/'.$this->student1->id, [
+            'full_name' => 'Hacker Name',
+            'photo_file_id' => Str::uuid()->toString(),
+        ]);
+
+        $res->assertStatus(403);
+    }
 }
