@@ -201,12 +201,12 @@ describe('FASE 4: Role Non-Portal Lewat /admin dengan RBAC Suite', () => {
   });
 
   describe('3. Role Switcher Multi-Peran (Guru Pengajar yang juga Wakasek)', () => {
-    it('menghasilkan opsi beralih antara Portal Guru dan Panel Admin untuk guru yang juga wakasek', () => {
+    it('menghasilkan opsi beralih antara Portal Guru dan Portal Pimpinan untuk guru yang juga wakasek', () => {
       const dualRoles = ['teacher', 'vice_principal'];
       const accessible = getPortalRoleOptions(dualRoles);
 
       const portalKeys = accessible.map((p) => p.portal);
-      expect(portalKeys).toContain('admin');
+      expect(portalKeys).toContain('kepsek');
       expect(portalKeys).toContain('guru');
       expect(portalKeys).not.toContain('siswa');
       expect(portalKeys).not.toContain('ortu');

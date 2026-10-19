@@ -35,24 +35,27 @@ describe('RBAC Evaluator & Route Protection', () => {
       expect(getDestinationPath('ortu')).toBe('/portal/ortu');
     });
 
-    it('resolves teacher, admin_tu, and principal roles to admin', () => {
-      expect(resolveUserDestination(['teacher'])).toBe('admin');
-      expect(resolveUserDestination(['admin_tu'])).toBe('admin');
-      expect(resolveUserDestination(['principal'])).toBe('admin');
+    it('resolves teacher, admin_tu, and principal roles to their legitimate portals', () => {
+      expect(resolveUserDestination(['teacher'])).toBe('guru');
+      expect(resolveUserDestination(['admin_tu'])).toBe('staf');
+      expect(getDestinationPath('staf')).toBe('/portal/staf');
+      expect(resolveUserDestination(['principal'])).toBe('kepsek');
+      expect(getDestinationPath('kepsek')).toBe('/portal/kepsek');
+      expect(resolveUserDestination(['vice_principal'])).toBe('kepsek');
       expect(resolveUserDestination(['super_admin'])).toBe('admin');
       expect(getDestinationPath('admin')).toBe('/admin');
     });
 
-    it('handles malformed or empty roles by defaulting to admin safely', () => {
-      expect(resolveUserDestination(null)).toBe('admin');
-      expect(resolveUserDestination(undefined)).toBe('admin');
-      expect(resolveUserDestination([])).toBe('admin');
+    it('handles malformed or empty roles safely without granting admin access', () => {
+      expect(resolveUserDestination(null)).not.toBe('admin');
+      expect(resolveUserDestination(undefined)).not.toBe('admin');
+      expect(resolveUserDestination([])).not.toBe('admin');
     });
 
     it('detects accessible portals for multi-role user (e.g. teacher + guardian)', () => {
       const portals = getAccessiblePortals(['teacher', 'guardian']);
       expect(portals).toHaveLength(2);
-      expect(portals.map((p) => p.portal)).toContain('admin');
+      expect(portals.map((p) => p.portal)).toContain('guru');
       expect(portals.map((p) => p.portal)).toContain('ortu');
     });
 
@@ -66,7 +69,8 @@ describe('RBAC Evaluator & Route Protection', () => {
     it('correctly isolates navigation shells with canAccessShell', () => {
       // Admin shell
       expect(canAccessShell(['admin_tu'], 'admin')).toBe(true);
-      expect(canAccessShell(['teacher'], 'admin')).toBe(true);
+      expect(canAccessShell(['teacher'], 'admin')).toBe(false);
+      expect(canAccessShell(['teacher'], 'guru')).toBe(true);
       expect(canAccessShell(['student'], 'admin')).toBe(false);
       expect(canAccessShell(['guardian'], 'admin')).toBe(false);
 

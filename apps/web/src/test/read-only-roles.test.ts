@@ -142,14 +142,16 @@ describe('FASE 5: Read-Only Roles (Committee & Supervisor)', () => {
   });
 
   describe('3. Shell Navigation & Destination Routing', () => {
-    it('resolves committee and supervisor to admin shell without a personal portal', () => {
-      expect(resolveUserDestination(['committee'])).toBe('admin');
-      expect(resolveUserDestination(['supervisor'])).toBe('admin');
+    it('does not route committee and supervisor to admin shell automatically (routes safely to portal hub)', () => {
+      expect(resolveUserDestination(['committee'])).toBe('portal');
+      expect(resolveUserDestination(['supervisor'])).toBe('portal');
+      expect(resolveUserDestination(['committee'])).not.toBe('admin');
+      expect(resolveUserDestination(['supervisor'])).not.toBe('admin');
     });
 
-    it('allows access to admin shell but denies access to personal portals', () => {
-      expect(canAccessShell(['committee'], 'admin')).toBe(true);
-      expect(canAccessShell(['supervisor'], 'admin')).toBe(true);
+    it('denies automatic access to admin shell and personal portals for mitra roles', () => {
+      expect(canAccessShell(['committee'], 'admin')).toBe(false);
+      expect(canAccessShell(['supervisor'], 'admin')).toBe(false);
 
       expect(canAccessShell(['committee'], 'siswa')).toBe(false);
       expect(canAccessShell(['committee'], 'guru')).toBe(false);

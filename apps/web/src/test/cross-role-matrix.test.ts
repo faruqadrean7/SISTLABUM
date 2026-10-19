@@ -142,9 +142,9 @@ describe('FASE 6: Cross-Role Isolation Matrix & Security Hardening', () => {
   });
 
   describe('3. Teacher Classroom Authority & Wali Kelas Boundary', () => {
-    it('allows teacher to access guru portal and admin shell, but isolates homeroom menus', () => {
+    it('allows teacher to access guru portal and isolates admin shell and other portals', () => {
       expect(canAccessShell(teacher7A.roles, 'guru')).toBe(true);
-      expect(canAccessShell(teacher7A.roles, 'admin')).toBe(true);
+      expect(canAccessShell(teacher7A.roles, 'admin')).toBe(false);
       expect(canAccessShell(teacher7A.roles, 'ortu')).toBe(false);
       expect(canAccessShell(teacher7A.roles, 'siswa')).toBe(false);
 
