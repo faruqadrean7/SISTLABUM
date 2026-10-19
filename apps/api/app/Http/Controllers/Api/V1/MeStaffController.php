@@ -114,10 +114,16 @@ class MeStaffController extends Controller
         ]);
 
         $today = now()->toDateString();
-        $record = StaffAttendance::firstOrNew([
-            'user_id' => $user->id,
-            'att_date' => $today,
-        ]);
+        $record = StaffAttendance::where('user_id', $user->id)
+            ->whereDate('att_date', $today)
+            ->first();
+
+        if (! $record) {
+            $record = new StaffAttendance([
+                'user_id' => $user->id,
+                'att_date' => $today,
+            ]);
+        }
 
         if ($validated['action'] === 'check_in') {
             $record->check_in = now();
@@ -181,7 +187,13 @@ class MeStaffController extends Controller
             'reason' => 'required|string|max:1000',
         ]);
 
-        $leaveType = $validated['leave_type'] ?? ($validated['leaveType'] ?? 'izin');
+        $rawType = $validated['leave_type'] ?? ($validated['leaveType'] ?? 'izin');
+        $leaveType = match ($rawType) {
+            'sick', 'Sakit' => 'sakit',
+            'duty', 'Dispensasi', 'dispen' => 'dispen',
+            'annual', 'family', 'Izin', 'izin' => 'izin',
+            default => $rawType,
+        };
         $startDate = $validated['start_date'] ?? ($validated['startDate'] ?? now()->toDateString());
         $endDate = $validated['end_date'] ?? ($validated['endDate'] ?? now()->toDateString());
 

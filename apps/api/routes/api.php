@@ -202,6 +202,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/schedule', [MeStudentController::class, 'schedule']);
             Route::get('/grades', [MeStudentController::class, 'grades']);
             Route::get('/exams', [MeStudentController::class, 'exams']);
+            Route::get('/tasks', [MeStudentController::class, 'tasks']);
+            Route::post('/tasks/{id}/submit', [MeStudentController::class, 'submitTask']);
+            Route::get('/counseling-requests', [MeStudentController::class, 'counselingRequests']);
             Route::post('/counseling-requests', [MeStudentController::class, 'storeCounselingRequest']);
         });
 

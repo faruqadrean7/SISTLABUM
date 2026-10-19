@@ -6,6 +6,40 @@ use App\Http\Requests\BaseApiRequest;
 
 class StoreLeaveRequest extends BaseApiRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+        if ($this->has('studentId') && ! $this->has('student_id')) {
+            $merge['student_id'] = $this->input('studentId');
+        }
+        if ($this->has('leaveType') && ! $this->has('leave_type')) {
+            $merge['leave_type'] = $this->input('leaveType');
+        }
+        if ($this->has('startDate') && ! $this->has('start_date')) {
+            $merge['start_date'] = $this->input('startDate');
+        }
+        if ($this->has('endDate') && ! $this->has('end_date')) {
+            $merge['end_date'] = $this->input('endDate');
+        }
+        if ($this->has('attachmentFileId') && ! $this->has('attachment_file_id')) {
+            $merge['attachment_file_id'] = $this->input('attachmentFileId');
+        }
+
+        $type = $merge['leave_type'] ?? $this->input('leave_type');
+        if ($type) {
+            $merge['leave_type'] = match ($type) {
+                'sick', 'Sakit' => 'sakit',
+                'duty', 'Dispensasi', 'dispen' => 'dispen',
+                'annual', 'family', 'Izin', 'izin' => 'izin',
+                default => $type,
+            };
+        }
+
+        if (! empty($merge)) {
+            $this->merge($merge);
+        }
+    }
+
     public function rules(): array
     {
         return [

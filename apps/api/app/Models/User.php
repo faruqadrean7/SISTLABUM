@@ -139,7 +139,7 @@ class User extends Authenticatable
     public function getProfileSummary(): ?array
     {
         if ($this->relationLoaded('student') && $this->student) {
-            $this->student->loadMissing('classes');
+            $this->student->loadMissing(['classes', 'photoFile']);
             $activeClass = $this->student->classes->first();
 
             return [
@@ -152,10 +152,14 @@ class User extends Authenticatable
                 'status' => $this->student->status,
                 'className' => $activeClass?->name,
                 'classId' => $activeClass?->id,
+                'photo_file_id' => $this->student->photo_file_id,
+                'photo_url' => $this->student->photoFile?->url,
+                'photoUrl' => $this->student->photoFile?->url,
             ];
         }
 
         if ($this->relationLoaded('teacher') && $this->teacher) {
+            $this->teacher->loadMissing('photoFile');
             return [
                 'type' => 'teacher',
                 'id' => $this->teacher->id,
@@ -164,11 +168,14 @@ class User extends Authenticatable
                 'nuptk' => $this->teacher->nuptk,
                 'position' => $this->teacher->position,
                 'status' => $this->teacher->status,
+                'photo_file_id' => $this->teacher->photo_file_id,
+                'photo_url' => $this->teacher->photoFile?->url,
+                'photoUrl' => $this->teacher->photoFile?->url,
             ];
         }
 
         if ($this->relationLoaded('guardian') && $this->guardian) {
-            $this->guardian->loadMissing('students.classes');
+            $this->guardian->loadMissing(['students.classes', 'students.photoFile']);
             $children = $this->guardian->students ? $this->guardian->students->map(function ($s) {
                 $activeClass = $s->classes->first();
 
@@ -180,6 +187,9 @@ class User extends Authenticatable
                     'gender' => $s->gender,
                     'className' => $activeClass?->name,
                     'classId' => $activeClass?->id,
+                    'photo_file_id' => $s->photo_file_id,
+                    'photo_url' => $s->photoFile?->url,
+                    'photoUrl' => $s->photoFile?->url,
                 ];
             })->all() : [];
 

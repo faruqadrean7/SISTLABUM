@@ -72,6 +72,26 @@ class PresignFileRequest extends BaseApiRequest
             if (in_array($mimeType, self::DISALLOWED_MIME_TYPES, true)) {
                 $validator->errors()->add('mime_type', 'Tipe konten (MIME) berkas ini dilarang demi keamanan sistem.');
             }
+
+            // Validasi khusus untuk purpose 'avatar' (Foto Profil Resmi)
+            $purpose = strtolower(trim((string) $this->input('purpose', '')));
+            if ($purpose === 'avatar') {
+                $allowedAvatarMimes = ['image/jpeg', 'image/png', 'image/webp'];
+                $allowedAvatarExts = ['jpg', 'jpeg', 'png', 'webp'];
+
+                if (! in_array($mimeType, $allowedAvatarMimes, true)) {
+                    $validator->errors()->add('mime_type', 'Foto profil harus berupa format gambar JPEG, PNG, atau WebP.');
+                }
+
+                if (! in_array($extension, $allowedAvatarExts, true)) {
+                    $validator->errors()->add('filename', 'Ekstensi berkas foto profil harus berupa .jpg, .jpeg, .png, atau .webp.');
+                }
+
+                $sizeBytes = (int) $this->input('size_bytes', 0);
+                if ($sizeBytes > 2097152) { // Maksimal 2 MB
+                    $validator->errors()->add('size_bytes', 'Ukuran foto profil melebihi batas maksimum 2 MB.');
+                }
+            }
         });
     }
 }

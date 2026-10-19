@@ -110,6 +110,11 @@ class FileStorageService
             throw new HttpException(422, 'Ukuran berkas melebihi batas yang disetujui saat presign.');
         }
 
+        // Hard limit server-side for avatar (foto profil maks 2 MB)
+        if (($cacheData['purpose'] ?? null) === 'avatar' && $size > 2097152) {
+            throw new HttpException(422, 'Ukuran fisik berkas foto profil melebihi batas maksimum 2 MB.');
+        }
+
         $disk = $cacheData['visibility'] === 'publik' ? 'public' : 'local';
         Storage::disk($disk)->put($cacheData['object_key'], $content);
 

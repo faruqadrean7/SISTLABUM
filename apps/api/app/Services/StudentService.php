@@ -28,9 +28,12 @@ class StudentService
         $classId = $request->query('class_id');
         $q = trim((string) $request->query('q', ''));
 
-        $query = Student::with(['classes' => function ($q) {
-            $q->whereNull('class_students.left_at');
-        }]);
+        $query = Student::with([
+            'photoFile',
+            'classes' => function ($q) {
+                $q->whereNull('class_students.left_at');
+            },
+        ]);
 
         // Role & Scoping restrictions
         $this->applyDataScoping($query, $user);
@@ -77,6 +80,7 @@ class StudentService
     public function getStudent(string $id, Request $request): Student
     {
         $student = Student::with([
+            'photoFile',
             'classes' => function ($q) {
                 $q->whereNull('class_students.left_at');
             },

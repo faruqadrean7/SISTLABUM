@@ -613,8 +613,8 @@ class LmsService
             $fileId = $fileRecord->id;
         }
 
-        if (! $fileId) {
-            throw new HttpException(422, 'Berkas pengerjaan tugas wajib diunggah.');
+        if (! $fileId && empty($data['drive_link']) && empty($data['notes']) && empty($data['file_name'])) {
+            throw new HttpException(422, 'Berkas pengerjaan, tautan berkas/drive, atau catatan tugas wajib disertakan.');
         }
 
         return DB::transaction(function () use ($assignment, $student, $fileId, $data, $currentUser, $request) {
@@ -632,8 +632,17 @@ class LmsService
             ]);
 
             $submission->file_id = $fileId;
-            if (! empty($data['notes'])) {
-                $submission->notes = trim($data['notes']);
+            $combinedNotes = $data['notes'] ?? '';
+            if (! empty($data['drive_link'])) {
+                $linkPrefix = '[Tautan Berkas/Drive]: ' . $data['drive_link'];
+                $combinedNotes = $combinedNotes ? ($combinedNotes . "\n" . $linkPrefix) : $linkPrefix;
+            }
+            if (! empty($data['file_name']) && ! empty($data['drive_link'])) {
+                $namePrefix = '[Nama Berkas]: ' . $data['file_name'];
+                $combinedNotes = $namePrefix . "\n" . $combinedNotes;
+            }
+            if ($combinedNotes) {
+                $submission->notes = trim($combinedNotes);
             }
             $submission->submitted_at = Carbon::now();
             $submission->save();
