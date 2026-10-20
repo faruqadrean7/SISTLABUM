@@ -88,15 +88,26 @@ export default function HomePage() {
           ========================================================================= */}
       <section
         aria-labelledby="hero-heading"
-        className="relative bg-gradient-to-b from-pub-navy-deep via-pub-navy to-pub-navy-deep text-white py-16 sm:py-24 lg:py-28 overflow-hidden"
+        className="relative min-h-[600px] lg:min-h-[660px] flex items-center py-20 overflow-hidden bg-pub-navy-deep text-white"
       >
-        {/* Latar Belakang Aksen Halus */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(#C98A1F_1px,transparent_1px)] [background-size:28px_28px] opacity-15 pointer-events-none"
-        />
+        {/* Background Poster & Video Overlay */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-pub-navy-deep">
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+            style={{ backgroundImage: `url('${HERO_CONTENT.videoThumbnail}')` }}
+          />
+          <iframe
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-screen min-w-[177.77vh] pointer-events-none border-0 opacity-100"
+            src={HERO_CONTENT.youtubeEmbedUrl}
+            title="Video Profil SMP Laboratorium"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            loading="eager"
+          />
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-pub-navy-deep/90 via-pub-navy-deep/60 to-black/40 pointer-events-none" />
+          <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none" />
+        </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="max-w-3xl space-y-6">
             {/* Badges Afiliasi & Akreditasi */}
             <div className="flex flex-wrap items-center gap-2.5">
@@ -115,13 +126,13 @@ export default function HomePage() {
             {/* Headline Utama */}
             <h1
               id="hero-heading"
-              className="font-pub-heading text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-white drop-shadow-sm tracking-tight"
+              className="font-pub-heading text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-white drop-shadow-md tracking-tight"
             >
-              Membina Generasi <span className="text-pub-gold-soft">Beradab, Kreatif</span>, dan Berprestasi
+              Mewujudkan Generasi <span className="text-pub-gold">Beriman, Berkarakter</span>, Berprestasi, dan Berbudaya
             </h1>
 
             {/* Deskripsi Singkat */}
-            <p className="text-base sm:text-lg text-white/90 leading-relaxed max-w-2xl">
+            <p className="text-base sm:text-lg text-white/90 leading-relaxed max-w-2xl drop-shadow">
               {HERO_CONTENT.description}
             </p>
 
@@ -136,7 +147,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href={HERO_CONTENT.ctaSecondary.href}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/40 hover:border-white font-semibold text-sm sm:text-base px-6 py-3.5 rounded-[10px] transition-all backdrop-blur-sm inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
+                className="bg-transparent hover:bg-white/15 text-white border border-white/50 hover:border-white font-semibold text-sm sm:text-base px-6 py-3.5 rounded-[10px] transition-all backdrop-blur-sm inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
               >
                 <span>{HERO_CONTENT.ctaSecondary.label}</span>
               </Link>
