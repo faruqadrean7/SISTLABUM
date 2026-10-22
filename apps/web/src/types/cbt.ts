@@ -55,11 +55,20 @@ export type ExamType =
 
 export type ExamStatus =
   | 'draft'
-  | 'published'
-  | 'active'
+  | 'dijadwalkan'
   | 'berlangsung'
   | 'selesai'
+  | 'dibatalkan'
+  | 'arsip'
+  | 'published'
+  | 'active'
   | 'archived';
+
+export type ExamSessionStatus =
+  | 'belum'
+  | 'mengerjakan'
+  | 'selesai'
+  | 'terkunci';
 
 export interface ExamRoomItem {
   id: string;

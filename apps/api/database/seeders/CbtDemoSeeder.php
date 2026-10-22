@@ -458,7 +458,7 @@ class CbtDemoSeeder extends Seeder
                     'shuffle_options' => true,
                     'package_mode' => 'tunggal',
                     'show_result_mode' => 'setelah_selesai',
-                    'status' => 'berlangsung',
+                    'status' => Exam::STATUS_IN_PROGRESS,
                 ]
             );
 
