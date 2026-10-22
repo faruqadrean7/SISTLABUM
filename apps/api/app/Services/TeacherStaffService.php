@@ -802,7 +802,16 @@ class TeacherStaffService
             throw new HttpException(404, 'Profil pendidik guru Anda belum terdaftar.');
         }
 
-        return $this->downloadSalarySlip($teacher->id, $slipId, $request);
+        $salarySlip = TeacherSalarySlip::with('teacher')->find($slipId);
+        if (! $salarySlip) {
+            throw new HttpException(404, 'Slip gaji tidak ditemukan.');
+        }
+
+        if ($salarySlip->teacher_id !== $teacher->id && ! $this->canAccessTeacherSalary($user, $salarySlip->teacher)) {
+            throw new HttpException(403, 'Anda tidak memiliki hak akses untuk mengunduh slip gaji ini.');
+        }
+
+        return $this->downloadSalarySlip($salarySlip->teacher_id, $slipId, $request);
     }
 
     /**

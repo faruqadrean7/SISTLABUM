@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Models\Attendance;
+use App\Models\AuditLog;
 use App\Models\Exam;
 use App\Models\File;
 use App\Models\Grade;
@@ -695,9 +696,19 @@ class MeTeacherController extends Controller
             return $this->errorResponse('Akses ditolak: Anda tidak ditugaskan mengampu mata pelajaran ini di kelas terkait.', 'FORBIDDEN', 403);
         }
 
-        // Find or create active grade period
-        $period = GradePeriod::where('status', 'open')->first()
-            ?? GradePeriod::first();
+        // Find or validate grade period
+        $periodId = $input['period_id'] ?? $input['periodId'] ?? null;
+        if ($periodId) {
+            if (! Str::isUuid($periodId)) {
+                return $this->errorResponse('Format ID periode penilaian tidak valid.', 'VALIDATION_ERROR', 422);
+            }
+            $period = GradePeriod::find($periodId);
+            if (! $period) {
+                return $this->errorResponse('Periode penilaian tidak ditemukan.', 'NOT_FOUND', 404);
+            }
+        } else {
+            $period = GradePeriod::where('status', 'open')->first() ?? GradePeriod::first();
+        }
 
         if (! $period) {
             $semester = Semester::where('is_active', true)->first() ?? Semester::first();
@@ -710,8 +721,25 @@ class MeTeacherController extends Controller
             }
         }
 
+        if ($period && $period->status === 'locked') {
+            return $this->errorResponse('Periode penilaian telah dikunci (locked). Perubahan nilai tidak diizinkan.', 'BUSINESS_RULE_VIOLATION', 422);
+        }
+
+        if (is_array($gradesList)) {
+            foreach ($gradesList as $item) {
+                $scores = $item['scores'] ?? [];
+                if (is_array($scores)) {
+                    foreach ($scores as $componentId => $scoreVal) {
+                        if (! is_numeric($scoreVal) || $scoreVal < 0 || $scoreVal > 100) {
+                            return $this->errorResponse('Nilai harus berupa angka dalam rentang 0 hingga 100.', 'VALIDATION_ERROR', 422);
+                        }
+                    }
+                }
+            }
+        }
+
         if ($period && is_array($gradesList)) {
-            DB::transaction(function () use ($gradesList, $period, $request) {
+            DB::transaction(function () use ($gradesList, $period, $request, $classId) {
                 foreach ($gradesList as $item) {
                     $studentId = $item['student_id'] ?? $item['studentId'] ?? null;
                     if (! $studentId || ! Str::isUuid($studentId)) {
@@ -739,6 +767,15 @@ class MeTeacherController extends Controller
                         }
                     }
                 }
+
+                AuditLog::create([
+                    'actor_id' => $request->user()->id,
+                    'action' => 'teacher.grades.bulk_updated',
+                    'entity' => 'Grade',
+                    'entity_id' => $classId,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
             });
         }
 
@@ -1130,7 +1167,7 @@ class MeTeacherController extends Controller
 
         $today = now()->toDateString();
         $record = StaffAttendance::where('user_id', $request->user()->id)
-            ->where('att_date', $today)
+            ->whereDate('att_date', $today)
             ->first();
 
         $workHours = StaffAttendance::where('user_id', $request->user()->id)
