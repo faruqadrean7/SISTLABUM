@@ -14,6 +14,7 @@ use App\Models\GradeLevel;
 use App\Models\GradePeriod;
 use App\Models\Journal;
 use App\Models\LeaveRequest;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\Schedule;
@@ -61,6 +62,8 @@ class TeacherDemoSeeder extends Seeder
     {
         $this->checkEnvironmentSafety();
 
+        (new DatabaseSeeder)->run();
+
         $schoolId = self::DEFAULT_SCHOOL_ID;
         $defaultPassword = Hash::make('SistLabUM2026!UAT');
 
@@ -69,6 +72,18 @@ class TeacherDemoSeeder extends Seeder
         $roleHomeroom = Role::firstOrCreate(['code' => 'homeroom'], ['name' => 'Wali Kelas', 'is_system' => true]);
         $roleStudent = Role::firstOrCreate(['code' => 'student'], ['name' => 'Siswa', 'is_system' => true]);
         $roleAdminKurikulum = Role::firstOrCreate(['code' => 'admin_kurikulum'], ['name' => 'Admin Kurikulum', 'is_system' => true]);
+
+        $kurikulumPermIds = Permission::whereIn('code', [
+            'academic.schedule.manage',
+            'academic.grade.read',
+            'academic.grade.write',
+            'cbt.bank.write',
+            'cbt.exam.manage',
+            'academic.report.generate',
+        ])->pluck('id')->toArray();
+        if (! empty($kurikulumPermIds)) {
+            $roleAdminKurikulum->permissions()->syncWithoutDetaching($kurikulumPermIds);
+        }
 
         // Helper to seed user
         $seedUser = function (string $username, string $email, array $roleCodes) use ($schoolId, $defaultPassword): User {

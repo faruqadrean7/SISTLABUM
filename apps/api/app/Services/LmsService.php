@@ -692,15 +692,21 @@ class LmsService
                 $semesterId = $assignment->gradeComponent?->semester_id;
                 if ($semesterId) {
                     $currentMonth = (int) Carbon::now()->format('m');
-                    $period = GradePeriod::firstOrCreate(
-                        [
+                    $period = GradePeriod::where('semester_id', $semesterId)
+                        ->where('month', $currentMonth)
+                        ->first();
+
+                    if (! $period) {
+                        $period = GradePeriod::create([
                             'semester_id' => $semesterId,
                             'month' => $currentMonth,
-                        ],
-                        [
                             'status' => 'open',
-                        ]
-                    );
+                        ]);
+                    }
+
+                    if ($period->status === 'locked') {
+                        throw new HttpException(422, 'Periode penilaian telah dikunci. Penilaian tugas tidak dapat dimasukkan ke buku nilai tanpa pembukaan kunci.');
+                    }
 
                     Grade::updateOrCreate(
                         [

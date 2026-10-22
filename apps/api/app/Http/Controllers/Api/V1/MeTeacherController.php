@@ -1047,9 +1047,33 @@ class MeTeacherController extends Controller
             'feedback' => 'nullable|string',
         ]);
 
+        if ($submission->assignment && $submission->assignment->grade_component_id) {
+            $comp = GradeComponent::find($submission->assignment->grade_component_id);
+            if ($comp) {
+                $period = GradePeriod::where('semester_id', $comp->semester_id)
+                    ->where('month', now()->month)
+                    ->first();
+                if ($period && $period->status === 'locked') {
+                    return $this->errorResponse('Periode penilaian telah dikunci (locked). Penilaian tidak dapat disimpan.', 'BUSINESS_RULE_VIOLATION', 422);
+                }
+            }
+        }
+
+        $oldData = $submission->toArray();
         $submission->update([
             'score' => $validated['score'],
             'feedback' => $validated['feedback'] ?? null,
+        ]);
+
+        AuditLog::create([
+            'actor_id' => $request->user()->id,
+            'action' => 'assignment.graded',
+            'entity' => 'AssignmentSubmission',
+            'entity_id' => $submission->id,
+            'old_value' => $oldData,
+            'new_value' => $submission->toArray(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         return $this->successResponse(['message' => 'Nilai dan feedback berhasil diberikan.']);
