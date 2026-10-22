@@ -160,6 +160,7 @@ class User extends Authenticatable
 
         if ($this->relationLoaded('teacher') && $this->teacher) {
             $this->teacher->loadMissing('photoFile');
+
             return [
                 'type' => 'teacher',
                 'id' => $this->teacher->id,

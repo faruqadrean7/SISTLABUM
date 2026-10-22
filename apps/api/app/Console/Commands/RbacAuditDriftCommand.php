@@ -392,11 +392,11 @@ class RbacAuditDriftCommand extends Command
         );
 
         if (! empty($report['unknown_roles'])) {
-            $this->warn('⚠ Peran Tidak Dikenal (Unknown Roles): ' . implode(', ', $report['unknown_roles']));
+            $this->warn('⚠ Peran Tidak Dikenal (Unknown Roles): '.implode(', ', $report['unknown_roles']));
         }
 
         if (! empty($report['orphan_permissions'])) {
-            $this->comment('ℹ Permission Yatim (Belum Terpasang ke Role): ' . implode(', ', $report['orphan_permissions']));
+            $this->comment('ℹ Permission Yatim (Belum Terpasang ke Role): '.implode(', ', $report['orphan_permissions']));
         }
 
         $this->newLine();
@@ -406,13 +406,13 @@ class RbacAuditDriftCommand extends Command
         foreach ($report['roles'] as $code => $details) {
             $notes = [];
             if (! empty($details['prohibited_permissions'])) {
-                $notes[] = 'LEAK: ' . implode(', ', $details['prohibited_permissions']);
+                $notes[] = 'LEAK: '.implode(', ', $details['prohibited_permissions']);
             }
             if (! empty($details['missing_permissions'])) {
-                $notes[] = 'MISSING: ' . count($details['missing_permissions']) . ' item';
+                $notes[] = 'MISSING: '.count($details['missing_permissions']).' item';
             }
             if (! empty($details['custom_permissions'])) {
-                $notes[] = 'CUSTOM: ' . implode(', ', $details['custom_permissions']);
+                $notes[] = 'CUSTOM: '.implode(', ', $details['custom_permissions']);
             }
 
             $rows[] = [

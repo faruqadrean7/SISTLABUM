@@ -695,7 +695,7 @@ class ExamSessionService
             $session->save();
 
             try {
-                app(\App\Services\Cbt\ExamGradingService::class)->gradeSessionObjectiveAnswers($session);
+                app(ExamGradingService::class)->gradeSessionObjectiveAnswers($session);
             } catch (\Throwable $gradeEx) {
                 // Non-blocking
             }

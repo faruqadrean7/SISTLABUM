@@ -408,6 +408,7 @@ class ReminderService
             // Uniqueness violation pada [event_type, event_id, recipient_id, milestone]
             // Berarti sudah pernah dikirim atau sedang dalam antrean
             Log::debug("Skipping duplicate reminder: {$eventType}/{$eventId}/{$recipientId}/{$milestone}");
+
             return null;
         }
 
@@ -449,10 +450,10 @@ class ReminderService
             ->where('status', 'processing')
             ->where(function ($q) use ($now) {
                 $q->where('updated_at', '<', $now->copy()->subMinutes(15))
-                  ->orWhere(function ($q2) use ($now) {
-                      $q2->whereNotNull('claim_expires_at')
-                         ->where('claim_expires_at', '<', $now);
-                  });
+                    ->orWhere(function ($q2) use ($now) {
+                        $q2->whereNotNull('claim_expires_at')
+                            ->where('claim_expires_at', '<', $now);
+                    });
             })
             ->count();
 
@@ -478,10 +479,10 @@ class ReminderService
         $query = ReminderDispatch::where('status', 'failed')
             ->where(function ($q) {
                 $q->whereNull('error_message')
-                  ->orWhere(function ($q2) {
-                      $q2->where('error_message', 'not like', '%Recipient user record does not exist%')
-                         ->where('error_message', 'not like', '%Tenant boundary mismatch%');
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->where('error_message', 'not like', '%Recipient user record does not exist%')
+                            ->where('error_message', 'not like', '%Tenant boundary mismatch%');
+                    });
             });
 
         if ($schoolId) {
@@ -527,10 +528,10 @@ class ReminderService
         $stuckQuery = ReminderDispatch::where('status', 'processing')
             ->where(function ($q) use ($threshold) {
                 $q->where('updated_at', '<', $threshold)
-                  ->orWhere(function ($q2) {
-                      $q2->whereNotNull('claim_expires_at')
-                         ->where('claim_expires_at', '<', Carbon::now());
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('claim_expires_at')
+                            ->where('claim_expires_at', '<', Carbon::now());
+                    });
             });
 
         $stuckIds = $stuckQuery->pluck('id')->all();

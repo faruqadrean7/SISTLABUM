@@ -7,21 +7,27 @@ use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Models\Attendance;
 use App\Models\Exam;
+use App\Models\File;
 use App\Models\Grade;
 use App\Models\GradeComponent;
+use App\Models\GradePeriod;
 use App\Models\Journal;
 use App\Models\LeaveRequest;
 use App\Models\Schedule;
 use App\Models\SchoolClass;
+use App\Models\Semester;
 use App\Models\StaffAttendance;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\TeachingAssignment;
 use App\Models\TeachingMaterial;
+use App\Models\TimeSlot;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class MeTeacherController extends Controller
 {
@@ -42,7 +48,7 @@ class MeTeacherController extends Controller
      */
     protected function verifyClassAccess(Teacher $teacher, string $classId): bool
     {
-        if (! \Illuminate\Support\Str::isUuid($classId)) {
+        if (! Str::isUuid($classId)) {
             return false;
         }
 
@@ -66,7 +72,7 @@ class MeTeacherController extends Controller
      */
     protected function verifySubjectAccess(Teacher $teacher, string $subjectId, ?string $classId = null): bool
     {
-        if (! \Illuminate\Support\Str::isUuid($subjectId)) {
+        if (! Str::isUuid($subjectId)) {
             return false;
         }
 
@@ -77,7 +83,7 @@ class MeTeacherController extends Controller
             ->where('subject_id', $subjectId);
 
         if ($classId) {
-            if (! \Illuminate\Support\Str::isUuid($classId)) {
+            if (! Str::isUuid($classId)) {
                 return false;
             }
             $assignmentQuery->where('class_id', $classId);
@@ -94,7 +100,7 @@ class MeTeacherController extends Controller
     {
         // 1. Try by schedule_id if provided (MUST belong to this teacher)
         if ($scheduleId) {
-            if (! \Illuminate\Support\Str::isUuid($scheduleId)) {
+            if (! Str::isUuid($scheduleId)) {
                 return null;
             }
 
@@ -106,11 +112,11 @@ class MeTeacherController extends Controller
                 return null;
             }
 
-            if ($classId && \Illuminate\Support\Str::isUuid($classId) && $schedule->class_id !== $classId) {
+            if ($classId && Str::isUuid($classId) && $schedule->class_id !== $classId) {
                 return null;
             }
 
-            if ($subjectId && \Illuminate\Support\Str::isUuid($subjectId) && $schedule->subject_id !== $subjectId) {
+            if ($subjectId && Str::isUuid($subjectId) && $schedule->subject_id !== $subjectId) {
                 return null;
             }
 
@@ -118,7 +124,7 @@ class MeTeacherController extends Controller
         }
 
         // 2. If schedule_id is not provided, both classId and subjectId must be valid UUIDs
-        if (! $classId || ! \Illuminate\Support\Str::isUuid($classId) || ! $subjectId || ! \Illuminate\Support\Str::isUuid($subjectId)) {
+        if (! $classId || ! Str::isUuid($classId) || ! $subjectId || ! Str::isUuid($subjectId)) {
             return null;
         }
 
@@ -126,7 +132,7 @@ class MeTeacherController extends Controller
             return null;
         }
 
-        $semester = \App\Models\Semester::where('is_active', true)->first() ?? \App\Models\Semester::first();
+        $semester = Semester::where('is_active', true)->first() ?? Semester::first();
 
         $scheduleQuery = Schedule::where('teacher_id', $teacher->id)
             ->where('class_id', $classId)
@@ -145,7 +151,7 @@ class MeTeacherController extends Controller
         }
 
         // Auto-provision schedule only for an actively verified teaching assignment
-        $timeSlot = \App\Models\TimeSlot::first();
+        $timeSlot = TimeSlot::first();
         if ($semester && $timeSlot) {
             return Schedule::firstOrCreate(
                 [
@@ -324,24 +330,24 @@ class MeTeacherController extends Controller
 
         // Strict authorization and validation without fallbacks
         if ($scheduleId) {
-            if (! \Illuminate\Support\Str::isUuid($scheduleId)) {
+            if (! Str::isUuid($scheduleId)) {
                 return $this->errorResponse('Format ID jadwal tidak valid.', 'VALIDATION_ERROR', 422);
             }
             $schedule = Schedule::where('id', $scheduleId)->where('teacher_id', $teacher->id)->first();
             if (! $schedule) {
                 return $this->errorResponse('Jadwal mengajar tidak ditemukan atau bukan milik Anda.', 'FORBIDDEN', 403);
             }
-            if ($classId && \Illuminate\Support\Str::isUuid($classId) && $schedule->class_id !== $classId) {
+            if ($classId && Str::isUuid($classId) && $schedule->class_id !== $classId) {
                 return $this->errorResponse('Jadwal tidak sesuai dengan kelas yang dipilih.', 'VALIDATION_ERROR', 422);
             }
-            if ($subjectId && \Illuminate\Support\Str::isUuid($subjectId) && $schedule->subject_id !== $subjectId) {
+            if ($subjectId && Str::isUuid($subjectId) && $schedule->subject_id !== $subjectId) {
                 return $this->errorResponse('Jadwal tidak sesuai dengan mata pelajaran yang dipilih.', 'VALIDATION_ERROR', 422);
             }
         } else {
             if (! $classId || ! $subjectId) {
                 return $this->errorResponse('ID kelas dan ID mata pelajaran wajib diisi.', 'VALIDATION_ERROR', 422);
             }
-            if (! \Illuminate\Support\Str::isUuid($classId) || ! \Illuminate\Support\Str::isUuid($subjectId)) {
+            if (! Str::isUuid($classId) || ! Str::isUuid($subjectId)) {
                 return $this->errorResponse('Format ID kelas atau mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
             }
 
@@ -363,7 +369,7 @@ class MeTeacherController extends Controller
         if (is_array($attendeesRaw)) {
             foreach ($attendeesRaw as $att) {
                 $studentId = $att['student_id'] ?? $att['studentId'] ?? null;
-                if (! $studentId || ! \Illuminate\Support\Str::isUuid($studentId)) {
+                if (! $studentId || ! Str::isUuid($studentId)) {
                     continue;
                 }
                 $statusRaw = strtolower((string) ($att['status'] ?? 'present'));
@@ -384,7 +390,7 @@ class MeTeacherController extends Controller
             }
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($teacher, $schedule, $sessionDate, $sessionTopic, $normalizedAttendees, $request) {
+        DB::transaction(function () use ($teacher, $schedule, $sessionDate, $sessionTopic, $normalizedAttendees, $request) {
             $journal = Journal::create([
                 'schedule_id' => $schedule->id,
                 'teacher_id' => $teacher->id,
@@ -475,22 +481,22 @@ class MeTeacherController extends Controller
         $method = $request->input('method', 'Tatap Muka');
 
         if (! empty($learningObstacles)) {
-            $notes = trim($notes . "\nCatatan Kendala: " . $learningObstacles);
+            $notes = trim($notes."\nCatatan Kendala: ".$learningObstacles);
         }
 
         // Strict authorization and validation without fallbacks
         if ($scheduleId) {
-            if (! \Illuminate\Support\Str::isUuid($scheduleId)) {
+            if (! Str::isUuid($scheduleId)) {
                 return $this->errorResponse('Format ID jadwal tidak valid.', 'VALIDATION_ERROR', 422);
             }
             $schedule = Schedule::where('id', $scheduleId)->where('teacher_id', $teacher->id)->first();
             if (! $schedule) {
                 return $this->errorResponse('Jadwal pembelajaran tidak ditemukan atau bukan milik Anda.', 'FORBIDDEN', 403);
             }
-            if ($classId && \Illuminate\Support\Str::isUuid($classId) && $schedule->class_id !== $classId) {
+            if ($classId && Str::isUuid($classId) && $schedule->class_id !== $classId) {
                 return $this->errorResponse('Jadwal tidak sesuai dengan kelas yang dipilih.', 'VALIDATION_ERROR', 422);
             }
-            if ($subjectId && \Illuminate\Support\Str::isUuid($subjectId) && $schedule->subject_id !== $subjectId) {
+            if ($subjectId && Str::isUuid($subjectId) && $schedule->subject_id !== $subjectId) {
                 return $this->errorResponse('Jadwal tidak sesuai dengan mata pelajaran yang dipilih.', 'VALIDATION_ERROR', 422);
             }
             if (! $this->verifyClassAccess($teacher, $schedule->class_id)) {
@@ -503,7 +509,7 @@ class MeTeacherController extends Controller
             if (! $classId || ! $subjectId) {
                 return $this->errorResponse('ID kelas dan ID mata pelajaran wajib diisi.', 'VALIDATION_ERROR', 422);
             }
-            if (! \Illuminate\Support\Str::isUuid($classId) || ! \Illuminate\Support\Str::isUuid($subjectId)) {
+            if (! Str::isUuid($classId) || ! Str::isUuid($subjectId)) {
                 return $this->errorResponse('Format ID kelas atau mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
             }
 
@@ -570,7 +576,7 @@ class MeTeacherController extends Controller
         $subjectId = $request->query('subject_id') ?? $request->query('subjectId');
 
         if ($classId) {
-            if (! \Illuminate\Support\Str::isUuid($classId)) {
+            if (! Str::isUuid($classId)) {
                 return $this->errorResponse('Format ID kelas tidak valid.', 'VALIDATION_ERROR', 422);
             }
             if (! $this->verifyClassAccess($teacher, $classId)) {
@@ -579,7 +585,7 @@ class MeTeacherController extends Controller
         }
 
         if ($subjectId) {
-            if (! \Illuminate\Support\Str::isUuid($subjectId)) {
+            if (! Str::isUuid($subjectId)) {
                 return $this->errorResponse('Format ID mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
             }
             if (! $this->verifySubjectAccess($teacher, $subjectId, $classId)) {
@@ -621,7 +627,7 @@ class MeTeacherController extends Controller
         $subjectId = $request->query('subject_id') ?? $request->query('subjectId');
 
         if ($classId) {
-            if (! \Illuminate\Support\Str::isUuid($classId)) {
+            if (! Str::isUuid($classId)) {
                 return $this->errorResponse('Format ID kelas tidak valid.', 'VALIDATION_ERROR', 422);
             }
             if (! $this->verifyClassAccess($teacher, $classId)) {
@@ -632,7 +638,7 @@ class MeTeacherController extends Controller
         }
 
         if ($subjectId) {
-            if (! \Illuminate\Support\Str::isUuid($subjectId)) {
+            if (! Str::isUuid($subjectId)) {
                 return $this->errorResponse('Format ID mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
             }
             if (! $this->verifySubjectAccess($teacher, $subjectId, $classId)) {
@@ -677,7 +683,7 @@ class MeTeacherController extends Controller
             return $this->errorResponse('ID kelas dan ID mata pelajaran wajib diisi.', 'VALIDATION_ERROR', 422);
         }
 
-        if (! \Illuminate\Support\Str::isUuid($classId) || ! \Illuminate\Support\Str::isUuid($subjectId)) {
+        if (! Str::isUuid($classId) || ! Str::isUuid($subjectId)) {
             return $this->errorResponse('Format ID kelas atau mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
         }
 
@@ -690,13 +696,13 @@ class MeTeacherController extends Controller
         }
 
         // Find or create active grade period
-        $period = \App\Models\GradePeriod::where('status', 'open')->first()
-            ?? \App\Models\GradePeriod::first();
+        $period = GradePeriod::where('status', 'open')->first()
+            ?? GradePeriod::first();
 
         if (! $period) {
-            $semester = \App\Models\Semester::where('is_active', true)->first() ?? \App\Models\Semester::first();
+            $semester = Semester::where('is_active', true)->first() ?? Semester::first();
             if ($semester) {
-                $period = \App\Models\GradePeriod::create([
+                $period = GradePeriod::create([
                     'semester_id' => $semester->id,
                     'month' => now()->month,
                     'status' => 'open',
@@ -705,17 +711,17 @@ class MeTeacherController extends Controller
         }
 
         if ($period && is_array($gradesList)) {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($gradesList, $period, $request) {
+            DB::transaction(function () use ($gradesList, $period, $request) {
                 foreach ($gradesList as $item) {
                     $studentId = $item['student_id'] ?? $item['studentId'] ?? null;
-                    if (! $studentId || ! \Illuminate\Support\Str::isUuid($studentId)) {
+                    if (! $studentId || ! Str::isUuid($studentId)) {
                         continue;
                     }
 
                     $scores = $item['scores'] ?? [];
                     if (is_array($scores)) {
                         foreach ($scores as $componentId => $scoreVal) {
-                            if (! \Illuminate\Support\Str::isUuid($componentId)) {
+                            if (! Str::isUuid($componentId)) {
                                 continue;
                             }
                             Grade::updateOrCreate(
@@ -792,7 +798,7 @@ class MeTeacherController extends Controller
             return $this->errorResponse('ID mata pelajaran wajib diisi.', 'VALIDATION_ERROR', 422);
         }
 
-        if (! \Illuminate\Support\Str::isUuid($subjectId)) {
+        if (! Str::isUuid($subjectId)) {
             return $this->errorResponse('Format ID mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
         }
 
@@ -801,8 +807,8 @@ class MeTeacherController extends Controller
         }
 
         // Ensure a valid file exists for foreign key constraint
-        if (! $fileId || ! \Illuminate\Support\Str::isUuid($fileId)) {
-            $file = \App\Models\File::firstOrCreate(
+        if (! $fileId || ! Str::isUuid($fileId)) {
+            $file = File::firstOrCreate(
                 ['object_key' => 'materials/default-modul.pdf'],
                 [
                     'bucket' => 'academic',
@@ -899,7 +905,7 @@ class MeTeacherController extends Controller
             return $this->errorResponse('ID kelas dan ID mata pelajaran wajib diisi.', 'VALIDATION_ERROR', 422);
         }
 
-        if (! \Illuminate\Support\Str::isUuid($classId) || ! \Illuminate\Support\Str::isUuid($subjectId)) {
+        if (! Str::isUuid($classId) || ! Str::isUuid($subjectId)) {
             return $this->errorResponse('Format ID kelas atau mata pelajaran tidak valid.', 'VALIDATION_ERROR', 422);
         }
 

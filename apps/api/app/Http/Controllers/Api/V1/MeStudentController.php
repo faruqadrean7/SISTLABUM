@@ -306,7 +306,7 @@ class MeStudentController extends Controller
                 $prefSchedule = $c->preferred_date->format('Y-m-d');
             }
             if ($c->preferred_time) {
-                $prefSchedule = trim($prefSchedule . ' ' . $c->preferred_time);
+                $prefSchedule = trim($prefSchedule.' '.$c->preferred_time);
             }
 
             return [
@@ -381,7 +381,7 @@ class MeStudentController extends Controller
         if ($counseling->preferred_date) {
             $prefDateStr = is_string($counseling->preferred_date) ? substr($counseling->preferred_date, 0, 10) : $counseling->preferred_date->format('Y-m-d');
         }
-        $counselingData['preferredSchedule'] = trim($prefDateStr . ' ' . ($counseling->preferred_time ?? ''));
+        $counselingData['preferredSchedule'] = trim($prefDateStr.' '.($counseling->preferred_time ?? ''));
         $counselingData['counselorName'] = 'Guru BK';
         $counselingData['notes'] = $counseling->notes;
 

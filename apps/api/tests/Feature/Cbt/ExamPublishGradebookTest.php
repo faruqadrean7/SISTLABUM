@@ -423,4 +423,3 @@ class ExamPublishGradebookTest extends TestCase
         ]);
     }
 }
-

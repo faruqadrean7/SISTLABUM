@@ -7,7 +7,6 @@ use App\Models\Applicant;
 use App\Models\Booking;
 use App\Models\ClassStudent;
 use App\Models\Facility;
-use App\Models\GradeLevel;
 use App\Models\Guardian;
 use App\Models\LeaveRequest;
 use App\Models\PPDBTrack;
@@ -26,7 +25,6 @@ use App\Models\User;
 use Database\Seeders\UatStagingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -301,7 +299,7 @@ class UatSeederTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('UatStagingSeeder dilarang keras dijalankan pada lingkungan production!');
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
         $seeder->run();
     }
 
@@ -318,7 +316,7 @@ class UatSeederTest extends TestCase
         $_ENV['UAT_SEED_ENABLED'] = 'false';
 
         try {
-            $seeder = new UatStagingSeeder();
+            $seeder = new UatStagingSeeder;
             $seeder->checkEnvironmentSafety();
             $this->fail('Harus melempar RuntimeException ketika UAT_SEED_ENABLED tidak aktif di staging.');
         } catch (\RuntimeException $e) {
@@ -346,7 +344,7 @@ class UatSeederTest extends TestCase
         App::detectEnvironment(fn () => 'staging');
         putenv('UAT_SEED_ENABLED=true');
         $_ENV['UAT_SEED_ENABLED'] = 'true';
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
 
         // 1. Password kosong di staging -> Exception
         putenv('UAT_STAGING_PASSWORD=');
@@ -390,7 +388,7 @@ class UatSeederTest extends TestCase
         putenv('UAT_STAGING_PASSWORD=RahasiaStagingSISTLABUM#2026!Secure');
         $_ENV['UAT_STAGING_PASSWORD'] = 'RahasiaStagingSISTLABUM#2026!Secure';
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
 
         // 1. Tenant ID tidak ada dan tidak ada SiteSetting -> Exception
         putenv('UAT_SCHOOL_ID=');
@@ -453,7 +451,7 @@ class UatSeederTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('UatStagingSeeder dilarang keras dijalankan pada lingkungan production!');
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
         $seeder->run();
     }
 
@@ -469,7 +467,7 @@ class UatSeederTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('UatStagingSeeder hanya boleh dijalankan di lingkungan staging dengan opt-in UAT_SEED_ENABLED=true atau lingkungan testing.');
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
         $seeder->run();
     }
 
@@ -488,7 +486,7 @@ class UatSeederTest extends TestCase
         putenv('UAT_SCHOOL_ID=invalid-uuid-format'); // memicu kegagalan preflight
         $_ENV['UAT_SCHOOL_ID'] = 'invalid-uuid-format';
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
 
         try {
             $seeder->run();
@@ -584,7 +582,7 @@ class UatSeederTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("Konflik identifier akun UAT: email 'admin.staging@smp-labum.sch.id' telah digunakan oleh akun lain");
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
         $seeder->run();
     }
 
@@ -659,7 +657,7 @@ class UatSeederTest extends TestCase
         putenv('UAT_SCHOOL_ID=invalid-uuid-to-trigger-exception');
         $_ENV['UAT_SCHOOL_ID'] = 'invalid-uuid-to-trigger-exception';
 
-        $seeder = new UatStagingSeeder();
+        $seeder = new UatStagingSeeder;
 
         try {
             $seeder->run();

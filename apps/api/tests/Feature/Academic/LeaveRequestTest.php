@@ -649,4 +649,3 @@ class LeaveRequestTest extends TestCase
             ->assertJsonPath('data.0.student_id', $this->student1->id);
     }
 }
-

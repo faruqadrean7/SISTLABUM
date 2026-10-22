@@ -411,7 +411,7 @@ class ReportCardService
             throw new HttpException(403, 'Hanya Administrator atau Admin Kurikulum yang berwenang mengunci e-rapor.');
         }
 
-        return DB::transaction(function () use ($id, $data, $currentUser, $request) {
+        return DB::transaction(function () use ($id, $data, $request) {
             $report = ReportCard::findOrFail($id);
             $oldStatus = $report->status;
             $isLocked = (bool) $data['is_locked'];
@@ -428,7 +428,7 @@ class ReportCardService
 
             $action = $isLocked ? 'academic.report_card.lock' : 'academic.report_card.unlock';
 
-            app(\App\Services\AuditLogService::class)->record(
+            app(AuditLogService::class)->record(
                 action: $action,
                 entity: 'ReportCard',
                 entityId: $report->id,
@@ -471,7 +471,7 @@ class ReportCardService
 
             $reason = $data['note'] ?? $data['reason'] ?? null;
 
-            app(\App\Services\AuditLogService::class)->record(
+            app(AuditLogService::class)->record(
                 action: 'academic.report_card.approve',
                 entity: 'ReportCard',
                 entityId: $report->id,
@@ -540,7 +540,7 @@ class ReportCardService
                 $updatedCount++;
 
                 $reason = $data['note'] ?? $data['reason'] ?? null;
-                app(\App\Services\AuditLogService::class)->record(
+                app(AuditLogService::class)->record(
                     action: 'academic.report_card.bulk_approve',
                     entity: 'ReportCard',
                     entityId: $report->id,

@@ -634,12 +634,12 @@ class LmsService
             $submission->file_id = $fileId;
             $combinedNotes = $data['notes'] ?? '';
             if (! empty($data['drive_link'])) {
-                $linkPrefix = '[Tautan Berkas/Drive]: ' . $data['drive_link'];
-                $combinedNotes = $combinedNotes ? ($combinedNotes . "\n" . $linkPrefix) : $linkPrefix;
+                $linkPrefix = '[Tautan Berkas/Drive]: '.$data['drive_link'];
+                $combinedNotes = $combinedNotes ? ($combinedNotes."\n".$linkPrefix) : $linkPrefix;
             }
             if (! empty($data['file_name']) && ! empty($data['drive_link'])) {
-                $namePrefix = '[Nama Berkas]: ' . $data['file_name'];
-                $combinedNotes = $namePrefix . "\n" . $combinedNotes;
+                $namePrefix = '[Nama Berkas]: '.$data['file_name'];
+                $combinedNotes = $namePrefix."\n".$combinedNotes;
             }
             if ($combinedNotes) {
                 $submission->notes = trim($combinedNotes);

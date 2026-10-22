@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\AcademicYear;
 use App\Models\Achievement;
+use App\Models\Announcement;
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Models\Attendance;
@@ -12,9 +13,11 @@ use App\Models\CounselingRequest;
 use App\Models\Exam;
 use App\Models\ExamParticipant;
 use App\Models\ExamRoom;
+use App\Models\File;
 use App\Models\Grade;
 use App\Models\GradeComponent;
 use App\Models\GradeLevel;
+use App\Models\GradePeriod;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\Schedule;
@@ -25,16 +28,13 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\TeachingAssignment;
+use App\Models\TeachingMaterial;
 use App\Models\TimeSlot;
 use App\Models\User;
-use App\Models\Announcement;
-use App\Models\File;
-use App\Models\TeachingMaterial;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class StudentPortalDataSeeder extends Seeder
 {
@@ -375,7 +375,7 @@ class StudentPortalDataSeeder extends Seeder
                 $sCm->school_id = $schoolId;
                 $sCm->nis = $cm['nis'];
                 $sCm->nisn = $cm['nisn'];
-                $sCm->nik_enc = '357801010109' . substr($cm['nis'], -4);
+                $sCm->nik_enc = '357801010109'.substr($cm['nis'], -4);
                 $sCm->full_name = $cm['name'];
                 $sCm->gender = $cm['gender'];
                 $sCm->birth_place = 'Malang';
@@ -429,7 +429,7 @@ class StudentPortalDataSeeder extends Seeder
             }
 
             // 11. Grade Components & Grades for all subjects
-            $gradePeriod = \App\Models\GradePeriod::firstOrCreate(
+            $gradePeriod = GradePeriod::firstOrCreate(
                 [
                     'semester_id' => $semester->id,
                     'month' => 10,

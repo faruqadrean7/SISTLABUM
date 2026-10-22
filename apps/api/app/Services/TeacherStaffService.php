@@ -7,6 +7,7 @@ use App\Models\File;
 use App\Models\Staff;
 use App\Models\Teacher;
 use App\Models\TeacherSalarySlip;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -853,7 +854,7 @@ class TeacherStaffService
     /**
      * Helper to verify if user has access to view a teacher's salary information (IDOR safe).
      */
-    protected function canAccessTeacherSalary(?\App\Models\User $user, Teacher $teacher): bool
+    protected function canAccessTeacherSalary(?User $user, Teacher $teacher): bool
     {
         if (! $user) {
             return false;

@@ -743,7 +743,7 @@ class ProgressReportService
                 $dimPairs[] = "{$dimLabel}: {$valLabel}";
             }
             foreach (array_chunk($dimPairs, 2) as $pairChunk) {
-                $lines[] = ' - ' . implode(' | ', $pairChunk);
+                $lines[] = ' - '.implode(' | ', $pairChunk);
             }
         } else {
             $lines[] = ' - Belum ada catatan dimensi karakter';
@@ -753,7 +753,7 @@ class ProgressReportService
         $lines[] = 'CATATAN WALI KELAS:';
         $wrapped = wordwrap($note, 70, "\n");
         foreach (explode("\n", $wrapped) as $noteLine) {
-            $lines[] = '   ' . $noteLine;
+            $lines[] = '   '.$noteLine;
         }
         $lines[] = '========================================================================';
         $lines[] = 'STATUS PENGESAHAN : '.strtoupper($report->status);

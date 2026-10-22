@@ -807,6 +807,7 @@ class ExamGradingService
 
                 if ($existingGrade && $existingGrade->locked_at !== null && ! $overwriteLocked) {
                     $skippedLockedCount++;
+
                     continue;
                 }
 
@@ -850,7 +851,7 @@ class ExamGradingService
             'period_id' => $period->id,
             'grades_synced' => $syncedCount,
             'skipped_locked' => $skippedLockedCount,
-            'message' => "Nilai ujian CBT berhasil dipublikasikan ke Buku Nilai ({$syncedCount} tersimpan" . ($skippedLockedCount > 0 ? ", {$skippedLockedCount} dilewati karena terkunci" : '') . ").",
+            'message' => "Nilai ujian CBT berhasil dipublikasikan ke Buku Nilai ({$syncedCount} tersimpan".($skippedLockedCount > 0 ? ", {$skippedLockedCount} dilewati karena terkunci" : '').').',
         ];
     }
 

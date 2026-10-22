@@ -72,7 +72,7 @@ class DashboardService
         ];
 
         // 2. Metrik Agregat Ter-cache (Cache 2 Menit / 120 Detik)
-        $cacheKey = 'dashboard_executive_metrics_' . ($schoolId ?? 'global');
+        $cacheKey = 'dashboard_executive_metrics_'.($schoolId ?? 'global');
         $cachedMetrics = Cache::remember($cacheKey, 120, function () use ($schoolId) {
             $today = Carbon::today()->toDateString();
 

@@ -273,7 +273,7 @@ class GradeService
             $action = $isUpdate ? 'academic.grade.update' : 'grade.entered';
             $newValues = $grade->only(['value', 'source', 'entered_by']);
 
-            app(\App\Services\AuditLogService::class)->record(
+            app(AuditLogService::class)->record(
                 action: $action,
                 entity: 'Grade',
                 entityId: $grade->id,
@@ -333,7 +333,7 @@ class GradeService
                 $savedGrades[] = $grade;
             }
 
-            app(\App\Services\AuditLogService::class)->record(
+            app(AuditLogService::class)->record(
                 action: 'grade.bulk_entered',
                 entity: 'Grade',
                 entityId: $defaultComponentId ?? $data['period_id'],

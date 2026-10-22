@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Policies\GuardianChildPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\Gate::define('view-child', [\App\Policies\GuardianChildPolicy::class, 'viewChild']);
+        Gate::define('view-child', [GuardianChildPolicy::class, 'viewChild']);
     }
 }
