@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_DATABASE:-sistlabum}
     ports:
-      - "${DB_PORT:-5433}:5432"
+      - "${DB_PORT_HOST:-${DB_PORT:-5433}}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -120,6 +120,58 @@ services:
       UAT_SEED_ENABLED: ${UAT_SEED_ENABLED:-true}
     volumes:
       - ./apps/api:/var/www/html
+    networks:
+      - sistlabum-network
+
+  # ============================================================================
+  # Frontend Web (Next.js 14 - Landing, PPDB, Admin, Portal)
+  # ============================================================================
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: sistlabum-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_APP_NAME: "SISTLABUM - Portal Sekolah Satu Pintu"
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - sistlabum-network
+
+  # ============================================================================
+  # Frontend Portal Siswa, Guru, & Ortu (Next.js 16)
+  # ============================================================================
+  portal:
+    build:
+      context: ./apps/portal
+      dockerfile: Dockerfile
+    container_name: sistlabum-portal
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_APP_NAME: "Portal Siswa SISTLABUM"
+      PORT: 3001
+      HOSTNAME: "0.0.0.0"
+    volumes:
+      - ./apps/portal:/app
+      - /app/node_modules
+      - /app/.next
     networks:
       - sistlabum-network
 
