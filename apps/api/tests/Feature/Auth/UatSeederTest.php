@@ -320,7 +320,7 @@ class UatSeederTest extends TestCase
             $seeder->checkEnvironmentSafety();
             $this->fail('Harus melempar RuntimeException ketika UAT_SEED_ENABLED tidak aktif di staging.');
         } catch (\RuntimeException $e) {
-            $this->assertStringContainsString('hanya boleh dijalankan di lingkungan staging dengan opt-in UAT_SEED_ENABLED=true', $e->getMessage());
+            $this->assertStringContainsString('hanya boleh dijalankan di lingkungan staging/local dengan opt-in UAT_SEED_ENABLED=true', $e->getMessage());
         }
 
         // Dengan opt-in UAT_SEED_ENABLED=true
@@ -465,7 +465,7 @@ class UatSeederTest extends TestCase
         $_ENV['UAT_SEED_ENABLED'] = 'false';
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('UatStagingSeeder hanya boleh dijalankan di lingkungan staging dengan opt-in UAT_SEED_ENABLED=true atau lingkungan testing.');
+        $this->expectExceptionMessage('UatStagingSeeder hanya boleh dijalankan di lingkungan staging/local dengan opt-in UAT_SEED_ENABLED=true atau lingkungan testing.');
 
         $seeder = new UatStagingSeeder;
         $seeder->run();
