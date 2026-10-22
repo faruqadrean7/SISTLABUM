@@ -147,12 +147,14 @@ class ReportCardService
         $statusToSet = $data['status'] ?? 'draft';
 
         if ($statusToSet === 'terbit') {
-            $hasOpenPeriods = GradePeriod::where('semester_id', $semester->id)
-                ->where('status', '!=', 'locked')
-                ->exists();
+            if (! $this->checkIsAdmin($currentUser)) {
+                $hasOpenPeriods = GradePeriod::where('semester_id', $semester->id)
+                    ->where('status', '!=', 'locked')
+                    ->exists();
 
-            if ($hasOpenPeriods) {
-                throw new HttpException(422, 'E-Rapor semester hanya dapat diterbitkan bila periode penilaian telah dikunci (locked).');
+                if ($hasOpenPeriods) {
+                    throw new HttpException(422, 'E-Rapor semester hanya dapat diterbitkan bila periode penilaian telah dikunci (locked).');
+                }
             }
         }
 
@@ -477,12 +479,14 @@ class ReportCardService
                 throw new HttpException(422, 'E-Rapor semester telah diterbitkan dan tidak dapat diterbitkan kembali.');
             }
 
-            $hasOpenPeriods = GradePeriod::where('semester_id', $report->semester_id)
-                ->where('status', '!=', 'locked')
-                ->exists();
+            if (! $this->checkIsAdmin($currentUser)) {
+                $hasOpenPeriods = GradePeriod::where('semester_id', $report->semester_id)
+                    ->where('status', '!=', 'locked')
+                    ->exists();
 
-            if ($hasOpenPeriods) {
-                throw new HttpException(422, 'E-Rapor semester hanya dapat diterbitkan bila periode penilaian telah dikunci (locked).');
+                if ($hasOpenPeriods) {
+                    throw new HttpException(422, 'E-Rapor semester hanya dapat diterbitkan bila periode penilaian telah dikunci (locked).');
+                }
             }
         }
 
@@ -521,6 +525,10 @@ class ReportCardService
         /** @var User $currentUser */
         $currentUser = $request->user();
 
+        if (! $this->canBulkApprove($currentUser)) {
+            throw new HttpException(403, 'Hanya Kepala Sekolah atau Administrator yang berwenang mengesahkan e-rapor secara massal.');
+        }
+
         $newStatus = $data['status'];
         $query = ReportCard::with(['student.classes']);
 
@@ -555,12 +563,14 @@ class ReportCardService
                     throw new HttpException(422, "E-Rapor siswa {$report->student?->full_name} sudah diterbitkan sebelumnya.");
                 }
 
-                $hasOpenPeriods = GradePeriod::where('semester_id', $report->semester_id)
-                    ->where('status', '!=', 'locked')
-                    ->exists();
+                if (! $this->checkIsAdmin($currentUser)) {
+                    $hasOpenPeriods = GradePeriod::where('semester_id', $report->semester_id)
+                        ->where('status', '!=', 'locked')
+                        ->exists();
 
-                if ($hasOpenPeriods) {
-                    throw new HttpException(422, 'E-Rapor semester hanya dapat diterbitkan bila periode penilaian telah dikunci (locked).');
+                    if ($hasOpenPeriods) {
+                        throw new HttpException(422, 'E-Rapor semester hanya dapat diterbitkan bila periode penilaian telah dikunci (locked).');
+                    }
                 }
             }
         }
@@ -1073,11 +1083,15 @@ class ReportCardService
         return false;
     }
 
+    protected function canBulkApprove(User $user): bool
+    {
+        return $this->checkIsAdmin($user);
+    }
+
     protected function checkIsAdmin(User $user): bool
     {
         return $user->hasRole('super_admin')
             || $user->hasRole('principal')
-            || $user->hasPermission('academic.report.generate')
             || $user->roles()->where('code', 'like', 'admin%')->exists();
     }
 
