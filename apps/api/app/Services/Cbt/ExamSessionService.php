@@ -565,6 +565,12 @@ class ExamSessionService
             $session->submitted_at = $now;
             $session->save();
 
+            try {
+                app(ExamGradingService::class)->gradeSessionObjectiveAnswers($session);
+            } catch (\Throwable $gradeEx) {
+                // Non-blocking
+            }
+
             $this->logAudit(
                 $user->id,
                 'exam.finish_session',

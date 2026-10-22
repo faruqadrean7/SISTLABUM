@@ -47,7 +47,13 @@ class UatSeederTest extends TestCase
             $_ENV['UAT_DEFAULT_PASSWORD'],
             $_ENV['UAT_SCHOOL_ID'],
             $_ENV['UAT_FORCE_RESET_PASSWORDS'],
-            $_ENV['ALLOW_PREDICTABLE_UAT_PASSWORD']
+            $_ENV['ALLOW_PREDICTABLE_UAT_PASSWORD'],
+            $_SERVER['UAT_SEED_ENABLED'],
+            $_SERVER['UAT_STAGING_PASSWORD'],
+            $_SERVER['UAT_DEFAULT_PASSWORD'],
+            $_SERVER['UAT_SCHOOL_ID'],
+            $_SERVER['UAT_FORCE_RESET_PASSWORDS'],
+            $_SERVER['ALLOW_PREDICTABLE_UAT_PASSWORD']
         );
 
         parent::tearDown();
@@ -314,6 +320,7 @@ class UatSeederTest extends TestCase
         // Tanpa opt-in UAT_SEED_ENABLED
         putenv('UAT_SEED_ENABLED=false');
         $_ENV['UAT_SEED_ENABLED'] = 'false';
+        $_SERVER['UAT_SEED_ENABLED'] = 'false';
 
         try {
             $seeder = new UatStagingSeeder;
@@ -326,6 +333,7 @@ class UatSeederTest extends TestCase
         // Dengan opt-in UAT_SEED_ENABLED=true
         putenv('UAT_SEED_ENABLED=true');
         $_ENV['UAT_SEED_ENABLED'] = 'true';
+        $_SERVER['UAT_SEED_ENABLED'] = 'true';
 
         // Tidak boleh melempar exception
         $seeder->checkEnvironmentSafety();
@@ -463,6 +471,7 @@ class UatSeederTest extends TestCase
         App::detectEnvironment(fn () => 'local');
         putenv('UAT_SEED_ENABLED=false');
         $_ENV['UAT_SEED_ENABLED'] = 'false';
+        $_SERVER['UAT_SEED_ENABLED'] = 'false';
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('UatStagingSeeder hanya boleh dijalankan di lingkungan staging/local dengan opt-in UAT_SEED_ENABLED=true atau lingkungan testing.');

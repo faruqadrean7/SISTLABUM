@@ -456,10 +456,13 @@ class ExamGradingService
                     ? ($userAnswer['selected_option_id'] ?? $userAnswer['option_id'] ?? $userAnswer['opt'] ?? $userAnswer['value'] ?? null)
                     : $userAnswer;
 
+                $correctText = is_array($correctOption->body) ? ($correctOption->body['text'] ?? $correctOption->body['content'] ?? '') : (string) $correctOption->body;
                 if (
                     $chosenId === $correctOption->id ||
                     $chosenId === $correctOption->label ||
-                    (isset($userAnswer['value']) && strtolower(trim((string) $userAnswer['value'])) === strtolower(trim((string) $correctOption->label)))
+                    (is_string($chosenId) && strtolower(trim($chosenId)) === strtolower(trim($correctText))) ||
+                    (isset($userAnswer['value']) && strtolower(trim((string) $userAnswer['value'])) === strtolower(trim((string) $correctOption->label))) ||
+                    (isset($userAnswer['value']) && strtolower(trim((string) $userAnswer['value'])) === strtolower(trim($correctText)))
                 ) {
                     return $maxWeight;
                 }
@@ -469,7 +472,16 @@ class ExamGradingService
             case 'pg_kompleks':
                 // Multiple select: hitung proporsi kebenaran
                 $correctOptionIds = $question->options->where('is_correct', true)->pluck('id')->all();
-                $chosenIds = is_array($userAnswer) ? ($userAnswer['selected_option_ids'] ?? $userAnswer['option_ids'] ?? []) : [];
+                $chosenIds = [];
+                if (is_array($userAnswer)) {
+                    if (isset($userAnswer['selected_option_ids']) && is_array($userAnswer['selected_option_ids'])) {
+                        $chosenIds = $userAnswer['selected_option_ids'];
+                    } elseif (isset($userAnswer['option_ids']) && is_array($userAnswer['option_ids'])) {
+                        $chosenIds = $userAnswer['option_ids'];
+                    } elseif (array_is_list($userAnswer)) {
+                        $chosenIds = $userAnswer;
+                    }
+                }
 
                 if (empty($correctOptionIds) || empty($chosenIds)) {
                     return 0.0;

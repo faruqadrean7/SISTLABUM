@@ -117,6 +117,41 @@ class CbtDemoSeeder extends Seeder
                 ]
             );
 
+            // 2b. Siswa UAT 002 (untuk pengujian multi-siswa & konkurensi)
+            $studentUser2 = User::where('username', 'siswa.lab.002')->first();
+            if (! $studentUser2) {
+                $studentUser2 = User::firstOrCreate(
+                    ['email' => 'siswa.lab.002@smp-labum.sch.id'],
+                    [
+                        'username' => 'siswa.lab.002',
+                        'password_hash' => Hash::make('Password123!'),
+                        'status' => 'active',
+                        'must_change_password' => false,
+                    ]
+                );
+            }
+            if (! $studentUser2->roles()->where('role_id', $studentRole->id)->exists()) {
+                $studentUser2->roles()->attach($studentRole->id);
+            }
+
+            $student2 = Student::firstOrCreate(
+                ['user_id' => $studentUser2->id],
+                [
+                    'school_id' => $schoolId,
+                    'nis' => '26002',
+                    'nisn' => '0099001002',
+                    'nik_enc' => '3578010101090002',
+                    'full_name' => 'Siswa UAT Lab 002',
+                    'gender' => 'P',
+                    'birth_place' => 'Malang',
+                    'birth_date' => '2012-08-20',
+                    'religion' => 'Islam',
+                    'address' => 'Jl. Simpang Bogor No. 2, Malang',
+                    'status' => 'aktif',
+                    'entry_date' => '2026-07-01',
+                ]
+            );
+
             // 3. Subject & Room
             $subject = Subject::firstOrCreate(
                 ['code' => 'INF-07'],
@@ -491,8 +526,8 @@ class CbtDemoSeeder extends Seeder
                 ]
             );
 
-            // 8. Daftarkan siswa.lab.001 dan seluruh siswa di kelas 7-A
-            $targetStudentIds = [$student->id];
+            // 8. Daftarkan siswa.lab.001, siswa.lab.002, dan seluruh siswa di kelas 7-A
+            $targetStudentIds = [$student->id, $student2->id];
 
             $class7A = SchoolClass::where('name', '7-A')->first();
             if ($class7A) {
