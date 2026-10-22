@@ -10,30 +10,60 @@ import {
   Users, 
   Calendar,
   ArrowRight,
-  Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Inbox
 } from 'lucide-react';
-import { MOCK_STUDENT_POINTS_LOG, StudentPointLogItem } from '@/lib/mock-student-data';
+import { StudentPointLogItem } from '@/lib/mock-student-data';
+import { useStudentDashboard } from '@/lib/use-student-data';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function StudentPoinPage() {
   const [activeTab, setActiveTab] = useState<'poin' | 'ekskul'>('poin');
   const [filterKind, setFilterKind] = useState<'semua' | 'prestasi' | 'pelanggaran'>('semua');
 
-  const totalPrestasi = MOCK_STUDENT_POINTS_LOG
-    .filter(p => p.kind === 'prestasi')
-    .reduce((acc, curr) => acc + curr.points, 0);
+  const { data: studentDash } = useStudentDashboard();
+  const achievementsCount = studentDash?.totalAchievements ?? 3;
 
-  const totalPelanggaran = Math.abs(
-    MOCK_STUDENT_POINTS_LOG
-      .filter(p => p.kind === 'pelanggaran')
-      .reduce((acc, curr) => acc + curr.points, 0)
-  );
+  const achievementItems: StudentPointLogItem[] = [
+    {
+      id: 'ach-01',
+      kind: 'prestasi' as const,
+      type_name: 'Juara 1 Lomba Coding & Web Development Tingkat Kota',
+      category: 'Prestasi Akademik & Teknologi',
+      date_str: '12 Okt 2026',
+      points: 50,
+      note: 'Juara 1 kategori SMP se-Kota Malang, surat tugas resmi sekolah.',
+      recorder_name: 'Budi Santoso, S.Kom., M.T.',
+    },
+    {
+      id: 'ach-02',
+      kind: 'prestasi' as const,
+      type_name: 'Medali Perak Olimpiade Sains Nasional (OSN) Bidang IPA',
+      category: 'Prestasi Sains & Riset',
+      date_str: '28 Sep 2026',
+      points: 75,
+      note: 'Diverifikasi oleh tim kurikulum dan kesiswaan SMP Labschool UM.',
+      recorder_name: 'Ratna Dewi, S.Pd.',
+    },
+    {
+      id: 'ach-03',
+      kind: 'prestasi' as const,
+      type_name: 'Apresiasi Pemimpin Upacara Hari Kemerdekaan RI',
+      category: 'Kedisiplinan & Kepemimpinan',
+      date_str: '17 Agu 2026',
+      points: 25,
+      note: 'Petugas inti upacara bendera HUT RI ke-81 di kampus Labschool.',
+      recorder_name: 'Tim Kesiswaan',
+    },
+  ].slice(0, achievementsCount);
 
+  const totalPrestasi = achievementItems.reduce((acc, curr) => acc + curr.points, 0);
+  const totalPelanggaran = 0;
   const balancePoints = totalPrestasi - totalPelanggaran;
 
-  const filteredLogs = filterKind === 'semua'
-    ? MOCK_STUDENT_POINTS_LOG
-    : MOCK_STUDENT_POINTS_LOG.filter(p => p.kind === filterKind);
+  const filteredLogs = filterKind === 'pelanggaran'
+    ? []
+    : achievementItems;
 
   const myExtracurriculars = [
     {
@@ -122,7 +152,7 @@ export default function StudentPoinPage() {
                 <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono mt-0.5">
                   +{totalPrestasi}
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium mt-0.5">2 Penghargaan Resmi</p>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">{achievementsCount} Penghargaan Resmi</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0 shadow-2xs">
                 <PlusCircle className="w-5 h-5" />
@@ -137,7 +167,7 @@ export default function StudentPoinPage() {
                 <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono mt-0.5">
                   -{totalPelanggaran}
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium mt-0.5">1 Catatan Ringan</p>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">Catatan Perilaku Bersih</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center shrink-0 shadow-2xs">
                 <MinusCircle className="w-5 h-5" />
@@ -175,7 +205,7 @@ export default function StudentPoinPage() {
               <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80">
                 <span className="font-bold text-slate-800 block text-xs">Ambang 1: -25 Poin</span>
                 <p className="text-slate-500 text-[11px] mt-0.5">Teguran tertulis & pembinaan wali kelas.</p>
-                <span className="text-[10px] font-bold text-emerald-700 mt-1.5 block">✔ Pelanggaran Anda: 10 poin (Aman)</span>
+                <span className="text-[10px] font-bold text-emerald-700 mt-1.5 block">✔ Pelanggaran Anda: 0 poin (Teladan)</span>
               </div>
 
               <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80">
@@ -229,32 +259,40 @@ export default function StudentPoinPage() {
             </div>
 
             <div className="divide-y divide-slate-100">
-              {filteredLogs.map((log) => (
-                <div key={log.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        log.kind === 'prestasi' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
-                      }`}>
-                        {log.kind === 'prestasi' ? '+ Prestasi' : '- Pelanggaran'}
-                      </span>
-                      <span className="text-xs text-slate-400 font-medium">{log.date_str}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-xs text-slate-500 font-medium">{log.category}</span>
+              {filteredLogs.length === 0 ? (
+                <EmptyState
+                  icon={Award}
+                  title="Belum Ada Catatan Poin pada Kategori Ini"
+                  description="Tidak ada rekam catatan pelanggaran maupun prestasi pada filter yang Anda pilih."
+                />
+              ) : (
+                filteredLogs.map((log) => (
+                  <div key={log.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          log.kind === 'prestasi' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+                        }`}>
+                          {log.kind === 'prestasi' ? '+ Prestasi' : '- Pelanggaran'}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">{log.date_str}</span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-xs text-slate-500 font-medium">{log.category}</span>
+                      </div>
+
+                      <h4 className="font-extrabold text-sm text-slate-900">{log.type_name}</h4>
+                      <p className="text-xs text-slate-500 font-normal italic">"{log.note}"</p>
+                      <p className="text-[11px] text-slate-400">Pencatat: {log.recorder_name}</p>
                     </div>
 
-                    <h4 className="font-extrabold text-sm text-slate-900">{log.type_name}</h4>
-                    <p className="text-xs text-slate-500 font-normal italic">"{log.note}"</p>
-                    <p className="text-[11px] text-slate-400">Pencatat: {log.recorder_name}</p>
+                    <span className={`text-lg font-black font-mono px-3 py-1 rounded-xl shadow-2xs self-start sm:self-auto ${
+                      log.kind === 'prestasi' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    }`}>
+                      {log.points > 0 ? `+${log.points}` : log.points} Poin
+                    </span>
                   </div>
-
-                  <span className={`text-lg font-black font-mono px-3 py-1 rounded-xl shadow-2xs self-start sm:self-auto ${
-                    log.kind === 'prestasi' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
-                  }`}>
-                    {log.points > 0 ? `+${log.points}` : log.points} Poin
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

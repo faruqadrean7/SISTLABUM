@@ -23,12 +23,16 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { CURRENT_TEACHER, MOCK_CLASSES, MOCK_SUBJECTS } from '@/lib/mock-lms-data';
+import { useAuth } from '@/lib/auth-context';
+import { RoleGuard } from '@/components/role-guard';
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const [selectedClassId, setSelectedClassId] = useState(MOCK_CLASSES[0].id);
   const [selectedSubjectId, setSelectedSubjectId] = useState(MOCK_SUBJECTS[0].id);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
 
   const navLinks = [
     {
@@ -96,7 +100,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-100 text-slate-900 font-sans">
+    <RoleGuard allowedRoles={['teacher', 'homeroom', 'counselor']} portalName="Portal Guru & LMS">
+      <div className="flex min-h-screen bg-slate-100 text-slate-900 font-sans">
+
       {/* ─── SIDEBAR (Width 288px / w-72 for generous label breathing room) ─── */}
       <aside className="w-72 border-r border-slate-200/90 bg-white flex flex-col fixed inset-y-0 left-0 z-30 shadow-xs">
         {/* Brand Header */}
@@ -207,14 +213,19 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   </Link>
                 </div>
                 <div className="pt-1 px-1">
-                  <a
-                    href="http://localhost:3000/masuk.html"
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRoleDropdownOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 shrink-0" />
                     <span>Keluar Sesi Guru</span>
-                  </a>
+                  </button>
                 </div>
+
               </div>
             )}
           </div>
@@ -330,5 +341,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </main>
       </div>
     </div>
+    </RoleGuard>
   );
 }
+

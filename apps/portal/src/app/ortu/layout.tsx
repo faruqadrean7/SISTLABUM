@@ -14,15 +14,20 @@ import {
   Bell, 
   Users, 
   CheckCircle2, 
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
 import { GuardianProvider, useGuardian } from '@/lib/guardian-context';
+import { useAuth } from '@/lib/auth-context';
+import { RoleGuard } from '@/components/role-guard';
 
 function GuardianShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { logout } = useAuth();
   const { guardian, activeChild, setActiveChildId } = useGuardian();
   const [isChildDropdownOpen, setIsChildDropdownOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
 
   const navLinks = [
     {
@@ -276,8 +281,22 @@ function GuardianShell({ children }: { children: React.ReactNode }) {
                     <span>Portal Orang Tua (/ortu)</span>
                   </Link>
                 </div>
+                <div className="pt-1 px-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRoleDropdownOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span>Keluar Sesi Orang Tua</span>
+                  </button>
+                </div>
               </div>
             )}
+
           </div>
         </div>
       </aside>
@@ -347,8 +366,11 @@ function GuardianShell({ children }: { children: React.ReactNode }) {
 
 export default function GuardianLayout({ children }: { children: React.ReactNode }) {
   return (
-    <GuardianProvider>
-      <GuardianShell>{children}</GuardianShell>
-    </GuardianProvider>
+    <RoleGuard allowedRoles={['guardian']} portalName="Portal Orang Tua">
+      <GuardianProvider>
+        <GuardianShell>{children}</GuardianShell>
+      </GuardianProvider>
+    </RoleGuard>
   );
 }
+

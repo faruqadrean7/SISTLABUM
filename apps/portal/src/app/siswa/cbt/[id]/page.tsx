@@ -17,13 +17,29 @@ import {
   X,
   Lock
 } from 'lucide-react';
-import { MOCK_STUDENT_EXAMS, MOCK_ACTIVE_EXAM_QUESTIONS, CBTQuestionDetail, CURRENT_STUDENT } from '@/lib/mock-student-data';
+import { CBT_ACTIVE_EXAM_QUESTIONS, CBTQuestionDetail } from '@/lib/mock-student-data';
+import { useStudentExams, useStudentDashboard } from '@/lib/use-student-data';
 
 export default function CBTExamWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const resolvedParams = use(params);
   const examId = resolvedParams.id;
-  const exam = MOCK_STUDENT_EXAMS.find(e => e.id === examId) || MOCK_STUDENT_EXAMS[0];
+
+  const { data: apiExams } = useStudentExams();
+  const { data: studentDash } = useStudentDashboard();
+
+  const foundExam = apiExams?.find(e => e.id === examId);
+  const exam = {
+    id: foundExam?.id || examId,
+    title: foundExam?.title || 'Sumatif Asesmen: Informatika & Logika Web',
+    subject_name: foundExam?.subjectName || 'Informatika',
+    total_questions: foundExam?.totalQuestions || 30,
+    duration_minutes: foundExam?.durationMinutes || 60,
+    room_name: 'Lab Komputer 1',
+  };
+
+  const studentName = studentDash?.name || 'Siswa Terdaftar';
+  const studentClass = studentDash?.className || 'Kelas Siswa';
 
   // Current Question Index
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -66,13 +82,13 @@ export default function CBTExamWorkspacePage({ params }: { params: Promise<{ id:
 
   // 30 Question list
   const allQuestionIds = Array.from({ length: exam.total_questions }, (_, i) => {
-    if (i < MOCK_ACTIVE_EXAM_QUESTIONS.length) {
-      return MOCK_ACTIVE_EXAM_QUESTIONS[i].id;
+    if (i < CBT_ACTIVE_EXAM_QUESTIONS.length) {
+      return CBT_ACTIVE_EXAM_QUESTIONS[i].id;
     }
     return `q-${String(i + 1).padStart(2, '0')}`;
   });
 
-  const currentQ: CBTQuestionDetail = MOCK_ACTIVE_EXAM_QUESTIONS[currentIdx] || {
+  const currentQ: CBTQuestionDetail = CBT_ACTIVE_EXAM_QUESTIONS[currentIdx] || {
     id: `q-${String(currentIdx + 1).padStart(2, '0')}`,
     number: currentIdx + 1,
     type: 'pg',
@@ -240,7 +256,7 @@ export default function CBTExamWorkspacePage({ params }: { params: Promise<{ id:
 
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                Terima Kasih, {CURRENT_STUDENT.name}!
+                Terima Kasih, {studentName}!
               </h2>
               <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed max-w-sm mx-auto">
                 Seluruh lembar jawaban Anda untuk <strong>{exam.title}</strong> telah berhasil direkam secara permanen ke server sekolah.
@@ -301,7 +317,7 @@ export default function CBTExamWorkspacePage({ params }: { params: Promise<{ id:
               </h1>
             </div>
             <p className="text-xs text-slate-500 font-normal truncate mt-0.5">
-              Peserta: <strong className="text-slate-900 font-semibold">{CURRENT_STUDENT.name}</strong> • Kelas {CURRENT_STUDENT.class_name} • <span className="font-mono text-slate-700 font-semibold">PC-LAB1-08</span>
+              Peserta: <strong className="text-slate-900 font-semibold">{studentName}</strong> • Kelas {studentClass} • <span className="font-mono text-slate-700 font-semibold">PC-LAB1-08</span>
             </p>
           </div>
         </div>

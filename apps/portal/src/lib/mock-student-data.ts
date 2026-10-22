@@ -341,7 +341,7 @@ export interface CBTQuestionDetail {
   matching_pairs?: { premise: string; target: string; options: string[] }[];
 }
 
-export const MOCK_ACTIVE_EXAM_QUESTIONS: CBTQuestionDetail[] = [
+export const CBT_ACTIVE_EXAM_QUESTIONS: CBTQuestionDetail[] = [
   {
     id: 'q-01',
     number: 1,

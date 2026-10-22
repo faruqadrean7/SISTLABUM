@@ -21,7 +21,11 @@ import {
   HelpCircle,
   Inbox
 } from 'lucide-react';
-import { MOCK_STUDENT_EXAMS, CURRENT_STUDENT } from '@/lib/mock-student-data';
+import { StudentCBTExamItem } from '@/lib/mock-student-data';
+import { useStudentExams, useStudentDashboard } from '@/lib/use-student-data';
+import { ExamListSkeleton } from '@/components/ui/student-skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function StudentCBTListPage() {
   const router = useRouter();
@@ -30,10 +34,33 @@ export default function StudentCBTListPage() {
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
 
+  const { data: apiExams, isLoading, isError, refetch } = useStudentExams();
+  const { data: studentDash } = useStudentDashboard();
+
+  const allExams: StudentCBTExamItem[] = apiExams
+    ? apiExams.map((e) => ({
+        id: e.id,
+        title: e.title,
+        subject_name: e.subjectName,
+        subject_code: 'CBT',
+        teacher_name: 'Guru Pengampu CBT',
+        date_str: e.startTime ? e.startTime.split('T')[0] : 'Hari Ini',
+        time_range: e.startTime ? `${e.startTime.slice(11, 16)} - ${e.endTime?.slice(11, 16) || ''}` : '07:30 - 09:00',
+        duration_minutes: e.durationMinutes || 60,
+        total_questions: e.totalQuestions || 40,
+        room_name: e.roomName || 'Lab Komputer 1',
+        kktp: e.kktp || 75,
+        status: (e.status as any) || 'aktif',
+        token_required: e.tokenRequired || 'LAB-CBT',
+        score: e.score,
+        is_passed: e.score !== undefined ? e.score >= (e.kktp || 75) : undefined,
+      }))
+    : [];
+
   // Filter exams by status
-  const activeExams = MOCK_STUDENT_EXAMS.filter(e => e.status === 'aktif');
-  const upcomingExams = MOCK_STUDENT_EXAMS.filter(e => e.status === 'terjadwal');
-  const pastExams = MOCK_STUDENT_EXAMS.filter(e => e.status === 'selesai');
+  const activeExams = allExams.filter(e => e.status === 'aktif');
+  const upcomingExams = allExams.filter(e => e.status === 'terjadwal');
+  const pastExams = allExams.filter(e => e.status === 'selesai');
 
   // Dynamic calculations derived from actual past exams
   const pastExamsWithScores = pastExams.filter(e => typeof e.score === 'number');
@@ -45,7 +72,7 @@ export default function StudentCBTListPage() {
   const passRate = pastExams.length > 0 ? Math.round((passedCount / pastExams.length) * 100) : null;
 
   const activeExamToday = activeExams[0] || null;
-  const selectedExam = MOCK_STUDENT_EXAMS.find(ex => ex.id === selectedExamId) || null;
+  const selectedExam = allExams.find(ex => ex.id === selectedExamId) || null;
 
   const handleStartExam = (examId: string) => {
     setSelectedExamId(examId);
@@ -55,10 +82,10 @@ export default function StudentCBTListPage() {
 
   const handleVerifyTokenAndProceed = (e: React.FormEvent) => {
     e.preventDefault();
-    const exam = MOCK_STUDENT_EXAMS.find(ex => ex.id === selectedExamId);
+    const exam = allExams.find(ex => ex.id === selectedExamId);
     if (!exam) return;
 
-    if (tokenInput.trim().toUpperCase() !== exam.token_required) {
+    if (tokenInput.trim().toUpperCase() !== exam.token_required?.toUpperCase()) {
       setTokenError(`Token tidak valid! Pastikan Anda memasukkan token yang tertulis di papan pengawas lab (contoh: ${exam.token_required})`);
       return;
     }
@@ -273,7 +300,7 @@ export default function StudentCBTListPage() {
                 <span className="text-slate-300 hidden sm:inline">•</span>
                 <div>
                   <span>Peserta: </span>
-                  <strong className="text-slate-900 font-semibold">{CURRENT_STUDENT.name} ({CURRENT_STUDENT.class_name})</strong>
+                  <strong className="text-slate-900 font-semibold">{studentDash?.name || 'Siswa Terdaftar'} ({studentDash?.className || 'Kelas Siswa'})</strong>
                 </div>
               </div>
             </div>
@@ -360,17 +387,25 @@ export default function StudentCBTListPage() {
 
             {/* List Stream with internal scroll */}
             <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 mt-2.5">
+              {isLoading && <ExamListSkeleton count={2} />}
+
+              {isError && (
+                <ErrorState
+                  title="Gagal Memuat Jadwal Ujian CBT"
+                  message="Terjadi kendala saat mengambil data sesi ujian dari server. Silakan coba kembali."
+                  onRetry={() => refetch()}
+                />
+              )}
+
               {/* TAB 1: UJIAN AKTIF */}
-              {activeTab === 'aktif' && (
+              {!isLoading && !isError && activeTab === 'aktif' && (
                 <>
                   {activeExams.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 rounded-xl border border-dashed border-slate-200 my-auto">
-                      <Inbox className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                      <p className="font-bold text-sm text-slate-800">Tidak ada sesi ujian aktif saat ini</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Seluruh jadwal ujian Anda hari ini telah selesai atau belum dimulai.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon={MonitorPlay}
+                      title="Tidak Ada Sesi Ujian Aktif Saat Ini"
+                      description="Seluruh jadwal ujian Anda hari ini telah selesai atau belum dimulai oleh pengawas lab."
+                    />
                   ) : (
                     activeExams.map((exam) => (
                       <div
@@ -457,16 +492,14 @@ export default function StudentCBTListPage() {
               )}
 
               {/* TAB 2: JADWAL MENDATANG */}
-              {activeTab === 'terjadwal' && (
+              {!isLoading && !isError && activeTab === 'terjadwal' && (
                 <>
                   {upcomingExams.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 rounded-xl border border-dashed border-slate-200 my-auto">
-                      <Inbox className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                      <p className="font-bold text-sm text-slate-800">Tidak ada jadwal ujian mendatang</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Belum ada asesmen sumatif baru yang diagendakan guru pengampu.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon={Calendar}
+                      title="Tidak Ada Jadwal Ujian Mendatang"
+                      description="Belum ada asesmen sumatif baru yang diagendakan guru pengampu pada periode ini."
+                    />
                   ) : (
                     upcomingExams.map((exam) => (
                       <div
@@ -515,16 +548,14 @@ export default function StudentCBTListPage() {
               )}
 
               {/* TAB 3: RIWAYAT NILAI */}
-              {activeTab === 'riwayat' && (
+              {!isLoading && !isError && activeTab === 'riwayat' && (
                 <>
                   {pastExams.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 rounded-xl border border-dashed border-slate-200 my-auto">
-                      <Inbox className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                      <p className="font-bold text-sm text-slate-800">Belum ada riwayat hasil ujian</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Hasil ujian yang telah dikoreksi dan divalidasi akan tampil di tab ini.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon={CheckCircle2}
+                      title="Belum Ada Riwayat Hasil Ujian"
+                      description="Hasil ujian CBT yang telah dikoreksi dan divalidasi akan tampil di tab ini."
+                    />
                   ) : (
                     pastExams.map((exam) => (
                       <div

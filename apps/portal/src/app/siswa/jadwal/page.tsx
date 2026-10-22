@@ -17,12 +17,18 @@ import {
   Sun,
   PlayCircle
 } from 'lucide-react';
-import { MOCK_STUDENT_SCHEDULES, StudentScheduleItem } from '@/lib/mock-student-data';
+import { StudentScheduleItem } from '@/lib/use-student-data';
+import { useStudentSchedule } from '@/lib/use-student-data';
+import { ScheduleListSkeleton } from '@/components/ui/student-skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function StudentJadwalPage() {
   const [activeMainTab, setActiveMainTab] = useState<'jadwal' | 'kalender'>('jadwal');
   const [scheduleViewMode, setScheduleViewMode] = useState<'timeline' | 'matriks'>('timeline');
   const [selectedDay, setSelectedDay] = useState<'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat'>('Senin');
+
+  const { data: apiSchedule, isLoading, isError, refetch } = useStudentSchedule();
 
   const days: Array<'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat'> = [
     'Senin', 
@@ -32,12 +38,56 @@ export default function StudentJadwalPage() {
     'Jumat'
   ];
 
-  // Schedules for active day
-  const dailySchedules = MOCK_STUDENT_SCHEDULES.filter(s => s.day === selectedDay);
+  // Schedules for active day (real API data)
+  const dailySchedules = (apiSchedule && apiSchedule.length > 0)
+    ? apiSchedule
+        .filter((s) => s.dayName === selectedDay)
+        .map((s, idx) => ({
+          id: s.id,
+          period: `Jam Ke-${idx + 1}`,
+          time_start: s.startTime,
+          time_end: s.endTime,
+          time_range: `${s.startTime} - ${s.endTime} WIB`,
+          subject_name: s.subjectName,
+          subject_code: 'MAPEL',
+          teacher_name: s.teacherName,
+          teacher_avatar_url: '',
+          room_name: s.roomName,
+          day: s.dayName,
+          topic_name: 'Kegiatan Belajar Mengajar Tatap Muka',
+          is_active_today: true,
+          status: 'akan_datang' as const,
+          icon_type: 'theory' as const,
+        }))
+    : [];
 
   // Helper to retrieve schedule cell for matrix table
-  const getMatrixSchedule = (day: string, periodKey: string): StudentScheduleItem | undefined => {
-    return MOCK_STUDENT_SCHEDULES.find(s => s.day === day && s.period.includes(periodKey));
+  const getMatrixSchedule = (day: string, periodKey: string | number) => {
+    if (!apiSchedule) return undefined;
+    const dayItems = apiSchedule.filter(s => s.dayName === day);
+    let item;
+    if (typeof periodKey === 'number') {
+      item = dayItems[periodKey];
+    } else if (periodKey === '1-2' || periodKey === '1') {
+      item = dayItems[0];
+    } else if (periodKey === '3-4' || periodKey === '3') {
+      item = dayItems[1];
+    } else if (periodKey === '5-6' || periodKey === '5') {
+      item = dayItems[2];
+    } else if (periodKey === '7-8' || periodKey === '7') {
+      item = dayItems[3];
+    } else {
+      item = dayItems[0];
+    }
+    if (!item) return undefined;
+    return {
+      id: item.id,
+      subject_name: item.subjectName,
+      subject_code: 'MAPEL',
+      teacher_name: item.teacherName,
+      room_name: item.roomName,
+      time_range: `${item.startTime} - ${item.endTime}`,
+    };
   };
 
   // Academic calendar data grouped by month
@@ -345,26 +395,43 @@ export default function StudentJadwalPage() {
             {/* ─── VIEW 1: TIMELINE HARIAN (COMPACT & CLEAN) ─── */}
             {scheduleViewMode === 'timeline' && (
               <div className="space-y-3">
-                {/* Daily Subtitle Bar */}
-                <div className="flex items-center justify-between p-2.5 px-3 bg-slate-50 rounded-xl border border-slate-200/90 text-xs">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-3.5 h-3.5 text-blue-900" />
-                    <span className="font-extrabold text-slate-900">
-                      Jadwal Hari {selectedDay}
-                    </span>
-                    {selectedDay === 'Senin' && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-900">
-                        Hari Ini
+                {isLoading ? (
+                  <ScheduleListSkeleton />
+                ) : isError ? (
+                  <ErrorState
+                    title="Gagal Memuat Jadwal Pelajaran"
+                    message="Tidak dapat mengambil jadwal pelajaran dari server. Silakan coba kembali."
+                    onRetry={() => refetch()}
+                  />
+                ) : dailySchedules.length === 0 ? (
+                  <EmptyState
+                    icon={CalendarDays}
+                    title={`Tidak Ada Jadwal Hari ${selectedDay}`}
+                    description="Tidak ada sesi pembelajaran tatap muka yang dijadwalkan pada hari ini."
+                  />
+                ) : (
+                  <>
+                    {/* Daily Subtitle Bar */}
+                    <div className="flex items-center justify-between p-2.5 px-3 bg-slate-50 rounded-xl border border-slate-200/90 text-xs">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="w-3.5 h-3.5 text-blue-900" />
+                        <span className="font-extrabold text-slate-900">
+                          Jadwal Hari {selectedDay}
+                        </span>
+                        {selectedDay === 'Senin' && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-900">
+                            Hari Ini
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-slate-500 font-semibold text-[11px]">
+                        Total {dailySchedules.length} Sesi Tatap Muka ({dailySchedules.length * 2} JP)
                       </span>
-                    )}
-                  </div>
-                  <span className="text-slate-500 font-semibold text-[11px]">
-                    Total {dailySchedules.length} Sesi Tatap Muka ({dailySchedules.length * 2} JP)
-                  </span>
-                </div>
+                    </div>
 
-                {/* Vertical Timeline */}
-                <div className="relative pl-6 sm:pl-7 space-y-2.5 before:content-[''] before:absolute before:left-2 sm:before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                    {/* Vertical Timeline */}
+                    <div className="relative pl-6 sm:pl-7 space-y-2.5 before:content-[''] before:absolute before:left-2 sm:before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+
                   {/* Node 1: Pembiasaan Pagi */}
                   <div className="relative group">
                     <div className="absolute -left-6 sm:-left-7 top-2.5 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white shadow-2xs"></div>
@@ -551,13 +618,16 @@ export default function StudentJadwalPage() {
                     </div>
                   </div>
                 </div>
+                </>
+              )}
               </div>
             )}
+
 
             {/* ─── VIEW 2: TABEL MATRIKS MINGGUAN (STANDAR SEKOLAH) ─── */}
             {scheduleViewMode === 'matriks' && (
               <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
-                <table className="w-full text-xs text-left border-collapse min-w-[760px]">
+                <table className="w-full text-xs text-left border-collapse min-w-190">
                   <thead>
                     <tr className="bg-slate-100 text-slate-700 uppercase font-black text-[11px] border-b border-slate-200">
                       <th className="p-2.5 px-3 w-28 border-r border-slate-200">Jam Pelajaran</th>

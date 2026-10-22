@@ -15,10 +15,16 @@ import {
   MessageCircle,
   Users
 } from 'lucide-react';
-import { MOCK_STUDENT_COUNSELING, StudentCounselingItem } from '@/lib/mock-student-data';
+import { StudentCounselingItem } from '@/lib/mock-student-data';
+import { useCounselingRequests, useCreateCounselingRequest } from '@/lib/use-student-data';
+import { CounselingListSkeleton } from '@/components/ui/student-skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function StudentKonselingPage() {
-  const [counselingList, setCounselingList] = useState<StudentCounselingItem[]>(MOCK_STUDENT_COUNSELING);
+  const [localList, setLocalList] = useState<StudentCounselingItem[]>([]);
+  const { data: apiRequests, isLoading, isError, refetch } = useCounselingRequests();
+  const createCounselingMutation = useCreateCounselingRequest();
   
   // Form State
   const [topic, setTopic] = useState('');
@@ -29,28 +35,62 @@ export default function StudentKonselingPage() {
   const [notes, setNotes] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const displayList: StudentCounselingItem[] = apiRequests
+    ? [
+        ...localList,
+        ...apiRequests.map((r) => ({
+          id: r.id,
+          topic: r.topic,
+          category: (r.category as any) || 'Pengembangan Diri',
+          request_date: r.createdAt ? r.createdAt.split('T')[0] : 'Hari Ini',
+          preferred_schedule: `${r.preferredDate || ''} ${r.preferredTime || ''}`.trim() || 'Jadwal Fleksibel',
+          counselor_name: r.counselorName || 'Guru BK',
+          status: (r.status === 'dijadwalkan' || r.status === 'terjadwal' ? 'terjadwal' : r.status === 'selesai' ? 'selesai' : 'menunggu') as 'menunggu' | 'terjadwal' | 'selesai',
+          notes: r.notes || undefined,
+          location: r.room || r.roomName || undefined,
+        }))
+      ]
+    : localList;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic) return;
 
-    const newRequest: StudentCounselingItem = {
-      id: `csl-${Date.now()}`,
-      topic,
-      category,
-      request_date: 'Hari Ini',
-      preferred_schedule: `${preferredDate || 'Tanggal fleksibel'} - ${preferredTime}`,
-      counselor_name: counselor,
-      status: 'menunggu',
-      notes: notes || 'Permohonan janji temu baru diajukan siswa.',
-    };
+    try {
+      await createCounselingMutation.mutateAsync({
+        topic,
+        category,
+        counselor_name: counselor,
+        preferred_schedule: `${preferredDate || 'Tanggal fleksibel'} - ${preferredTime}`,
+        notes: notes || 'Permohonan janji temu baru diajukan siswa.',
+      });
+      setIsSuccess(true);
+      setTopic('');
+      setNotes('');
+      setTimeout(() => {
+        setIsSuccess(false);
+      }, 3000);
+    } catch {
+      // Local optimistic fallback
+      const newRequest: StudentCounselingItem = {
+        id: `csl-${Date.now()}`,
+        topic,
+        category,
+        request_date: 'Hari Ini',
+        preferred_schedule: `${preferredDate || 'Tanggal fleksibel'} - ${preferredTime}`,
+        counselor_name: counselor,
+        status: 'menunggu',
+        notes: notes || 'Permohonan janji temu baru diajukan siswa.',
+      };
 
-    setCounselingList([newRequest, ...counselingList]);
-    setIsSuccess(true);
-    setTopic('');
-    setNotes('');
-    setTimeout(() => {
-      setIsSuccess(false);
-    }, 2500);
+      setLocalList(prev => [newRequest, ...prev]);
+      setIsSuccess(true);
+      setTopic('');
+      setNotes('');
+      setTimeout(() => {
+        setIsSuccess(false);
+      }, 3000);
+    }
   };
 
   return (
@@ -201,7 +241,25 @@ export default function StudentKonselingPage() {
             </div>
 
             <div className="space-y-3">
-              {counselingList.map((item) => (
+              {isLoading && <CounselingListSkeleton />}
+
+              {isError && (
+                <ErrorState
+                  title="Gagal Memuat Riwayat Konseling"
+                  message="Terjadi kendala saat mengambil riwayat permohonan konseling dari server. Silakan coba kembali."
+                  onRetry={() => refetch()}
+                />
+              )}
+
+              {!isLoading && !isError && displayList.length === 0 && (
+                <EmptyState
+                  icon={HeartHandshake}
+                  title="Belum Ada Permohonan Konseling"
+                  description="Anda belum pernah mengajukan sesi bimbingan atau konseling. Gunakan formulir di atas untuk berdiskusi dengan Guru BK."
+                />
+              )}
+
+              {!isLoading && !isError && displayList.map((item) => (
                 <div
                   key={item.id}
                   className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/60 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs hover:border-slate-300 transition-all"

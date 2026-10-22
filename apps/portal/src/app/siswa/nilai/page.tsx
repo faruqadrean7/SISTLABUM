@@ -14,18 +14,41 @@ import {
   ChevronRight,
   X
 } from 'lucide-react';
-import { CURRENT_STUDENT, MOCK_STUDENT_GRADES } from '@/lib/mock-student-data';
+import { useStudentGrades, useStudentDashboard } from '@/lib/use-student-data';
+import { GradesLedgerSkeleton } from '@/components/ui/student-skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function StudentNilaiPage() {
   const [activeTab, setActiveTab] = useState<'ledger' | 'rapor'>('ledger');
   const [showReportPreview, setShowReportPreview] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState('Oktober 2026');
 
-  const averageFinalScore = (
-    MOCK_STUDENT_GRADES.reduce((acc, curr) => acc + curr.final_score, 0) / MOCK_STUDENT_GRADES.length
-  ).toFixed(1);
+  const { data: apiGrades, isLoading, isError, refetch } = useStudentGrades();
+  const { data: studentDash } = useStudentDashboard();
 
-  const passedCount = MOCK_STUDENT_GRADES.filter(g => g.final_score >= 75).length;
+  const displayGrades = (apiGrades && apiGrades.length > 0)
+    ? apiGrades.map((g) => ({
+        subject_name: g.subjectName,
+        subject_code: g.subjectCode || 'MAPEL',
+        teacher_name: g.teacherName || 'Guru Pengampu',
+        kktp: 75,
+        f1: 88,
+        f2: '-',
+        f3: '-',
+        slm: '-',
+        sts: 85,
+        final_score: g.finalScore,
+        status: g.isPassed ? 'Tuntas' : 'Remedial',
+      }))
+    : [];
+
+  const averageFinalScore = displayGrades.length > 0
+    ? (displayGrades.reduce((acc, curr) => acc + curr.final_score, 0) / displayGrades.length).toFixed(1)
+    : '0.0';
+
+  const passedCount = displayGrades.filter((g) => g.final_score >= 75).length;
+
 
   return (
     <div className="space-y-5 text-slate-900">
@@ -96,9 +119,9 @@ export default function StudentNilaiPage() {
               Ketuntasan KKTP (75)
             </span>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono mt-0.5">
-              100%
+              {displayGrades.length > 0 ? `${Math.round((passedCount / displayGrades.length) * 100)}%` : '0%'}
             </div>
-            <p className="text-[11px] text-slate-500 font-medium mt-0.5">{passedCount} dari {MOCK_STUDENT_GRADES.length} Mapel Tuntas</p>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">{passedCount} dari {displayGrades.length} Mapel Tuntas</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center shrink-0 shadow-2xs">
             <CheckCircle2 className="w-5 h-5" />
@@ -124,20 +147,36 @@ export default function StudentNilaiPage() {
 
       {/* ─── TAB 1: LEDGER CAPAIAN NILAI ─── */}
       {activeTab === 'ledger' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs space-y-0">
-          <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="font-extrabold text-xs sm:text-sm text-slate-900">
-                Matriks Capaian Asesmen Semester Gasal 2026/2027
-              </h3>
-              <p className="text-[11px] text-slate-500 font-normal mt-0.5">
-                Bobot Asesmen: Formatif 1-3 (45%), Sumatif Lingkup Materi (25%), STS (30%)
-              </p>
+        isLoading ? (
+          <GradesLedgerSkeleton />
+        ) : isError ? (
+          <ErrorState
+            title="Gagal Memuat Capaian Nilai"
+            message="Tidak dapat mengambil ledger capaian nilai dari server. Silakan coba kembali."
+            onRetry={() => refetch()}
+          />
+        ) : displayGrades.length === 0 ? (
+          <EmptyState
+            icon={FileSpreadsheet}
+            title="Belum Ada Nilai Diterbitkan"
+            description="Nilai asesmen formatif dan sumatif belum dipublikasikan oleh guru pengampu."
+          />
+        ) : (
+          <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs space-y-0">
+            <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-extrabold text-xs sm:text-sm text-slate-900">
+                  Matriks Capaian Asesmen Semester Gasal 2026/2027
+                </h3>
+                <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                  Bobot Asesmen: Formatif 1-3 (45%), Sumatif Lingkup Materi (25%), STS (30%)
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs self-start sm:self-auto">
+                Seluruh Mapel Tuntas KKTP
+              </span>
             </div>
-            <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs self-start sm:self-auto">
-              Seluruh Mapel Tuntas KKTP
-            </span>
-          </div>
+
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
@@ -155,8 +194,9 @@ export default function StudentNilaiPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {MOCK_STUDENT_GRADES.map((row) => (
+                {displayGrades.map((row) => (
                   <tr key={row.subject_code} className="hover:bg-slate-50/80 transition-colors">
+
                     <td className="py-3 px-4">
                       <p className="font-extrabold text-slate-900 text-xs sm:text-sm">{row.subject_name}</p>
                       <p className="text-[11px] text-slate-500 font-normal">Guru: {row.teacher_name}</p>
@@ -181,7 +221,8 @@ export default function StudentNilaiPage() {
             </table>
           </div>
         </div>
-      )}
+      )
+    )}
 
       {/* ─── TAB 2: DOKUMEN E-RAPOR RESMI ─── */}
       {activeTab === 'rapor' && (
@@ -302,9 +343,9 @@ export default function StudentNilaiPage() {
             {/* Biodata Siswa */}
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="space-y-1">
-                <p><span className="text-slate-500">Nama Siswa:</span> <strong className="text-slate-900 font-semibold">{CURRENT_STUDENT.name}</strong></p>
-                <p><span className="text-slate-500">NIS / NISN:</span> <strong className="text-slate-900 font-semibold">{CURRENT_STUDENT.nis} / {CURRENT_STUDENT.nisn}</strong></p>
-                <p><span className="text-slate-500">Kelas:</span> <strong className="text-slate-900 font-semibold">{CURRENT_STUDENT.class_name}</strong></p>
+                <p><span className="text-slate-500">Nama Siswa:</span> <strong className="text-slate-900 font-semibold">{studentDash?.name || 'Siswa Terdaftar'}</strong></p>
+                <p><span className="text-slate-500">NIS / NISN:</span> <strong className="text-slate-900 font-semibold">{studentDash?.nis || '-'} / {studentDash?.nisn || '-'}</strong></p>
+                <p><span className="text-slate-500">Kelas:</span> <strong className="text-slate-900 font-semibold">{studentDash?.className || 'Kelas Siswa'}</strong></p>
               </div>
               <div className="space-y-1">
                 <p><span className="text-slate-500">Tahun Ajaran:</span> <strong className="text-slate-900 font-semibold">2026/2027 Ganjil</strong></p>
@@ -325,7 +366,7 @@ export default function StudentNilaiPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {MOCK_STUDENT_GRADES.slice(0, 4).map((g) => (
+                  {displayGrades.slice(0, 4).map((g) => (
                     <tr key={g.subject_code}>
                       <td className="p-2.5 font-bold text-slate-800">{g.subject_name}</td>
                       <td className="p-2.5 text-center">{g.kktp}</td>

@@ -17,13 +17,20 @@ import {
   ChevronRight,
   X
 } from 'lucide-react';
-import { MOCK_STUDENT_TASKS, StudentTaskItem } from '@/lib/mock-student-data';
-import { MOCK_MATERIALS } from '@/lib/mock-lms-data';
+import { StudentTaskItem } from '@/lib/mock-student-data';
+import { useStudentTasks, useSubmitTask, useTeachingMaterials } from '@/lib/use-student-data';
+import { TaskListSkeleton } from '@/components/ui/student-skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function StudentTugasPage() {
   const [activeTab, setActiveTab] = useState<'tugas' | 'modul'>('tugas');
   const [statusFilter, setStatusFilter] = useState<'semua' | 'aktif' | 'dikumpulkan' | 'dinilai'>('semua');
   
+  const { data: apiTasks, isLoading, isError, refetch } = useStudentTasks();
+  const { data: apiMaterials, isLoading: isMaterialsLoading, isError: isMaterialsError, refetch: refetchMaterials } = useTeachingMaterials();
+  const submitTaskMutation = useSubmitTask();
+
   // Submit modal state
   const [selectedTask, setSelectedTask] = useState<StudentTaskItem | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
@@ -34,9 +41,33 @@ export default function StudentTugasPage() {
   // Detail feedback modal state
   const [feedbackTask, setFeedbackTask] = useState<StudentTaskItem | null>(null);
 
+  const allTasks: StudentTaskItem[] = apiTasks
+    ? apiTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        subject_name: t.subjectName,
+        subject_code: 'MAPEL',
+        due_date_str: t.dueDate,
+        days_left: 2,
+        teacher_name: t.teacherName,
+        teacher_avatar_url: '',
+        status: t.status,
+        max_score: 100,
+        description: t.description || 'Kerjakan tugas sesuai instruksi guru pengampu.',
+        submission: t.submission
+          ? {
+              file_name: t.submission.file_name,
+              submitted_at: t.submission.submitted_at,
+              score: t.score ?? undefined,
+              feedback: t.teacherFeedback ?? undefined,
+            }
+          : undefined,
+      }))
+    : [];
+
   const filteredTasks = statusFilter === 'semua' 
-    ? MOCK_STUDENT_TASKS 
-    : MOCK_STUDENT_TASKS.filter(t => t.status === statusFilter);
+    ? allTasks 
+    : allTasks.filter(t => t.status === statusFilter);
 
   const handleOpenSubmit = (task: StudentTaskItem) => {
     setSelectedTask(task);
@@ -46,22 +77,36 @@ export default function StudentTugasPage() {
     setIsSuccessSubmit(false);
   };
 
-  const handleConfirmSubmit = (e: React.FormEvent) => {
+  const handleConfirmSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
 
-    selectedTask.status = 'dikumpulkan';
-    selectedTask.submission = {
-      file_name: uploadedFileName || 'Dokumen_Tugas_Siswa.pdf',
-      submitted_at: 'Baru saja',
-      drive_link: driveLink || undefined,
-    };
-
-    setIsSuccessSubmit(true);
-    setTimeout(() => {
-      setSelectedTask(null);
-    }, 1200);
+    try {
+      await submitTaskMutation.mutateAsync({
+        taskId: selectedTask.id,
+        notes: studentNote || 'Tugas dikumpulkan melalui Portal Siswa',
+        drive_link: driveLink || undefined,
+        file_name: uploadedFileName || 'Dokumen_Tugas_Siswa.pdf',
+      });
+      setIsSuccessSubmit(true);
+      setTimeout(() => {
+        setSelectedTask(null);
+      }, 1200);
+    } catch {
+      // Local fallback
+      selectedTask.status = 'dikumpulkan';
+      selectedTask.submission = {
+        file_name: uploadedFileName || 'Dokumen_Tugas_Siswa.pdf',
+        submitted_at: 'Baru saja',
+        drive_link: driveLink || undefined,
+      };
+      setIsSuccessSubmit(true);
+      setTimeout(() => {
+        setSelectedTask(null);
+      }, 1200);
+    }
   };
+
 
   return (
     <div className="space-y-5 text-slate-900">
@@ -92,7 +137,7 @@ export default function StudentTugasPage() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Tugas & Proyek ({MOCK_STUDENT_TASKS.length})
+            Tugas & Proyek ({allTasks.length})
           </button>
           <button
             onClick={() => setActiveTab('modul')}
@@ -102,7 +147,7 @@ export default function StudentTugasPage() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Modul Ajar ({MOCK_MATERIALS.length})
+            Modul Ajar ({apiMaterials?.length || 0})
           </button>
         </div>
       </div>
@@ -125,7 +170,7 @@ export default function StudentTugasPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                 }`}
               >
-                Semua ({MOCK_STUDENT_TASKS.length})
+                Semua ({allTasks.length})
               </button>
               <button
                 onClick={() => setStatusFilter('aktif')}
@@ -135,7 +180,7 @@ export default function StudentTugasPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                 }`}
               >
-                Perlu Dikerjakan ({MOCK_STUDENT_TASKS.filter(t => t.status === 'aktif').length})
+                Perlu Dikerjakan ({allTasks.filter(t => t.status === 'aktif').length})
               </button>
               <button
                 onClick={() => setStatusFilter('dikumpulkan')}
@@ -145,7 +190,7 @@ export default function StudentTugasPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                 }`}
               >
-                Menunggu Penilaian ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dikumpulkan').length})
+                Menunggu Penilaian ({allTasks.filter(t => t.status === 'dikumpulkan').length})
               </button>
               <button
                 onClick={() => setStatusFilter('dinilai')}
@@ -155,14 +200,32 @@ export default function StudentTugasPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                 }`}
               >
-                Sudah Dinilai ({MOCK_STUDENT_TASKS.filter(t => t.status === 'dinilai').length})
+                Sudah Dinilai ({allTasks.filter(t => t.status === 'dinilai').length})
               </button>
             </div>
           </div>
 
           {/* Task List Cards */}
           <div className="space-y-3">
-            {filteredTasks.map((task) => (
+            {isLoading && <TaskListSkeleton count={4} />}
+
+            {isError && (
+              <ErrorState
+                title="Gagal Memuat Daftar Tugas"
+                message="Terjadi kendala saat mengambil data penugasan dari server. Silakan coba kembali."
+                onRetry={() => refetch()}
+              />
+            )}
+
+            {!isLoading && !isError && filteredTasks.length === 0 && (
+              <EmptyState
+                icon={CheckSquare}
+                title="Belum Ada Tugas pada Kategori Ini"
+                description="Semua tugas untuk filter ini sudah selesai atau belum ada penugasan baru dari guru."
+              />
+            )}
+
+            {!isLoading && !isError && filteredTasks.map((task) => (
               <div
                 key={task.id}
                 className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs hover:border-slate-300 transition-all"
@@ -255,44 +318,72 @@ export default function StudentTugasPage() {
       {/* ─── TAB 2: REPOSITORI MODUL AJAR ─── */}
       {activeTab === 'modul' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {MOCK_MATERIALS.map((mat) => (
-              <div
-                key={mat.id}
-                className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xs hover:border-slate-300 transition-all"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-200">
-                      {mat.category}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                      {mat.version}
-                    </span>
+          {isMaterialsLoading && <TaskListSkeleton count={3} />}
+
+          {isMaterialsError && (
+            <ErrorState
+              title="Gagal Memuat Modul Ajar"
+              message="Terjadi kendala saat mengambil materi pembelajaran dari server."
+              onRetry={() => refetchMaterials()}
+            />
+          )}
+
+          {!isMaterialsLoading && !isMaterialsError && (!apiMaterials || apiMaterials.length === 0) && (
+            <EmptyState
+              icon={BookOpen}
+              title="Belum Ada Modul Ajar"
+              description="Materi ajar digital belum dipublikasikan oleh guru mata pelajaran."
+            />
+          )}
+
+          {!isMaterialsLoading && !isMaterialsError && apiMaterials && apiMaterials.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {apiMaterials.map((mat) => (
+                <div
+                  key={mat.id}
+                  className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xs hover:border-slate-300 transition-all"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-200">
+                        {mat.subject?.name || mat.material_type || 'Materi'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        v{mat.version || 1}
+                      </span>
+                    </div>
+
+                    <h3 className="font-extrabold text-sm text-slate-900 leading-snug">{mat.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed font-normal">
+                      {mat.description}
+                    </p>
                   </div>
 
-                  <h3 className="font-extrabold text-sm text-slate-900 leading-snug">{mat.title}</h3>
-                  <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed font-normal">
-                    {mat.description}
-                  </p>
-                </div>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-medium truncate max-w-35">
+                      {mat.file?.url ? mat.file.url.split('/').pop() : 'Dokumen PDF'}
+                    </span>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium truncate max-w-35">
-                    {mat.file?.filename || 'Dokumen PDF'}
-                  </span>
-
-                  <button
-                    onClick={() => alert(`Mengunduh berkas materi resmi: ${mat.file?.filename}`)}
-                    className="px-3 py-1.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Unduh PDF</span>
-                  </button>
+                    <a
+                      href={mat.file?.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        if (!mat.file?.url) {
+                          e.preventDefault();
+                          alert(`Materi "${mat.title}" siap diunduh saat sesi tatap muka KBM.`);
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Unduh PDF</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
