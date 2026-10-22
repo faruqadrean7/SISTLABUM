@@ -249,17 +249,30 @@ class ExamSessionService
             }
 
             // Sanitasi opsi: buang is_correct dan match_key sensitif jika bukan format matching target
-            $sanitizedOptions = $options->map(function ($opt) {
-                $item = [
-                    'id' => $opt->id,
-                    'label' => $opt->label,
-                    'body' => $opt->body,
-                ];
+            $sanitizedOptions = [];
+            if (! in_array($q->question_type, ['isian', 'uraian'])) {
+                $sanitizedOptions = $options->map(function ($opt) {
+                    $item = [
+                        'id' => $opt->id,
+                        'label' => $opt->label,
+                        'text' => is_array($opt->body) ? ($opt->body['text'] ?? $opt->body['content'] ?? '') : (string) $opt->body,
+                        'body' => $opt->body,
+                    ];
 
-                // Jika soal tipe menjodohkan, biarkan match_key jika dibutuhkan untuk rendering pasangan,
-                // tapi JANGAN sertakan is_correct
-                return $item;
-            })->values()->all();
+                    return $item;
+                })->values()->all();
+            }
+
+            // Sanitasi body: buang kunci jawaban atau rubrik tersembunyi
+            $sanitizedBody = $q->body;
+            if (is_array($sanitizedBody)) {
+                unset(
+                    $sanitizedBody['correct_answer'],
+                    $sanitizedBody['is_correct'],
+                    $sanitizedBody['rubric'],
+                    $sanitizedBody['kunci_jawaban']
+                );
+            }
 
             $existingAnswer = $savedAnswers->get($q->id);
 
@@ -268,8 +281,8 @@ class ExamSessionService
                 'id' => $q->id,
                 'question_id' => $q->id,
                 'question_type' => $q->question_type,
-                'body' => $q->body,
-                'stem' => is_array($q->body) ? ($q->body['content'] ?? '') : (string) $q->body,
+                'body' => $sanitizedBody,
+                'stem' => is_array($sanitizedBody) ? ($sanitizedBody['content'] ?? '') : (string) $sanitizedBody,
                 'options' => $sanitizedOptions,
                 'user_answer' => $existingAnswer?->answer,
                 'current_answer' => $existingAnswer?->answer,
