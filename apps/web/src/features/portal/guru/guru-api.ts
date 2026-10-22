@@ -17,6 +17,7 @@ import {
   TeacherSalarySlipItem,
   TeacherSelfAttendance,
   TeacherHomeroomData,
+  TeacherQuestionBankItem,
 } from './types';
 
 const loadGuruMock =
@@ -257,6 +258,32 @@ export const guruApi = {
       },
       loadGuruMock ? () => loadGuruMock().then((m) => m.MOCK_TEACHER_EXAMS) : undefined
     );
+  },
+
+  // === BANK SOAL & PEMBUATAN UJIAN GURU MANDIRI ===
+  async getQuestionBanks(): Promise<TeacherQuestionBankItem[]> {
+    const res = await apiClient.get<TeacherQuestionBankItem[]>('/me/teacher/question-banks');
+    return unwrapList<TeacherQuestionBankItem>(res);
+  },
+
+  async createQuestionBank(payload: { name: string; subject_id: string; grade_level_id?: string }): Promise<TeacherQuestionBankItem> {
+    const res = await apiClient.post<TeacherQuestionBankItem>('/me/teacher/question-banks', payload);
+    return unwrapItem<TeacherQuestionBankItem>(res, res.data);
+  },
+
+  async getQuestionBankDetail(bankId: string): Promise<TeacherQuestionBankItem> {
+    const res = await apiClient.get<TeacherQuestionBankItem>(`/me/teacher/question-banks/${bankId}`);
+    return unwrapItem<TeacherQuestionBankItem>(res, res.data);
+  },
+
+  async createQuestion(bankId: string, payload: any): Promise<any> {
+    const res = await apiClient.post(`/me/teacher/question-banks/${bankId}/questions`, payload);
+    return unwrapItem(res, res.data);
+  },
+
+  async createExam(payload: any): Promise<any> {
+    const res = await apiClient.post('/me/teacher/exams', payload);
+    return unwrapItem(res, res.data);
   },
 
   // === IZIN & CUTI GURU ===

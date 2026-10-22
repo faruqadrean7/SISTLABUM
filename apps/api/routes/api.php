@@ -228,6 +228,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/assignments/{id}/submissions', [MeTeacherController::class, 'submissions']);
             Route::post('/submissions/{id}/grade', [MeTeacherController::class, 'gradeSubmission']);
             Route::get('/exams', [MeTeacherController::class, 'exams']);
+            Route::post('/exams', [MeTeacherController::class, 'storeExam']);
+            Route::get('/question-banks', [MeTeacherController::class, 'questionBanks']);
+            Route::post('/question-banks', [MeTeacherController::class, 'storeQuestionBank']);
+            Route::get('/question-banks/{id}', [MeTeacherController::class, 'showQuestionBank']);
+            Route::put('/question-banks/{id}', [MeTeacherController::class, 'updateQuestionBank']);
+            Route::delete('/question-banks/{id}', [MeTeacherController::class, 'destroyQuestionBank']);
+            Route::post('/question-banks/{id}/questions', [MeTeacherController::class, 'storeQuestion']);
+            Route::get('/questions/{id}', [MeTeacherController::class, 'showQuestion']);
+            Route::put('/questions/{id}', [MeTeacherController::class, 'updateQuestion']);
+            Route::delete('/questions/{id}', [MeTeacherController::class, 'destroyQuestion']);
             Route::get('/leave-requests', [MeTeacherController::class, 'leaveRequests']);
             Route::post('/leave-requests', [MeTeacherController::class, 'storeLeaveRequest']);
             Route::get('/self-attendance', [MeTeacherController::class, 'selfAttendance']);

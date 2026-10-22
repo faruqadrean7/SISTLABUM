@@ -199,3 +199,22 @@ export interface TeacherHomeroomData {
     rank: number;
   }>;
 }
+
+export interface TeacherQuestionBankItem {
+  id: string;
+  name: string;
+  subject_id: string;
+  grade_level_id?: string;
+  questions_count?: number;
+  subject?: { id: string; name: string; code: string };
+  gradeLevel?: { id: string; name: string };
+  questions?: Array<{
+    id: string;
+    question_type: string;
+    body: { text?: string; [key: string]: any };
+    cognitive_level?: string;
+    difficulty?: number;
+    weight?: number;
+    options?: any[];
+  }>;
+}
