@@ -1357,9 +1357,8 @@ class MeTeacherController extends Controller
             return $this->errorResponse('Soal tidak ditemukan.', 'NOT_FOUND', 404);
         }
 
-        $taughtSubjectIds = TeachingAssignment::where('teacher_id', $teacher->id)->pluck('subject_id');
-        if ($question->bank->owner_id !== $request->user()->id && ! $taughtSubjectIds->contains($question->bank->subject_id)) {
-            return $this->errorResponse('Akses ditolak: Anda tidak memiliki wewenang untuk mengubah soal ini.', 'FORBIDDEN', 403);
+        if ($question->bank->owner_id !== $request->user()->id) {
+            return $this->errorResponse('Akses ditolak: Anda bukan pemilik bank soal ini.', 'FORBIDDEN', 403);
         }
 
         $isUsedInActiveExam = ExamQuestion::where('question_id', $question->id)
@@ -1424,9 +1423,8 @@ class MeTeacherController extends Controller
             return $this->errorResponse('Soal tidak ditemukan.', 'NOT_FOUND', 404);
         }
 
-        $taughtSubjectIds = TeachingAssignment::where('teacher_id', $teacher->id)->pluck('subject_id');
-        if ($question->bank->owner_id !== $request->user()->id && ! $taughtSubjectIds->contains($question->bank->subject_id)) {
-            return $this->errorResponse('Akses ditolak: Anda tidak memiliki wewenang untuk menghapus soal ini.', 'FORBIDDEN', 403);
+        if ($question->bank->owner_id !== $request->user()->id) {
+            return $this->errorResponse('Akses ditolak: Anda bukan pemilik bank soal ini.', 'FORBIDDEN', 403);
         }
 
         $isUsedInActiveExam = ExamQuestion::where('question_id', $question->id)
