@@ -108,7 +108,7 @@ class LmsService
                 'object_key' => $storagePath,
                 'mime_type' => $uploaded->getMimeType() ?: 'application/octet-stream',
                 'size_bytes' => $uploaded->getSize(),
-                'visibility' => 'publik',
+                'visibility' => 'privat',
                 'checksum' => $checksum,
             ]);
 
@@ -191,7 +191,7 @@ class LmsService
                 'object_key' => $storagePath,
                 'mime_type' => $uploaded->getMimeType() ?: 'application/octet-stream',
                 'size_bytes' => $uploaded->getSize(),
-                'visibility' => 'publik',
+                'visibility' => 'privat',
                 'checksum' => $checksum,
             ]);
 
@@ -358,7 +358,7 @@ class LmsService
                 'object_key' => $storagePath,
                 'mime_type' => $uploaded->getMimeType() ?: 'application/octet-stream',
                 'size_bytes' => $uploaded->getSize(),
-                'visibility' => 'publik',
+                'visibility' => 'privat',
                 'checksum' => $checksum,
             ]);
 
@@ -453,7 +453,7 @@ class LmsService
                 'object_key' => $storagePath,
                 'mime_type' => $uploaded->getMimeType() ?: 'application/octet-stream',
                 'size_bytes' => $uploaded->getSize(),
-                'visibility' => 'publik',
+                'visibility' => 'privat',
                 'checksum' => $checksum,
             ]);
 
