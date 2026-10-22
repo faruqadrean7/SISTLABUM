@@ -46,7 +46,7 @@ services:
   # MinIO S3-Compatible Object Storage (Jalankan dengan: docker compose --profile storage up)
   # ============================================================================
   minio:
-    image: quay.io/minio/minio:RELEASE.2024-11-07T00-52-49Z
+    image: cgr.dev/chainguard/minio:latest
     profiles: ["storage"]
     container_name: sistlabum-minio
     restart: unless-stopped
@@ -94,7 +94,7 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_KEY: ${APP_KEY:-}
+      APP_KEY: ${APP_KEY:-base64:w6oCVlMI64nU2Pmfg4Zp4LzcQXDC+lPJsZ63sL4wwTQ=}
       APP_URL: http://localhost:8000
       DB_CONNECTION: pgsql
       DB_HOST: postgres
@@ -107,7 +107,7 @@ services:
       QUEUE_CONNECTION: redis
       CACHE_STORE: redis
       SESSION_DRIVER: redis
-      FILESYSTEM_DISK: s3
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-minioadmin}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-minioadmin}
       AWS_DEFAULT_REGION: us-east-1
@@ -117,6 +117,7 @@ services:
       MAIL_MAILER: smtp
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
+      UAT_SEED_ENABLED: ${UAT_SEED_ENABLED:-true}
     volumes:
       - ./apps/api:/var/www/html
     networks:
