@@ -16,17 +16,18 @@ import {
   User, 
   X, 
   AlertCircle,
-  Sparkles,
   ExternalLink,
   BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGuardian } from '@/lib/guardian-context';
-import { MOCK_GUARDIAN_COUNSELING, GuardianCounselingItem } from '@/lib/mock-guardian-data';
+import { GuardianCounselingItem } from '@/lib/mock-guardian-data';
+import { useGuardianCounselingRequests, useCreateGuardianCounselingRequest } from '@/lib/use-guardian-data';
 
 export default function GuardianKonselingPage() {
   const { activeChild } = useGuardian();
-  const [appointments, setAppointments] = useState<GuardianCounselingItem[]>(MOCK_GUARDIAN_COUNSELING);
+  const { data: rawAppointments = [], isLoading: isCslLoading } = useGuardianCounselingRequests();
+  const createCounselingMutation = useCreateGuardianCounselingRequest();
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,23 +37,36 @@ export default function GuardianKonselingPage() {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter appointments for active child
-  const childAppointments = appointments.filter(a => a.student_id === activeChild.id);
+  // Filter and map appointments for active child
+  const childAppointments = React.useMemo<GuardianCounselingItem[]>(() => {
+    return rawAppointments
+      .filter(a => !a.student_id || a.student_id === activeChild.id)
+      .map((item) => ({
+        id: item.id,
+        student_id: activeChild.id,
+        student_name: activeChild.name,
+        topic: item.topic,
+        target_role: item.counselorName?.includes('BK') ? 'Guru BK' : 'Wali Kelas',
+        target_name: item.counselorName || activeChild.homeroom_teacher,
+        requested_date: item.scheduledTime || item.preferredSchedule || 'Jadwal Ditentukan',
+        status: (item.status === 'dijadwalkan' || item.status === 'terjadwal' 
+          ? 'terjadwal' 
+          : item.status === 'selesai' 
+          ? 'selesai' 
+          : 'menunggu') as 'menunggu' | 'terjadwal' | 'selesai',
+        location: item.room || item.roomName || 'Ruang Konseling Labschool',
+        notes: item.notes || 'Permohonan konsultasi perkembangan siswa.',
+      }));
+  }, [rawAppointments, activeChild]);
 
   // Dynamic Homeroom Teacher Photo
   const getHomeroomPhoto = () => {
-    if (activeChild.id === 'std-240901') {
-      return 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&q=80&w=256'; // Ibu Siti Rahmawati
-    }
-    if (activeChild.id === 'std-260715') {
-      return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256'; // Drs. Hendra Wijaya
-    }
-    return 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256'; // Drs. Bambang Sutrisno
+    return 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256';
   };
 
-  const bkPhoto = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256'; // Ibu Ratna Dewi
+  const bkPhoto = 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&q=80&w=256';
 
-  const handleCreateAppointment = (e: React.FormEvent) => {
+  const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic || !requestedDate || !notes) {
       toast.error('Mohon lengkapi topik, tanggal, dan catatan permohonan konsultasi');
@@ -60,25 +74,16 @@ export default function GuardianKonselingPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const targetName = targetRole === 'Wali Kelas' 
-        ? `${activeChild.homeroom_teacher} (Wali Kelas ${activeChild.class_name})`
-        : 'Ibu Ratna Dewi, S.Pd., Kons. (Koordinator Guru BK)';
-
-      const newAppt: GuardianCounselingItem = {
-        id: `g-csl-${Date.now()}`,
+    try {
+      await createCounselingMutation.mutateAsync({
         student_id: activeChild.id,
-        student_name: activeChild.name,
-        topic: topic,
-        target_role: targetRole,
-        target_name: targetName,
-        requested_date: requestedDate,
-        status: 'menunggu',
-        location: targetRole === 'Wali Kelas' ? 'Ruang Guru Gedung Utama' : 'Ruang BK Lantai 2',
-        notes: notes,
-      };
+        topic,
+        category: targetRole === 'Wali Kelas' ? 'akademik' : 'sosial',
+        reason: notes,
+        preferred_schedule: requestedDate,
+        counselor_name: targetRole === 'Wali Kelas' ? activeChild.homeroom_teacher : 'Guru BK Labschool UM',
+      });
 
-      setAppointments([newAppt, ...appointments]);
       setIsSubmitting(false);
       setIsModalOpen(false);
       setTopic('');
@@ -86,7 +91,10 @@ export default function GuardianKonselingPage() {
       setNotes('');
 
       toast.success('Permohonan janji temu berhasil diajukan kepada sekolah');
-    }, 500);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      toast.error(err?.response?.data?.message || 'Gagal mengajukan janji temu');
+    }
   };
 
   return (

@@ -22,16 +22,47 @@ import {
   ChevronDown,
   CheckCircle2
 } from 'lucide-react';
-import { CURRENT_TEACHER, MOCK_CLASSES, MOCK_SUBJECTS } from '@/lib/mock-lms-data';
 import { useAuth } from '@/lib/auth-context';
 import { RoleGuard } from '@/components/role-guard';
+import { useTeacherClasses, useTeacherSubjects } from '@/lib/use-teacher-data';
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const [selectedClassId, setSelectedClassId] = useState(MOCK_CLASSES[0].id);
-  const [selectedSubjectId, setSelectedSubjectId] = useState(MOCK_SUBJECTS[0].id);
+  const { data: teacherClasses = [] } = useTeacherClasses();
+  const { data: teacherSubjects = [] } = useTeacherSubjects();
+
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (!selectedClassId && teacherClasses.length > 0) {
+      setSelectedClassId(teacherClasses[0].id);
+    }
+  }, [teacherClasses, selectedClassId]);
+
+  React.useEffect(() => {
+    if (!selectedSubjectId && teacherSubjects.length > 0) {
+      setSelectedSubjectId(teacherSubjects[0].id);
+    }
+  }, [teacherSubjects, selectedSubjectId]);
+
+  const teacherDisplayName = user?.full_name || user?.name || 'Agus Santoso, M.Pd.';
+  const isHomeroom = (user?.roles || []).some((r: any) => String(r).toLowerCase() === 'homeroom');
+  const isCounselor = (user?.roles || []).some((r: any) => String(r).toLowerCase() === 'counselor');
+  const roleLabel = isHomeroom ? 'Wali Kelas' : isCounselor ? 'Guru BK' : 'Guru Pengampu';
+  const initials = teacherDisplayName
+    ? teacherDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n: string) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'GR';
+
+  const activeClasses = teacherClasses.map(c => ({ id: c.id, name: c.name, total_students: c.studentCount }));
 
 
   const navLinks = [
@@ -159,23 +190,23 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
               className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 border border-slate-200 transition-colors text-left group cursor-pointer"
             >
-              {CURRENT_TEACHER.avatar_url ? (
+              {user?.avatar_url ? (
                 <img
-                  src={CURRENT_TEACHER.avatar_url}
-                  alt={CURRENT_TEACHER.name}
+                  src={user.avatar_url}
+                  alt={teacherDisplayName}
                   className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
                 />
               ) : (
                 <div className="w-9 h-9 rounded-full bg-blue-900 text-white font-bold flex items-center justify-center text-xs shrink-0">
-                  BS
+                  {initials}
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-blue-900">
-                  {CURRENT_TEACHER.name}
+                  {teacherDisplayName}
                 </p>
                 <p className="text-xs text-slate-500 truncate font-normal">
-                  Guru Pengampu • <span className="text-blue-900 font-medium">Beralih Portal</span>
+                  {roleLabel} • <span className="text-blue-900 font-medium">Beralih Portal</span>
                 </p>
               </div>
               <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 shrink-0" />
@@ -244,7 +275,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               </span>
               <span className="text-slate-300 font-light">/</span>
               <span className="font-semibold text-slate-900 text-xs">
-                {CURRENT_TEACHER.name.split(',')[0]}
+                {teacherDisplayName.split(',')[0]}
               </span>
               <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 font-mono border border-slate-200">
                 Informatika
@@ -260,7 +291,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   onChange={(e) => setSelectedClassId(e.target.value)}
                   className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-1"
                 >
-                  {MOCK_CLASSES.map((cls) => (
+                  {activeClasses.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name} ({cls.total_students} Siswa)
                     </option>
@@ -276,7 +307,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   onChange={(e) => setSelectedSubjectId(e.target.value)}
                   className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-1"
                 >
-                  {MOCK_SUBJECTS.map((sbj) => (
+                  {teacherSubjects.map((sbj) => (
                     <option key={sbj.id} value={sbj.id}>
                       {sbj.name} ({sbj.code})
                     </option>
@@ -312,23 +343,23 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
             {/* Avatar Pill */}
             <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-              {CURRENT_TEACHER.avatar_url ? (
+              {user?.avatar_url ? (
                 <img
-                  src={CURRENT_TEACHER.avatar_url}
-                  alt={CURRENT_TEACHER.name}
+                  src={user.avatar_url}
+                  alt={teacherDisplayName}
                   className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-blue-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                  BS
+                  {initials}
                 </div>
               )}
               <div className="hidden md:block text-left">
                 <p className="text-xs font-semibold text-slate-900 leading-tight">
-                  {CURRENT_TEACHER.name}
+                  {teacherDisplayName}
                 </p>
                 <p className="text-[11px] text-slate-500 font-normal leading-tight">
-                  Guru Pengampu
+                  {roleLabel}
                 </p>
               </div>
             </div>

@@ -181,10 +181,11 @@ export interface StudentGradeRow {
 
 export interface GradebookPeriod {
   id: string;
-  class_id: string;
-  subject_id: string;
-  academic_year: string;
-  semester: 'Ganjil' | 'Genap';
+  class_id?: string;
+  subject_id?: string;
+  name?: string;
+  academic_year?: string;
+  semester?: 'Ganjil' | 'Genap' | string;
   is_locked: boolean;
   locked_at?: string | null;
   locked_by?: string | null;

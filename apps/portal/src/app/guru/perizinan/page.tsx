@@ -45,11 +45,46 @@ interface LeaveRequestItem {
 }
 
 export default function PerizinanSiswaPage() {
+  const [classFilter, setClassFilter] = useState<string>('ALL');
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedId, setSelectedId] = useState<string>('lr-001');
+  const [selectedId, setSelectedId] = useState<string>('lr-101');
 
   const [requests, setRequests] = useState<LeaveRequestItem[]>([
+    {
+      id: 'lr-101',
+      studentId: 'std-260705',
+      studentName: 'Dimas Anggara Saputra',
+      avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=150',
+      nis: '260705',
+      className: 'Kelas VII-A',
+      type: 'sakit',
+      startDate: '2026-10-21',
+      endDate: '2026-10-22',
+      reason: 'Demam tinggi dan flu batuk, istirahat di rumah sesuai anjuran dokter.',
+      attachmentUrl: '#',
+      attachmentName: 'Surat_Keterangan_Sakit_Klinik_UM.pdf',
+      submittedAt: '2026-10-21 06:30 WIB',
+      status: 'menunggu',
+      parentName: 'Bpk. Anggara Saputra (Ayah)',
+    },
+    {
+      id: 'lr-102',
+      studentId: 'std-260707',
+      studentName: 'Gita Amanda Sari',
+      avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150',
+      nis: '260707',
+      className: 'Kelas VII-A',
+      type: 'dispensasi',
+      startDate: '2026-10-22',
+      endDate: '2026-10-23',
+      reason: 'Mewakili sekolah pada Kejuaraan Renang Pelajar Tingkat Kota Malang.',
+      attachmentUrl: '#',
+      attachmentName: 'Surat_Dispensasi_KONI_Malang.pdf',
+      submittedAt: '2026-10-20 15:40 WIB',
+      status: 'menunggu',
+      parentName: 'Ibu Amanda (Ibu)',
+    },
     {
       id: 'lr-001',
       studentId: 'std-240907',
@@ -161,6 +196,7 @@ export default function PerizinanSiswaPage() {
 
   const filteredRequests = requests.filter(req => {
     if (filterType !== 'ALL' && req.status !== filterType) return false;
+    if (classFilter !== 'ALL' && !req.className.toLowerCase().includes(classFilter.toLowerCase())) return false;
     if (searchQuery && !req.studentName.toLowerCase().includes(searchQuery.toLowerCase()) && !req.nis.includes(searchQuery)) return false;
     return true;
   });
@@ -181,7 +217,7 @@ export default function PerizinanSiswaPage() {
               <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
                 Modul Perizinan
               </span>
-              <span className="text-xs text-slate-500 font-semibold">• Kelas Binaan: Kelas IX-A</span>
+              <span className="text-xs text-slate-500 font-semibold">• Kelas: {classFilter === 'ALL' ? 'Semua Kelas (Prioritas VII-A)' : classFilter}</span>
             </div>
             <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
               Verifikasi Surat Izin & Sakit Siswa
@@ -240,15 +276,34 @@ export default function PerizinanSiswaPage() {
         <div className="xl:col-span-5 flex flex-col min-h-0 bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
           {/* Header & Filter Bar */}
           <div className="p-3 border-b border-slate-200/90 bg-slate-50/70 space-y-2 shrink-0">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Cari nama atau NIS siswa..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
-              />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-1 shrink-0">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Kelas:</span>
+                <select
+                  aria-label="Filter Kelas Perizinan"
+                  id="select-filter-kelas-perizinan"
+                  value={classFilter}
+                  onChange={(e) => setClassFilter(e.target.value)}
+                  className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">Semua Kelas</option>
+                  <option value="VII-A">Kelas VII-A (Walas)</option>
+                  <option value="VII-B">Kelas VII-B</option>
+                  <option value="VIII-A">Kelas VIII-A</option>
+                  <option value="IX-A">Kelas IX-A</option>
+                </select>
+              </div>
+
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Cari nama atau NIS siswa..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
               <button

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { lmsApi } from '@/lib/api-client';
 import { MaterialCategory } from '@/types/lms';
-import { MOCK_CLASSES, MOCK_SUBJECTS } from '@/lib/mock-lms-data';
+import { useTeacherClasses, useTeacherSubjects } from '@/lib/use-teacher-data';
 import { toast } from 'sonner';
 
 export default function GuruMateriPage() {
@@ -25,14 +25,29 @@ export default function GuruMateriPage() {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { data: teacherClasses = [] } = useTeacherClasses();
+  const { data: teacherSubjects = [] } = useTeacherSubjects();
+
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<MaterialCategory>('modul_ajar');
   const [version, setVersion] = useState('v1.0');
-  const [classId, setClassId] = useState(MOCK_CLASSES[0].id);
-  const [subjectId, setSubjectId] = useState(MOCK_SUBJECTS[0].id);
+  const [classId, setClassId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  React.useEffect(() => {
+    if (!classId && teacherClasses.length > 0) {
+      setClassId(teacherClasses[0].id);
+    }
+  }, [teacherClasses, classId]);
+
+  React.useEffect(() => {
+    if (!subjectId && teacherSubjects.length > 0) {
+      setSubjectId(teacherSubjects[0].id);
+    }
+  }, [teacherSubjects, subjectId]);
 
   // Fetch materials
   const { data: materials = [], isLoading, isError, refetch } = useQuery({
@@ -78,7 +93,7 @@ export default function GuruMateriPage() {
   const filteredMaterials = materials.filter((m) => {
     const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.description && m.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesClass = selectedClassFilter === 'all' || m.class_id === selectedClassFilter;
+    const matchesClass = selectedClassFilter === 'all' || m.class_id === selectedClassFilter || m.class?.id === selectedClassFilter;
     const matchesCategory = selectedCategoryFilter === 'all' || m.category === selectedCategoryFilter;
     return matchesSearch && matchesClass && matchesCategory;
   });
@@ -165,8 +180,8 @@ export default function GuruMateriPage() {
               className="px-2.5 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-teal-800 cursor-pointer"
             >
               <option value="all">Semua Kelas</option>
-              {MOCK_CLASSES.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+              {teacherClasses.map((c) => (
+                <option key={c.id} value={c.id}>Kelas {c.name}</option>
               ))}
             </select>
           </div>
@@ -352,8 +367,8 @@ export default function GuruMateriPage() {
                     onChange={(e) => setClassId(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-800 font-medium"
                   >
-                    {MOCK_CLASSES.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                    {teacherClasses.map((c) => (
+                      <option key={c.id} value={c.id}>Kelas {c.name}</option>
                     ))}
                   </select>
                 </div>
@@ -367,7 +382,7 @@ export default function GuruMateriPage() {
                     onChange={(e) => setSubjectId(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-800 font-medium"
                   >
-                    {MOCK_SUBJECTS.map((s) => (
+                    {teacherSubjects.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>

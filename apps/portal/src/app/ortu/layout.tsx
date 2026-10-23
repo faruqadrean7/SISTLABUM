@@ -236,7 +236,7 @@ function GuardianShell({ children }: { children: React.ReactNode }) {
                 />
               ) : (
                 <div className="w-9 h-9 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0">
-                  BM
+                  {guardian.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -344,11 +344,11 @@ function GuardianShell({ children }: { children: React.ReactNode }) {
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                  BM
+                  {guardian.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
               <div className="hidden md:block text-left">
-                <p className="text-xs font-semibold text-slate-900 leading-tight">H. Ir. Bambang Maulana</p>
+                <p className="text-xs font-semibold text-slate-900 leading-tight">{guardian.name}</p>
                 <p className="text-[11px] text-slate-500 font-normal leading-tight">Wali Murid</p>
               </div>
             </div>

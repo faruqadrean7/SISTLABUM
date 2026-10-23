@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { 
   Calendar, 
-  CalendarCheck,
+  CalendarCheck, 
   Clock, 
   MapPin, 
   Printer, 
   GraduationCap, 
   BookOpen
 } from 'lucide-react';
+import { useTeacherSchedules } from '@/lib/use-teacher-data';
 
 interface ScheduleSlot {
   id: string;
@@ -22,25 +23,39 @@ interface ScheduleSlot {
   jpCount: number;
 }
 
+const defaultScheduleSlots: ScheduleSlot[] = [
+  // Senin
+  { id: 'sch-1', day: 'Senin', period: 1, timeRange: '07:30 - 09:00', className: 'Kelas IX-A', subjectName: 'Informatika', roomName: 'Lab Komputer 1', jpCount: 2 },
+  { id: 'sch-2', day: 'Senin', period: 4, timeRange: '10:00 - 11:30', className: 'Kelas IX-B', subjectName: 'Pemrograman Web', roomName: 'Lab Multimedia', jpCount: 2 },
+  // Selasa
+  { id: 'sch-3', day: 'Selasa', period: 2, timeRange: '08:15 - 09:45', className: 'Kelas VIII-C', subjectName: 'Informatika Dasar', roomName: 'Lab Komputer 2', jpCount: 2 },
+  { id: 'sch-4', day: 'Selasa', period: 6, timeRange: '12:45 - 14:15', className: 'Kelas IX-A', subjectName: 'Praktikum Web', roomName: 'Lab Komputer 1', jpCount: 2 },
+  // Rabu (Hari Ini)
+  { id: 'sch-5', day: 'Rabu', period: 1, timeRange: '07:30 - 09:00', className: 'Kelas IX-A', subjectName: 'Informatika & Pemrograman', roomName: 'Lab Komputer 1', jpCount: 2 },
+  { id: 'sch-6', day: 'Rabu', period: 4, timeRange: '10:00 - 11:30', className: 'Kelas IX-B', subjectName: 'Pemrograman Web & Logika', roomName: 'Lab Multimedia', jpCount: 2 },
+  // Kamis
+  { id: 'sch-7', day: 'Kamis', period: 2, timeRange: '08:15 - 09:45', className: 'Kelas VIII-C', subjectName: 'Informatika Dasar', roomName: 'Lab Komputer 2', jpCount: 2 },
+  { id: 'sch-8', day: 'Kamis', period: 5, timeRange: '10:30 - 12:00', className: 'Kelas IX-B', subjectName: 'Informatika', roomName: 'Lab Komputer 1', jpCount: 2 },
+  // Jumat
+  { id: 'sch-9', day: 'Jumat', period: 1, timeRange: '07:30 - 09:00', className: 'Kelas IX-A', subjectName: 'Proyek P5 Rekayasa Teknologi', roomName: 'Lab Komputer 1', jpCount: 2 },
+];
+
 export default function JadwalMengajarPage() {
   const [selectedDayFilter, setSelectedDayFilter] = useState<string>('ALL');
+  const { data: liveSchedules = [] } = useTeacherSchedules();
 
-  const scheduleSlots: ScheduleSlot[] = [
-    // Senin
-    { id: 'sch-1', day: 'Senin', period: 1, timeRange: '07:30 - 09:00', className: 'Kelas IX-A', subjectName: 'Informatika', roomName: 'Lab Komputer 1', jpCount: 2 },
-    { id: 'sch-2', day: 'Senin', period: 4, timeRange: '10:00 - 11:30', className: 'Kelas IX-B', subjectName: 'Pemrograman Web', roomName: 'Lab Multimedia', jpCount: 2 },
-    // Selasa
-    { id: 'sch-3', day: 'Selasa', period: 2, timeRange: '08:15 - 09:45', className: 'Kelas VIII-C', subjectName: 'Informatika Dasar', roomName: 'Lab Komputer 2', jpCount: 2 },
-    { id: 'sch-4', day: 'Selasa', period: 6, timeRange: '12:45 - 14:15', className: 'Kelas IX-A', subjectName: 'Praktikum Web', roomName: 'Lab Komputer 1', jpCount: 2 },
-    // Rabu (Hari Ini)
-    { id: 'sch-5', day: 'Rabu', period: 1, timeRange: '07:30 - 09:00', className: 'Kelas IX-A', subjectName: 'Informatika & Pemrograman', roomName: 'Lab Komputer 1', jpCount: 2 },
-    { id: 'sch-6', day: 'Rabu', period: 4, timeRange: '10:00 - 11:30', className: 'Kelas IX-B', subjectName: 'Pemrograman Web & Logika', roomName: 'Lab Multimedia', jpCount: 2 },
-    // Kamis
-    { id: 'sch-7', day: 'Kamis', period: 2, timeRange: '08:15 - 09:45', className: 'Kelas VIII-C', subjectName: 'Informatika Dasar', roomName: 'Lab Komputer 2', jpCount: 2 },
-    { id: 'sch-8', day: 'Kamis', period: 5, timeRange: '10:30 - 12:00', className: 'Kelas IX-B', subjectName: 'Informatika', roomName: 'Lab Komputer 1', jpCount: 2 },
-    // Jumat
-    { id: 'sch-9', day: 'Jumat', period: 1, timeRange: '07:30 - 09:00', className: 'Kelas IX-A', subjectName: 'Proyek P5 Rekayasa Teknologi', roomName: 'Lab Komputer 1', jpCount: 2 },
-  ];
+  const scheduleSlots: ScheduleSlot[] = liveSchedules.length > 0
+    ? liveSchedules.map((s, idx) => ({
+        id: s.id,
+        day: (s.dayName as any) || 'Senin',
+        period: idx + 1,
+        timeRange: `${s.startTime} - ${s.endTime}`,
+        className: s.className,
+        subjectName: s.subjectName,
+        roomName: s.roomName,
+        jpCount: 2,
+      }))
+    : defaultScheduleSlots;
 
   const daysOfWeek = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'] as const;
   const totalJP = scheduleSlots.reduce((acc, curr) => acc + curr.jpCount, 0);

@@ -20,22 +20,24 @@ import {
   Check,
   TrendingUp,
   FileText,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { lmsApi } from '@/lib/api-client';
 import { AttendanceStatus, StudentRosterItem, TeachingJournal } from '@/types/lms';
 
 export default function JurnalPresensiPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'input' | 'riwayat'>('input');
-  const [selectedScheduleId, setSelectedScheduleId] = useState<string>('sch-001');
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
   
   // Form input state
   const [meetingNumber, setMeetingNumber] = useState<number>(7);
   const [sessionDate, setSessionDate] = useState<string>('2026-10-21');
-  const [topic, setTopic] = useState<string>('Penerapan Flexbox & Grid pada Desain Dashboard Web');
-  const [method, setMethod] = useState<string>('Problem-Based Learning (PBL) & Praktikum Mandiri');
-  const [notes, setNotes] = useState<string>('Semua komputer Lab 1 berfungsi baik. Evaluasi tugas responsif.');
+  const [topic, setTopic] = useState<string>('Penerapan Konsep Relasi & Aljabar');
+  const [method, setMethod] = useState<string>('Problem-Based Learning (PBL) & Diskusi Kelompok');
+  const [notes, setNotes] = useState<string>('Kegiatan pembelajaran berjalan kondusif.');
   const [searchStudent, setSearchStudent] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -50,27 +52,43 @@ export default function JurnalPresensiPage() {
     queryFn: () => lmsApi.getJournals(),
   });
 
+  React.useEffect(() => {
+    if (!selectedScheduleId && schedules.length > 0) {
+      setSelectedScheduleId(schedules[0].id);
+    }
+  }, [schedules, selectedScheduleId]);
+
+  // Active selected schedule
+  const activeSchedule = schedules.find(s => s.id === selectedScheduleId) || schedules[0];
+  const currentClassId = activeSchedule?.class_id || '';
+
   const { data: initialRoster = [], isLoading: isLoadingRoster } = useQuery({
-    queryKey: ['student-roster'],
-    queryFn: () => lmsApi.getStudentRoster('cls-9a'),
+    queryKey: ['student-roster', currentClassId],
+    queryFn: () => lmsApi.getStudentRoster(currentClassId),
+    enabled: Boolean(currentClassId),
   });
 
   // Local student attendance state
   const [roster, setRoster] = useState<StudentRosterItem[]>([]);
 
-  // Sync roster on initial fetch
+  // Sync roster on class or schedule change
   React.useEffect(() => {
-    if (initialRoster.length > 0 && roster.length === 0) {
+    if (initialRoster.length > 0) {
       setRoster(initialRoster);
     }
-  }, [initialRoster, roster.length]);
-
-  // Active selected schedule
-  const activeSchedule = schedules.find(s => s.id === selectedScheduleId) || schedules[0];
+  }, [initialRoster, selectedScheduleId]);
 
   // Quick batch actions
   const markAllStatus = (status: AttendanceStatus) => {
     setRoster(prev => prev.map(s => ({ ...s, status })));
+    toast.success(`Seluruh ${roster.length} siswa ${activeSchedule?.class_name || 'kelas'} berhasil ditandai ${status === 'hadir' ? 'Hadir' : status}!`);
+  };
+
+  const resetAllStatus = () => {
+    if (initialRoster.length > 0) {
+      setRoster(initialRoster);
+      toast.info('Status presensi dikembalikan ke catatan awal.');
+    }
   };
 
   const updateStudentStatus = (studentId: string, status: AttendanceStatus) => {
@@ -377,11 +395,21 @@ export default function JurnalPresensiPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  id="btn-mark-all-hadir"
                   onClick={() => markAllStatus('hadir')}
-                  className="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-2xs cursor-pointer transition-transform active:scale-95"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>Tandai Semua Hadir</span>
+                </button>
+                <button
+                  type="button"
+                  id="btn-reset-attendance"
+                  onClick={resetAllStatus}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1 border border-slate-200 cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Reset</span>
                 </button>
               </div>
             </div>
