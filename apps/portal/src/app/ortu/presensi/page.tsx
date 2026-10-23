@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   CalendarCheck, 
   Clock, 
@@ -24,13 +24,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGuardian } from '@/lib/guardian-context';
-import { MOCK_LEAVE_REQUESTS, LeaveRequestItem, AttendanceCalendarDay } from '@/lib/mock-guardian-data';
+import { AttendanceCalendarDay } from '@/lib/mock-guardian-data';
+import { useLeaveRequests, useCreateLeaveRequest } from '@/lib/use-guardian-data';
 
 export default function GuardianPresensiPage() {
   const { activeChild, activeAttendance } = useGuardian();
-  
-  // Local state for leave requests so user can submit new ones
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequestItem[]>(MOCK_LEAVE_REQUESTS);
+  const { data: rawLeaveRequests = [], isLoading: isLeaveLoading } = useLeaveRequests();
+  const createLeaveMutation = useCreateLeaveRequest();
   
   // View toggle: 'calendar' (zero-scroll 7x5 month matrix) vs 'table' (detailed log)
   const [viewMode, setViewMode] = useState<'calendar' | 'table'>('calendar');
@@ -51,7 +51,28 @@ export default function GuardianPresensiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter leave requests for active child
-  const childLeaveRequests = leaveRequests.filter(lr => lr.student_id === activeChild.id);
+  const childLeaveRequests = useMemo(() => {
+    return rawLeaveRequests
+      .filter(lr => lr.student_id === activeChild.id)
+      .map((req, idx) => {
+        const startStr = req.start_date ? new Date(req.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+        const endStr = req.end_date ? new Date(req.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+        const createdStr = req.created_at ? new Date(req.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja';
+        return {
+          id: req.id,
+          student_id: req.student_id,
+          leave_type: req.leave_type,
+          start_date: startStr,
+          end_date: endStr,
+          reason: req.reason,
+          attachment_name: req.attachment_file_id ? 'Lampiran_Dokter.pdf' : (req.leave_type === 'sakit' ? 'Surat_Keterangan_Dokter.pdf' : undefined),
+          status: req.status,
+          submitted_at: createdStr,
+          approval_note: req.decision_notes || (req.status === 'disetujui' ? 'Disetujui oleh wali kelas.' : 'Menunggu peninjauan oleh wali kelas.'),
+          approved_by: req.decided_by ? 'Wali Kelas' : undefined,
+        };
+      });
+  }, [rawLeaveRequests, activeChild.id]);
 
   // Generate full 31 days of October 2026 for the calendar matrix
   // Oct 1, 2026 is Kamis (Thursday). Days of week: Sen(1), Sel(2), Rab(3), Kam(4), Jum(5), Sab(6), Min(7)
@@ -91,7 +112,7 @@ export default function GuardianPresensiPage() {
 
   const selectedDayData = fullOctoberDays.find(d => d.day_number === selectedDayNumber) || fullOctoberDays[13];
 
-  const handleSubmitLeaveRequest = (e: React.FormEvent) => {
+  const handleSubmitLeaveRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate || !reason) {
       toast.error('Mohon lengkapi tanggal dan alasan permohonan izin');
@@ -99,22 +120,15 @@ export default function GuardianPresensiPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const newRequest: LeaveRequestItem = {
-        id: `lr-${Date.now()}`,
+    try {
+      await createLeaveMutation.mutateAsync({
         student_id: activeChild.id,
-        student_name: activeChild.name,
         leave_type: leaveType,
         start_date: startDate,
         end_date: endDate,
         reason: reason,
-        attachment_name: uploadedFileName || (leaveType === 'sakit' ? 'Surat_Keterangan_Dokter_Klinik.pdf' : 'Surat_Izin_Orang_Tua.pdf'),
-        status: 'menunggu',
-        submitted_at: 'Baru saja',
-        approval_note: 'Menunggu peninjauan dan persetujuan oleh wali kelas.',
-      };
+      });
 
-      setLeaveRequests([newRequest, ...leaveRequests]);
       setIsSubmitting(false);
       setIsModalOpen(false);
       setStartDate('');
@@ -123,7 +137,10 @@ export default function GuardianPresensiPage() {
       setUploadedFileName('');
 
       toast.success('Surat permohonan izin berhasil dikirim ke Wali Kelas!');
-    }, 600);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      toast.error(err?.response?.data?.message || 'Gagal mengirim permohonan izin. Silakan coba lagi.');
+    }
   };
 
   return (

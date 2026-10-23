@@ -44,6 +44,10 @@ export interface AuthUser {
   roles: UserRole[];
   permissions: string[];
   profile?: UserProfile;
+  full_name?: string;
+  name?: string;
+  nip?: string;
+  avatar_url?: string | null;
 }
 
 export interface AuthTokens {

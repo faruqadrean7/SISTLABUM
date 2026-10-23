@@ -42,4 +42,5 @@ apiClient.interceptors.response.use(
   }
 );
 
+export { lmsApi } from './lms-api';
 export default apiClient;

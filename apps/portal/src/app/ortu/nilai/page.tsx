@@ -20,14 +20,13 @@ import {
   BookOpen,
   Check,
   Clock,
-  Sparkles,
   PhoneCall
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGuardian } from '@/lib/guardian-context';
 
 export default function GuardianNilaiPage() {
-  const { activeChild, activeGrades } = useGuardian();
+  const { guardian, activeChild, activeGrades, reportCardData, isLoading } = useGuardian();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedReportPeriod, setSelectedReportPeriod] = useState('sts-gasal');
   const [filterStatus, setFilterStatus] = useState<'all' | 'tuntas' | 'remedial'>('all');
@@ -502,7 +501,7 @@ export default function GuardianNilaiPage() {
               {/* Recommendation Content */}
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <Award className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                   <p className="text-xs font-bold text-slate-900">
                     Evaluasi & Arahan Pembelajaran Siswa
                   </p>
@@ -680,13 +679,13 @@ export default function GuardianNilaiPage() {
               <div className="pt-4 border-t border-slate-300 font-sans grid grid-cols-3 gap-4 text-center text-xs">
                 <div>
                   <p className="text-slate-600">Mengetahui Orang Tua,</p>
-                  <p className="mt-12 font-bold text-slate-900 underline">H. Ir. Bambang Maulana</p>
+                  <p className="mt-12 font-bold text-slate-900 underline">{guardian.name}</p>
                 </div>
 
                 <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50 border border-slate-200">
                   <QrCode className="w-10 h-10 text-slate-900" />
                   <p className="text-[9px] font-mono font-semibold mt-1 text-slate-600">
-                    TOKEN: VERIFY-REP-{activeChild.nis}-2026
+                    TOKEN: {reportCardData?.verifyToken || `VERIFY-REP-${activeChild.nis}-2026`}
                   </p>
                   <span className="text-[9px] text-emerald-800 font-semibold">
                     Tervalidasi Sistem Satu Pintu

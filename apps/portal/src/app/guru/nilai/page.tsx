@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { lmsApi } from '@/lib/api-client';
 import { GradeComponent, StudentGradeRow } from '@/types/lms';
+import { useTeacherClasses, useTeacherSubjects } from '@/lib/use-teacher-data';
 
 export default function BukuNilaiPage() {
   const queryClient = useQueryClient();
@@ -37,6 +38,9 @@ export default function BukuNilaiPage() {
   const [approvalStatus, setApprovalStatus] = useState<'draft' | 'menunggu_acc' | 'disetujui'>('menunggu_acc');
   const [previewStudent, setPreviewStudent] = useState<StudentGradeRow | null>(null);
 
+  const { data: teacherClasses = [] } = useTeacherClasses();
+  const { data: teacherSubjects = [] } = useTeacherSubjects();
+
   // Character evaluation state
   const [characterScores, setCharacterScores] = useState<Record<string, {
     beriman: string;
@@ -47,10 +51,26 @@ export default function BukuNilaiPage() {
     catatan: string;
   }>>({});
 
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+
+  React.useEffect(() => {
+    if (!selectedClassId && teacherClasses.length > 0) {
+      setSelectedClassId(teacherClasses[0].id);
+    }
+  }, [teacherClasses, selectedClassId]);
+
+  React.useEffect(() => {
+    if (!selectedSubjectId && teacherSubjects.length > 0) {
+      setSelectedSubjectId(teacherSubjects[0].id);
+    }
+  }, [teacherSubjects, selectedSubjectId]);
+
   // Queries
   const { data, isLoading } = useQuery({
-    queryKey: ['gradebook-data', 'cls-9a', 'sbj-inf'],
-    queryFn: () => lmsApi.getGradebook('cls-9a', 'sbj-inf'),
+    queryKey: ['gradebook-data', selectedClassId, selectedSubjectId],
+    queryFn: () => lmsApi.getGradebook(selectedClassId, selectedSubjectId),
+    enabled: Boolean(selectedClassId),
   });
 
   const period = data?.period;
@@ -61,10 +81,10 @@ export default function BukuNilaiPage() {
   const [localGrades, setLocalGrades] = useState<StudentGradeRow[]>([]);
 
   React.useEffect(() => {
-    if (initialGrades.length > 0 && localGrades.length === 0) {
+    if (initialGrades.length > 0) {
       setLocalGrades(initialGrades);
     }
-  }, [initialGrades, localGrades.length]);
+  }, [initialGrades, selectedClassId, selectedSubjectId]);
 
   // Handle cell score changes with dynamic recalculation
   const handleScoreChange = (studentId: string, componentId: string, valStr: string) => {
@@ -103,8 +123,8 @@ export default function BukuNilaiPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       return lmsApi.saveBulkGrades({
-        class_id: 'cls-9a',
-        subject_id: 'sbj-inf',
+        class_id: selectedClassId,
+        subject_id: selectedSubjectId,
         grades: localGrades.map(s => ({
           student_id: s.student_id,
           scores: s.scores,
@@ -182,7 +202,7 @@ export default function BukuNilaiPage() {
             <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
               Buku Nilai & Asesmen
             </span>
-            <span className="text-xs text-slate-500 font-semibold">• Kelas IX-A (Informatika)</span>
+            <span className="text-xs text-slate-500 font-semibold">• {selectedClassId === 'cls-7a' ? 'Kelas VII-A (Wali Kelas)' : selectedClassId === 'cls-7b' ? 'Kelas VII-B' : selectedClassId === 'cls-8a' ? 'Kelas VIII-A' : 'Kelas IX-A'} ({selectedSubjectId === 'sbj-mat' ? 'Matematika' : selectedSubjectId === 'sbj-inf' ? 'Informatika' : 'Pemrograman Web'})</span>
           </div>
           <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
             Ledger Buku Nilai Guru & Ketercapaian KKTP
@@ -400,8 +420,45 @@ export default function BukuNilaiPage() {
 
           {/* ─── CONTROLS & FILTER BAR ─── */}
           <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5 shrink-0">
+            {/* Class & Subject Selector */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Kelas:</span>
+                <select
+                  aria-label="Pilih Kelas"
+                  id="select-class-nilai"
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+                >
+                  {teacherClasses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      Kelas {c.name} ({c.studentCount} Siswa)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Mapel:</span>
+                <select
+                  aria-label="Pilih Mata Pelajaran"
+                  id="select-subject-nilai"
+                  value={selectedSubjectId}
+                  onChange={(e) => setSelectedSubjectId(e.target.value)}
+                  className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+                >
+                  {teacherSubjects.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 max-w-sm">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"

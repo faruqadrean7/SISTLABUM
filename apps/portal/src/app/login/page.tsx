@@ -42,18 +42,18 @@ function LoginForm() {
     },
     {
       role: 'Guru',
-      label: 'guru.mtk.staging',
-      badge: 'Guru MTK',
+      label: 'guru.mtk',
+      badge: 'Guru MTK (Agus Santoso)',
       icon: BookOpen,
-      identifier: 'guru.mtk.staging',
+      identifier: 'guru.mtk',
       password: 'SistLabUM2026!UAT',
     },
     {
       role: 'Wali Kelas',
-      label: 'walas.7a.staging',
-      badge: 'Walas 7-A',
+      label: 'walas.7a',
+      badge: 'Walas 7-A (Nur Hayati)',
       icon: BookOpen,
-      identifier: 'walas.7a.staging',
+      identifier: 'walas.7a',
       password: 'SistLabUM2026!UAT',
     },
     {
@@ -62,7 +62,7 @@ function LoginForm() {
       badge: 'Orang Tua',
       icon: Users,
       identifier: 'ortu.siswa.001',
-      password: 'SistLabUM2026!UAT',
+      password: 'password',
     },
   ];
 
@@ -168,6 +168,7 @@ function LoginForm() {
                     key={preset.label}
                     type="button"
                     onClick={() => handleApplyPreset(preset.identifier, preset.password)}
+                    title={`ID: ${preset.identifier} | Pass: ${preset.password}`}
                     className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-semibold shadow-xs'

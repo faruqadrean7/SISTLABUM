@@ -23,9 +23,35 @@ import {
   ShieldCheck,
   BellRing
 } from 'lucide-react';
-import { CURRENT_TEACHER, MOCK_CLASSES, MOCK_ASSIGNMENTS } from '@/lib/mock-lms-data';
+import { useAuth } from '@/lib/auth-context';
+import { useTeacherDashboard, useTeacherClasses, useTeacherSchedules } from '@/lib/use-teacher-data';
 
 export default function GuruDashboardPage() {
+  const { user } = useAuth();
+  const { data: dashboardData } = useTeacherDashboard();
+  const { data: teacherClasses = [] } = useTeacherClasses();
+  const { data: teacherSchedules = [] } = useTeacherSchedules();
+
+  const teacherDisplayName = user?.full_name || user?.name || dashboardData?.teacherName || 'Agus Santoso, M.Pd.';
+  const nipDisplay = dashboardData?.nip || user?.nip || '198501012010011001';
+  const isHomeroom = (user?.roles || []).some((r: any) => String(r).toLowerCase() === 'homeroom');
+  const isCounselor = (user?.roles || []).some((r: any) => String(r).toLowerCase() === 'counselor');
+  const roleLabel = isHomeroom ? 'Wali Kelas' : isCounselor ? 'Guru BK' : 'Guru Pengampu';
+  const initials = teacherDisplayName
+    ? teacherDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .map((n: string) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'GR';
+
+  const totalStudents = teacherClasses.reduce((acc, c) => acc + (c.studentCount || 0), 0) || 94;
+  const totalRombel = teacherClasses.length || 3;
+  const rombelSummary = teacherClasses.length > 0 
+    ? teacherClasses.map(c => `${c.name} (${c.studentCount})`).join(' • ') + ' Siswa'
+    : 'IX-A (32) • IX-B (30) • VIII-C (32) Siswa';
   const recentSubmissions = [
     { 
       id: 'sub-1', 
@@ -124,27 +150,27 @@ export default function GuruDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Left: Identity & Badges */}
           <div className="flex items-center gap-3.5 min-w-0">
-            {CURRENT_TEACHER.avatar_url ? (
+            {user?.avatar_url ? (
               <img
-                src={CURRENT_TEACHER.avatar_url}
-                alt={CURRENT_TEACHER.name}
+                src={user.avatar_url}
+                alt={teacherDisplayName}
                 className="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 shadow-xs shrink-0"
               />
             ) : (
               <div className="w-12 h-12 rounded-xl bg-blue-900 text-white font-extrabold flex items-center justify-center text-base shadow-xs shrink-0">
-                BS
+                {initials}
               </div>
             )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-lg font-extrabold text-slate-900 tracking-tight truncate">
-                  {CURRENT_TEACHER.name}
+                  {teacherDisplayName}
                 </h1>
                 <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-900 text-white shadow-2xs font-mono">
-                  Guru Pengampu
+                  {roleLabel}
                 </span>
                 <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-300 text-slate-700 font-mono">
-                  NIP: {CURRENT_TEACHER.nip}
+                  NIP: {nipDisplay}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold shadow-2xs bg-emerald-800 text-white">
                   Aktif Mengajar
@@ -155,12 +181,12 @@ export default function GuruDashboardPage() {
               <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-slate-600">
                 <div className="inline-flex items-center gap-1 font-semibold text-emerald-800">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  <span>KBM: 2 Sesi Hari Ini (Lab 1 & Multimedia)</span>
+                  <span>KBM: {dashboardData?.todaySchedulesCount ?? 2} Sesi Terjadwal</span>
                 </div>
                 <span className="text-slate-300 hidden sm:inline">•</span>
                 <div>
                   <span>Mata Pelajaran: </span>
-                  <strong className="text-slate-900 font-semibold">Informatika & Pemrograman Web</strong>
+                  <strong className="text-slate-900 font-semibold">{isHomeroom ? 'Matematika & Perwalian 7-A' : 'Matematika Terapan'}</strong>
                 </div>
                 <span className="text-slate-300 hidden sm:inline">•</span>
                 <div>
@@ -212,16 +238,16 @@ export default function GuruDashboardPage() {
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  94
+                  {totalStudents}
                 </span>
                 <span className="text-sm font-bold text-slate-500">Siswa</span>
               </div>
               <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-900 text-white shadow-2xs">
-                3 Rombel
+                {totalRombel} Rombel
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
-              IX-A (32) • IX-B (30) • VIII-C (32) Siswa
+              {rombelSummary}
             </p>
           </div>
           <div className="pt-2 border-t border-slate-100">
@@ -247,16 +273,18 @@ export default function GuruDashboardPage() {
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  2 Sesi
+                  {dashboardData?.todaySchedulesCount ?? 2} Sesi
                 </span>
                 <span className="text-sm font-bold text-slate-500">(4 JP)</span>
               </div>
               <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-teal-800 text-white shadow-2xs">
-                Rabu Aktif
+                KBM Aktif
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
-              Lab Komputer 1 & Lab Multimedia
+              {teacherSchedules.length > 0 
+                ? `${teacherSchedules[0]?.roomName || 'Lab Komputer'} • ${teacherSchedules[0]?.className || 'Kelas 7-A'}` 
+                : 'Lab Komputer 1 & Ruang KBM'}
             </p>
           </div>
           <div className="pt-2 border-t border-slate-100">
@@ -288,7 +316,7 @@ export default function GuruDashboardPage() {
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
-              Dari {MOCK_ASSIGNMENTS.length} Penugasan Berjalan di LMS
+              Penugasan Aktif Berjalan di Seluruh Kelas
             </p>
           </div>
           <div className="pt-2 border-t border-slate-100">

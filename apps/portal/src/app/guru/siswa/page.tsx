@@ -20,7 +20,9 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { MOCK_STUDENTS_ROSTER } from '@/lib/mock-lms-data';
+import { useQuery } from '@tanstack/react-query';
+import { lmsApi } from '@/lib/api-client';
+import { useTeacherClasses } from '@/lib/use-teacher-data';
 
 interface StudentDetailedProfile {
   id: string;
@@ -62,14 +64,33 @@ interface BkReferralRecord {
 
 export default function DirektoriSiswaPage() {
   const [activeTab, setActiveTab] = useState<'direktori' | 'poin' | 'rujukan_bk'>('direktori');
+  const { data: teacherClasses = [] } = useTeacherClasses();
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+
+  React.useEffect(() => {
+    if (!selectedClassId && teacherClasses.length > 0) {
+      setSelectedClassId(teacherClasses[0].id);
+    }
+  }, [teacherClasses, selectedClassId]);
+
+  const activeClassId = selectedClassId || teacherClasses[0]?.id || '';
+  const activeClass = teacherClasses.find(c => c.id === activeClassId);
+
+  // Live Student Roster from API
+  const { data: roster = [], isLoading: isLoadingRoster } = useQuery({
+    queryKey: ['teacher-class-students', activeClassId],
+    queryFn: () => lmsApi.getStudentRoster(activeClassId),
+    enabled: Boolean(activeClassId),
+  });
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [genderFilter, setGenderFilter] = useState<'ALL' | 'L' | 'P'>('ALL');
   const [isPointModalOpen, setIsPointModalOpen] = useState<boolean>(false);
 
   // Form input state for adding points
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('std-240901');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [pointType, setPointType] = useState<'prestasi' | 'pelanggaran'>('prestasi');
-  const [pointRule, setPointRule] = useState<string>('Juara 1 Lomba OSN Informatika Tingkat Kota (+25)');
+  const [pointRule, setPointRule] = useState<string>('Juara 1 Lomba OSN Tingkat Kota (+25)');
   const [pointNotes, setPointNotes] = useState<string>('');
 
   // Form state for BK referral
@@ -89,34 +110,23 @@ export default function DirektoriSiswaPage() {
       priority: 'segera',
       date: '2026-10-12',
       status: 'dijadwalkan',
-      counselorNotes: 'Jadwal sesi temu konseling privat dengan Ibu Nurul (BK) pada Jumat, 16 Oktober 2026 pukul 09.30 WIB.'
-    },
-    {
-      id: 'ref-2',
-      studentId: 'std-240907',
-      studentName: 'Dimas Anggara Putra',
-      nis: '240907',
-      reason: 'Kesulitan Belajar & Penurunan Drastis Nilai Sumatif',
-      priority: 'biasa',
-      date: '2026-10-09',
-      status: 'selesai',
-      counselorNotes: 'Telah diberikan pendampingan motivasi belajar dan bimbingan belajar teman sebaya di kelas.'
+      counselorNotes: 'Jadwal sesi temu konseling privat dengan Guru BK.'
     }
   ]);
 
-  // 32 Enriched Students
-  const students: StudentDetailedProfile[] = MOCK_STUDENTS_ROSTER.map((std, idx) => ({
+  // Live mapped students
+  const students: StudentDetailedProfile[] = roster.map((std, idx) => ({
     id: std.id,
-    nis: std.nis,
+    nis: std.nis || '-',
     nisn: `00891234${idx < 10 ? '0' + idx : idx}`,
     name: std.name,
-    gender: std.gender,
+    gender: (std.gender === 'P' ? 'P' : 'L') as 'L' | 'P',
     parentName: idx % 2 === 0 ? `Bpk. ${std.name.split(' ')[0]} Senior` : `Ibu ${std.name.split(' ')[0]} W.`,
     parentPhone: `08123456${7000 + idx}`,
-    attendanceRate: idx === 2 ? 88.5 : idx === 6 ? 90.0 : 96.5,
-    totalPoints: idx === 1 ? 25 : idx === 2 ? -10 : idx === 13 ? 35 : 0,
+    attendanceRate: 95.0,
+    totalPoints: 0,
     status: 'aktif',
-    avatar_url: std.avatar_url
+    avatar_url: std.avatar_url,
   }));
 
   const [pointRecords, setPointRecords] = useState<PointRecord[]>([
@@ -242,7 +252,7 @@ export default function DirektoriSiswaPage() {
             <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-900 text-white shadow-2xs">
               Data Siswa & Wali Kelas
             </span>
-            <span className="text-xs text-slate-500 font-semibold">• Kelas IX-A (32 Siswa)</span>
+            <span className="text-xs text-slate-500 font-semibold">• Kelas {activeClass?.name || '-'} ({students.length} Siswa Terdaftar)</span>
           </div>
           <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
             Direktori Peserta Didik & Poin Karakter
@@ -330,7 +340,25 @@ export default function DirektoriSiswaPage() {
         <div className="flex-1 min-h-0 flex flex-col gap-2.5 overflow-hidden">
           {/* Controls Bar */}
           <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5 shrink-0">
-            <div className="relative flex-1 max-w-md">
+            {/* Class Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 shrink-0">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Kelas:</span>
+              <select
+                aria-label="Pilih Kelas"
+                id="select-class-siswa"
+                value={activeClassId}
+                onChange={(e) => setSelectedClassId(e.target.value)}
+                className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+              >
+                {teacherClasses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    Kelas {c.name} ({c.studentCount} Siswa)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative flex-1 max-w-sm">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"

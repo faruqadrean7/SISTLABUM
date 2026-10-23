@@ -22,26 +22,42 @@ import {
 } from 'lucide-react';
 import { lmsApi } from '@/lib/api-client';
 import { Assignment } from '@/types/lms';
-import { MOCK_CLASSES, MOCK_SUBJECTS, MOCK_GRADE_COMPONENTS } from '@/lib/mock-lms-data';
+import { useTeacherClasses, useTeacherSubjects } from '@/lib/use-teacher-data';
 import { toast } from 'sonner';
 
 export default function GuruTugasPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [classFilter, setClassFilter] = useState<'all' | string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'locked'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { data: teacherClasses = [] } = useTeacherClasses();
+  const { data: teacherSubjects = [] } = useTeacherSubjects();
+
   // Form state
   const [title, setTitle] = useState('');
-  const [classId, setClassId] = useState(MOCK_CLASSES[0].id);
-  const [subjectId, setSubjectId] = useState(MOCK_SUBJECTS[0].id);
-  const [gradeComponentName, setGradeComponentName] = useState(MOCK_GRADE_COMPONENTS[0].name);
+  const [classId, setClassId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
+  const [gradeComponentName, setGradeComponentName] = useState('Tugas Formatif 1');
   const [dueDate, setDueDate] = useState('2026-10-28T23:59');
   const [maxScore, setMaxScore] = useState(100);
   const [allowLate, setAllowLate] = useState(true);
   const [lockAfterDue, setLockAfterDue] = useState(false);
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  React.useEffect(() => {
+    if (!classId && teacherClasses.length > 0) {
+      setClassId(teacherClasses[0].id);
+    }
+  }, [teacherClasses, classId]);
+
+  React.useEffect(() => {
+    if (!subjectId && teacherSubjects.length > 0) {
+      setSubjectId(teacherSubjects[0].id);
+    }
+  }, [teacherSubjects, subjectId]);
 
   // Fetch assignments
   const { data: assignments = [], isLoading, isError, refetch } = useQuery({
@@ -138,6 +154,8 @@ export default function GuruTugasPage() {
   const filteredAssignments = assignments.filter((a) => {
     const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (a.description && a.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesClass = classFilter === 'all' || a.class_id === classFilter || a.class?.id === classFilter;
+    if (!matchesClass) return false;
     
     const isDue = new Date(a.due_at).getTime() < Date.now();
     if (statusFilter === 'active') return matchesSearch && !isDue && !a.is_locked;
@@ -232,16 +250,37 @@ export default function GuruTugasPage() {
 
       {/* ─── SEARCH & STATUS TABS ─── */}
       <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
-        {/* Search Field */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari judul tugas atau materi..."
-            className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
-          />
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          {/* Class Filter Dropdown */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Kelas:</span>
+            <select
+              aria-label="Filter Kelas"
+              id="select-filter-kelas-tugas"
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+            >
+              <option value="all">Semua Kelas</option>
+              {teacherClasses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  Kelas {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search Field */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari judul tugas atau materi..."
+              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-900 font-medium"
+            />
+          </div>
         </div>
 
         {/* Status Tab Filters - Solid Style */}
@@ -549,9 +588,9 @@ export default function GuruTugasPage() {
                     onChange={(e) => setClassId(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 font-medium"
                   >
-                    {MOCK_CLASSES.map((c) => (
+                    {teacherClasses.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.total_students} Siswa)
+                        Kelas {c.name} ({c.studentCount} Siswa)
                       </option>
                     ))}
                   </select>
@@ -566,7 +605,7 @@ export default function GuruTugasPage() {
                     onChange={(e) => setSubjectId(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 font-medium"
                   >
-                    {MOCK_SUBJECTS.map((s) => (
+                    {teacherSubjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} ({s.code})
                       </option>
@@ -586,9 +625,16 @@ export default function GuruTugasPage() {
                   onChange={(e) => setGradeComponentName(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 font-semibold"
                 >
-                  {MOCK_GRADE_COMPONENTS.map((gc) => (
-                    <option key={gc.id} value={gc.name}>
-                      {gc.name}
+                  {[
+                    'Tugas Formatif 1',
+                    'Tugas Formatif 2',
+                    'Tugas Formatif 3',
+                    'Sumatif Tengah Semester',
+                    'Sumatif Akhir Semester',
+                    'Proyek Penguatan Profil Pelajar Pancasila',
+                  ].map((name) => (
+                    <option key={name} value={name}>
+                      {name}
                     </option>
                   ))}
                 </select>
