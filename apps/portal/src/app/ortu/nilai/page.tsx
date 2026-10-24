@@ -36,7 +36,10 @@ export default function GuardianNilaiPage() {
   const tuntasCount = activeGrades.filter(g => g.status === 'Tuntas').length;
   const remedialCount = activeGrades.filter(g => g.status !== 'Tuntas').length;
   const maxScore = activeGrades.length > 0 ? Math.max(...activeGrades.map(g => g.final_score)) : 0;
+  const remedialSubject = activeGrades.find(g => g.status !== 'Tuntas');
+  const remedialDesc = remedialCount > 0 && remedialSubject ? `${remedialSubject.subject_name} (${remedialSubject.final_score})` : 'Nihil Remedial';
   const topSubject = activeGrades.find(g => g.final_score === maxScore);
+  const topSubjectText = topSubject ? `${topSubject.subject_code} • ${topSubject.subject_name}` : 'Belum Ada Data';
 
   // Filtered grades for table
   const filteredGrades = activeGrades.filter(g => {
@@ -200,8 +203,8 @@ export default function GuardianNilaiPage() {
                 {remedialCount}
               </span>
               <span className="text-xs font-semibold text-slate-500 ml-1.5">Mapel</span>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                {remedialCount > 0 ? 'B. Inggris (72.0)' : 'Nihil Remedial'}
+              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                {remedialDesc}
               </p>
             </div>
             <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
@@ -228,7 +231,7 @@ export default function GuardianNilaiPage() {
               </span>
               <span className="text-xs font-semibold text-slate-500 ml-1.5">Skor</span>
               <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
-                {topSubject?.subject_code} • {topSubject?.subject_name.slice(0, 11)}..
+                {topSubjectText}
               </p>
             </div>
             <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
@@ -364,46 +367,56 @@ export default function GuardianNilaiPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
-                {filteredGrades.map((grade) => (
-                  <tr key={grade.subject_code} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3">
-                      <p className="font-bold text-slate-900 text-xs">{grade.subject_name}</p>
-                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
-                        {grade.teacher_name} • <span className="font-mono text-slate-600">{grade.subject_code}</span>
-                      </p>
-                    </td>
-                    <td className="py-2.5 px-2 text-center font-mono font-medium text-slate-500">
-                      {grade.kktp}
-                    </td>
-                    <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-800">
-                      {grade.formative_avg}
-                    </td>
-                    <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-800">
-                      {grade.summative_avg}
-                    </td>
-                    <td className="py-2.5 px-2 text-center font-mono font-bold text-blue-900">
-                      {grade.sts_score}
-                    </td>
-                    <td className="py-2.5 px-2.5 text-center font-mono font-extrabold text-slate-900 text-xs">
-                      {grade.final_score}
-                    </td>
-                    <td className="py-2.5 px-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-white font-mono">
-                        {grade.predicate}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-2.5 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                        grade.status === 'Tuntas' ? 'bg-emerald-800 text-white' : 'bg-amber-600 text-white'
-                      }`}>
-                        {grade.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600 text-xs leading-relaxed max-w-xs">
-                      {grade.competency_desc}
+                {filteredGrades.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-slate-500">
+                      <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-400" />
+                      <p className="font-semibold text-slate-700">Belum ada data nilai mata pelajaran untuk filter ini.</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Silakan pilih filter lain atau hubungi wali kelas.</p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredGrades.map((grade) => (
+                    <tr key={grade.subject_code} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <p className="font-bold text-slate-900 text-xs">{grade.subject_name}</p>
+                        <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                          {grade.teacher_name} • <span className="font-mono text-slate-600">{grade.subject_code}</span>
+                        </p>
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-mono font-medium text-slate-500">
+                        {grade.kktp}
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-800">
+                        {grade.formative_avg}
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-800">
+                        {grade.summative_avg}
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-mono font-bold text-blue-900">
+                        {grade.sts_score}
+                      </td>
+                      <td className="py-2.5 px-2.5 text-center font-mono font-extrabold text-slate-900 text-xs">
+                        {grade.final_score}
+                      </td>
+                      <td className="py-2.5 px-2 text-center">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-white font-mono">
+                          {grade.predicate}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-2.5 text-center">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          grade.status === 'Tuntas' ? 'bg-emerald-800 text-white' : 'bg-amber-600 text-white'
+                        }`}>
+                          {grade.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600 text-xs leading-relaxed max-w-xs">
+                        {grade.competency_desc}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -494,7 +507,7 @@ export default function GuardianNilaiPage() {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 font-medium">
-                  Kelas IX-A
+                  {activeChild.class_name}
                 </span>
               </div>
 
@@ -661,16 +674,24 @@ export default function GuardianNilaiPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {activeGrades.map((g, idx) => (
-                      <tr key={g.subject_code}>
-                        <td className="py-1.5 px-2.5 font-medium">{idx + 1}</td>
-                        <td className="py-1.5 px-2.5 font-semibold text-slate-900">{g.subject_name}</td>
-                        <td className="py-1.5 px-2 text-center font-mono">{g.kktp}</td>
-                        <td className="py-1.5 px-2 text-center font-mono font-bold text-slate-900">{g.final_score}</td>
-                        <td className="py-1.5 px-2 text-center font-semibold text-slate-800">{g.predicate}</td>
-                        <td className="py-1.5 px-3 text-[11px] text-slate-600 truncate max-w-xs">{g.competency_desc}</td>
+                    {activeGrades.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-slate-500 font-sans">
+                          Belum ada data nilai semester untuk siswa ini.
+                        </td>
                       </tr>
-                    ))}
+                    ) : (
+                      activeGrades.map((g, idx) => (
+                        <tr key={g.subject_code}>
+                          <td className="py-1.5 px-2.5 font-medium">{idx + 1}</td>
+                          <td className="py-1.5 px-2.5 font-semibold text-slate-900">{g.subject_name}</td>
+                          <td className="py-1.5 px-2 text-center font-mono">{g.kktp}</td>
+                          <td className="py-1.5 px-2 text-center font-mono font-bold text-slate-900">{g.final_score}</td>
+                          <td className="py-1.5 px-2 text-center font-semibold text-slate-800">{g.predicate}</td>
+                          <td className="py-1.5 px-3 text-[11px] text-slate-600 truncate max-w-xs">{g.competency_desc}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

@@ -65,16 +65,16 @@ const DEFAULT_CHILD: GuardianChildProfile = {
     note: 'Presensi KBM Sekolah',
   },
   attendance_recap: {
-    hadir: 25,
-    sakit: 1,
-    izin: 1,
+    hadir: 0,
+    sakit: 0,
+    izin: 0,
     alpa: 0,
     terlambat: 0,
-    rate: 96.0,
+    rate: 100.0,
   },
-  grade_average: 87.4,
-  points_balance: 45,
-  points_prestasi: 45,
+  grade_average: 0,
+  points_balance: 0,
+  points_prestasi: 0,
   points_pelanggaran: 0,
   admin_fee_status: 'Lunas / Bebas Tanggungan',
   fee_summary: {
@@ -166,22 +166,29 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
       todayStatus === 'terlambat' ? 'Terlambat Masuk' : 'Tanpa Keterangan';
 
     const recap = attendanceData?.summary;
-    const hadirCount = recap?.present_days ?? recap?.presentDays ?? recap?.hadir ?? 25;
-    const sakitCount = recap?.sick_days ?? recap?.sickDays ?? recap?.sakit ?? 1;
-    const izinCount = recap?.leave_days ?? recap?.leaveDays ?? recap?.izin ?? 1;
+    const hadirCount = recap?.present_days ?? recap?.presentDays ?? recap?.hadir ?? 0;
+    const sakitCount = recap?.sick_days ?? recap?.sickDays ?? recap?.sakit ?? 0;
+    const izinCount = recap?.leave_days ?? recap?.leaveDays ?? recap?.izin ?? 0;
     const alpaCount = recap?.unexcused_days ?? recap?.unexcusedDays ?? recap?.alpa ?? 0;
     const terlambatCount = recap?.terlambat ?? 0;
-    const rate = recap?.percentage ?? recap?.attendance_percentage ?? recap?.persentase_kehadiran ?? 96.0;
+    const totalDays = hadirCount + sakitCount + izinCount + alpaCount;
+    const rate = recap?.percentage ?? recap?.attendance_percentage ?? recap?.persentase_kehadiran ?? (
+      totalDays > 0 ? Math.round((hadirCount / totalDays) * 1000) / 10 : 100.0
+    );
 
-    let avgScore = 87.4;
+    let avgScore = 0;
     if (Array.isArray(gradesData) && gradesData.length > 0) {
-      const sum = gradesData.reduce((acc, curr: any) => acc + (Number(curr.finalScore ?? curr.score) || 0), 0);
+      const sum = gradesData.reduce((acc, curr: any) => acc + (Number(curr.finalScore ?? curr.score ?? curr.dailyAverage) || 0), 0);
       avgScore = Math.round((sum / gradesData.length) * 10) / 10;
     } else if ((gradesData as any)?.average_score) {
       avgScore = (gradesData as any).average_score;
     } else if (reportCardData?.averageScore) {
       avgScore = reportCardData.averageScore;
     }
+
+    const defaultTeacher = gradeNum === '9' ? 'Drs. Subagyo, M.Pd.' : 'Nur Hayati, S.Pd.';
+    const defaultNip = gradeNum === '9' ? 'NIP. 19780512 200312 1 002' : 'NIP. 19840214 200902 2 003';
+    const defaultPhone = gradeNum === '9' ? '0813-9876-5432' : '0812-3456-7890';
 
     return {
       id: matchedSummary.id,
@@ -191,9 +198,9 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
       class_name: className.startsWith('Kelas') ? className : `Kelas ${className}`,
       grade_level: `Tingkat ${gradeNum} SMP`,
       curriculum_phase: 'Kurikulum Merdeka Fase D',
-      homeroom_teacher: childDetail?.homeroom_teacher?.name || 'Nur Hayati, S.Pd.',
-      homeroom_nip: childDetail?.homeroom_teacher?.nip ? `NIP. ${childDetail.homeroom_teacher.nip}` : 'NIP. 19840214 200902 2 003',
-      homeroom_phone: childDetail?.homeroom_teacher?.phone || '0812-3456-7890',
+      homeroom_teacher: childDetail?.homeroom_teacher?.name || defaultTeacher,
+      homeroom_nip: childDetail?.homeroom_teacher?.nip ? `NIP. ${childDetail.homeroom_teacher.nip}` : defaultNip,
+      homeroom_phone: childDetail?.homeroom_teacher?.phone || defaultPhone,
       avatar_url: matchedSummary.avatar_url || matchedSummary.avatarUrl || undefined,
       initials,
       gender: (matchedSummary.gender === 'female' || matchedSummary.gender === 'P') ? 'P' : 'L',
@@ -360,14 +367,18 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
     const list = (attendanceData as any)?.history || (attendanceData as any)?.records || [];
     if (list.length > 0) {
       return list.map((r: any, i: number) => {
-        const dateObj = new Date(r.date);
+        const parts = String(r.date).split('-');
+        const y = Number(parts[0]) || 2026;
+        const m = Number(parts[1]) || 10;
+        const d = Number(parts[2]) || (i + 1);
+        const dateObj = new Date(y, m - 1, d);
         const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         const dayName = dayNames[dateObj.getDay()] || 'Hari';
         const rawSt = r.status;
         const st = (rawSt === 'present' ? 'hadir' : rawSt === 'sick' ? 'sakit' : rawSt === 'permission' ? 'izin' : rawSt === 'unexcused' ? 'alpa' : rawSt || 'hadir') as 'hadir' | 'sakit' | 'izin' | 'alpa' | 'terlambat';
         return {
           date: r.date,
-          day_number: dateObj.getDate() || (i + 1),
+          day_number: d,
           day_name: dayName,
           status: st,
           tap_in: r.check_in_time || r.checkInTime || (st === 'hadir' ? '06:48 WIB' : st === 'terlambat' ? '07:15 WIB' : undefined),
@@ -510,7 +521,7 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
     ];
   }, [activeChild?.class_name]);
 
-  const isLoading = isChildrenLoading || isAttLoading || isGradesLoading;
+  const isLoading = isChildrenLoading || (!!activeChildId && (isAttLoading || isGradesLoading));
   const isError = isChildrenError;
 
   return (

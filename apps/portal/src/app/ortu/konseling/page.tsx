@@ -33,30 +33,48 @@ export default function GuardianKonselingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetRole, setTargetRole] = useState<'Wali Kelas' | 'Guru BK'>('Wali Kelas');
   const [topic, setTopic] = useState('');
-  const [requestedDate, setRequestedDate] = useState('');
+  const [preferredDate, setPreferredDate] = useState('');
+  const [preferredTime, setPreferredTime] = useState('13:00 - 14:00 WIB');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter and map appointments for active child
   const childAppointments = React.useMemo<GuardianCounselingItem[]>(() => {
-    return rawAppointments
-      .filter(a => !a.student_id || a.student_id === activeChild.id)
-      .map((item) => ({
-        id: item.id,
-        student_id: activeChild.id,
-        student_name: activeChild.name,
-        topic: item.topic,
-        target_role: item.counselorName?.includes('BK') ? 'Guru BK' : 'Wali Kelas',
-        target_name: item.counselorName || activeChild.homeroom_teacher,
-        requested_date: item.scheduledTime || item.preferredSchedule || 'Jadwal Ditentukan',
-        status: (item.status === 'dijadwalkan' || item.status === 'terjadwal' 
-          ? 'terjadwal' 
-          : item.status === 'selesai' 
-          ? 'selesai' 
-          : 'menunggu') as 'menunggu' | 'terjadwal' | 'selesai',
-        location: item.room || item.roomName || 'Ruang Konseling Labschool',
-        notes: item.notes || 'Permohonan konsultasi perkembangan siswa.',
-      }));
+    const list = Array.isArray(rawAppointments)
+      ? rawAppointments
+      : Array.isArray((rawAppointments as any)?.data)
+      ? (rawAppointments as any).data
+      : [];
+
+    return list
+      .filter((a: any) => !a.student_id || a.student_id === activeChild.id)
+      .map((item: any) => {
+        const isScheduled = item.status === 'scheduled' || item.status === 'dijadwalkan' || item.status === 'terjadwal';
+        const isCompleted = item.status === 'completed' || item.status === 'selesai';
+        const isRejected = item.status === 'rejected' || item.status === 'ditolak';
+
+        const counselorName = item.counselor?.name || item.preferredCounselor?.name || item.preferred_counselor?.name || item.counselorName || activeChild.homeroom_teacher;
+        const isBK = !!(item.counselor?.name || item.preferredCounselor?.name || item.preferred_counselor?.name || item.counselorName?.includes('BK'));
+
+        const formattedDate = item.scheduled_at
+          ? new Date(item.scheduled_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB'
+          : item.preferred_date
+          ? `${item.preferred_date} (${item.preferred_time || 'Jadwal Reguler'})`
+          : item.preferredSchedule || item.scheduledTime || 'Jadwal Ditentukan';
+
+        return {
+          id: item.id,
+          student_id: item.student_id || activeChild.id,
+          student_name: item.student?.full_name || activeChild.name,
+          topic: item.topic,
+          target_role: isBK ? 'Guru BK' : 'Wali Kelas',
+          target_name: counselorName,
+          requested_date: formattedDate,
+          status: (isScheduled ? 'terjadwal' : isCompleted ? 'selesai' : isRejected ? 'ditolak' : 'menunggu') as any,
+          location: item.room || item.roomName || 'Ruang Konseling BK Lantai 2',
+          notes: item.notes || item.reason || 'Permohonan konsultasi perkembangan siswa.',
+        };
+      });
   }, [rawAppointments, activeChild]);
 
   // Dynamic Homeroom Teacher Photo
@@ -68,8 +86,8 @@ export default function GuardianKonselingPage() {
 
   const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic || !requestedDate || !notes) {
-      toast.error('Mohon lengkapi topik, tanggal, dan catatan permohonan konsultasi');
+    if (!topic || !preferredDate || !notes) {
+      toast.error('Mohon lengkapi topik, tanggal usulan, dan catatan permohonan konsultasi');
       return;
     }
 
@@ -78,16 +96,16 @@ export default function GuardianKonselingPage() {
       await createCounselingMutation.mutateAsync({
         student_id: activeChild.id,
         topic,
-        category: targetRole === 'Wali Kelas' ? 'akademik' : 'sosial',
-        reason: notes,
-        preferred_schedule: requestedDate,
-        counselor_name: targetRole === 'Wali Kelas' ? activeChild.homeroom_teacher : 'Guru BK Labschool UM',
+        preferred_date: preferredDate,
+        preferred_time: preferredTime,
+        notes: `[Tujuan: ${targetRole}] ${notes}`,
       });
 
       setIsSubmitting(false);
       setIsModalOpen(false);
       setTopic('');
-      setRequestedDate('');
+      setPreferredDate('');
+      setPreferredTime('13:00 - 14:00 WIB');
       setNotes('');
 
       toast.success('Permohonan janji temu berhasil diajukan kepada sekolah');
@@ -514,18 +532,34 @@ export default function GuardianKonselingPage() {
               </div>
 
               {/* Usulan Waktu */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Usulan Hari & Jam Pertemuan *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={requestedDate}
-                  onChange={(e) => setRequestedDate(e.target.value)}
-                  placeholder="Contoh: Jumat, 23 Oktober 2026 - 13:30 WIB"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Tanggal Pertemuan *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={preferredDate}
+                    onChange={(e) => setPreferredDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Sesi Waktu Konseling *
+                  </label>
+                  <select
+                    value={preferredTime}
+                    onChange={(e) => setPreferredTime(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 bg-white"
+                  >
+                    <option value="08:00 - 09:00 WIB">Pagi (08:00 - 09:00 WIB)</option>
+                    <option value="10:00 - 11:00 WIB">Pagi (10:00 - 11:00 WIB)</option>
+                    <option value="13:00 - 14:00 WIB">Siang (13:00 - 14:00 WIB)</option>
+                    <option value="14:00 - 15:00 WIB">Sore (14:00 - 15:00 WIB)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Catatan / Harapan Diskusi */}

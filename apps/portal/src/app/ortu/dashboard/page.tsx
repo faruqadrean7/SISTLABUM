@@ -404,7 +404,7 @@ export default function GuardianDashboardPage() {
                     Alur Pembelajaran Hari Ini
                   </h2>
                   <p className="text-xs text-slate-500 font-normal">
-                    Rabu, 14 Oktober 2026 • {activeChild.curriculum_phase}
+                    {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • {activeChild.curriculum_phase}
                   </p>
                 </div>
               </div>

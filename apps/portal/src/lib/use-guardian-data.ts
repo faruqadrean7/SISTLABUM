@@ -177,32 +177,58 @@ export interface CreateLeaveRequestPayload {
 export interface CounselingRequestItem {
   id: string;
   student_id?: string;
+  requested_by?: string;
+  requester_role?: string;
   topic: string;
-  category: string;
-  requestDate?: string;
-  preferredSchedule?: string;
-  counselorName?: string;
-  status: 'menunggu' | 'dijadwalkan' | 'terjadwal' | 'selesai' | 'ditolak';
-  notes: string | null;
+  category?: string;
+  preferred_date?: string;
+  preferred_time?: string;
+  preferred_counselor_id?: string | null;
+  status: 'pending' | 'scheduled' | 'dijadwalkan' | 'terjadwal' | 'completed' | 'selesai' | 'rejected' | 'ditolak' | 'cancelled' | string;
+  scheduled_at?: string | null;
   scheduledTime?: string | null;
+  counselor_id?: string | null;
+  counselorName?: string;
+  notes: string | null;
+  rejection_reason?: string | null;
   roomName?: string;
   room?: string;
   createdAt?: string;
+  created_at?: string;
   preferredDate?: string;
   preferredTime?: string;
+  preferredSchedule?: string;
+  student?: {
+    id: string;
+    full_name?: string;
+    nis?: string;
+    classes?: Array<{ id: string; name: string }>;
+  };
+  counselor?: {
+    id: string;
+    name: string;
+  };
+  preferredCounselor?: {
+    id: string;
+    name: string;
+  };
+  preferred_counselor?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface CreateCounselingPayload {
-  student_id?: string;
-  topic?: string;
-  reason?: string;
+  student_id: string;
+  topic: string;
   preferred_date?: string;
   preferred_time?: string;
-  category?: string;
-  is_urgent?: boolean;
-  counselor_name?: string;
-  preferred_schedule?: string;
+  preferred_counselor_id?: string;
   notes?: string;
+  category?: string;
+  reason?: string;
+  preferred_schedule?: string;
+  counselor_name?: string;
 }
 
 // ─── Query Hooks ───
@@ -300,8 +326,9 @@ export function useLeaveRequests() {
   return useQuery({
     queryKey: ['leave-requests'],
     queryFn: async () => {
-      const res = await apiClient.get<{ data: LeaveRequestItem[] }>('/leave-requests');
-      return res.data.data;
+      const res = await apiClient.get<any>('/leave-requests');
+      const data = res.data?.data;
+      return Array.isArray(data) ? (data as LeaveRequestItem[]) : Array.isArray(data?.data) ? (data.data as LeaveRequestItem[]) : [];
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -322,12 +349,14 @@ export function useCreateLeaveRequest() {
   });
 }
 
-export function useGuardianCounselingRequests() {
+export function useGuardianCounselingRequests(studentId?: string) {
   return useQuery({
-    queryKey: ['guardian-counseling-requests'],
+    queryKey: ['guardian-counseling-requests', studentId],
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<CounselingRequestItem[]>>('/me/counseling-requests');
-      return res.data.data;
+      const params = studentId ? { student_id: studentId } : undefined;
+      const res = await apiClient.get<any>('/counseling/requests', { params });
+      const data = res.data?.data;
+      return Array.isArray(data) ? (data as CounselingRequestItem[]) : Array.isArray(data?.data) ? (data.data as CounselingRequestItem[]) : [];
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -338,7 +367,14 @@ export function useCreateGuardianCounselingRequest() {
 
   return useMutation({
     mutationFn: async (payload: CreateCounselingPayload) => {
-      const res = await apiClient.post('/me/counseling-requests', payload);
+      const res = await apiClient.post('/counseling/requests', {
+        student_id: payload.student_id,
+        topic: payload.topic,
+        preferred_date: payload.preferred_date || undefined,
+        preferred_time: payload.preferred_time || undefined,
+        preferred_counselor_id: payload.preferred_counselor_id || undefined,
+        notes: payload.notes || payload.reason || undefined,
+      });
       return res.data;
     },
     onSuccess: () => {
