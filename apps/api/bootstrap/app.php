@@ -26,9 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: env('TRUSTED_PROXIES', '*'));
-        $middleware->alias([
+        $aliases = [
             'permission' => RequirePermission::class,
-        ]);
+        ];
+        if (env('TEST_DISABLE_RATE_LIMIT', false) || env('DISABLE_RATE_LIMITING', false)) {
+            $aliases['throttle'] = \App\Http\Middleware\BypassThrottle::class;
+        }
+        $middleware->alias($aliases);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -94,6 +94,7 @@ services:
       - "8000:8000"
     environment:
       PHP_CLI_SERVER_WORKERS: "35"
+      TEST_DISABLE_RATE_LIMIT: ${TEST_DISABLE_RATE_LIMIT:-true}
       APP_ENV: local
       APP_DEBUG: "true"
       APP_KEY: ${APP_KEY:-base64:w6oCVlMI64nU2Pmfg4Zp4LzcQXDC+lPJsZ63sL4wwTQ=}
