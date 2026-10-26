@@ -254,6 +254,16 @@ class GradeService
                 ->where('period_id', $data['period_id'])
                 ->first();
 
+            if ($existing && $existing->locked_at !== null) {
+                $canOverride = ! empty($data['force_overwrite']) &&
+                    $currentUser &&
+                    ($currentUser->hasRole(['admin', 'super_admin']) || $currentUser->hasPermission('grade.unlock'));
+
+                if (! $canOverride) {
+                    throw new HttpException(422, 'Nilai pada komponen ini telah dikunci (locked) dan tidak dapat diubah.');
+                }
+            }
+
             $isUpdate = $existing !== null;
             $oldValues = $isUpdate ? $existing->only(['value', 'source', 'entered_by']) : null;
 
@@ -306,6 +316,29 @@ class GradeService
         }
 
         return DB::transaction(function () use ($data, $defaultComponentId, $currentUser, $request) {
+            $canOverride = ! empty($data['force_overwrite']) &&
+                $currentUser &&
+                ($currentUser->hasRole(['admin', 'super_admin']) || $currentUser->hasPermission('grade.unlock'));
+
+            if (! $canOverride) {
+                foreach ($data['grades'] as $item) {
+                    $componentId = $item['component_id'] ?? $defaultComponentId;
+                    if (! $componentId) {
+                        continue;
+                    }
+
+                    $isLocked = Grade::where('student_id', $item['student_id'])
+                        ->where('component_id', $componentId)
+                        ->where('period_id', $data['period_id'])
+                        ->whereNotNull('locked_at')
+                        ->exists();
+
+                    if ($isLocked) {
+                        throw new HttpException(422, 'Satu atau lebih nilai pada lingkup ini telah dikunci (locked) dan tidak dapat diubah.');
+                    }
+                }
+            }
+
             $savedGrades = [];
 
             foreach ($data['grades'] as $item) {

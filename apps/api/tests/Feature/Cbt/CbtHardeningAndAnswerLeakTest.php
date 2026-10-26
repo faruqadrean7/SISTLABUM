@@ -277,12 +277,13 @@ class CbtHardeningAndAnswerLeakTest extends TestCase
         $this->assertCount(20, $questionsPayload['data']['questions']);
 
         // 6. Endpoint: POST /api/v1/exams/{id}/save-answer
-        $firstQ = $questionsPayload['data']['questions'][0];
-        $firstOpt = $firstQ['options'][0] ?? null;
+        $targetQ = collect($questionsPayload['data']['questions'])->first(fn ($q) => ! empty($q['options']));
+        $this->assertNotNull($targetQ);
+        $firstOpt = $targetQ['options'][0] ?? null;
         $this->assertNotNull($firstOpt);
 
         $resSave = $this->actingAs($studentUser, 'sanctum')->postJson("/api/v1/exams/{$exam->id}/save-answer", [
-            'question_id' => $firstQ['question_id'],
+            'question_id' => $targetQ['question_id'],
             'answer' => ['selected_option_id' => $firstOpt['id']],
         ]);
         $resSave->assertStatus(200);

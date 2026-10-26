@@ -154,7 +154,7 @@ class StaffAttendanceTest extends TestCase
     {
         $token = $this->teacher1User->createToken('test')->plainTextToken;
 
-        $selfie = UploadedFile::fake()->image('selfie.jpg', 600, 600);
+        $selfie = UploadedFile::fake()->create('selfie.jpg', 100, 'image/jpeg');
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->post('/api/v1/staff-attendances/check-in', [

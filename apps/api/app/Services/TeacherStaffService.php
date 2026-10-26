@@ -776,7 +776,7 @@ class TeacherStaffService
 
         $teacher = Teacher::where('user_id', $user->id)->first();
         if (! $teacher) {
-            throw new HttpException(404, 'Profil pendidik guru Anda belum terdaftar.');
+            return collect([]);
         }
 
         return TeacherSalarySlip::where('teacher_id', $teacher->id)
@@ -799,7 +799,7 @@ class TeacherStaffService
 
         $teacher = Teacher::where('user_id', $user->id)->first();
         if (! $teacher) {
-            throw new HttpException(404, 'Profil pendidik guru Anda belum terdaftar.');
+            return collect([]);
         }
 
         $salarySlip = TeacherSalarySlip::with('teacher')->find($slipId);

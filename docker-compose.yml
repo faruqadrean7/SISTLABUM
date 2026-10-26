@@ -83,6 +83,7 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
     container_name: sistlabum-api
+    command: php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     restart: unless-stopped
     depends_on:
       postgres:
@@ -92,6 +93,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      PHP_CLI_SERVER_WORKERS: "35"
       APP_ENV: local
       APP_DEBUG: "true"
       APP_KEY: ${APP_KEY:-base64:w6oCVlMI64nU2Pmfg4Zp4LzcQXDC+lPJsZ63sL4wwTQ=}
@@ -124,7 +126,7 @@ services:
       - sistlabum-network
 
   # ============================================================================
-  # Frontend Web (Next.js 14 - Landing, PPDB, Admin, Portal)
+  # Frontend Web (Next.js 14 - Landing, PPDB, Admin, Portal Terpadu)
   # ============================================================================
   web:
     build:
@@ -136,6 +138,7 @@ services:
       - api
     ports:
       - "3000:3000"
+      - "3001:3000"
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
@@ -144,32 +147,6 @@ services:
       HOSTNAME: "0.0.0.0"
     volumes:
       - ./apps/web:/app
-      - /app/node_modules
-      - /app/.next
-    networks:
-      - sistlabum-network
-
-  # ============================================================================
-  # Frontend Portal Siswa, Guru, & Ortu (Next.js 16)
-  # ============================================================================
-  portal:
-    build:
-      context: ./apps/portal
-      dockerfile: Dockerfile
-    container_name: sistlabum-portal
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "3001:3001"
-    environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
-      NEXT_PUBLIC_APP_NAME: "Portal Siswa SISTLABUM"
-      PORT: 3001
-      HOSTNAME: "0.0.0.0"
-    volumes:
-      - ./apps/portal:/app
       - /app/node_modules
       - /app/.next
     networks:

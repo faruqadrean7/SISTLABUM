@@ -474,7 +474,7 @@ class StudentDisciplineTest extends TestCase
             ['name' => '2026/2027'],
             ['start_date' => '2026-07-01', 'end_date' => '2027-06-30', 'is_active' => true]
         );
-        $gradeLevel = GradeLevel::firstOrCreate(['level' => 10], ['name' => 'Kelas 10']);
+        $gradeLevel = GradeLevel::firstOrCreate(['name' => 'Kelas 10'], ['sort_order' => 10]);
         $classA = SchoolClass::create([
             'name' => 'X-IPA-1',
             'academic_year_id' => $academicYear->id,

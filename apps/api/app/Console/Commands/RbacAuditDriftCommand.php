@@ -31,7 +31,10 @@ class RbacAuditDriftCommand extends Command
         'public_relations',
         'student',
         'guardian',
+        'staff',
         'guest',
+        'bendahara',
+        'treasurer',
         // Ekstensi sistem yang sah
         'admin_kurikulum',
         'kurikulum',
@@ -64,6 +67,7 @@ class RbacAuditDriftCommand extends Command
             'master.student.read',
             'master.teacher.manage',
             'ppdb.applicant.read',
+            'finance.report.view',
         ],
         'admin_tu' => [
             'master.academic_year.manage',
@@ -169,6 +173,24 @@ class RbacAuditDriftCommand extends Command
             'student.point.read',
         ],
         'guest' => [],
+        'bendahara' => [
+            'finance.fee.manage',
+            'finance.invoice.manage',
+            'finance.payment.verify',
+            'finance.report.view',
+            'audit.read',
+            'master.student.read',
+            'reports.view',
+        ],
+        'treasurer' => [
+            'finance.fee.manage',
+            'finance.invoice.manage',
+            'finance.payment.verify',
+            'finance.report.view',
+            'audit.read',
+            'master.student.read',
+            'reports.view',
+        ],
     ];
 
     /**

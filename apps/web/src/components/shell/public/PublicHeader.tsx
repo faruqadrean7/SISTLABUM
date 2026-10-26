@@ -150,6 +150,8 @@ export function PublicHeader() {
           <div className="hidden lg:flex items-center gap-3">
             <Link
               href="/ppdb"
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-semibold text-sm px-4 py-2 rounded-[10px] shadow-sm hover:shadow transition-all inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
             >
               PPDB Online
@@ -244,6 +246,8 @@ export function PublicHeader() {
             <div className="mt-auto pt-6 border-t border-white/10 flex flex-col gap-3">
               <Link
                 href="/ppdb"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => closeMobileMenu(false)}
                 className="w-full text-center bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-semibold text-sm py-2.5 rounded-[10px] shadow transition-colors inline-block focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
               >

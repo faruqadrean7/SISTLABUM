@@ -118,7 +118,7 @@ class ServerAuditTrailTest extends TestCase
             'user_id' => $studentUser->id,
             'nis' => '10001',
             'nisn' => '0012345678',
-            'nik_enc' => encrypt('3578010101010001'),
+            'nik_enc' => '3578010101010001',
             'full_name' => 'Ahmad Siswa',
             'gender' => 'L',
             'birth_place' => 'Malang',

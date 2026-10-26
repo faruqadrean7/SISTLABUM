@@ -116,6 +116,37 @@ export const tokenStorage = {
         // Fallback
       }
     }
+
+    if (typeof document !== 'undefined') {
+      try {
+        const roles = user?.roles || [];
+        const adminRoles = [
+          'super_admin',
+          'admin_tu',
+          'principal',
+          'vice_principal',
+          'counselor',
+          'facility_staff',
+          'ppdb_committee',
+          'librarian',
+          'bendahara',
+          'treasurer',
+          'student_affairs',
+          'public_relations',
+          'operator_cms',
+          'admin_kurikulum',
+          'kurikulum',
+        ];
+        const hasAdminAccess = Array.isArray(roles) && roles.some((r) => adminRoles.includes(r));
+        if (hasAdminAccess) {
+          document.cookie = 'sistlabum_admin_session=1; path=/; SameSite=Lax';
+        } else {
+          document.cookie = 'sistlabum_admin_session=; path=/; max-age=0; SameSite=Lax';
+        }
+      } catch {
+        // Fallback
+      }
+    }
   },
 
   clearAll(): void {
@@ -133,6 +164,13 @@ export const tokenStorage = {
     if (hasLocalStorage()) {
       try {
         window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+      } catch {
+        // Ignore
+      }
+    }
+    if (typeof document !== 'undefined') {
+      try {
+        document.cookie = 'sistlabum_admin_session=; path=/; max-age=0; SameSite=Lax';
       } catch {
         // Ignore
       }

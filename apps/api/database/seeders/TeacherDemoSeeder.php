@@ -243,6 +243,11 @@ class TeacherDemoSeeder extends Seeder
             ['school_id' => $schoolId, 'code' => 'RK-7A', 'room_type' => 'kelas', 'capacity' => 36]
         );
 
+        $room7B = Room::firstOrCreate(
+            ['name' => 'Ruang Kelas 7-B'],
+            ['school_id' => $schoolId, 'code' => 'RK-7B', 'room_type' => 'kelas', 'capacity' => 36]
+        );
+
         $timeSlot1 = TimeSlot::firstOrCreate(
             ['name' => 'Jam ke-1'],
             ['school_id' => $schoolId, 'start_time' => '07:00:00', 'end_time' => '08:20:00', 'day_type' => 'reguler']
@@ -258,54 +263,56 @@ class TeacherDemoSeeder extends Seeder
             ['school_id' => $schoolId, 'start_time' => '09:55:00', 'end_time' => '11:15:00', 'day_type' => 'reguler']
         );
 
-        // Today ISO day of week (1=Monday ... 7=Sunday)
-        $todayDayOfWeek = (int) now()->dayOfWeekIso;
+        // Schedules for MTK 7-A across the week (Senin - Sabtu, Jam ke-1: 07:00 - 08:20)
+        foreach ([1, 2, 3, 4, 5, 6] as $day) {
+            Schedule::firstOrCreate(
+                [
+                    'semester_id' => $semesterGanjil->id,
+                    'class_id' => $class7A->id,
+                    'day_of_week' => $day,
+                    'time_slot_id' => $timeSlot1->id,
+                ],
+                [
+                    'subject_id' => $subjectMtk->id,
+                    'teacher_id' => $teacherMtk->id,
+                    'room_id' => $room7A->id,
+                ]
+            );
+        }
 
-        // Schedule for MTK 7-A today
-        Schedule::firstOrCreate(
-            [
-                'semester_id' => $semesterGanjil->id,
-                'class_id' => $class7A->id,
-                'subject_id' => $subjectMtk->id,
-                'teacher_id' => $teacherMtk->id,
-                'day_of_week' => $todayDayOfWeek,
-                'time_slot_id' => $timeSlot1->id,
-            ],
-            [
-                'room_id' => $room7A->id,
-            ]
-        );
+        // Schedules for Walas 7-A Bahasa Indonesia across the week (Senin - Sabtu, Jam ke-2: 08:20 - 09:40)
+        foreach ([1, 2, 3, 4, 5, 6] as $day) {
+            Schedule::firstOrCreate(
+                [
+                    'semester_id' => $semesterGanjil->id,
+                    'class_id' => $class7A->id,
+                    'day_of_week' => $day,
+                    'time_slot_id' => $timeSlot2->id,
+                ],
+                [
+                    'subject_id' => $subjectBin->id,
+                    'teacher_id' => $teacherWalas->id,
+                    'room_id' => $room7A->id,
+                ]
+            );
+        }
 
-        // Schedule for MTK 7-A another day
-        $otherDay = ($todayDayOfWeek % 5) + 1;
-        Schedule::firstOrCreate(
-            [
-                'semester_id' => $semesterGanjil->id,
-                'class_id' => $class7A->id,
-                'subject_id' => $subjectMtk->id,
-                'teacher_id' => $teacherMtk->id,
-                'day_of_week' => $otherDay,
-                'time_slot_id' => $timeSlot2->id,
-            ],
-            [
-                'room_id' => $room7A->id,
-            ]
-        );
-
-        // Schedule for Walas 7-A Bahasa Indonesia
-        Schedule::firstOrCreate(
-            [
-                'semester_id' => $semesterGanjil->id,
-                'class_id' => $class7A->id,
-                'subject_id' => $subjectBin->id,
-                'teacher_id' => $teacherWalas->id,
-                'day_of_week' => $todayDayOfWeek,
-                'time_slot_id' => $timeSlot2->id,
-            ],
-            [
-                'room_id' => $room7A->id,
-            ]
-        );
+        // Schedules for Kurikulum 7-B IPA across the week (Senin - Sabtu, Jam ke-3: 09:55 - 11:15)
+        foreach ([1, 2, 3, 4, 5, 6] as $day) {
+            Schedule::firstOrCreate(
+                [
+                    'semester_id' => $semesterGanjil->id,
+                    'class_id' => $class7B->id,
+                    'day_of_week' => $day,
+                    'time_slot_id' => $timeSlot3->id,
+                ],
+                [
+                    'subject_id' => $subjectIpa->id,
+                    'teacher_id' => $teacherKurikulum->id,
+                    'room_id' => $room7B->id,
+                ]
+            );
+        }
 
         // 8. 10 Students in 7-A
         $students = [];

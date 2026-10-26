@@ -4,6 +4,7 @@ namespace Tests\Feature\Teacher;
 
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
+use App\Models\Attendance;
 use App\Models\GradeComponent;
 use App\Models\GradePeriod;
 use App\Models\Guardian;
@@ -226,6 +227,7 @@ class TeacherCrossRoleConsistencyFeatureTest extends TestCase
     public function test_flow_3_teacher_attendance_reflected_in_guardian_dashboard(): void
     {
         $today = now()->toDateString();
+        Attendance::where('student_id', $this->student->id)->where('att_date', $today)->delete();
 
         // Guru catat absensi kelas via portal guru
         $attRes = $this->actingAs($this->userMtk)

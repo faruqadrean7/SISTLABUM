@@ -496,7 +496,10 @@ class ProgressReportService
             $hasGrades = ($gradesCount->get($stu->id, 0) > 0);
             $cNote = $charNotes->get($stu->id);
             $hasCharNote = ($cNote !== null);
-            $charNoteComplete = $cNote ? (count($cNote->scale_data ?? []) > 0 && ! empty($cNote->homeroom_note)) : false;
+            $scaleData = is_array($cNote?->scale_data)
+                ? $cNote->scale_data
+                : (is_string($cNote?->scale_data) ? json_decode($cNote->scale_data, true) : []);
+            $charNoteComplete = $cNote ? (is_array($scaleData) && count($scaleData) > 0 && ! empty($cNote->homeroom_note)) : false;
             $attDays = $attendanceCount->get($stu->id, 0);
 
             $isReady = $hasGrades && $hasCharNote;

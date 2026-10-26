@@ -11,6 +11,7 @@ use App\Models\Exam;
 use App\Models\ReminderDispatch;
 use App\Models\SchoolClass;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ReminderService
@@ -386,24 +387,38 @@ class ReminderService
         ?array $deepLinkData,
         bool $async
     ): ?ReminderDispatch {
+        // Cek keberadaan terlebih dahulu untuk mencegah SQL exception yang dapat membatalkan transaksi pada PostgreSQL
+        $exists = ReminderDispatch::where('event_type', $eventType)
+            ->where('event_id', $eventId)
+            ->where('recipient_id', $recipientId)
+            ->where('milestone', $milestone)
+            ->exists();
+
+        if ($exists) {
+            Log::debug("Skipping duplicate reminder: {$eventType}/{$eventId}/{$recipientId}/{$milestone}");
+            return null;
+        }
+
         try {
-            $dispatch = ReminderDispatch::create([
-                'school_id' => $schoolId,
-                'event_type' => $eventType,
-                'event_id' => $eventId,
-                'recipient_id' => $recipientId,
-                'milestone' => $milestone,
-                'channel' => 'in_app',
-                'status' => 'pending',
-                'claim_token' => null,
-                'claim_expires_at' => null,
-                'metadata' => [
-                    'title' => $title,
-                    'body' => $body,
-                    'notif_type' => $notifType,
-                    'deep_link_data' => $deepLinkData,
-                ],
-            ]);
+            $dispatch = DB::transaction(function () use ($schoolId, $eventType, $eventId, $recipientId, $milestone, $title, $body, $notifType, $deepLinkData) {
+                return ReminderDispatch::create([
+                    'school_id' => $schoolId,
+                    'event_type' => $eventType,
+                    'event_id' => $eventId,
+                    'recipient_id' => $recipientId,
+                    'milestone' => $milestone,
+                    'channel' => 'in_app',
+                    'status' => 'pending',
+                    'claim_token' => null,
+                    'claim_expires_at' => null,
+                    'metadata' => [
+                        'title' => $title,
+                        'body' => $body,
+                        'notif_type' => $notifType,
+                        'deep_link_data' => $deepLinkData,
+                    ],
+                ]);
+            });
         } catch (\Throwable $e) {
             // Uniqueness violation pada [event_type, event_id, recipient_id, milestone]
             // Berarti sudah pernah dikirim atau sedang dalam antrean

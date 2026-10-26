@@ -600,7 +600,7 @@ class StudentPortalDataSeeder extends Seeder
                     'start_at' => Carbon::now()->startOfDay()->addHours(7),
                     'end_at' => Carbon::now()->endOfDay(),
                     'passing_grade' => 75.0,
-                    'status' => 'aktif',
+                    'status' => 'berlangsung',
                     'shuffle_questions' => true,
                     'shuffle_options' => true,
                 ]
@@ -633,7 +633,7 @@ class StudentPortalDataSeeder extends Seeder
                     'start_at' => Carbon::now()->addDays(3)->setTime(8, 0, 0),
                     'end_at' => Carbon::now()->addDays(3)->setTime(10, 0, 0),
                     'passing_grade' => 75.0,
-                    'status' => 'scheduled',
+                    'status' => 'dijadwalkan',
                     'shuffle_questions' => true,
                     'shuffle_options' => true,
                 ]
@@ -666,7 +666,7 @@ class StudentPortalDataSeeder extends Seeder
                     'start_at' => Carbon::now()->subDays(7)->setTime(8, 0, 0),
                     'end_at' => Carbon::now()->subDays(7)->setTime(9, 30, 0),
                     'passing_grade' => 75.0,
-                    'status' => 'completed',
+                    'status' => 'selesai',
                 ]
             );
 
@@ -697,7 +697,7 @@ class StudentPortalDataSeeder extends Seeder
                     'preferred_date' => '2026-09-10',
                     'preferred_time' => '10:00',
                     'counselor_id' => $userBk->id,
-                    'status' => 'completed',
+                    'status' => 'selesai',
                     'scheduled_at' => Carbon::parse('2026-09-12 10:00:00'),
                     'notes' => 'Siswa telah berdiskusi mengenai pembagian jam belajar persiapan lomba robotika tingkat provinsi.',
                 ]
@@ -714,7 +714,7 @@ class StudentPortalDataSeeder extends Seeder
                     'preferred_date' => '2026-10-22',
                     'preferred_time' => '13:00',
                     'counselor_id' => $userBk->id,
-                    'status' => 'scheduled',
+                    'status' => 'dijadwalkan',
                     'scheduled_at' => Carbon::parse('2026-10-22 13:00:00'),
                     'notes' => 'Janji temu dijadwalkan di Ruang BK Lantai 2 pukul 13:00 WIB.',
                 ]
