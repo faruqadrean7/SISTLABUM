@@ -329,7 +329,7 @@ export default function StudentKonselingPage() {
             </div>
 
             <a
-              href="http://localhost:3000/aspirasi.html"
+              href={`${process.env.NEXT_PUBLIC_PUBLIC_SITE_URL || ''}/aspirasi`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
