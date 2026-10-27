@@ -67,6 +67,11 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   const navLinks = [
     {
+      name: 'Notifikasi',
+      href: '/guru/notifikasi',
+      icon: Bell,
+    },
+    {
       name: 'Ringkasan KBM',
       href: '/guru/dashboard',
       icon: LayoutDashboard,

@@ -31,6 +31,11 @@ function GuardianShell({ children }: { children: React.ReactNode }) {
 
   const navLinks = [
     {
+      name: 'Notifikasi',
+      href: '/ortu/notifikasi',
+      icon: Bell,
+    },
+    {
       name: 'Ringkasan & Beranda',
       href: '/ortu/dashboard',
       icon: LayoutDashboard,

@@ -62,6 +62,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const navLinks = [
     {
+      name: 'Notifikasi',
+      href: '/siswa/notifikasi',
+      icon: Bell,
+    },
+    {
       name: 'Ringkasan & Beranda',
       href: '/siswa/dashboard',
       icon: LayoutDashboard,
