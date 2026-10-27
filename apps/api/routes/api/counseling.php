@@ -37,11 +37,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // =====================================================================
     // BE-BK-02: Deteksi Dini / Early Warning System
     // =====================================================================
-    Route::get('/early-warnings/summary', [EarlyWarningController::class, 'summary']);
-    Route::get('/early-warnings', [EarlyWarningController::class, 'index']);
+    Route::get('/early-warnings/summary', [EarlyWarningController::class, 'summary'])
+        ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal,teacher,homeroom');
+    Route::get('/early-warnings', [EarlyWarningController::class, 'index'])
+        ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal,teacher,homeroom');
     Route::post('/early-warnings/evaluate', [EarlyWarningController::class, 'evaluate'])
         ->middleware('permission:bk.counseling.manage,counselor');
-    Route::get('/early-warnings/{id}', [EarlyWarningController::class, 'show']);
+    Route::get('/early-warnings/{id}', [EarlyWarningController::class, 'show'])
+        ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal,teacher,homeroom');
     Route::patch('/early-warnings/{id}/handle', [EarlyWarningController::class, 'handle'])
         ->middleware('permission:bk.counseling.manage,counselor');
 

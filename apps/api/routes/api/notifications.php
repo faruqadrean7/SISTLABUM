@@ -59,10 +59,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // BE-NTF-03: Pengumuman Terarah (Terjadwal & Pelacakan Pembaca)
     // =====================================================================
     Route::get('/announcements', [AnnouncementController::class, 'index']);
-    Route::post('/announcements', [AnnouncementController::class, 'store']);
+    Route::post('/announcements', [AnnouncementController::class, 'store'])
+        ->middleware('permission:notification.broadcast,super_admin,admin,teacher,admin_tu,principal,humas,kesiswaan');
     Route::get('/announcements/{id}', [AnnouncementController::class, 'show']);
-    Route::put('/announcements/{id}', [AnnouncementController::class, 'update']);
-    Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy']);
+    Route::put('/announcements/{id}', [AnnouncementController::class, 'update'])
+        ->middleware('permission:notification.broadcast,super_admin,admin,teacher,admin_tu,principal,humas,kesiswaan');
+    Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy'])
+        ->middleware('permission:notification.broadcast,super_admin,admin,teacher,admin_tu,principal,humas,kesiswaan');
     Route::post('/announcements/{id}/read', [AnnouncementController::class, 'markAsRead']);
     Route::get('/announcements/{id}/readers', [AnnouncementController::class, 'readers']);
 
