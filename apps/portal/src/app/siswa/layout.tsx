@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Users,
   CalendarCheck
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useStudentDashboard } from '@/lib/use-student-data';
@@ -99,6 +100,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       icon: Award,
       badge: '+30 Poin',
       badgeColor: 'bg-emerald-800 text-white',
+    },
+    {
+      name: 'Tagihan & Keuangan',
+      href: '/siswa/tagihan',
+      icon: Wallet,
     },
     {
       name: 'Konseling & Bantuan',
