@@ -487,7 +487,13 @@ describe('GAP-FIN-01 (REVISI BATCH 3B): Modul Keuangan & Slip Pembayaran Pihak K
       const verifyBtn = screen.getByRole('button', { name: /Terima Slip/i });
       fireEvent.click(verifyBtn);
 
-      expect(verifySpy).toHaveBeenCalledWith('pay-pending-1');
+      // Confirm via ConfirmDialog
+      const confirmVerifyBtn = screen.getByRole('button', { name: /Ya, Verifikasi/i });
+      fireEvent.click(confirmVerifyBtn);
+
+      await waitFor(() => {
+        expect(verifySpy).toHaveBeenCalledWith('pay-pending-1');
+      });
     });
 
     it('Admin ArrearsReportPage: renders arrears summary cards and breakdown', async () => {

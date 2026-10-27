@@ -36,6 +36,8 @@ import { counselingApi } from '@/features/counseling/counseling-api';
 import { CounselingCategory } from '@/features/counseling/types';
 import { competitionsApi } from '@/features/student-affairs/competitions-api';
 import { AchievementItem, CompetitionItem } from '@/features/student-affairs/types';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { toast } from '@/components/ui/toast';
 
 export default function StudentDashboardPage() {
   const { user } = useAuth();
@@ -59,6 +61,8 @@ export default function StudentDashboardPage() {
 
   // Modal Pengajuan Prestasi
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false);
+  const [deleteAchievementId, setDeleteAchievementId] = useState<string | null>(null);
+  const [isDeletingAchievement, setIsDeletingAchievement] = useState(false);
   const [achTitle, setAchTitle] = useState('');
   const [achRankLevel, setAchRankLevel] = useState('Juara 1');
   const [achLevel, setAchLevel] = useState('nasional');
@@ -196,16 +200,23 @@ export default function StudentDashboardPage() {
     }
   };
 
-  const handleDeletePendingAchievement = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin membatalkan pengajuan prestasi ini?')) {
-      return;
-    }
+  const handleDeletePendingAchievement = (id: string) => {
+    setDeleteAchievementId(id);
+  };
+
+  const handleConfirmDeleteAchievement = async () => {
+    if (!deleteAchievementId) return;
+    setIsDeletingAchievement(true);
     try {
-      await competitionsApi.deleteAchievement(id);
+      await competitionsApi.deleteAchievement(deleteAchievementId);
+      toast.success('Pengajuan prestasi berhasil dibatalkan.');
+      setDeleteAchievementId(null);
       fetchAchievements();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal membatalkan pengajuan.';
-      alert(msg);
+      toast.error(msg);
+    } finally {
+      setIsDeletingAchievement(false);
     }
   };
 
@@ -1108,6 +1119,19 @@ export default function StudentDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Dialog Konfirmasi Pembatalan Pengajuan Prestasi */}
+      <ConfirmDialog
+        isOpen={!!deleteAchievementId}
+        onClose={() => setDeleteAchievementId(null)}
+        onConfirm={handleConfirmDeleteAchievement}
+        title="Batalkan Pengajuan Prestasi"
+        description="Apakah Anda yakin ingin membatalkan pengajuan prestasi ini? Pengajuan yang dibatalkan tidak dapat dikembalikan."
+        confirmLabel="Ya, Batalkan"
+        cancelLabel="Tutup"
+        variant="danger"
+        isLoading={isDeletingAchievement}
+      />
     </div>
   );
 }

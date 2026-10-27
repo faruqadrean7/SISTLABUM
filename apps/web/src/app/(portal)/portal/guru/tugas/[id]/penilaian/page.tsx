@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
+import { toast } from '@/components/ui/toast';
 
 export default function TeacherSpeedGraderPage({ params }: { params: { id: string } }) {
   const assignmentId = params.id;
@@ -70,7 +71,7 @@ export default function TeacherSpeedGraderPage({ params }: { params: { id: strin
 
     const numScore = parseFloat(scoreInput);
     if (isNaN(numScore) || numScore < 0 || numScore > 100) {
-      alert('Mohon masukkan nilai yang valid antara 0 dan 100.');
+      toast.error('Mohon masukkan nilai yang valid antara 0 dan 100.');
       return;
     }
 
