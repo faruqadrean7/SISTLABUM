@@ -25,6 +25,11 @@ use App\Http\Controllers\Api\V1\ComplaintController;
 use App\Http\Controllers\Api\V1\DownloadController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\ExamController;
+use App\Http\Controllers\Api\V1\Finance\FeeTypeController;
+use App\Http\Controllers\Api\V1\Finance\FinanceReportController;
+use App\Http\Controllers\Api\V1\Finance\InvoiceController;
+use App\Http\Controllers\Api\V1\Finance\PaymentController;
+use App\Http\Controllers\Api\V1\Finance\PaymentProviderSettingController;
 use App\Http\Controllers\Api\V1\GradeComponentController;
 use App\Http\Controllers\Api\V1\GradeController;
 use App\Http\Controllers\Api\V1\GradePeriodController;
@@ -38,13 +43,8 @@ use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LeaveRequestController;
 use App\Http\Controllers\Api\V1\MaterialController;
 use App\Http\Controllers\Api\V1\MeChildController;
-use App\Http\Controllers\Api\V1\MeFinanceController;
-use App\Http\Controllers\Api\V1\Finance\FeeTypeController;
-use App\Http\Controllers\Api\V1\Finance\PaymentProviderSettingController;
-use App\Http\Controllers\Api\V1\Finance\InvoiceController;
-use App\Http\Controllers\Api\V1\Finance\PaymentController;
-use App\Http\Controllers\Api\V1\Finance\FinanceReportController;
 use App\Http\Controllers\Api\V1\MediaItemController;
+use App\Http\Controllers\Api\V1\MeFinanceController;
 use App\Http\Controllers\Api\V1\MeStaffController;
 use App\Http\Controllers\Api\V1\MeStudentController;
 use App\Http\Controllers\Api\V1\MeTeacherController;
@@ -330,7 +330,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/audit-logs/{id}', [AuditLogController::class, 'show']);
     });
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
         Route::post('/audit-logs', [AuditLogController::class, 'storeTelemetry']);
     });
 
@@ -757,7 +757,8 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         Route::get('/complaints', [ComplaintController::class, 'index']);
         Route::get('/complaints/{id}', [ComplaintController::class, 'show']);
-        Route::patch('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
+        Route::patch('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])
+            ->middleware('permission:complaint.manage');
 
         // =====================================================================
         // BE-ACD-01: Jadwal Pelajaran & Deteksi Bentrok
@@ -878,8 +879,10 @@ Route::prefix('v1')->group(function () {
 
         // Periode Penilaian
         Route::get('/grade-periods', [GradePeriodController::class, 'index']);
-        Route::patch('/grade-periods/{id}/lock', [GradePeriodController::class, 'lock']);
-        Route::patch('/grade-periods/{id}/lock-period', [GradePeriodController::class, 'lock']);
+        Route::patch('/grade-periods/{id}/lock', [GradePeriodController::class, 'lock'])
+            ->middleware('permission:academic.grade.write');
+        Route::patch('/grade-periods/{id}/lock-period', [GradePeriodController::class, 'lock'])
+            ->middleware('permission:academic.grade.write');
 
         // Buku Nilai & Input Nilai (Satuan, Spreadsheet Matrix & Massal)
         Route::get('/grades', [GradeController::class, 'index']);
@@ -914,12 +917,16 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         Route::get('/progress-reports/class-status', [ProgressReportController::class, 'classStatus']);
         Route::get('/progress-reports/preview', [ProgressReportController::class, 'preview']);
-        Route::post('/progress-reports/bulk-approve', [ProgressReportController::class, 'bulkApprove']);
-        Route::patch('/progress-reports/bulk-approve', [ProgressReportController::class, 'bulkApprove']);
-        Route::post('/progress-reports/generate', [ProgressReportController::class, 'generate']);
+        Route::post('/progress-reports/bulk-approve', [ProgressReportController::class, 'bulkApprove'])
+            ->middleware('permission:academic.report.generate');
+        Route::patch('/progress-reports/bulk-approve', [ProgressReportController::class, 'bulkApprove'])
+            ->middleware('permission:academic.report.generate');
+        Route::post('/progress-reports/generate', [ProgressReportController::class, 'generate'])
+            ->middleware('permission:academic.report.generate,academic.grade.write');
         Route::get('/progress-reports', [ProgressReportController::class, 'index']);
         Route::get('/progress-reports/{id}', [ProgressReportController::class, 'show']);
-        Route::patch('/progress-reports/{id}/approve', [ProgressReportController::class, 'approve']);
+        Route::patch('/progress-reports/{id}/approve', [ProgressReportController::class, 'approve'])
+            ->middleware('permission:academic.report.generate');
         Route::get('/progress-reports/{id}/pdf', [ProgressReportController::class, 'pdf']);
 
         // =====================================================================
@@ -933,15 +940,22 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/report-cards/class-status', [ReportCardController::class, 'classStatus']);
         Route::get('/report-cards/preview', [ReportCardController::class, 'preview']);
-        Route::post('/report-cards/bulk-approve', [ReportCardController::class, 'bulkApprove']);
-        Route::patch('/report-cards/bulk-approve', [ReportCardController::class, 'bulkApprove']);
-        Route::post('/report-cards/bulk-lock', [ReportCardController::class, 'bulkLock']);
-        Route::patch('/report-cards/bulk-lock', [ReportCardController::class, 'bulkLock']);
-        Route::post('/report-cards/generate', [ReportCardController::class, 'generate']);
+        Route::post('/report-cards/bulk-approve', [ReportCardController::class, 'bulkApprove'])
+            ->middleware('permission:academic.report.generate');
+        Route::patch('/report-cards/bulk-approve', [ReportCardController::class, 'bulkApprove'])
+            ->middleware('permission:academic.report.generate');
+        Route::post('/report-cards/bulk-lock', [ReportCardController::class, 'bulkLock'])
+            ->middleware('permission:academic.report.generate,academic.grade.write');
+        Route::patch('/report-cards/bulk-lock', [ReportCardController::class, 'bulkLock'])
+            ->middleware('permission:academic.report.generate,academic.grade.write');
+        Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])
+            ->middleware('permission:academic.report.generate,academic.grade.write');
         Route::get('/report-cards', [ReportCardController::class, 'index']);
         Route::get('/report-cards/{id}', [ReportCardController::class, 'show']);
-        Route::patch('/report-cards/{id}/lock', [ReportCardController::class, 'lock']);
-        Route::patch('/report-cards/{id}/approve', [ReportCardController::class, 'approve']);
+        Route::patch('/report-cards/{id}/lock', [ReportCardController::class, 'lock'])
+            ->middleware('permission:academic.report.generate,academic.grade.write');
+        Route::patch('/report-cards/{id}/approve', [ReportCardController::class, 'approve'])
+            ->middleware('permission:academic.report.generate');
         Route::get('/report-cards/{id}/pdf', [ReportCardController::class, 'pdf']);
 
         // =====================================================================
@@ -1061,11 +1075,16 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-CBT-05: Penilaian Otomatis, Grading Manual Uraian, & Item Analysis
         // =====================================================================
-        Route::post('/exams/{id}/auto-grade', [ExamGradingController::class, 'autoGrade']);
-        Route::get('/exams/{id}/essay-submissions', [ExamGradingController::class, 'essaySubmissions']);
-        Route::post('/exams/{id}/grade-essay', [ExamGradingController::class, 'gradeEssay']);
-        Route::get('/exams/{id}/results', [ExamGradingController::class, 'results']);
-        Route::get('/exams/{id}/item-analysis', [ExamGradingController::class, 'itemAnalysis']);
+        Route::post('/exams/{id}/auto-grade', [ExamGradingController::class, 'autoGrade'])
+            ->middleware('permission:cbt.exam.manage');
+        Route::get('/exams/{id}/essay-submissions', [ExamGradingController::class, 'essaySubmissions'])
+            ->middleware('permission:cbt.exam.manage,cbt.bank.write');
+        Route::post('/exams/{id}/grade-essay', [ExamGradingController::class, 'gradeEssay'])
+            ->middleware('permission:cbt.exam.manage,cbt.bank.write');
+        Route::get('/exams/{id}/results', [ExamGradingController::class, 'results'])
+            ->middleware('permission:cbt.exam.manage,cbt.bank.write');
+        Route::get('/exams/{id}/item-analysis', [ExamGradingController::class, 'itemAnalysis'])
+            ->middleware('permission:cbt.exam.manage,cbt.bank.write');
         Route::post('/exams/{id}/publish-gradebook', [ExamGradingController::class, 'publishGradebook'])
             ->middleware('permission:cbt.exam.manage');
 
@@ -1085,18 +1104,28 @@ Route::prefix('v1')->group(function () {
         // BE-STD-01: Kesiswaan - Poin Pelanggaran & Prestasi
         // =====================================================================
         // Master Jenis Poin
-        Route::get('/point-types', [PointTypeController::class, 'indexTypes']);
-        Route::post('/point-types', [PointTypeController::class, 'storeType']);
-        Route::get('/point-types/{id}', [PointTypeController::class, 'showType']);
-        Route::put('/point-types/{id}', [PointTypeController::class, 'updateType']);
-        Route::delete('/point-types/{id}', [PointTypeController::class, 'destroyType']);
+        Route::get('/point-types', [PointTypeController::class, 'indexTypes'])
+            ->middleware('permission:student.point.read');
+        Route::post('/point-types', [PointTypeController::class, 'storeType'])
+            ->middleware('permission:student.point.write');
+        Route::get('/point-types/{id}', [PointTypeController::class, 'showType'])
+            ->middleware('permission:student.point.read');
+        Route::put('/point-types/{id}', [PointTypeController::class, 'updateType'])
+            ->middleware('permission:student.point.write');
+        Route::delete('/point-types/{id}', [PointTypeController::class, 'destroyType'])
+            ->middleware('permission:student.point.write');
 
         // Master Ambang Batas Poin / Sanksi
-        Route::get('/point-thresholds', [PointTypeController::class, 'indexThresholds']);
-        Route::post('/point-thresholds', [PointTypeController::class, 'storeThreshold']);
-        Route::get('/point-thresholds/{id}', [PointTypeController::class, 'showThreshold']);
-        Route::put('/point-thresholds/{id}', [PointTypeController::class, 'updateThreshold']);
-        Route::delete('/point-thresholds/{id}', [PointTypeController::class, 'destroyThreshold']);
+        Route::get('/point-thresholds', [PointTypeController::class, 'indexThresholds'])
+            ->middleware('permission:student.point.read');
+        Route::post('/point-thresholds', [PointTypeController::class, 'storeThreshold'])
+            ->middleware('permission:student.point.write');
+        Route::get('/point-thresholds/{id}', [PointTypeController::class, 'showThreshold'])
+            ->middleware('permission:student.point.read');
+        Route::put('/point-thresholds/{id}', [PointTypeController::class, 'updateThreshold'])
+            ->middleware('permission:student.point.write');
+        Route::delete('/point-thresholds/{id}', [PointTypeController::class, 'destroyThreshold'])
+            ->middleware('permission:student.point.write');
 
         // Pencatatan Poin Siswa
         Route::get('/student-points', [StudentPointController::class, 'index']);
@@ -1182,28 +1211,38 @@ Route::prefix('v1')->group(function () {
         // BE-BK-01: Bimbingan & Konseling (Kasus, Sesi, dan Rujukan)
         // =====================================================================
         // Kasus Konseling
-        Route::get('/counseling/cases', [CounselingCaseController::class, 'index']);
-        Route::post('/counseling/cases', [CounselingCaseController::class, 'store']);
-        Route::get('/counseling/cases/{id}', [CounselingCaseController::class, 'show']);
-        Route::put('/counseling/cases/{id}', [CounselingCaseController::class, 'update']);
-        Route::post('/counseling/cases/{id}/sessions', [CounselingCaseController::class, 'storeSession']);
+        Route::get('/counseling/cases', [CounselingCaseController::class, 'index'])
+            ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal');
+        Route::post('/counseling/cases', [CounselingCaseController::class, 'store'])
+            ->middleware('permission:counseling.case.write,bk.counseling.manage,counselor');
+        Route::get('/counseling/cases/{id}', [CounselingCaseController::class, 'show'])
+            ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal');
+        Route::put('/counseling/cases/{id}', [CounselingCaseController::class, 'update'])
+            ->middleware('permission:counseling.case.write,bk.counseling.manage,counselor');
+        Route::post('/counseling/cases/{id}/sessions', [CounselingCaseController::class, 'storeSession'])
+            ->middleware('permission:counseling.case.write,bk.counseling.manage,counselor');
 
         // Sesi Konseling
-        Route::get('/counseling/sessions/{id}', [CounselingSessionController::class, 'show']);
+        Route::get('/counseling/sessions/{id}', [CounselingSessionController::class, 'show'])
+            ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal');
 
         // Rujukan Konseling
-        Route::get('/counseling/referrals', [CounselingReferralController::class, 'index']);
+        Route::get('/counseling/referrals', [CounselingReferralController::class, 'index'])
+            ->middleware('permission:counseling.case.read,bk.counseling.manage,counselor,principal,teacher');
         Route::post('/counseling/referrals', [CounselingReferralController::class, 'store']);
-        Route::patch('/counseling/referrals/{id}/status', [CounselingReferralController::class, 'updateStatus']);
+        Route::patch('/counseling/referrals/{id}/status', [CounselingReferralController::class, 'updateStatus'])
+            ->middleware('permission:counseling.case.write,bk.counseling.manage,counselor');
 
         // =====================================================================
         // BE-BK-02: Deteksi Dini / Early Warning System
         // =====================================================================
         Route::get('/early-warnings/summary', [EarlyWarningController::class, 'summary']);
         Route::get('/early-warnings', [EarlyWarningController::class, 'index']);
-        Route::post('/early-warnings/evaluate', [EarlyWarningController::class, 'evaluate']);
+        Route::post('/early-warnings/evaluate', [EarlyWarningController::class, 'evaluate'])
+            ->middleware('permission:bk.counseling.manage,counselor');
         Route::get('/early-warnings/{id}', [EarlyWarningController::class, 'show']);
-        Route::patch('/early-warnings/{id}/handle', [EarlyWarningController::class, 'handle']);
+        Route::patch('/early-warnings/{id}/handle', [EarlyWarningController::class, 'handle'])
+            ->middleware('permission:bk.counseling.manage,counselor');
 
         // =====================================================================
         // BE-BK-03: Permintaan Konseling (Counseling Requests)
@@ -1211,9 +1250,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/counseling/requests', [CounselingRequestController::class, 'index']);
         Route::post('/counseling/requests', [CounselingRequestController::class, 'store']);
         Route::get('/counseling/requests/{id}', [CounselingRequestController::class, 'show']);
-        Route::patch('/counseling/requests/{id}/schedule', [CounselingRequestController::class, 'schedule']);
-        Route::patch('/counseling/requests/{id}/reject', [CounselingRequestController::class, 'reject']);
-        Route::patch('/counseling/requests/{id}/complete', [CounselingRequestController::class, 'complete']);
+        Route::patch('/counseling/requests/{id}/schedule', [CounselingRequestController::class, 'schedule'])
+            ->middleware('permission:bk.counseling.manage,counselor');
+        Route::patch('/counseling/requests/{id}/reject', [CounselingRequestController::class, 'reject'])
+            ->middleware('permission:bk.counseling.manage,counselor');
+        Route::patch('/counseling/requests/{id}/complete', [CounselingRequestController::class, 'complete'])
+            ->middleware('permission:bk.counseling.manage,counselor');
         Route::delete('/counseling/requests/{id}', [CounselingRequestController::class, 'cancel']);
 
         // =====================================================================
@@ -1354,23 +1396,33 @@ Route::prefix('v1')->group(function () {
         Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
 
         // Broadcast Notifikasi Tersegmentasi
-        Route::post('/notifications/broadcast', [NotificationController::class, 'broadcast']);
+        Route::post('/notifications/broadcast', [NotificationController::class, 'broadcast'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
 
         // =====================================================================
         // BE-NTF-02: WhatsApp & Email (Template Berparameter & Log Pengiriman)
         // =====================================================================
         // Template Notifikasi
-        Route::get('/notification-templates', [MessagingController::class, 'indexTemplates']);
-        Route::post('/notification-templates', [MessagingController::class, 'storeTemplate']);
-        Route::get('/notification-templates/{id}', [MessagingController::class, 'showTemplate']);
-        Route::put('/notification-templates/{id}', [MessagingController::class, 'updateTemplate']);
-        Route::delete('/notification-templates/{id}', [MessagingController::class, 'destroyTemplate']);
-        Route::post('/notification-templates/send', [MessagingController::class, 'send']);
+        Route::get('/notification-templates', [MessagingController::class, 'indexTemplates'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::post('/notification-templates', [MessagingController::class, 'storeTemplate'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::get('/notification-templates/{id}', [MessagingController::class, 'showTemplate'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::put('/notification-templates/{id}', [MessagingController::class, 'updateTemplate'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::delete('/notification-templates/{id}', [MessagingController::class, 'destroyTemplate'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::post('/notification-templates/send', [MessagingController::class, 'send'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
 
         // Riwayat & Log Pengiriman
-        Route::get('/notification-logs', [MessagingController::class, 'indexLogs']);
-        Route::get('/notification-logs/{id}', [MessagingController::class, 'showLog']);
-        Route::post('/notification-logs/{id}/retry', [MessagingController::class, 'retry']);
+        Route::get('/notification-logs', [MessagingController::class, 'indexLogs'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::get('/notification-logs/{id}', [MessagingController::class, 'showLog'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
+        Route::post('/notification-logs/{id}/retry', [MessagingController::class, 'retry'])
+            ->middleware('permission:notification.broadcast,ntf.broadcast');
 
         // =====================================================================
         // BE-NTF-03: Pengumuman Terarah (Terjadwal & Pelacakan Pembaca)
@@ -1393,13 +1445,16 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-RPT-01: Laporan Rekapitulasi (Kehadiran, Nilai, PPDB, Poin, dll)
         // =====================================================================
-        Route::get('/reports/{type}/export', [ReportController::class, 'export']);
-        Route::get('/reports/{type}', [ReportController::class, 'show']);
+        Route::get('/reports/{type}/export', [ReportController::class, 'export'])
+            ->middleware('permission:reports.view');
+        Route::get('/reports/{type}', [ReportController::class, 'show'])
+            ->middleware('permission:reports.view');
 
         // =====================================================================
         // BE-RPT-02: Dashboard Persona (Eksekutif, Guru, Siswa, Wali Murid)
         // =====================================================================
-        Route::get('/dashboard/executive', [DashboardController::class, 'executive']);
+        Route::get('/dashboard/executive', [DashboardController::class, 'executive'])
+            ->middleware('permission:dashboard.executive,executive.dashboard.view,principal');
         Route::get('/dashboard/teacher', [DashboardController::class, 'teacher']);
         Route::get('/dashboard/student', [DashboardController::class, 'student']);
         Route::get('/dashboard/guardian/{studentId?}', [DashboardController::class, 'guardian']);
@@ -1407,8 +1462,10 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // BE-RPT-02 / ADM-DASH-02: Antrean & Eksekusi Persetujuan Eksekutif
         // =====================================================================
-        Route::get('/approvals/pending', [ApprovalController::class, 'pending']);
-        Route::post('/approvals/{id}/review', [ApprovalController::class, 'review']);
+        Route::get('/approvals/pending', [ApprovalController::class, 'pending'])
+            ->middleware('permission:executive.approval.manage,principal');
+        Route::post('/approvals/{id}/review', [ApprovalController::class, 'review'])
+            ->middleware('permission:executive.approval.manage,principal');
 
         // =====================================================================
         // BE-FILE-01: Penyimpanan & Utilitas Berkas (Upload Bertanda Tangan)
