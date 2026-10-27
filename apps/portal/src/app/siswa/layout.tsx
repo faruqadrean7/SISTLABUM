@@ -18,7 +18,7 @@ import {
   ChevronDown,
   CheckCircle2,
   Users,
-  CalendarCheck
+  CalendarCheck,
   Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
