@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { 
   FileSpreadsheet, 
   Download, 
@@ -53,42 +54,42 @@ export default function GuardianNilaiPage() {
   };
 
   return (
-    <div className="flex flex-col gap-3.5 max-w-full xl:h-[calc(100vh-112px)] xl:overflow-hidden">
+    <div className="flex flex-col gap-3.5 max-w-full min-h-full pb-6">
       {/* ─── 1. HEADER BAR (DESKTOP MAXIMIZED & WELL-PROPORTIONED) ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
+            <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-slate-900 tracking-tight">
               Capaian Kompetensi & Rapor ({activeChild.name.split(' ')[0]})
             </h1>
-            <span className="px-2.5 py-0.5 rounded-lg bg-blue-800 text-white text-xs font-bold shadow-2xs">
+            <span className="px-2.5 py-0.5 rounded-lg bg-blue-800 text-white text-[10px] sm:text-xs font-bold shadow-2xs">
               Kelas {activeChild.class_name.replace('Kelas ', '')}
             </span>
-            <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 text-xs font-mono font-semibold">
+            <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 text-[10px] sm:text-xs font-mono font-semibold">
               NIS: {activeChild.nis}
             </span>
-            <span className="px-2.5 py-0.5 rounded-lg bg-emerald-800 text-white text-xs font-bold shadow-2xs hidden md:inline-flex">
+            <span className="px-2.5 py-0.5 rounded-lg bg-emerald-800 text-white text-[10px] sm:text-xs font-bold shadow-2xs hidden md:inline-flex">
               {activeChild.curriculum_phase}
             </span>
           </div>
-          <p className="text-xs text-slate-600 mt-1 font-normal">
+          <p className="text-[11px] sm:text-xs text-slate-600 mt-1 font-normal">
             Buku nilai transparan asesmen formatif, sumatif tengah semester (STS), dan pengesahan e-rapor berkode QR resmi.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 self-start sm:self-auto shrink-0">
           <button
             onClick={() => setIsPreviewOpen(true)}
-            className="px-3.5 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 hover:shadow"
+            className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 sm:gap-2 hover:shadow"
           >
-            <Eye className="w-4 h-4 text-white" />
+            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             <span>Pratinjau E-Rapor</span>
           </button>
           <button
             onClick={handleDownloadPdf}
-            className="px-3.5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 hover:shadow"
+            className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 sm:gap-2 hover:shadow"
           >
-            <Download className="w-4 h-4 text-white" />
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             <span>Unduh PDF</span>
           </button>
         </div>
@@ -97,35 +98,35 @@ export default function GuardianNilaiPage() {
       {/* ─── 2. REKAPITULASI CAPAIAN (PROPORTIONED DESKTOP CARDS - NO EMPTY VOID) ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 shrink-0">
         {/* Panel 1: Rerata Nilai Akhir (Hero Card - 4 Cols) */}
-        <div className="xl:col-span-4 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200">
-                <BarChart3 className="w-4 h-4" />
+        <div className="xl:col-span-4 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between pb-2 sm:pb-2.5 border-b border-slate-100">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200">
+                <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Rerata Capaian Nilai</h3>
-                <p className="text-xs text-slate-500 font-normal">Semester Gasal 2026/2027</p>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Rerata Capaian Nilai</h3>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-normal">Semester Gasal 2026/2027</p>
               </div>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-white shadow-2xs">
+            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-slate-800 text-white shadow-2xs">
               KKTP: 75.0
             </span>
           </div>
 
           <div className="my-2 flex items-baseline justify-between gap-2">
-            <div className="flex items-baseline gap-2.5">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <div className="flex items-baseline gap-2 sm:gap-2.5">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 {activeChild.grade_average}
               </span>
-              <span className="text-xs font-semibold text-slate-500 font-mono">/ 100</span>
-              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold shadow-2xs ${
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 font-mono">/ 100</span>
+              <span className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold shadow-2xs ${
                 remedialCount > 0 ? 'bg-amber-600 text-white' : 'bg-blue-800 text-white'
               }`}>
                 {remedialCount > 0 ? 'Predikat B/C' : 'Predikat A (Sangat Baik)'}
               </span>
             </div>
-            <span className="text-xs font-semibold text-slate-600">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-600">
               +{((activeChild.grade_average || 88.5) - 75).toFixed(1)} di atas KKTP
             </span>
           </div>
@@ -139,16 +140,16 @@ export default function GuardianNilaiPage() {
           </div>
 
           {/* Status Ketercapaian Semester Banner */}
-          <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs ${
+          <div className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between gap-2 text-[11px] sm:text-xs ${
             remedialCount === 0 
               ? 'bg-emerald-50/70 border-emerald-200 text-slate-900' 
               : 'bg-amber-50/70 border-amber-200 text-slate-900'
           }`}>
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               {remedialCount === 0 ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-700" />
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-emerald-700" />
               ) : (
-                <AlertCircle className="w-4 h-4 shrink-0 text-amber-700" />
+                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-amber-700" />
               )}
               <p className="font-semibold text-slate-900 truncate">
                 {remedialCount === 0 
@@ -156,7 +157,7 @@ export default function GuardianNilaiPage() {
                   : `${remedialCount} Mata pelajaran membutuhkan bimbingan remedial`}
               </p>
             </div>
-            <span className={`px-2 py-0.5 rounded-md text-xs font-bold shrink-0 uppercase tracking-wide ${
+            <span className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold shrink-0 uppercase tracking-wide ${
               remedialCount === 0 ? 'bg-emerald-800 text-white' : 'bg-amber-600 text-white'
             }`}>
               {remedialCount === 0 ? 'Tuntas Penuh' : 'Remedial'}
@@ -165,51 +166,51 @@ export default function GuardianNilaiPage() {
         </div>
 
         {/* Panel 2: 5 Metrik Akademik dalam 1 Baris Seimbang (8 Cols, Rich Font & Spacing) */}
-        <div className="xl:col-span-8 grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="xl:col-span-8 grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
           {/* 1. Ketuntasan Belajar */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Ketuntasan</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
-                <CheckCircle2 className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Ketuntasan</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="my-1.5">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <div className="my-1 sm:my-1.5">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 {totalSubjects > 0 ? Math.round((tuntasCount / totalSubjects) * 100) : 100}%
               </span>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">
                 {tuntasCount} dari {totalSubjects} Mapel
               </p>
             </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">Standar</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-800 text-white">
+            <div className="pt-1.5 sm:pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs font-medium text-slate-500">Standar</span>
+              <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold bg-emerald-800 text-white">
                 {remedialCount === 0 ? 'Sempurna' : 'Memenuhi'}
               </span>
             </div>
           </div>
 
           {/* 2. Mapel Remedial */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Remedial</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200">
-                <AlertCircle className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Remedial</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200">
+                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="my-1.5">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <div className="my-1 sm:my-1.5">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 {remedialCount}
               </span>
-              <span className="text-xs font-semibold text-slate-500 ml-1.5">Mapel</span>
-              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 ml-1.5">Mapel</span>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate">
                 {remedialDesc}
               </p>
             </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">Status</span>
-              <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
+            <div className="pt-1.5 sm:pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs font-medium text-slate-500">Status</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${
                 remedialCount > 0 ? 'bg-amber-600 text-white' : 'bg-slate-800 text-white'
               }`}>
                 {remedialCount > 0 ? 'Perlu Jadwal' : 'Tuntas'}
@@ -218,74 +219,74 @@ export default function GuardianNilaiPage() {
           </div>
 
           {/* 3. Nilai Tertinggi */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Tertinggi</span>
-              <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200">
-                <Award className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Tertinggi</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200">
+                <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="my-1.5">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <div className="my-1 sm:my-1.5">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 {maxScore}
               </span>
-              <span className="text-xs font-semibold text-slate-500 ml-1.5">Skor</span>
-              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 ml-1.5">Skor</span>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate">
                 {topSubjectText}
               </p>
             </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">Kategori</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-800 text-white">
+            <div className="pt-1.5 sm:pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs font-medium text-slate-500">Kategori</span>
+              <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold bg-blue-800 text-white">
                 Unggulan
               </span>
             </div>
           </div>
 
           {/* 4. Poin Karakter (P3) */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Karakter P3</span>
-              <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center shrink-0 border border-teal-200">
-                <TrendingUp className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider truncate">Karakter P3</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center shrink-0 border border-teal-200">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="my-1.5">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <div className="my-1 sm:my-1.5">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 +{activeChild.points_balance}
               </span>
-              <span className="text-xs font-semibold text-slate-500 ml-1.5">Poin</span>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 ml-1.5">Poin</span>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">
                 Profil Pelajar Pancasila
               </p>
             </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">Predikat</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-teal-800 text-white">
+            <div className="pt-1.5 sm:pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs font-medium text-slate-500">Predikat</span>
+              <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold bg-teal-800 text-white">
                 Sangat Baik
               </span>
             </div>
           </div>
 
           {/* 5. Status E-Rapor Digital */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider truncate">E-Rapor</span>
-              <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 border border-slate-200">
-                <QrCode className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider truncate">E-Rapor</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 border border-slate-200">
+                <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="my-1.5">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <div className="my-1 sm:my-1.5">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 SAH
               </span>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">
                 Token: REP-{activeChild.nis}
               </p>
             </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">Legalitas</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-800 text-white">
+            <div className="pt-1.5 sm:pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs font-medium text-slate-500">Legalitas</span>
+              <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold bg-emerald-800 text-white">
                 Terverifikasi
               </span>
             </div>
@@ -293,66 +294,152 @@ export default function GuardianNilaiPage() {
         </div>
       </div>
 
-      {/* ─── 3. DUA KOLOM: TABEL KOMPETENSI & RINGKASAN RAPOR (MAXIMIZED DESKTOP) ─── */}
-      <div className="xl:flex-1 xl:min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+      {/* ─── 3. DUA KOLOM: TABEL KOMPETENSI & RINGKASAN RAPOR ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
         {/* KOLOM KIRI: BUKU NILAI & ASESMEN KURIKULUM MERDEKA (7 COLS) */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs flex flex-col h-full min-h-97.5">
+        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col">
           {/* Header Bar dengan Filter Status & Pilihan Periode */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 shrink-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-3 border-b border-slate-100 shrink-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate">
                   Daftar Nilai Capaian Kompetensi ({activeChild.name.split(' ')[0]})
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-white text-xs font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-white text-[10px] sm:text-xs font-bold whitespace-nowrap shrink-0">
                   {totalSubjects} Mapel
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5 truncate">
                 Buku nilai asesmen formatif, sumatif materi (LM), dan STS berstandar KKTP 75.0.
               </p>
             </div>
 
-            {/* Filter Tabs & Period Selector */}
-            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-              <div className="flex items-center p-1 bg-slate-100 border border-slate-200 rounded-xl">
-                <button
-                  onClick={() => setFilterStatus('all')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                    filterStatus === 'all'
-                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Semua ({totalSubjects})
-                </button>
-                <button
-                  onClick={() => setFilterStatus('tuntas')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                    filterStatus === 'tuntas'
-                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Tuntas ({tuntasCount})
-                </button>
-                <button
-                  onClick={() => setFilterStatus('remedial')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                    filterStatus === 'remedial'
-                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Remedial ({remedialCount})
-                </button>
-              </div>
+            {/* Filter Tabs (Full width segmented on mobile) */}
+            <div className="flex items-center p-1 bg-slate-100 border border-slate-200 rounded-xl shrink-0 w-full sm:w-auto">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className={`flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  filterStatus === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Semua ({totalSubjects})
+              </button>
+              <button
+                onClick={() => setFilterStatus('tuntas')}
+                className={`flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  filterStatus === 'tuntas'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Tuntas ({tuntasCount})
+              </button>
+              <button
+                onClick={() => setFilterStatus('remedial')}
+                className={`flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  filterStatus === 'remedial'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Remedial ({remedialCount})
+              </button>
             </div>
           </div>
 
-          {/* Table Container with Internal Scroll & Sticky Header */}
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 mt-2.5 border border-slate-200 rounded-xl">
-            <table className="w-full text-left text-xs border-collapse">
+          {/* Mobile Card List View (sm:hidden) */}
+          <div className="sm:hidden space-y-2 mt-2.5 max-h-[440px] overflow-y-auto pr-0.5">
+            {filteredGrades.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 bg-slate-50 rounded-xl border border-slate-200">
+                <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-400" />
+                <p className="font-semibold text-slate-700">Belum ada data nilai mata pelajaran untuk filter ini.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Silakan pilih filter lain atau hubungi wali kelas.</p>
+              </div>
+            ) : (
+              filteredGrades.map((grade, idx) => {
+                const isTuntas = grade.status === 'Tuntas';
+                return (
+                  <div 
+                    key={`${grade.subject_code}-${idx}`}
+                    className={`p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs border-l-4 ${
+                      isTuntas ? 'border-l-emerald-700' : 'border-l-amber-500'
+                    } space-y-2.5`}
+                  >
+                    {/* Header Row: Subject, Teacher & Final Score Badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
+                          {grade.subject_name}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                          {grade.teacher_name} • <span className="font-mono text-slate-600">{grade.subject_code}</span>
+                        </p>
+                      </div>
+
+                      {/* Final Score & Status */}
+                      <div className="text-right shrink-0">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-lg font-extrabold text-slate-900 font-mono">
+                            {grade.final_score}
+                          </span>
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-800 text-white font-mono">
+                            {grade.predicate}
+                          </span>
+                        </div>
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 shadow-2xs ${
+                          isTuntas ? 'bg-emerald-800 text-white' : 'bg-amber-600 text-white'
+                        }`}>
+                          {grade.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Score Grid: KKTP, Formatif, Sumatif, STS */}
+                    <div className="grid grid-cols-4 gap-1.5 p-2 bg-slate-50 rounded-lg text-center font-mono">
+                      <div>
+                        <span className="text-[9px] font-sans font-semibold text-slate-400 block uppercase">
+                          KKTP
+                        </span>
+                        <span className="text-xs font-medium text-slate-600">{grade.kktp}</span>
+                      </div>
+                      <div className="border-l border-slate-200">
+                        <span className="text-[9px] font-sans font-semibold text-slate-400 block uppercase">
+                          Formatif
+                        </span>
+                        <span className="text-xs font-bold text-slate-800">{grade.formative_avg}</span>
+                      </div>
+                      <div className="border-l border-slate-200">
+                        <span className="text-[9px] font-sans font-semibold text-slate-400 block uppercase">
+                          Sumatif
+                        </span>
+                        <span className="text-xs font-bold text-slate-800">{grade.summative_avg}</span>
+                      </div>
+                      <div className="border-l border-slate-200">
+                        <span className="text-[9px] font-sans font-semibold text-blue-700 block uppercase">
+                          STS
+                        </span>
+                        <span className="text-xs font-bold text-blue-900">{grade.sts_score}</span>
+                      </div>
+                    </div>
+
+                    {/* Competency Description */}
+                    {grade.competency_desc && (
+                      <p className="text-[11px] text-slate-600 font-normal leading-relaxed bg-slate-50/70 p-2 rounded-lg border border-slate-100">
+                        <span className="font-semibold text-slate-700">Capaian: </span>
+                        {grade.competency_desc}
+                      </p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table Container (hidden sm:block) */}
+          <div className="hidden sm:block overflow-x-auto pr-1 mt-2.5 border border-slate-200 rounded-xl">
+            <table className="w-full min-w-[720px] text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-slate-100 z-10 shadow-2xs">
                 <tr className="border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
                   <th className="py-2.5 px-3">Mata Pelajaran & Guru</th>
@@ -376,8 +463,8 @@ export default function GuardianNilaiPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredGrades.map((grade) => (
-                    <tr key={grade.subject_code} className="hover:bg-slate-50/80 transition-colors">
+                  filteredGrades.map((grade, idx) => (
+                    <tr key={`${grade.subject_code}-${idx}`} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-2.5 px-3">
                         <p className="font-bold text-slate-900 text-xs">{grade.subject_name}</p>
                         <p className="text-[11px] text-slate-500 font-normal mt-0.5">
@@ -422,18 +509,18 @@ export default function GuardianNilaiPage() {
           </div>
         </div>
 
-        {/* KOLOM KANAN: RINGKASAN E-RAPOR & CATATAN WALI KELAS (5 COLS - NO DEAD VOID) */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs flex flex-col h-full min-h-97.5 justify-between">
+        {/* KOLOM KANAN: RINGKASAN E-RAPOR & CATATAN WALI KELAS (5 COLS) */}
+        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+            <div className="min-w-0">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate">
                 Ringkasan E-Rapor & Tindak Lanjut
               </h2>
-              <p className="text-xs text-slate-500 font-normal">
+              <p className="text-[11px] sm:text-xs text-slate-500 font-normal truncate">
                 Verifikasi resmi oleh Wali Kelas ({activeChild.homeroom_teacher.split(',')[0]})
               </p>
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-slate-800 text-white text-xs font-bold shadow-2xs">
+            <span className="px-2.5 py-1 rounded-full bg-slate-800 text-white text-[10px] sm:text-xs font-bold shadow-2xs whitespace-nowrap shrink-0">
               STS Gasal 2026
             </span>
           </div>
@@ -479,18 +566,27 @@ export default function GuardianNilaiPage() {
                 <span className="text-[10px] text-emerald-800 font-bold uppercase">QR Valid</span>
               </div>
 
-              {/* Footer Row */}
-              <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-800 text-white">
+              {/* Footer Row (Responsive 2 Action Buttons) */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold bg-emerald-800 text-white self-start">
                   Telah Disahkan Kepsek & Walas
                 </span>
-                <button
-                  onClick={() => setIsPreviewOpen(true)}
-                  className="text-xs font-bold text-blue-800 hover:text-blue-950 flex items-center gap-1"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Pratinjau Lembar A4</span>
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setIsPreviewOpen(true)}
+                    className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Pratinjau A4</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadPdf}
+                    className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5 text-white" />
+                    <span>Unduh PDF</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -544,36 +640,37 @@ export default function GuardianNilaiPage() {
             </div>
           </div>
 
-          {/* Solid Information Card & Fast Actions (Eliminates empty white space) */}
+          {/* Solid Information Card & Fast Actions */}
           <div className="pt-2 border-t border-slate-100 shrink-0 space-y-2">
             {/* Kebijakan Remedial & Pengayaan */}
             <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/90 text-xs text-slate-700 space-y-0.5">
               <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
-                <BookOpen className="w-3.5 h-3.5 text-blue-800" />
+                <BookOpen className="w-3.5 h-3.5 text-blue-800 shrink-0" />
                 <span>Ketentuan Remedial Kurikulum Merdeka Labschool UM:</span>
               </div>
-              <p className="text-slate-600 leading-normal text-[11px] font-normal">
+              <p className="text-slate-600 leading-normal text-[11px] font-normal pl-5">
                 • Remedial terjadwal maksimal 2x pengulangan untuk mencapai batas KKTP 75.0.<br />
                 • Siswa dengan predikat A berhak mengikuti program bimbingan pengayaan olimpiade.
               </p>
             </div>
 
-            {/* Bantuan Akademik & Unduh Cepat */}
-            <div className="p-2 bg-blue-50/60 rounded-xl border border-blue-200 text-xs text-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <PhoneCall className="w-3.5 h-3.5 text-blue-800 shrink-0" />
-                <div>
-                  <span className="font-bold text-slate-900 block leading-tight text-xs">Konsultasi Belajar Walas</span>
-                  <span className="text-slate-600 text-[11px]">Jadwal konsultasi akademik wali murid: 13.00 - 15.30 WIB</span>
+            {/* Bantuan Akademik & Konsultasi Walas */}
+            <div className="p-2.5 bg-blue-50/60 rounded-xl border border-blue-200 text-xs text-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200">
+                  <PhoneCall className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-bold text-slate-900 block leading-tight text-xs truncate">Konsultasi Belajar Walas</span>
+                  <span className="text-slate-600 text-[11px] block truncate">Jadwal konsultasi akademik wali murid: 13.00 - 15.30 WIB</span>
                 </div>
               </div>
-              <button
-                onClick={handleDownloadPdf}
-                className="px-2.5 py-1 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold shrink-0 transition-colors shadow-2xs flex items-center gap-1"
+              <Link
+                href="/ortu/konseling"
+                className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shrink-0 transition-colors shadow-2xs flex items-center justify-center gap-1.5 text-center"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Unduh PDF</span>
-              </button>
+                <span>Janji Konsultasi</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -581,12 +678,12 @@ export default function GuardianNilaiPage() {
 
       {/* ─── MODAL PRATINJAU DOKUMEN E-RAPOR RESMI BER-QR CODE (A4) ─── */}
       {isPreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full my-auto max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Bar */}
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-3.5 bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2.5">
-                <FileCheck className="w-5 h-5 text-emerald-400" />
+                <FileCheck className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-bold text-white">
                     Lembar Resmi E-Progress Report Siswa (T.A. 2026/2027)
@@ -596,7 +693,7 @@ export default function GuardianNilaiPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                 <button
                   onClick={handleDownloadPdf}
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
@@ -614,31 +711,31 @@ export default function GuardianNilaiPage() {
             </div>
 
             {/* Official Report Document Body (A4 Style) */}
-            <div className="p-8 space-y-6 text-slate-900 font-serif bg-white">
+            <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 text-slate-900 font-serif bg-white overflow-y-auto flex-1">
               {/* Kop Surat Sekolah */}
-              <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4">
-                <div className="w-16 h-16 rounded-xl bg-blue-950 text-white font-bold text-xl flex items-center justify-center shrink-0">
-                  <School className="w-8 h-8 text-white" />
+              <div className="flex flex-col sm:flex-row items-center justify-between border-b-2 border-slate-900 pb-4 gap-3 text-center sm:text-left">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-blue-950 text-white font-bold text-xl flex items-center justify-center shrink-0">
+                  <School className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <div className="text-center flex-1 px-4">
-                  <h4 className="text-base font-bold tracking-wide uppercase text-slate-900">
+                <div className="flex-1 px-2 sm:px-4">
+                  <h4 className="text-xs sm:text-base font-bold tracking-wide uppercase text-slate-900">
                     YAYASAN PEMBINA PENDIDIKAN LABSCHOOL UM
                   </h4>
-                  <h3 className="text-lg font-bold tracking-tight text-blue-950">
+                  <h3 className="text-sm sm:text-lg font-bold tracking-tight text-blue-950">
                     LABORATORIUM UNIVERSITAS NEGERI MALANG
                   </h3>
-                  <p className="text-xs font-sans text-slate-600">
+                  <p className="text-[11px] sm:text-xs font-sans text-slate-600">
                     Jl. Simpang Bogor No. 19, Lowokwaru, Kota Malang | Telp: (0341) 551312 | Web: labschool.um.ac.id
                   </p>
                 </div>
-                <div className="w-16 h-16 border border-slate-300 rounded-xl p-1 flex items-center justify-center bg-slate-50">
-                  <QrCode className="w-12 h-12 text-slate-800" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 border border-slate-300 rounded-xl p-1 flex items-center justify-center bg-slate-50 shrink-0">
+                  <QrCode className="w-10 h-10 sm:w-12 sm:h-12 text-slate-800" />
                 </div>
               </div>
 
               {/* Title Document */}
               <div className="text-center font-sans space-y-1">
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900">
                   LAPORAN HASIL KEMAJUAN BELAJAR SISWA (E-PROGRESS REPORT)
                 </h4>
                 <p className="text-xs text-slate-600 font-normal">
@@ -647,7 +744,7 @@ export default function GuardianNilaiPage() {
               </div>
 
               {/* Student Metadata Table */}
-              <div className="grid grid-cols-2 gap-4 font-sans text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 font-sans text-xs bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200">
                 <div className="space-y-1">
                   <p><span className="font-semibold text-slate-600 inline-block w-28">Nama Siswa:</span> <span className="font-bold text-slate-900">{activeChild.name}</span></p>
                   <p><span className="font-semibold text-slate-600 inline-block w-28">NIS / NISN:</span> <span className="font-mono">{activeChild.nis} / {activeChild.nisn}</span></p>
@@ -660,9 +757,9 @@ export default function GuardianNilaiPage() {
                 </div>
               </div>
 
-              {/* Compact Grades Table */}
-              <div className="font-sans">
-                <table className="w-full text-left text-xs border border-slate-300 rounded-lg overflow-hidden">
+              {/* Compact Grades Table with Horizontal Scroll */}
+              <div className="font-sans overflow-x-auto">
+                <table className="w-full min-w-[540px] text-left text-xs border border-slate-300 rounded-lg overflow-hidden">
                   <thead>
                     <tr className="bg-slate-100 font-semibold border-b border-slate-300 text-slate-700">
                       <th className="py-2 px-2.5">No</th>
@@ -697,10 +794,10 @@ export default function GuardianNilaiPage() {
               </div>
 
               {/* Signatures & Verification Token Footer */}
-              <div className="pt-4 border-t border-slate-300 font-sans grid grid-cols-3 gap-4 text-center text-xs">
+              <div className="pt-4 border-t border-slate-300 font-sans grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs">
                 <div>
                   <p className="text-slate-600">Mengetahui Orang Tua,</p>
-                  <p className="mt-12 font-bold text-slate-900 underline">{guardian.name}</p>
+                  <p className="mt-8 sm:mt-12 font-bold text-slate-900 underline">{guardian.name}</p>
                 </div>
 
                 <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50 border border-slate-200">
@@ -716,7 +813,7 @@ export default function GuardianNilaiPage() {
                 <div>
                   <p className="text-slate-600">Kota Malang, 14 Oktober 2026</p>
                   <p className="text-slate-600">Wali Kelas,</p>
-                  <p className="mt-8 font-bold text-slate-900 underline">{activeChild.homeroom_teacher}</p>
+                  <p className="mt-4 sm:mt-8 font-bold text-slate-900 underline">{activeChild.homeroom_teacher}</p>
                   <p className="text-[10px] text-slate-500 font-mono">{activeChild.homeroom_nip}</p>
                 </div>
               </div>
