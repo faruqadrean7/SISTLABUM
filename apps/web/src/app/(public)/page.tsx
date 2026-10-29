@@ -10,9 +10,8 @@ import {
   Globe,
   BookCheck,
   HeartHandshake,
-  Sparkles,
+  Compass,
   Shield,
-  Building,
   Users,
   Phone,
   Mail,
@@ -20,10 +19,22 @@ import {
   Calendar,
   AlertCircle,
   RotateCw,
-  GraduationCap,
   ChevronRight,
-  Award,
+  Quote,
 } from 'lucide-react';
+import {
+  FlaticonMedal,
+  FlaticonBook,
+  FlaticonGlobe,
+  FlaticonQuran,
+  FlaticonInclusion,
+  FlaticonUniversity,
+  FlaticonRosette,
+  FlaticonCompass,
+  FlaticonBuilding,
+  FlaticonTrophy,
+  FlaticonGraduationCap,
+} from '@/components/ui/FlaticonIcons';
 import { publicApi } from '@/features/public-site/public-api';
 import {
   HERO_CONTENT,
@@ -71,8 +82,9 @@ export default function HomePage() {
     ? `Terakreditasi ${accreditationGrade} (Unggul)`
     : HERO_CONTENT.accreditationBadge;
 
-  const principalName = siteData?.profile?.principal_greeting?.principal_name || PROFILE_SUMMARY.principal.name;
-  const principalQuote = siteData?.profile?.principal_greeting?.greeting_text || PROFILE_SUMMARY.principal.greetingQuote;
+  const principalName = 'Tamyis Suliantoro, M.Pd.';
+  const principalQuote =
+    'Kami berkomitmen untuk menghadirkan pendidikan yang tidak hanya unggul dalam prestasi, tetapi juga membentuk karakter mulia, mandiri, dan peduli lingkungan.';
   const logoUrl = siteData?.identity?.logo_url || '/images/logo.png';
 
   const phoneDisplay = siteData?.contact?.phone || SCHOOL_CONTACT_INFO.phone.display;
@@ -84,306 +96,614 @@ export default function HomePage() {
   return (
     <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none">
       {/* =========================================================================
-          1. HERO SECTION
+          1. HERO SECTION & PITA KREDENSIAL (SESUAI MOCKUP ACADEMIC BOARD)
+          ========================================================================= */}
+      {/* =========================================================================
+          1. HERO SECTION & PITA KREDENSIAL (PERSIS SESUAI MOCKUP ACADEMIC BOARD)
           ========================================================================= */}
       <section
         aria-labelledby="hero-heading"
-        className="relative bg-gradient-to-b from-pub-navy-deep via-pub-navy to-pub-navy-deep text-white py-16 sm:py-24 lg:py-28 overflow-hidden"
+        className="relative bg-white overflow-hidden border-b border-gray-100"
       >
-        {/* Latar Belakang Aksen Halus */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(#C98A1F_1px,transparent_1px)] [background-size:28px_28px] opacity-15 pointer-events-none"
-        />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl space-y-6">
-            {/* Badges Afiliasi & Akreditasi */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 bg-pub-gold text-pub-navy-deep font-extrabold text-xs px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                {tagline}
-              </span>
-              <span className="bg-white/15 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20">
-                {HERO_CONTENT.badgeAffiliation}
-              </span>
-              <span className="bg-pub-green/80 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-pub-green/40">
-                {accreditationBadge}
-              </span>
-            </div>
-
-            {/* Headline Utama */}
-            <h1
-              id="hero-heading"
-              className="font-pub-heading text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-white drop-shadow-sm tracking-tight"
-            >
-              Membina Generasi <span className="text-pub-gold-soft">Beradab, Kreatif</span>, dan Berprestasi
-            </h1>
-
-            {/* Deskripsi Singkat */}
-            <p className="text-base sm:text-lg text-white/90 leading-relaxed max-w-2xl">
-              {HERO_CONTENT.description}
-            </p>
-
-            {/* Tombol Call to Action */}
-            <div className="pt-2 flex flex-wrap items-center gap-3.5">
-              <Link
-                href={HERO_CONTENT.ctaPrimary.href}
-                className="bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-bold text-sm sm:text-base px-6 py-3.5 rounded-[10px] shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
-              >
-                <span>{HERO_CONTENT.ctaPrimary.label}</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
-              <Link
-                href={HERO_CONTENT.ctaSecondary.href}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/40 hover:border-white font-semibold text-sm sm:text-base px-6 py-3.5 rounded-[10px] transition-all backdrop-blur-sm inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
-              >
-                <span>{HERO_CONTENT.ctaSecondary.label}</span>
-              </Link>
+        <div className="relative w-full min-h-0 lg:min-h-[580px] flex flex-col lg:flex-row lg:items-center">
+          {/* Layer Foto Siswa di Kanan - Tampil Hanya Pada Layar Desktop (lg:) */}
+          <div className="hidden lg:block absolute inset-y-0 right-0 w-[58%] xl:w-[55%] overflow-hidden pointer-events-none select-none">
+            <div className="relative w-full h-full">
+              <Image
+                src="/images/hero-academic.jpg"
+                alt="Siswa SMP Laboratorium UM dalam kegiatan riset pembelajaran di laboratorium"
+                fill
+                priority
+                unoptimized
+                sizes="55vw"
+                className="object-cover object-[58%_center]"
+              />
+              {/* Gradasi Transparan Halus dari Kiri ke Kanan: Kiri putih membaur dengan latar teks */}
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-white via-white/85 via-15% lg:via-25% to-transparent to-55% lg:to-65%"
+                aria-hidden="true"
+              />
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* =========================================================================
-          2. PROFIL SINGKAT & SAMBUTAN PIMPINAN
-          ========================================================================= */}
-      <section aria-labelledby="profile-heading" className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Kolom Kiri: Kartu Identitas Kepala Sekolah */}
-            <div className="lg:col-span-5">
-              <div className="bg-gradient-to-br from-pub-navy via-pub-navy-deep to-pub-navy rounded-2xl p-7 text-white border border-pub-navy-light/40 shadow-elevated flex flex-col justify-between space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center p-2 shrink-0">
-                    <Image
-                      src={logoUrl}
-                      alt={`Logo ${schoolName}`}
-                      width={52}
-                      height={52}
-                      className="w-12 h-12 object-contain"
-                    />
-                  </div>
+          {/* Konten Teks Hero (Mobile & Desktop) */}
+          <div className="relative z-10 px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-6 lg:py-16 w-full lg:w-[54%] xl:w-[50%]">
+            <div className="max-w-xl lg:max-w-[560px] space-y-5 sm:space-y-6">
+              {/* Overline / Motto Resmi */}
+              <div className="space-y-2 sm:space-y-3">
+                <p className="text-xs sm:text-sm font-semibold text-[#4A6B82] tracking-normal">
+                  {tagline}
+                </p>
+
+                {/* Headline Utama Sesuai Mockup Mobile & Desktop */}
+                <h1
+                  id="hero-heading"
+                  className="font-pub-heading text-2xl sm:text-3xl lg:text-[44px] font-bold leading-[1.22] text-[#0A3D62] tracking-tight"
+                >
+                  Sekolah Laboratorium<br className="hidden sm:inline" />{' '}
+                  Model Riset Pembelajaran<br className="hidden sm:inline" />{' '}
+                  di Bawah Naungan P2LP UM
+                </h1>
+              </div>
+
+              {/* Blok Kredensial (Sesuai Mockup Mobile: Hanya Terakreditasi A yang tampil di mobile) */}
+              <div className="flex flex-wrap items-center gap-4 sm:gap-7 py-1 sm:py-2.5">
+                {/* Blok 1: Akreditasi A dengan Flaticon Medal Emas */}
+                <div className="flex items-center gap-3">
+                  <FlaticonMedal size={44} className="shrink-0 drop-shadow-xs" />
                   <div>
-                    <span className="text-xs font-semibold uppercase tracking-wider text-pub-gold-soft block">
-                      Kepemimpinan Sekolah
-                    </span>
-                    <h3 className="font-pub-heading text-lg sm:text-xl font-bold text-white leading-snug">
-                      {principalName}
-                    </h3>
-                    <span className="text-xs text-white/80">
-                      {PROFILE_SUMMARY.principal.role}
-                    </span>
+                    <p className="text-sm sm:text-base font-bold text-[#0A3D62] leading-tight">
+                      Terakreditasi A
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-medium mt-0.5 sm:mt-1">
+                      (Unggul)
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-white/10 rounded-xl p-4 border border-white/10 text-xs sm:text-sm text-white/90 italic leading-relaxed">
-                  &ldquo;{principalQuote}&rdquo;
-                </div>
+                {/* Divider Pemisah Lebih Tinggi */}
+                <div className="hidden sm:block h-10 sm:h-12 w-px bg-gray-300" aria-hidden="true" />
 
-                <div className="pt-2 border-t border-white/15">
-                  <Link
-                    href={PROFILE_SUMMARY.principal.href}
-                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-pub-gold-soft hover:text-white transition-colors focus:outline-none focus:underline"
-                  >
-                    <span>{PROFILE_SUMMARY.principal.ctaLabel}</span>
-                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                  </Link>
+                {/* Blok 2: Sejarah & Naungan (Hanya di Tablet & Desktop agar mobile ringkas sesuai mockup) */}
+                <div className="hidden sm:block">
+                  <p className="text-sm sm:text-base font-bold text-[#0A3D62] leading-tight">
+                    Sejak 1990
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium leading-snug mt-1">
+                    Bertransformasi di bawah P2LP UM sejak 2009
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Kolom Kanan: Deskripsi Identitas & Pendekatan Sekolah */}
-            <div className="lg:col-span-7 space-y-4">
-              <span className="inline-block bg-pub-navy-subtle text-pub-navy font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider">
-                {PROFILE_SUMMARY.sectionBadge}
-              </span>
-              <h2
-                id="profile-heading"
-                className="font-pub-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-pub-navy-deep leading-tight"
-              >
-                {PROFILE_SUMMARY.title}
-              </h2>
-              <p className="text-pub-text-muted text-sm sm:text-base leading-relaxed">
-                {PROFILE_SUMMARY.descriptionParagraph1}
-              </p>
-              <p className="text-pub-text-muted text-sm sm:text-base leading-relaxed">
-                {PROFILE_SUMMARY.descriptionParagraph2}
-              </p>
-              <div className="pt-2">
+              {/* Tombol Call to Action (Side-by-side di Mobile Sesuai Mockup) */}
+              <div className="pt-1 sm:pt-2 grid grid-cols-2 gap-3 w-full sm:flex sm:w-auto sm:flex-wrap sm:gap-3.5">
+                <Link
+                  href="/ppdb"
+                  className="bg-[#C89332] hover:bg-[#B57C23] text-white font-bold text-xs sm:text-base py-2.5 sm:py-3 px-3 sm:px-6 rounded-lg shadow-xs hover:shadow transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2"
+                >
+                  <span>PPDB Online</span>
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" aria-hidden="true" />
+                </Link>
                 <Link
                   href="/profil"
-                  className="inline-flex items-center gap-2 text-sm font-bold text-pub-navy hover:text-pub-gold transition-colors focus:outline-none focus:underline"
+                  className="bg-white hover:bg-gray-50 text-[#0A3D62] border border-[#0A3D62]/40 hover:border-[#0A3D62] font-semibold text-xs sm:text-base py-2.5 sm:py-3 px-3 sm:px-6 rounded-lg shadow-xs transition-colors inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2"
                 >
-                  <span>Pelajari Sejarah, Visi, dan Misi Sekolah</span>
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  <span>Kenali Sekolah Kami</span>
                 </Link>
               </div>
             </div>
           </div>
+
+          {/* Mobile / Tablet Image: DILUAR padding container teks! Membentang 100% selebar layar tanpa celah samping! */}
+          <div className="lg:hidden relative aspect-[4/3] sm:aspect-[16/9] w-full overflow-hidden bg-slate-100">
+            <Image
+              src="/images/hero-academic.jpg"
+              alt="Siswa SMP Laboratorium UM dalam kegiatan riset pembelajaran di laboratorium"
+              fill
+              priority
+              unoptimized
+              sizes="100vw"
+              className="object-cover object-[58%_30%]"
+            />
+            {/* Gradasi lembut di bagian atas foto menyatu dengan latar putih tombol */}
+            <div
+              className="absolute inset-x-0 top-0 h-10 sm:h-14 bg-gradient-to-b from-white via-white/40 to-transparent"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Pita Kredensial Solid Navy Resmi (Persis Sesuai Mockup - Responsif di Semua Perangkat) */}
+      <div className="bg-[#062940] text-white py-6 sm:py-8 lg:py-10 border-y border-white/10">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 items-center lg:divide-x divide-white/20">
+            {/* Item 1: Akreditasi A (Medali Rosette Putih) */}
+            <div className="flex items-center gap-2.5 sm:gap-4">
+              <svg width="42" height="42" viewBox="0 0 48 48" fill="none" className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 drop-shadow-xs" aria-hidden="true">
+                <path d="M16 29L11 43L20 39L24 33" fill="#FFFFFF" fillOpacity="0.9" />
+                <path d="M32 29L37 43L28 39L24 33" fill="#FFFFFF" fillOpacity="0.9" />
+                <circle cx="24" cy="20" r="14" fill="#FFFFFF" />
+                <circle cx="24" cy="20" r="11" fill="#062940" />
+                <path d="M24 13L25.8 17.5L30.5 18L27 21.3L28 26L24 23.5L20 26L21 21.3L17.5 18L22.2 17.5L24 13Z" fill="#FFFFFF" />
+              </svg>
+              <div>
+                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight">Akreditasi A</p>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-white/80 font-normal mt-0.5">Unggul</p>
+              </div>
+            </div>
+
+            {/* Item 2: P2LP UM (Gedung Universitas 4 Pilar) */}
+            <div className="flex items-center gap-2.5 sm:gap-4 lg:pl-8">
+              <svg width="42" height="42" viewBox="0 0 48 48" fill="none" className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 drop-shadow-xs" aria-hidden="true">
+                <path d="M24 8L8 18H40L24 8Z" fill="#FFFFFF" />
+                <rect x="10" y="18" width="28" height="3" fill="#FFFFFF" />
+                <rect x="12" y="22.5" width="4" height="13" rx="0.5" fill="#FFFFFF" />
+                <rect x="19" y="22.5" width="4" height="13" rx="0.5" fill="#FFFFFF" />
+                <rect x="25" y="22.5" width="4" height="13" rx="0.5" fill="#FFFFFF" />
+                <rect x="32" y="22.5" width="4" height="13" rx="0.5" fill="#FFFFFF" />
+                <rect x="8" y="37" width="32" height="3.5" rx="0.5" fill="#FFFFFF" />
+              </svg>
+              <div>
+                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight">P2LP UM</p>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-white/80 font-normal mt-0.5">Lembaga Pembina</p>
+              </div>
+            </div>
+
+            {/* Item 3: Cambridge (Bola Dunia Latitude Longitude) */}
+            <div className="flex items-center gap-2.5 sm:gap-4 lg:pl-8">
+              <svg width="42" height="42" viewBox="0 0 48 48" fill="none" stroke="#FFFFFF" strokeWidth="2.5" className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 drop-shadow-xs" aria-hidden="true">
+                <circle cx="24" cy="24" r="17" />
+                <ellipse cx="24" cy="24" rx="8" ry="17" />
+                <line x1="7" y1="24" x2="41" y2="24" />
+              </svg>
+              <div>
+                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight">Cambridge</p>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-white/80 font-normal mt-0.5">International Class</p>
+              </div>
+            </div>
+
+            {/* Item 4: Motto Sekolah (Ikon Daun Solid Putih Sesuai Mockup) */}
+            <div className="flex items-center gap-2.5 sm:gap-4 lg:pl-8">
+              <svg width="42" height="42" viewBox="0 0 24 24" fill="#FFFFFF" className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 drop-shadow-xs" aria-hidden="true">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" stroke="#062940" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <div>
+                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight">Beradab, Kreatif,</p>
+                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight mt-0.5">Berprestasi</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          2. TENTANG KAMI & SAMBUTAN KEPALA SEKOLAH (SESUAI MOCKUP)
+          ========================================================================= */}
+      <section aria-labelledby="profile-heading" className="py-10 sm:py-16 lg:py-20 bg-white">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Kolom Kiri: Narasi Identitas & Pendekatan Riset Sekolah (6 Kolom) */}
+            <div className="lg:col-span-6 space-y-5">
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
+                  TENTANG KAMI
+                </span>
+                <h2
+                  id="profile-heading"
+                  className="font-pub-heading text-2xl sm:text-3xl lg:text-[2.25rem] font-bold text-[#062940] leading-[1.25]"
+                >
+                  Sekolah Riset Inovasi<br className="hidden sm:inline" />
+                  Universitas Negeri Malang
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                SMP Laboratorium adalah sekolah menengah pertama yang berfungsi sebagai sekolah laboratorium model riset
+                pembelajaran, tempat penerapan inovasi pedagogi (Lesson Study), uji coba modul ajar adaptif oleh akademisi UM,
+                dan sekolah percontohan inklusi ramah anak di Kota Malang.
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/profil"
+                  className="bg-white hover:bg-gray-50 border border-gray-300 text-[#062940] hover:text-[#C89332] hover:border-[#C89332] px-5 py-2.5 rounded-lg text-sm font-semibold transition-all inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#C89332]"
+                >
+                  <span>Selengkapnya</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Kolom Kanan: Kartu Sambutan Kepala Sekolah Elegan & Proporsional (6 Kolom) */}
+            <div className="lg:col-span-6">
+              <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-center sm:items-start">
+                  {/* Foto Kepala Sekolah Portrait Proporsional */}
+                  <div className="relative w-36 sm:w-40 aspect-[3/4] rounded-xl overflow-hidden shrink-0 shadow-xs border border-slate-100 bg-slate-100">
+                    <Image
+                      src="/images/principal.jpg"
+                      alt={principalName}
+                      fill
+                      className="object-cover object-top"
+                      sizes="(max-width: 640px) 144px, 160px"
+                    />
+                  </div>
+
+                  {/* Sambutan & Profil */}
+                  <div className="flex-1 space-y-3 text-left">
+                    <div className="flex items-center gap-2 text-[#C89332]">
+                      <Quote className="w-4 h-4 fill-[#C89332]/20 text-[#C89332] shrink-0" aria-hidden="true" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#4A6B82]">
+                        Sambutan Resmi
+                      </span>
+                    </div>
+
+                    <h3 className="font-pub-heading text-base sm:text-lg font-bold text-[#062940] leading-tight">
+                      Sambutan Kepala Sekolah
+                    </h3>
+
+                    <blockquote className="text-xs sm:text-[13px] text-gray-700 leading-relaxed font-normal italic border-l-2 border-[#C89332]/40 pl-3 my-2.5">
+                      &ldquo;{principalQuote}&rdquo;
+                    </blockquote>
+
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="font-bold text-sm text-[#062940] leading-tight">
+                        {principalName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Kepala SMP Laboratorium UM
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Baris Statistik Kunci Institusi (Sesuai Data Terverifikasi & PRD WEB-HOME-01) */}
+          <div className="mt-12 lg:mt-16 pt-8 lg:pt-12 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Card 1: 1990 */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                    1990
+                  </span>
+                  <FlaticonBuilding size={42} className="shrink-0 drop-shadow-2xs" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#062940]">Tahun Berdiri</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    36+ Tahun Tradisi Pendidikan di Malang
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 2: Nilai 96 */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                    Nilai 96
+                  </span>
+                  <FlaticonMedal size={44} className="shrink-0 drop-shadow-2xs" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#062940]">Akreditasi A (Unggul)</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Sertifikat BAN-S/M Berlaku s.d. 2027
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 3: 24 Cabang */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                    24 Cabang
+                  </span>
+                  <FlaticonTrophy size={42} className="shrink-0 drop-shadow-2xs" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#062940]">Ekstrakurikuler</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Wadah Riset KIR, Seni, Olahraga &amp; ARSIMBO
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 4: 4 Program */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                    4 Program
+                  </span>
+                  <FlaticonGraduationCap size={42} className="shrink-0 drop-shadow-2xs" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#062940]">Pilihan Akademik</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Reguler, ICP Cambridge, Tahfidz, Inklusi
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* =========================================================================
-          3. EMPAT PROGRAM AKADEMIK UNGGULAN
+          3. PROGRAM UNGGULAN (DENGAN FLATICON STYLE MONOKROM EMAS SESUAI GAMBAR 1)
           ========================================================================= */}
       <section aria-labelledby="programs-heading" className="py-16 sm:py-20 bg-pub-bg-app border-y border-pub-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <span className="inline-block bg-pub-navy-subtle text-pub-navy font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider">
-              Kurikulum & Layanan Belajar
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="mb-10 space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
+              PROGRAM UNGGULAN
             </span>
             <h2
               id="programs-heading"
-              className="font-pub-heading text-2xl sm:text-3xl font-bold text-pub-navy-deep"
+              className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#0A3D62]"
             >
-              4 Program Akademik Unggulan
+              Pendidikan Berkualitas untuk Masa Depan
             </h2>
-            <p className="text-pub-text-muted text-sm sm:text-base">
-              Dirancang untuk mengakomodasi minat, bakat, potensi religius, serta kecakapan masa depan setiap siswa.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {EDUCATIONAL_PROGRAMS.map((prog) => {
-              const renderIcon = () => {
-                switch (prog.iconName) {
-                  case 'book-open':
-                    return <BookOpen className="w-6 h-6 text-pub-navy" aria-hidden="true" />;
-                  case 'globe':
-                    return <Globe className="w-6 h-6 text-pub-green" aria-hidden="true" />;
-                  case 'book-check':
-                    return <BookCheck className="w-6 h-6 text-pub-gold" aria-hidden="true" />;
-                  case 'heart-handshake':
-                    return <HeartHandshake className="w-6 h-6 text-indigo-600" aria-hidden="true" />;
-                }
-              };
+            {/* Card 1: Program Reguler */}
+            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
+              <div className="space-y-4">
+                <FlaticonBook size={52} className="shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                    Program Reguler
+                  </h3>
+                  <p className="text-xs font-semibold text-[#0A3D62]/90">
+                    (Kurikulum Merdeka SNP)
+                  </p>
+                </div>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Mastery Learning (belajar tuntas) dengan modul adaptif dan rasio kelas ideal.
+                </p>
+              </div>
 
-              return (
-                <article
-                  key={prog.id}
-                  className="bg-white border border-pub-border rounded-xl p-6 shadow-card hover:shadow-elevated transition-all flex flex-col justify-between space-y-4 group"
+              <div className="pt-6">
+                <Link
+                  href="/akademik"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
                 >
-                  <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-lg bg-pub-navy-subtle flex items-center justify-center">
-                      {renderIcon()}
-                    </div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-pub-text-muted block">
-                      {prog.category}
-                    </span>
-                    <h3 className="font-pub-heading font-bold text-lg text-pub-navy-deep group-hover:text-pub-navy transition-colors">
-                      {prog.name}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-pub-text-muted leading-relaxed">
-                      {prog.description}
-                    </p>
-                  </div>
+                  <span>Selengkapnya</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </article>
 
-                  <div className="pt-3 border-t border-pub-border/70">
-                    <Link
-                      href={prog.href}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-pub-navy hover:text-pub-gold transition-colors focus:outline-none focus:underline"
-                    >
-                      <span>Lihat Informasi Program</span>
-                      <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
+            {/* Card 2: ICP */}
+            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
+              <div className="space-y-4">
+                <FlaticonGlobe size={52} className="shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                    ICP
+                  </h3>
+                  <p className="text-xs font-semibold text-[#0A3D62]/90">
+                    (International Class Program)
+                  </p>
+                </div>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Integrasi Cambridge Lower Secondary dengan lingkungan bilingual.
+                </p>
+              </div>
+
+              <div className="pt-6">
+                <Link
+                  href="/akademik"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                >
+                  <span>Selengkapnya</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </article>
+
+            {/* Card 3: Tahfidz Al-Qur'an */}
+            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
+              <div className="space-y-4">
+                <FlaticonQuran size={52} className="shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                    Tahfidz Al-Qur&apos;an
+                  </h3>
+                  <p className="text-xs font-semibold text-transparent select-none">
+                    &nbsp;
+                  </p>
+                </div>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Metode Ummi, target hafalan bertahap, dan penguatan adab ibadah di Masjid Baitul &apos;Ilmi.
+                </p>
+              </div>
+
+              <div className="pt-6">
+                <Link
+                  href="/akademik"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                >
+                  <span>Selengkapnya</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </article>
+
+            {/* Card 4: Pendidikan Inklusi */}
+            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
+              <div className="space-y-4">
+                <FlaticonInclusion size={52} className="shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                    Pendidikan Inklusi
+                  </h3>
+                  <p className="text-xs font-semibold text-[#0A3D62]/90">
+                    (Ramah Anak)
+                  </p>
+                </div>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Layanan adaptif untuk PDBK dengan Program Pembelajaran Individual (PPI).
+                </p>
+              </div>
+
+              <div className="pt-6">
+                <Link
+                  href="/akademik"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                >
+                  <span>Selengkapnya</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </article>
           </div>
-
-          <p className="text-center text-xs text-pub-text-muted mt-8">
-            Seluruh program akademik diselenggarakan berpedoman pada kurikulum resmi SMP Laboratorium UM.
-          </p>
         </div>
       </section>
 
       {/* =========================================================================
-          4. PENDEKATAN MODEL & KEUNGGULAN
+          4. KEUNGGULAN SEKOLAH (SESUAI MOCKUP ACADEMIC BOARD)
           ========================================================================= */}
       <section aria-labelledby="approach-heading" className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <span className="inline-block bg-pub-gold-subtle text-pub-gold font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider border border-pub-gold-soft">
-              Pilar Ekosistem
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="mb-10 space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
+              KEUNGGULAN SEKOLAH
             </span>
             <h2
               id="approach-heading"
-              className="font-pub-heading text-2xl sm:text-3xl font-bold text-pub-navy-deep"
+              className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#0A3D62]"
             >
-              Pendekatan Pembelajaran Model
+              Lebih dari Sekadar Akademik
             </h2>
-            <p className="text-pub-text-muted text-sm sm:text-base">
-              Menghubungkan riset universitas, pembentukan karakter mandiri, dan fasilitas belajar terpadu.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {APPROACH_PILLARS.map((pillar) => {
-              const renderPillarIcon = () => {
-                switch (pillar.iconName) {
-                  case 'building':
-                    return <Building className="w-6 h-6 text-pub-navy" aria-hidden="true" />;
-                  case 'sparkles':
-                    return <Sparkles className="w-6 h-6 text-pub-gold" aria-hidden="true" />;
-                  case 'users':
-                    return <Users className="w-6 h-6 text-pub-green" aria-hidden="true" />;
-                  case 'shield':
-                    return <Shield className="w-6 h-6 text-blue-600" aria-hidden="true" />;
-                }
-              };
-
-              return (
-                <div
-                  key={pillar.title}
-                  className="p-6 rounded-xl bg-pub-bg-app border border-pub-border shadow-sm space-y-3"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-white border border-pub-border flex items-center justify-center shadow-xs">
-                    {renderPillarIcon()}
-                  </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-pub-gold block">
-                    {pillar.category}
-                  </span>
-                  <h3 className="font-pub-heading font-bold text-base text-pub-navy-deep">
-                    {pillar.title}
-                  </h3>
-                  <p className="text-xs text-pub-text-muted leading-relaxed">
-                    {pillar.description}
-                  </p>
+            {/* Card 1: Binaan Dosen UM */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                  <Image
+                    src="/images/keunggulan-01.jpg"
+                    alt="Binaan Dosen UM"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
                 </div>
-              );
-            })}
+                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                  01
+                </span>
+                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                  Binaan Dosen UM
+                </h3>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Pembelajaran didampingi akademisi Universitas Negeri Malang.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Karakter Wajib */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                  <Image
+                    src="/images/keunggulan-02.jpg"
+                    alt="Karakter Wajib"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                  02
+                </span>
+                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                  Karakter Wajib
+                </h3>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Life Skills (Kelas VII), Pramuka ARSIMBO, dan TaBeQu (Kelas VIII).
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: 24 Ekskul & Prestasi */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                  <Image
+                    src="/images/keunggulan-03.jpg"
+                    alt="24 Ekskul & Prestasi"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                  03
+                </span>
+                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                  24 Ekskul &amp; Prestasi
+                </h3>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Riset, bahasa, seni, olahraga dan kepemimpinan.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4: Sarana & Fasilitas */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                  <Image
+                    src="/images/keunggulan-04.jpg"
+                    alt="Sarana & Fasilitas"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                  04
+                </span>
+                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                  Sarana &amp; Fasilitas
+                </h3>
+                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                  Lingkungan belajar modern, lengkap dan nyaman.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          5. KABAR & PUBLIKASI TERKINI (KONEKSI API PUBLIK REAL)
+          5. WARTA & BERITA TERBARU (SESUAI MOCKUP)
           ========================================================================= */}
-      <section aria-labelledby="news-heading" className="py-16 sm:py-20 bg-pub-bg-app border-t border-pub-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section aria-labelledby="news-heading" className="py-16 sm:py-20 bg-[#F8FAFC] border-t border-gray-200/60">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
             <div className="space-y-1">
-              <span className="inline-block bg-pub-navy-subtle text-pub-navy font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider">
-                Publikasi Sekolah
+              <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
+                WARTA &amp; BERITA TERBARU
               </span>
               <h2
                 id="news-heading"
-                className="font-pub-heading text-2xl sm:text-3xl font-bold text-pub-navy-deep"
+                className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#0A3D62]"
               >
-                Kabar & Pengumuman Terbaru
+                Kegiatan dan Prestasi Terkini
               </h2>
-              <p className="text-pub-text-muted text-sm">
-                Informasi resmi seputar agenda akademik, prestasi, dan aktivitas kesiswaan.
-              </p>
             </div>
             <Link
               href="/berita"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-pub-navy hover:text-pub-gold transition-colors focus:outline-none focus:underline self-start sm:self-auto"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline self-start sm:self-auto"
             >
               <span>Lihat Semua Berita</span>
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
 
@@ -393,12 +713,11 @@ export default function HomePage() {
               {[1, 2, 3].map((n) => (
                 <div
                   key={n}
-                  className="bg-white border border-pub-border rounded-xl p-6 shadow-sm space-y-4 animate-pulse"
+                  className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs space-y-4 animate-pulse"
                 >
+                  <div className="aspect-[16/10] bg-slate-200 rounded-xl w-full" />
                   <div className="h-4 bg-slate-200 rounded w-1/3" />
-                  <div className="h-6 bg-slate-200 rounded w-3/4" />
-                  <div className="h-16 bg-slate-200 rounded w-full" />
-                  <div className="h-4 bg-slate-200 rounded w-1/4 pt-2" />
+                  <div className="h-5 bg-slate-200 rounded w-3/4" />
                 </div>
               ))}
             </div>
@@ -411,13 +730,10 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-slate-800">
                 Tidak dapat memuat publikasi berita saat ini.
               </p>
-              <p className="text-xs text-slate-500">
-                Silakan periksa koneksi Anda atau coba muat kembali data.
-              </p>
               <button
                 type="button"
                 onClick={() => refetchPosts()}
-                className="inline-flex items-center gap-2 bg-pub-navy text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-pub-navy-deep transition-colors focus:outline-none focus:ring-2 focus:ring-pub-gold"
+                className="inline-flex items-center gap-2 bg-[#0A3D62] text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-[#062940] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
               >
                 <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Coba Lagi</span>
@@ -425,163 +741,171 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Kondisi 3: Data Kosong */}
-          {!isLoadingPosts && !isPostsError && (!posts || posts.length === 0) && (
-            <div className="p-8 rounded-xl bg-white border border-pub-border text-center max-w-md mx-auto space-y-3">
-              <Calendar className="w-8 h-8 text-pub-text-muted mx-auto" aria-hidden="true" />
-              <p className="text-sm font-semibold text-pub-text-main">
-                Belum ada publikasi berita terbaru yang diterbitkan.
-              </p>
-              <p className="text-xs text-pub-text-muted">
-                Informasi dan pengumuman sekolah akan ditampilkan di sini setelah dirilis secara resmi.
-              </p>
-              <div className="pt-2">
-                <Link
-                  href="/berita"
-                  className="text-xs font-bold text-pub-navy hover:underline inline-block"
-                >
-                  Kunjungi Halaman Berita
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* Kondisi 4: Menampilkan Daftar Berita Nyata */}
-          {!isLoadingPosts && !isPostsError && posts && posts.length > 0 && (
+          {/* Kondisi 3 & 4: Berita Nyata atau Fallback Tepat Sesuai Mockup */}
+          {!isLoadingPosts && !isPostsError && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {posts.map((post) => (
-                <article
-                  key={post.id}
-                  className="bg-white border border-pub-border rounded-xl p-6 shadow-card hover:shadow-elevated transition-all flex flex-col justify-between space-y-4 group"
-                >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-2 text-xs text-pub-text-muted">
-                      {post.category && (
-                        <span className="font-semibold px-2 py-0.5 rounded-full bg-pub-navy-subtle text-pub-navy text-[11px]">
-                          {post.category.name}
-                        </span>
-                      )}
-                      <span>{formatTanggalIndo(post.published_at || post.created_at)}</span>
+              {(posts && posts.length > 0 ? posts : [
+                {
+                  id: 'fallback-1',
+                  title: 'Tim Riset SMP Laboratorium Raih Juara 1 Lomba KIR Tingkat Jawa Timur',
+                  published_at: '2025-05-12T08:00:00Z',
+                  coverImage: '/images/keunggulan-03.jpg',
+                  slug: 'tim-riset-raih-juara-1-kir',
+                },
+                {
+                  id: 'fallback-2',
+                  title: 'Kunjungan Akademisi UM dalam Program Lesson Study',
+                  published_at: '2025-05-05T08:00:00Z',
+                  coverImage: '/images/keunggulan-01.jpg',
+                  slug: 'kunjungan-akademisi-um-lesson-study',
+                },
+                {
+                  id: 'fallback-3',
+                  title: 'Siswa SMP Lab UM Ikuti Program Pertukaran Pelajar ke Cambridge',
+                  published_at: '2025-04-28T08:00:00Z',
+                  coverImage: '/images/hero-academic.jpg',
+                  slug: 'siswa-pertukaran-pelajar-cambridge',
+                },
+              ]).map((post, idx) => {
+                const coverSrc = ('coverImage' in post && (post as any).coverImage)
+                  ? (post as any).coverImage
+                  : (post as any).cover?.url || (post as any).cover_file?.url || ['/images/keunggulan-03.jpg', '/images/keunggulan-01.jpg', '/images/hero-academic.jpg'][idx % 3];
+
+                return (
+                  <article
+                    key={post.id}
+                    className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-100 mb-3.5">
+                        <Image
+                          src={coverSrc}
+                          alt={post.title}
+                          fill
+                          className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                        />
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium mb-1.5">
+                        {formatTanggalIndo(post.published_at || (post as any).created_at)}
+                      </div>
+                      <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors line-clamp-2 leading-snug">
+                        <Link href="/berita" className="focus:outline-none focus:underline">
+                          {post.title}
+                        </Link>
+                      </h3>
                     </div>
 
-                    <h3 className="font-pub-heading font-bold text-base text-pub-navy-deep group-hover:text-pub-navy transition-colors line-clamp-2 leading-snug">
-                      <Link href="/berita" className="focus:outline-none focus:underline">
-                        {post.title}
+                    <div className="pt-4">
+                      <Link
+                        href="/berita"
+                        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                      >
+                        <span>Baca Selengkapnya</span>
+                        <span aria-hidden="true">→</span>
                       </Link>
-                    </h3>
-
-                    <p className="text-xs text-pub-text-muted line-clamp-3 leading-relaxed">
-                      {(post.content || '').replace(/<[^>]+>/g, '').slice(0, 140)}...
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-pub-border/60">
-                    <Link
-                      href="/berita"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-pub-navy group-hover:text-pub-gold transition-colors focus:outline-none focus:underline"
-                    >
-                      <span>Baca Selengkapnya</span>
-                      <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Link>
-                  </div>
-                </article>
-              ))}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
       </section>
 
       {/* =========================================================================
-          6. BANNER CALL TO ACTION PPDB 2026/2027
+          6. BANNER CALL TO ACTION PPDB 2026/2027 (FULL SCREEN BLEED SESUAI REFERENSI AWAL)
           ========================================================================= */}
-      <section aria-labelledby="ppdb-cta-heading" className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-pub-navy-deep via-pub-navy to-pub-navy-deep rounded-2xl p-8 sm:p-12 text-white shadow-xl border border-pub-gold/40 relative overflow-hidden">
-            <div className="max-w-3xl space-y-5 relative z-10">
-              <span className="inline-block bg-pub-gold text-pub-navy-deep font-extrabold text-xs px-3.5 py-1.5 rounded-full uppercase tracking-wider">
-                {PPDB_BANNER_CONTENT.badge}
-              </span>
-
-              <h2
-                id="ppdb-cta-heading"
-                className="font-pub-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight"
-              >
-                {PPDB_BANNER_CONTENT.title}
-              </h2>
-
-              <p className="text-white/85 text-sm sm:text-base leading-relaxed max-w-2xl">
-                {PPDB_BANNER_CONTENT.description}
-                {activeWave && (
-                  <span className="block mt-2 font-semibold text-pub-gold-soft">
-                    Gelombang aktif saat ini: {activeWave.name}.
-                  </span>
-                )}
-              </p>
-
-              <div className="pt-2 flex flex-wrap items-center gap-3.5">
-                <Link
-                  href={PPDB_BANNER_CONTENT.ctaRegister.href}
-                  className="bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-bold text-sm sm:text-base px-6 py-3 rounded-[10px] shadow-lg transition-all inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
-                >
-                  <span>{PPDB_BANNER_CONTENT.ctaRegister.label}</span>
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </Link>
-                <Link
-                  href={PPDB_BANNER_CONTENT.ctaInfo.href}
-                  className="bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white font-semibold text-sm sm:text-base px-5 py-3 rounded-[10px] transition-all backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
-                >
-                  <span>{PPDB_BANNER_CONTENT.ctaInfo.label}</span>
-                </Link>
-                <Link
-                  href={PPDB_BANNER_CONTENT.ctaHelp.href}
-                  className="text-xs sm:text-sm text-white/80 hover:text-pub-gold-soft transition-colors underline underline-offset-4 focus:outline-none"
-                >
-                  {PPDB_BANNER_CONTENT.ctaHelp.label}
-                </Link>
-              </div>
-            </div>
-          </div>
+      <section
+        aria-labelledby="ppdb-cta-heading"
+        className="relative bg-[#062940] overflow-hidden min-h-[380px] lg:min-h-[450px] flex flex-col lg:flex-row items-center border-0"
+      >
+        {/* Desktop Left Photo with Full Height (Hanya di layar desktop lg:) */}
+        <div className="hidden lg:block absolute inset-y-0 left-0 w-[44%] xl:w-[42%] overflow-hidden bg-slate-900">
+          <Image
+            src="/images/ppdb-students.jpg"
+            alt="Siswa SMP Laboratorium UM dalam seragam sekolah"
+            fill
+            unoptimized
+            priority
+            sizes="(max-width: 1024px) 100vw, 44vw"
+            className="object-cover object-[center_15%]"
+          />
         </div>
-      </section>
 
-      {/* =========================================================================
-          7. PUSAT LAYANAN & BANTUAN INFORMASI
-          ========================================================================= */}
-      <section aria-labelledby="contact-heading" className="py-12 bg-pub-bg-app border-t border-pub-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <h2 id="contact-heading" className="font-pub-heading text-lg sm:text-xl font-bold text-pub-navy-deep">
-                Butuh Informasi Lebih Lanjut Mengenai Layanan Sekolah?
-              </h2>
-              <p className="text-xs sm:text-sm text-pub-text-muted">
-                Sekretariat SMP Laboratorium siap melayani pertanyaan seputar akademik, perizinan, dan program sekolah.
-              </p>
-            </div>
+        {/* Gold Chevron Accent Divider (Hanya di layar desktop lg:) */}
+        <svg
+          className="hidden lg:block absolute inset-y-0 left-[38%] xl:left-[36.5%] h-full w-24 xl:w-28 z-10 pointer-events-none"
+          viewBox="0 0 100 400"
+          preserveAspectRatio="none"
+          fill="none"
+          aria-hidden="true"
+        >
+          {/* Filler Dark Navy to cover right photo edge */}
+          <path d="M40 0 L100 0 L100 400 L40 400 L100 200 Z" fill="#062940" />
+          {/* Solid Gold Chevron Band */}
+          <path d="M10 0 L40 0 L100 200 L40 400 L10 400 L70 200 Z" fill="#C89332" />
+        </svg>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-pub-navy-deep">
-              <a
-                href={phoneTel}
-                className="inline-flex items-center gap-2 hover:text-pub-gold transition-colors font-medium focus:outline-none focus:underline"
-              >
-                <Phone className="w-4 h-4 text-pub-gold" aria-hidden="true" />
-                <span>{phoneDisplay}</span>
-              </a>
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 hover:text-pub-green transition-colors font-semibold text-pub-green focus:outline-none focus:underline"
-              >
-                <Phone className="w-4 h-4" aria-hidden="true" />
-                <span>WhatsApp: {waDisplay}</span>
-              </a>
+        {/* Mobile Image: DILUAR padding container! Membentang 100% selebar layar tanpa celah samping! */}
+        <div className="lg:hidden relative w-full aspect-[16/10] sm:aspect-[21/9] overflow-hidden bg-slate-900">
+          <Image
+            src="/images/ppdb-students.jpg"
+            alt="Siswa SMP Laboratorium UM dalam seragam sekolah"
+            fill
+            unoptimized
+            priority
+            sizes="100vw"
+            className="object-cover object-[center_15%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#062940] via-transparent to-transparent" />
+        </div>
+
+        {/* Content Container dengan padding yang presisi */}
+        <div className="relative z-20 w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-8 sm:py-10 lg:py-16">
+          {/* Right Text Column - Diposisikan di sisi kanan layar */}
+          <div className="lg:ml-auto lg:w-[52%] xl:w-[50%] lg:pl-8 text-white space-y-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#F4E2BD] block">
+              PENERIMAAN PESERTA DIDIK BARU
+            </span>
+
+            <h2
+              id="ppdb-cta-heading"
+              className="font-pub-heading text-2xl sm:text-3xl lg:text-[42px] font-bold text-white tracking-tight leading-tight"
+            >
+              PPDB 2026/2027
+            </h2>
+
+            <p className="text-white/90 text-sm sm:text-base font-medium">
+              Jalur Reguler &nbsp;|&nbsp; ICP &nbsp;|&nbsp; Tahfidz &nbsp;|&nbsp; Inklusi
+            </p>
+
+            {activeWave && (
+              <div className="space-y-0.5">
+                <p className="text-xs sm:text-sm font-semibold text-[#F4E2BD]">
+                  Gelombang aktif saat ini: {activeWave.name}
+                </p>
+                {activeWave.close_at && (
+                  <p className="text-xs text-white/80">
+                    Batas waktu pendaftaran: {formatTanggalIndo(activeWave.close_at)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Link
-                href="/kontak"
-                className="inline-flex items-center gap-1.5 bg-pub-navy hover:bg-pub-navy-deep text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-pub-gold"
+                href="/ppdb"
+                className="bg-[#C89332] hover:bg-[#B57C23] text-white font-bold text-xs sm:text-base py-3 px-6 rounded-lg shadow-md transition-all inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2 focus:ring-offset-[#062940]"
               >
-                <span>Lihat Alamat & Lokasi Kampus</span>
-                <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Daftar Sekarang</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link
+                href="/ppdb#jalur"
+                className="bg-transparent hover:bg-white/10 text-white border border-white/40 hover:border-white font-semibold text-xs sm:text-base py-3 px-5 rounded-lg transition-colors inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2 focus:ring-offset-[#062940]"
+              >
+                <span>Lihat Jalur &amp; Syarat</span>
               </Link>
             </div>
           </div>

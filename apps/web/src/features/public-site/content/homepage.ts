@@ -21,7 +21,7 @@ export interface ApproachPillar {
   title: string;
   category: string;
   description: string;
-  iconName: 'building' | 'sparkles' | 'users' | 'shield';
+  iconName: 'building' | 'compass' | 'users' | 'shield';
 }
 
 export const HERO_CONTENT = {
@@ -112,7 +112,7 @@ export const APPROACH_PILLARS: ApproachPillar[] = [
     category: 'PKH & TaBaQu',
     description:
       'Pendidikan Keterampilan Hidup (Life Skills) di kelas 7 dan Tata Baca Al-Qur\'an (TaBaQu) di kelas 8 untuk membangun kemandirian mental.',
-    iconName: 'sparkles',
+    iconName: 'compass',
   },
   {
     title: 'Pengembangan Minat & Bakat',

@@ -12,7 +12,7 @@ const USER_DATA_KEY = 'sistlabum_user_profile';
 // In-memory fallback untuk SSR / sesi tab aktif / environment tanpa localStorage
 let memoryAccessToken: string | null = null;
 let memoryRefreshToken: string | null = null;
-let memoryUser: User | null = null;
+let memoryUser: Partial<User> | null = null;
 
 function hasSessionStorage(): boolean {
   try {
@@ -32,14 +32,29 @@ function hasLocalStorage(): boolean {
 
 export const tokenStorage = {
   getAccessToken(): string | null {
-    if (!hasSessionStorage()) {
+    if (memoryAccessToken) {
       return memoryAccessToken;
     }
-    try {
-      return memoryAccessToken || window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
-    } catch {
-      return memoryAccessToken;
+    if (hasSessionStorage()) {
+      try {
+        const sessionToken = window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
+        if (sessionToken) return sessionToken;
+      } catch {
+        // Fallback
+      }
     }
+    // Fallback defensif untuk sesi pendaftar PPDB atau legacy local storage
+    if (hasLocalStorage()) {
+      try {
+        const localToken =
+          window.localStorage.getItem(ACCESS_TOKEN_KEY) ||
+          window.localStorage.getItem('auth_token');
+        if (localToken) return localToken;
+      } catch {
+        // Fallback
+      }
+    }
+    return memoryAccessToken;
   },
 
   setAccessToken(token: string | null): void {
@@ -53,6 +68,18 @@ export const tokenStorage = {
         }
       } catch {
         // Fallback to memory
+      }
+    }
+    // Sinkronkan juga ke localStorage untuk backward compatibility
+    if (hasLocalStorage()) {
+      try {
+        if (token) {
+          window.localStorage.setItem('auth_token', token);
+        } else {
+          window.localStorage.removeItem('auth_token');
+        }
+      } catch {
+        // Fallback
       }
     }
   },
@@ -91,7 +118,7 @@ export const tokenStorage = {
   },
 
   getUser(): User | null {
-    if (memoryUser) return memoryUser;
+    if (memoryUser) return memoryUser as User;
     if (hasSessionStorage()) {
       try {
         const raw = window.sessionStorage.getItem(USER_DATA_KEY);
@@ -103,7 +130,7 @@ export const tokenStorage = {
     return null;
   },
 
-  setUser(user: User | null): void {
+  setUser(user: Partial<User> | null): void {
     memoryUser = user;
     if (hasSessionStorage()) {
       try {
@@ -133,6 +160,8 @@ export const tokenStorage = {
     if (hasLocalStorage()) {
       try {
         window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+        window.localStorage.removeItem('auth_token');
+        window.localStorage.removeItem('user_role');
       } catch {
         // Ignore
       }

@@ -237,27 +237,51 @@ class UatStagingSeeder extends Seeder
                 ]
             );
 
-            // 4. PPDB Setup (Gelombang 1 & Jalur Prestasi)
+            // 4. PPDB Setup (Gelombang 1 & 4 Jalur Pendaftaran Faktual)
             $wave1 = PPDBWave::firstOrCreate(
                 ['name' => 'Gelombang 1'],
                 [
                     'school_id' => $schoolId,
                     'open_at' => '2026-01-01 00:00:00',
-                    'close_at' => '2026-04-30 23:59:59',
-                    'result_publish_at' => '2026-05-10 10:00:00',
+                    'close_at' => '2027-06-30 23:59:59',
+                    'result_publish_at' => '2027-07-05 10:00:00',
                     'status' => 'aktif',
                 ]
             );
 
-            $trackPrestasi = PPDBTrack::firstOrCreate(
+            PPDBTrack::firstOrCreate(
+                ['wave_id' => $wave1->id, 'code' => 'reguler'],
                 [
-                    'wave_id' => $wave1->id,
-                    'code' => 'prestasi',
-                ],
+                    'name' => 'Jalur Reguler',
+                    'quota' => 120,
+                    'score_formula' => ['rapor' => 0.7, 'tes' => 0.3],
+                ]
+            );
+
+            PPDBTrack::firstOrCreate(
+                ['wave_id' => $wave1->id, 'code' => 'prestasi'],
                 [
                     'name' => 'Jalur Prestasi',
                     'quota' => 50,
                     'score_formula' => ['rapor' => 0.6, 'prestasi' => 0.4],
+                ]
+            );
+
+            PPDBTrack::firstOrCreate(
+                ['wave_id' => $wave1->id, 'code' => 'afirmasi'],
+                [
+                    'name' => 'Jalur Afirmasi',
+                    'quota' => 40,
+                    'score_formula' => ['rapor' => 1.0],
+                ]
+            );
+
+            PPDBTrack::firstOrCreate(
+                ['wave_id' => $wave1->id, 'code' => 'tahfidz'],
+                [
+                    'name' => 'Jalur Tahfidz Qur\'an',
+                    'quota' => 15,
+                    'score_formula' => ['tahfidz' => 0.6, 'rapor' => 0.4],
                 ]
             );
 

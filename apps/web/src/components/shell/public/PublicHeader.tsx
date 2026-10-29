@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
-import { PUBLIC_NAV_ITEMS } from '@/features/public-site/content/navigation';
+import { Menu, X, Phone, Clock, Building, MapPin, ChevronRight } from 'lucide-react';
+import { PUBLIC_NAV_ITEMS, SCHOOL_CONTACT_INFO } from '@/features/public-site/content/navigation';
 import { PublicAuthNav } from './PublicAuthNav';
 
 export function PublicHeader() {
@@ -96,33 +96,79 @@ export function PublicHeader() {
   return (
     <>
       {/* Header Sticky Utama */}
-      <header className="sticky top-0 z-40 transition-all duration-200 bg-pub-navy shadow-md py-3.5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-          {/* Logo & Identitas Institusi */}
+      <header className="sticky top-0 z-40 transition-all duration-200 bg-white shadow-xs border-b border-gray-100">
+        {/* Top Utility Bar (Informasi Kampus & Kontak Resmi Sesuai Mockup) */}
+        <div className="hidden lg:block bg-[#062940] border-b border-white/10 text-xs text-white/90 py-3 px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="w-full flex items-center justify-between">
+            {/* Sisi Kiri: Institusi & Alamat */}
+            <div className="flex items-center gap-7">
+              <div className="flex items-center gap-2 text-white/95 font-medium">
+                <Building className="w-4 h-4 text-white/85" aria-hidden="true" />
+                <span>P2LP-Universitas Negeri Malang</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/85">
+                <MapPin className="w-4 h-4 text-white/85" aria-hidden="true" />
+                <span>Jl. Simpang Bogor No. T-7, Sumbersari, Malang</span>
+              </div>
+            </div>
+
+            {/* Sisi Kanan: Telepon & Jam Kantor */}
+            <div className="flex items-center gap-7">
+              <a
+                href={SCHOOL_CONTACT_INFO.phone.tel}
+                className="flex items-center gap-2 text-white/85 hover:text-white transition-colors"
+                title="Telepon Resmi Sekolah"
+              >
+                <Phone className="w-4 h-4 text-white/85" aria-hidden="true" />
+                <span>(0341) 588550</span>
+              </a>
+              <div className="flex items-center gap-2 text-white/85">
+                <Clock className="w-4 h-4 text-white/85" aria-hidden="true" />
+                <span>Senin - Jumat 07.00 - 15.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bar Navigasi Utama */}
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-3 flex items-center justify-between bg-white">
+          {/* Dua Logo Institusi Berdampingan (UM & SMP Lab UM) */}
           <Link
             href="/"
-            className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy rounded-lg p-0.5"
+            className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2 rounded-lg p-0.5"
           >
-            <Image
-              src="/images/logo.png"
-              alt="Logo SMP Laboratorium"
-              width={44}
-              height={44}
-              priority
-              className="w-11 h-11 object-contain flex-shrink-0 drop-shadow-sm transition-transform group-hover:scale-105"
-            />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* <Image
+                src="/images/logo-um.png"
+                alt="Logo Universitas Negeri Malang"
+                width={40}
+                height={40}
+                priority
+                unoptimized
+                className="w-7 h-7 sm:w-9 sm:h-9 lg:w-10 lg:h-10 object-contain flex-shrink-0 drop-shadow-xs transition-transform group-hover:scale-105"
+              /> */}
+              <Image
+                src="/images/logo.png"
+                alt="Logo SMP Laboratorium"
+                width={40}
+                height={40}
+                priority
+                unoptimized
+                className="w-7 h-7 sm:w-9 sm:h-9 lg:w-10 lg:h-10 object-contain flex-shrink-0 drop-shadow-xs transition-transform group-hover:scale-105"
+              />
+            </div>
             <div className="flex flex-col">
-              <span className="font-pub-heading text-[1.05rem] font-bold text-white leading-tight tracking-wide">
+              <span className="font-pub-heading text-sm sm:text-base lg:text-[1.25rem] font-bold text-[#0A3D62] leading-tight tracking-tight">
                 SMP Laboratorium
               </span>
-              <span className="text-[0.75rem] text-pub-gold-soft font-medium tracking-wider">
+              <span className="text-[9px] sm:text-[11px] lg:text-xs text-[#4A6B82] font-medium tracking-tight">
                 P2LP Universitas Negeri Malang
               </span>
             </div>
           </Link>
 
-          {/* Navigasi Desktop */}
-          <nav className="hidden lg:flex items-center gap-1.5" aria-label="Navigasi Utama">
+          {/* Navigasi Desktop Bersih Sesuai Mockup (Tanpa Garis Bawah, Hanya Teks Bold / Warna) */}
+          <nav className="hidden lg:flex items-center gap-7" aria-label="Navigasi Utama">
             {PUBLIC_NAV_ITEMS.map((item) => {
               const isActive =
                 item.href === '/'
@@ -133,11 +179,10 @@ export function PublicHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-3.5 py-1.5 rounded-[6px] text-sm font-medium transition-colors relative focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy ${
-                    isActive
-                      ? "text-pub-gold-soft font-semibold after:content-[''] after:absolute after:bottom-0 after:left-3.5 after:right-3.5 after:h-[2px] after:bg-pub-gold after:rounded-full"
-                      : 'text-white/90 hover:text-white hover:bg-white/10'
-                  }`}
+                  className={`py-1 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332] rounded ${isActive
+                    ? 'text-[#0A3D62] font-bold'
+                    : 'text-gray-600 hover:text-[#0A3D62] font-medium'
+                    }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
                   {item.label}
@@ -146,11 +191,11 @@ export function PublicHeader() {
             })}
           </nav>
 
-          {/* Quick Actions Desktop */}
+          {/* Quick Actions Desktop (PPDB Online Emas & Masuk Portal Outline Sesuai Mockup) */}
           <div className="hidden lg:flex items-center gap-3">
             <Link
               href="/ppdb"
-              className="bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-semibold text-sm px-4 py-2 rounded-[10px] shadow-sm hover:shadow transition-all inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
+              className="bg-[#C89332] hover:bg-[#B57C23] text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg shadow-xs hover:shadow transition-all inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2"
             >
               PPDB Online
             </Link>
@@ -166,7 +211,7 @@ export function PublicHeader() {
             aria-label={isMobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-nav-drawer"
-            className="lg:hidden p-2 rounded-[6px] border border-white/20 text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
+            className="lg:hidden p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2"
           >
             <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -189,33 +234,46 @@ export function PublicHeader() {
             role="dialog"
             aria-modal="true"
             aria-label="Menu navigasi mobile"
-            className="fixed top-0 right-0 bottom-0 w-[min(320px,85vw)] bg-pub-navy z-50 p-6 flex flex-col shadow-2xl lg:hidden animate-in slide-in-from-right duration-200"
+            className="fixed top-0 right-0 bottom-0 w-[min(340px,85vw)] bg-white z-50 p-6 flex flex-col shadow-2xl lg:hidden animate-in slide-in-from-right duration-200 border-l border-gray-100 overflow-y-auto"
           >
             {/* Header Drawer */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-              <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-between pb-5 border-b border-gray-100 shrink-0">
+              <Link
+                href="/"
+                onClick={() => closeMobileMenu(false)}
+                className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-[#C89332] rounded-lg p-0.5"
+              >
                 <Image
                   src="/images/logo.png"
                   alt="Logo SMP Laboratorium"
-                  width={36}
-                  height={36}
-                  className="w-9 h-9 object-contain flex-shrink-0"
+                  width={40}
+                  height={40}
+                  priority
+                  unoptimized
+                  className="w-9 h-9 object-contain shrink-0"
                 />
-                <span className="font-pub-heading font-bold text-white text-base">SMP Laboratorium</span>
-              </div>
+                <div className="flex flex-col">
+                  <span className="font-pub-heading text-base font-bold text-[#0A3D62] leading-tight tracking-tight">
+                    SMP Laboratorium
+                  </span>
+                  <span className="text-[11px] text-[#4A6B82] font-medium tracking-tight">
+                    P2LP Universitas Negeri Malang
+                  </span>
+                </div>
+              </Link>
               <button
                 ref={closeButtonRef}
                 type="button"
                 onClick={() => closeMobileMenu(true)}
                 aria-label="Tutup panel navigasi"
-                className="p-1.5 rounded-[6px] text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
+                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-[#0A3D62] hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
-            {/* Daftar Menu Mobile */}
-            <nav className="flex flex-col gap-1.5" aria-label="Menu Mobile">
+            {/* Daftar Navigasi Utama */}
+            <nav className="py-5 flex flex-col gap-1.5 shrink-0" aria-label="Menu Mobile">
               {PUBLIC_NAV_ITEMS.map((item) => {
                 const isActive =
                   item.href === '/'
@@ -227,29 +285,83 @@ export function PublicHeader() {
                     key={item.href}
                     href={item.href}
                     onClick={() => closeMobileMenu(false)}
-                    className={`px-4 py-2.5 rounded-[6px] font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy ${
-                      isActive
-                        ? 'bg-white/15 text-pub-gold-soft font-semibold'
-                        : 'text-white/90 hover:bg-white/10'
-                    }`}
+                    className={`group flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#C89332] ${isActive
+                      ? 'bg-[#062940] text-white font-semibold shadow-xs'
+                      : 'text-gray-700 hover:text-[#0A3D62] hover:bg-gray-50 font-medium'
+                      }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    <ChevronRight
+                      className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${isActive ? 'text-[#C89332]' : 'text-gray-400 group-hover:text-[#0A3D62]'
+                        }`}
+                      aria-hidden="true"
+                    />
                   </Link>
                 );
               })}
             </nav>
 
-            {/* CTA Bawah Drawer Mobile */}
-            <div className="mt-auto pt-6 border-t border-white/10 flex flex-col gap-3">
-              <Link
-                href="/ppdb"
-                onClick={() => closeMobileMenu(false)}
-                className="w-full text-center bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-semibold text-sm py-2.5 rounded-[10px] shadow transition-colors inline-block focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
-              >
-                Daftar PPDB Online
-              </Link>
-              <PublicAuthNav variant="mobile" onNavigate={() => closeMobileMenu(false)} />
+            {/* Quick Actions & Informasi Kontak (Sesuai Header Desktop & Style Halaman Utama) */}
+            <div className="mt-auto pt-5 border-t border-gray-100 flex flex-col gap-3.5 shrink-0">
+              {/* Info Bar Resmi (Diposisikan di atas tombol aksi) */}
+              <div className="bg-[#062940] text-white rounded-xl p-3.5 border border-white/5 space-y-2.5 shadow-xs">
+                {/* Header Institusi */}
+                <div className="flex items-center gap-2.5 pb-2 border-b border-white/10">
+                  <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center shrink-0 text-[#C89332]">
+                    <Building className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <span className="text-xs font-semibold text-white tracking-tight">
+                    P2LP Universitas Negeri Malang
+                  </span>
+                </div>
+
+                {/* Baris Informasi Detail */}
+                <div className="space-y-2 text-xs">
+                  {/* Telepon */}
+                  <div className="flex items-center gap-2.5 text-white/85">
+                    <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0 text-white/70">
+                      <Phone className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <a
+                      href={SCHOOL_CONTACT_INFO.phone.tel}
+                      className="font-medium hover:text-[#C89332] hover:underline transition-colors"
+                    >
+                      (0341) 588550
+                    </a>
+                  </div>
+
+                  {/* Jam Operasional */}
+                  <div className="flex items-center gap-2.5 text-white/85">
+                    <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0 text-white/70">
+                      <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <span className="font-normal text-white/80">Senin - Jumat: 07.00 - 15.00 WIB</span>
+                  </div>
+
+                  {/* Alamat */}
+                  <div className="flex items-start gap-2.5 text-white/85">
+                    <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0 text-white/70 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <span className="text-xs text-white/75 leading-snug">
+                      Jl. Simpang Bogor No. T-7, Sumbersari, Malang
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dua Tombol Aksi Persis Desktop Header */}
+              <div className="flex flex-col gap-2.5">
+                <Link
+                  href="/ppdb"
+                  onClick={() => closeMobileMenu(false)}
+                  className="w-full bg-[#C89332] hover:bg-[#B57C23] text-white font-semibold text-sm py-2.5 px-4 rounded-lg shadow-xs hover:shadow transition-all text-center inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2"
+                >
+                  PPDB Online
+                </Link>
+                <PublicAuthNav variant="mobile" onNavigate={() => closeMobileMenu(false)} />
+              </div>
             </div>
           </aside>
         </>

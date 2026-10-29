@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/providers/auth-provider';
 import { resolveUserDestination, getDestinationPath } from '@/lib/rbac/evaluator';
 
+import { LogIn } from 'lucide-react';
+
 interface PublicAuthNavProps {
   variant?: 'desktop' | 'mobile';
   onNavigate?: () => void;
@@ -31,9 +33,10 @@ export function PublicAuthNav({ variant = 'desktop', onNavigate }: PublicAuthNav
       <Link
         href={destinationPath}
         onClick={onNavigate}
-        className="w-full text-center bg-transparent border border-white/30 text-white hover:bg-white/10 font-semibold text-sm py-2.5 rounded-[10px] transition-colors inline-block focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
+        className="w-full text-center bg-white hover:bg-gray-50 text-[#0A3D62] border border-[#0A3D62] font-semibold text-sm py-2.5 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#C89332] focus:ring-offset-2"
       >
-        {label}
+        <LogIn className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />
+        <span>{label}</span>
       </Link>
     );
   }
@@ -41,9 +44,9 @@ export function PublicAuthNav({ variant = 'desktop', onNavigate }: PublicAuthNav
   return (
     <Link
       href={destinationPath}
-      className="bg-transparent hover:bg-white/10 text-white border border-white/40 hover:border-white font-semibold text-sm px-3.5 py-2 rounded-[10px] transition-all inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2 focus:ring-offset-pub-navy"
+      className="bg-white hover:bg-gray-50 text-[#0A3D62] border border-[#0A3D62] font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg transition-colors inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-pub-gold focus:ring-offset-2"
     >
-      {label}
+      <span>{label}</span>
     </Link>
   );
 }

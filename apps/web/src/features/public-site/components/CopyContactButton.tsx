@@ -6,10 +6,11 @@ import { Copy, Check } from 'lucide-react';
 interface CopyContactButtonProps {
   textToCopy: string;
   label: string;
+  customText?: string;
   className?: string;
 }
 
-export function CopyContactButton({ textToCopy, label, className = '' }: CopyContactButtonProps) {
+export function CopyContactButton({ textToCopy, label, customText, className = '' }: CopyContactButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -31,21 +32,21 @@ export function CopyContactButton({ textToCopy, label, className = '' }: CopyCon
         onClick={handleCopy}
         aria-label={`Salin ${label}: ${textToCopy}`}
         title={`Salin ${label}`}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-[6px] border transition-colors focus:outline-none focus:ring-2 focus:ring-pub-gold ${
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332] ${
           copied
-            ? 'bg-pub-green-soft/30 border-pub-green text-pub-green'
-            : 'bg-white border-pub-border text-pub-text-muted hover:text-pub-navy hover:border-pub-navy/30'
+            ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+            : 'bg-white border-gray-300 text-gray-700 hover:text-[#062940] hover:border-[#C89332]'
         } ${className}`}
       >
         {copied ? (
           <>
-            <Check className="w-3.5 h-3.5 text-pub-green" aria-hidden="true" />
+            <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>Tersalin</span>
           </>
         ) : (
           <>
-            <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Salin</span>
+            <Copy className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" />
+            <span>{customText || 'Salin'}</span>
           </>
         )}
       </button>

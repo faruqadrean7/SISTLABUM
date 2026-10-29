@@ -194,3 +194,70 @@ export const SCHOOL_IDENTITY_DETAILS: IdentityDetail[] = [
     value: 'Kurikulum Merdeka SNP, Cambridge ICP, & Program Adab TaBaQu',
   },
 ];
+
+export interface FacilityItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  highlight: string;
+  imageSrc: string;
+}
+
+export const SCHOOL_FACILITIES: FacilityItem[] = [
+  {
+    id: 'lab-sains',
+    name: 'Laboratorium Sains & Riset Terpadu',
+    category: 'Eksplorasi Ilmiah',
+    description:
+      'Fasilitas praktikum Fisika, Biologi, dan Kimia terpadu untuk pembelajaran berbasis inkuiri, eksperimen nyata, serta pembinaan Karya Ilmiah Remaja (KIR).',
+    highlight: 'Peralatan Praktikum Standar SNP & Pembimbingan Pakar UM',
+    imageSrc: '/images/keunggulan-02.jpg',
+  },
+  {
+    id: 'lab-komputer',
+    name: 'Laboratorium Komputer & CBT Center',
+    category: 'Teknologi & Digital',
+    description:
+      'Pusat komputasi modern dengan jaringan fiber optik berkecepatan tinggi untuk Asesmen Nasional Berbasis Komputer (ANBK), ujian digital CBT, dan literasi teknologi.',
+    highlight: 'Dukungan Ujian Digital Mandiri & Komputer Modern',
+    imageSrc: '/images/keunggulan-01.jpg',
+  },
+  {
+    id: 'perpustakaan',
+    name: 'Perpustakaan & Pojok Literasi Digital',
+    category: 'Pusat Sumber Belajar',
+    description:
+      'Koleksi literatur kurikulum, buku pengayaan referensi, ensiklopedia sains, serta akses repositori e-library yang terintegrasi dengan jejaring perpustakaan UM.',
+    highlight: 'Ruang Baca Ber-AC & Koleksi Referensi Lengkap',
+    imageSrc: '/images/keunggulan-04.jpg',
+  },
+  {
+    id: 'inklusi',
+    name: 'Ruang Khusus Inklusi & Resource Center',
+    category: 'Layanan Ramah Anak',
+    description:
+      'Ruang pendampingan ramah anak yang dirancang untuk stimulasi dan bimbingan individual peserta didik berkebutuhan khusus dengan dukungan Guru Pendamping Khusus (GPK).',
+    highlight: 'Pendampingan Berkelanjutan & Tenaga Ahli Terlatih',
+    imageSrc: '/images/keunggulan-03.jpg',
+  },
+  {
+    id: 'lapangan',
+    name: 'Lapangan Olahraga & Arena Serbaguna',
+    category: 'Kebugaran & Prestasi',
+    description:
+      'Sarana lapangan terbuka untuk basket, futsal, bulu tangkis, voli, senam kebugaran jasmani, serta kegiatan apel upacara bendera sekolah.',
+    highlight: 'Mewadahi 24 Cabang Ekstrakurikuler Minat & Bakat',
+    imageSrc: '/images/keunggulan-04.jpg',
+  },
+  {
+    id: 'ibadah',
+    name: 'Masjid & Ruang Pembiasaan Ibadah',
+    category: 'Pembinaan Karakter Spiritual',
+    description:
+      'Sarana peribadatan representatif untuk sholat berjamaah harian, sholat Dhuha bersama, setoran hafalan program TaBaQu (Tahfidz Baca Quran), dan keputrian.',
+    highlight: 'Pusat Penguatan Adab & Pembiasaan Akhlak Mulia',
+    imageSrc: '/images/keunggulan-03.jpg',
+  },
+];
+

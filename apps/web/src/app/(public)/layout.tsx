@@ -34,7 +34,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <div
       className={`${fraunces.variable} ${inter.variable} min-h-screen flex flex-col bg-pub-bg-app text-pub-text-main font-pub-sans selection:bg-pub-gold-soft selection:text-pub-navy-deep`}
     >
-      <SkipLink />
+      {/* <SkipLink /> */}
       <PublicHeader />
       <div className="flex-1 flex flex-col scroll-mt-20">
         {children}

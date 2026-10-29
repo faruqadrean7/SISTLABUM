@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -9,6 +10,7 @@ import {
   Calendar,
   Tag,
   ArrowLeft,
+  ArrowRight,
   AlertCircle,
   RotateCw,
   Share2,
@@ -221,24 +223,49 @@ export default function NewsDetailPage() {
         </div>
       </section>
 
-      {/* 3. CTA PPDB */}
-      <section className="py-10 bg-pub-navy-deep text-white border-t border-pub-navy/20">
-        <div className="max-w-container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-center sm:text-left">
-              <h2 className="font-heading font-bold text-lg text-white">
-                Penerimaan Siswa Baru Tahun Ajaran 2026/2027
+      {/* 3. CALL TO ACTION PENDAFTARAN & KONTAK */}
+      <section className="relative overflow-hidden bg-[#062940] text-white py-12 sm:py-14 w-full border-t border-white/10">
+        {/* Foto Kampus dengan Pohon Hijau di Sisi Kiri Faded Overlay */}
+        <div className="absolute inset-y-0 left-0 w-2/5 overflow-hidden pointer-events-none opacity-25">
+          <Image
+            src="/images/school-gate.jpg"
+            alt=""
+            fill
+            unoptimized
+            sizes="40vw"
+            className="object-cover object-left"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#062940]/80 to-[#062940]" aria-hidden="true" />
+        </div>
+
+        <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+            <div className="text-center lg:text-left border-l-0 lg:border-l-2 lg:border-white/20 lg:pl-5">
+              <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Jangan lewatkan informasi terbaru
+                <br />
+                seputar kegiatan dan prestasi kami.
               </h2>
-              <p className="text-xs text-white/75">
-                Daftarkan putra-putri Anda melalui portal pendaftaran online resmi SPMB.
+              <p className="text-white/80 text-xs sm:text-sm mt-1.5 max-w-xl leading-relaxed">
+                Ikuti terus warta, berita dan pengumuman resmi SMP Laboratorium UM.
               </p>
             </div>
-            <Link
-              href="/ppdb"
-              className="bg-pub-gold hover:bg-pub-gold-hover text-pub-navy-deep font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-white flex-shrink-0"
-            >
-              Daftar PPDB Sekarang
-            </Link>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
+              <Link
+                href="/ppdb"
+                className="w-full sm:w-auto text-center bg-[#C89332] hover:bg-[#B57C23] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-sm hover:shadow transition-all inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#062940]"
+              >
+                <span>PPDB Online</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/kontak"
+                className="w-full sm:w-auto text-center inline-flex items-center justify-center gap-2 bg-[#062940] hover:bg-white/10 border border-white/40 hover:border-white text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
+              >
+                <span>Hubungi Kami</span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
