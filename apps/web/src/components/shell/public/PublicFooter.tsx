@@ -1,10 +1,50 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { MapPin, Phone, Mail, MessageCircle, HelpCircle } from 'lucide-react';
 import { FooterLeafletMap } from './FooterLeafletMap';
 
 export function PublicFooter() {
+  const pathname = usePathname();
+
+  // Deteksi Zona Sistem Admisi (Auth & Dashboard PPDB)
+  const isPPDBAuthOrDashboard =
+    pathname === '/ppdb/daftar' ||
+    pathname === '/ppdb/masuk' ||
+    pathname?.startsWith('/ppdb/dashboard');
+
+  // Jika berada di zona pendaftaran / login / dashboard pendaftar, tampilkan Minimal Single-Line Footer
+  if (isPPDBAuthOrDashboard) {
+    return (
+      <footer className="bg-[#062940] text-white/80 py-4 border-t-2 border-[#C89332]/40 print:hidden mt-auto">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/70">
+          <div className="flex items-center gap-2">
+            <span>© 2026 SMP Laboratorium UM (P2LP Universitas Negeri Malang).</span>
+            <span className="hidden md:inline">• Portal Admisi PPDB Online</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] sm:text-xs">
+            <Link href="/ppdb" className="hover:text-white transition-colors underline">
+              Informasi Alur &amp; Kuota PPDB
+            </Link>
+            <a
+              href="https://wa.me/6285126068473"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md"
+            >
+              <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" aria-hidden="true" />
+              <span>Bantuan Panitia PPDB</span>
+            </a>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Footer Lengkap 4-Kolom untuk Seluruh Halaman Publik (Beranda, Profil, Akademik, Berita, Galeri, Kontak, Info PPDB)
   return (
     <footer className="bg-[#062940] text-white/80 pt-16 border-t-4 border-[#C89332]">
       <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
@@ -155,7 +195,7 @@ export function PublicFooter() {
 
         {/* Sub-footer Hak Cipta */}
         <div className="border-t border-white/10 py-6 text-xs text-white/60 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
-          <div>© 2025 SMP Laboratorium P2LP UM. All rights reserved.</div>
+          <div>© 2026 SMP Laboratorium P2LP UM. All rights reserved.</div>
           <div>SMP Laboratorium &nbsp;|&nbsp; Universitas Negeri Malang</div>
         </div>
       </div>

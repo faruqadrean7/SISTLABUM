@@ -22,11 +22,28 @@ import {
   FlaticonRosette,
 } from '@/components/ui/FlaticonIcons';
 import {
+  FadeIn,
+  StaggerContainer,
+  StaggerItem,
+  AnimatedNumber,
+  MarqueeTicker,
+} from '@/components/ui/Motion';
+import {
   PRINCIPAL_STATEMENT,
   VISION_MISSION,
 } from '@/features/public-site/content/profile';
 import { publicApi } from '@/features/public-site/public-api';
 import { formatPhoneLink, formatWaLink } from '@/features/public-site/utils';
+
+const PROFIL_TICKER_ITEMS = [
+  'Akreditasi A (Unggul) Nilai 96 BAN-SM',
+  'Afiliasi Resmi P2LP Universitas Negeri Malang',
+  'Cambridge International Class Program (ICP)',
+  'Sekolah Laboratorium Model Riset & Inovasi Pembelajaran',
+  'Pionir & Percontohan Sekolah Inklusi Ramah Anak',
+  'Pembinaan Karakter, Adab & Tahfidz Al-Qur\'an',
+  'Didukung Fasilitas Terpadu & Laboratorium Pembelajaran UM',
+];
 
 export default function ProfilePage() {
   const { data: siteData } = useQuery({
@@ -75,7 +92,7 @@ export default function ProfilePage() {
         aria-labelledby="profile-hero-heading"
         className="relative bg-[#062940] text-white overflow-hidden border-b border-white/10 w-full"
       >
-        <div className="relative w-full min-h-0 lg:min-h-[460px] flex flex-col lg:flex-row lg:items-center">
+        <div className="relative w-full min-h-0 lg:min-h-[440px] flex flex-col lg:flex-row lg:items-center">
           {/* Layer Foto Kampus di Kanan - Dibuat Jauh Lebih Lebar & Dominan Sesuai Permintaan */}
           <div className="hidden lg:block absolute inset-y-0 right-0 w-[64%] xl:w-[68%] 2xl:w-[70%] overflow-hidden pointer-events-none select-none">
             <div className="relative w-full h-full">
@@ -96,9 +113,9 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Konten Teks Hero (Mobile & Desktop) - Dibuat Lebih Ringkas & Rapi Tanpa Ruang Kosong Berlebih */}
-          <div className="relative z-10 w-full lg:w-[40%] xl:w-[35%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-6 lg:py-16">
-            <div className="max-w-md space-y-4">
+          {/* Konten Teks Hero (Mobile & Desktop) */}
+          <div className="relative z-10 w-full lg:w-[42%] xl:w-[38%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-6 lg:py-16">
+            <FadeIn direction="right" className="max-w-md space-y-4">
               {/* Breadcrumb Navigation */}
               <nav aria-label="Navigasi Halaman">
                 <ol className="flex items-center gap-2 text-xs text-white/70">
@@ -136,7 +153,7 @@ export default function ProfilePage() {
                   <span>SMP Laboratorium UM</span>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
 
           {/* Mobile / Tablet Image: Membentang 100% selebar layar tanpa celah samping persis Homepage */}
@@ -174,7 +191,7 @@ export default function ProfilePage() {
               <FlaticonRosette size={42} className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 drop-shadow-xs" aria-hidden="true" />
               <div>
                 <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight">Akreditasi A</p>
-                <p className="text-[11px] sm:text-xs lg:text-sm text-white/80 font-normal mt-0.5">Nilai 96 (Unggul)</p>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-white/80 font-normal mt-0.5">Nilai <AnimatedNumber value={96} /> (Unggul)</p>
               </div>
             </div>
 
@@ -190,10 +207,10 @@ export default function ProfilePage() {
             {/* Kredensial 3: 36 Tahun Mengabdi */}
             <div className="flex items-center gap-2.5 sm:gap-4 lg:pl-8">
               <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-dashed border-white/70 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 text-[#F4E2BD]">
-                36
+                <AnimatedNumber value={36} />
               </div>
               <div>
-                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight">36 Tahun Mengabdi</p>
+                <p className="text-sm sm:text-base lg:text-[17px] font-bold text-white leading-tight"><AnimatedNumber value={36} /> Tahun Mengabdi</p>
                 <p className="text-[11px] sm:text-xs lg:text-sm text-white/80 font-normal mt-0.5">Est. 1990</p>
               </div>
             </div>
@@ -210,14 +227,19 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Running Marquee Ticker Profil Emas & Navy */}
+      <div className="bg-[#FAF8F5] border-b border-slate-200/80 py-3 text-[#062940]">
+        <MarqueeTicker items={PROFIL_TICKER_ITEMS} speed={42} />
+      </div>
+
       {/* =========================================================================
           3. SECTION 1: TENTANG SEKOLAH BENTO (FULL LAYAR BERLATAR PUTIH)
           ========================================================================= */}
       <section className="py-12 sm:py-16 lg:py-20 bg-white border-b border-gray-100 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <StaggerContainer className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {/* Kolom 1 (Kiri): Tentang Sekolah */}
-            <div className="lg:col-span-4 flex flex-col justify-between">
+            <StaggerItem className="lg:col-span-4 flex flex-col justify-between">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block mb-2">
                   TENTANG SEKOLAH
@@ -248,149 +270,153 @@ export default function ProfilePage() {
                   <ArrowRight className="w-3.5 h-3.5 text-[#C89332]" aria-hidden="true" />
                 </Link>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Kolom 2 (Tengah): Sambutan Kepala Sekolah dengan Foto Potret */}
-            <div className="lg:col-span-5 bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-              <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
-                {/* Foto Potret Kepala Sekolah */}
-                <div className="relative w-32 sm:w-36 aspect-[3/4] rounded-xl overflow-hidden shrink-0 shadow-xs border border-gray-200 bg-gray-100">
-                  <Image
-                    src={principalPhotoUrl}
-                    alt={`Foto ${principalName}`}
-                    fill
-                    unoptimized
-                    sizes="(max-width: 640px) 128px, 144px"
-                    className="object-cover object-top"
-                  />
-                </div>
-
-                {/* Teks Sambutan & Kutipan */}
-                <div className="flex-1 space-y-2.5 text-left">
-                  <div className="flex items-center gap-2 text-[#C89332]">
-                    <Quote className="w-4 h-4 fill-[#C89332]/20 text-[#C89332] shrink-0" aria-hidden="true" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#4A6B82]">
-                      Amanat Kepala Sekolah
-                    </span>
+            <StaggerItem className="lg:col-span-5 flex flex-col justify-between">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full">
+                <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+                  {/* Foto Potret Kepala Sekolah */}
+                  <div className="relative w-32 sm:w-36 aspect-[3/4] rounded-xl overflow-hidden shrink-0 shadow-xs border border-gray-200 bg-gray-100">
+                    <Image
+                      src={principalPhotoUrl}
+                      alt={`Foto ${principalName}`}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 640px) 128px, 144px"
+                      className="object-cover object-top"
+                    />
                   </div>
 
-                  <h2 className="font-pub-heading text-base font-bold text-[#062940]">
-                    Sambutan Kepala Sekolah
-                    <span className="sr-only"> - Mendidik Karakter, Menumbuhkan Potensi, Merajut Prestasi</span>
-                  </h2>
-
-                  <blockquote className="text-xs sm:text-[13px] text-gray-700 leading-relaxed italic border-l-2 border-[#C89332] pl-3 py-0.5">
-                    &ldquo;{quoteToDisplay}&rdquo;
-                    {!rawPrincipalQuote && (
-                      <span className="sr-only">
-                        {' '}Pendidikan bukan sekadar capaian angka akademis, melainkan perjalanan menumbuhkan kemandirian budi pekerti dan ketangguhan karakter masa depan.
+                  {/* Teks Sambutan & Kutipan */}
+                  <div className="flex-1 space-y-2.5 text-left">
+                    <div className="flex items-center gap-2 text-[#C89332]">
+                      <Quote className="w-4 h-4 fill-[#C89332]/20 text-[#C89332] shrink-0" aria-hidden="true" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#4A6B82]">
+                        Amanat Kepala Sekolah
                       </span>
-                    )}
-                  </blockquote>
+                    </div>
 
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="font-pub-heading font-bold text-sm text-[#062940] leading-tight">
-                      {principalName}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Kepala Sekolah SMP Laboratorium UM
-                    </p>
+                    <h2 className="font-pub-heading text-base font-bold text-[#062940]">
+                      Sambutan Kepala Sekolah
+                      <span className="sr-only"> - Mendidik Karakter, Menumbuhkan Potensi, Merajut Prestasi</span>
+                    </h2>
+
+                    <blockquote className="text-xs sm:text-[13px] text-gray-700 leading-relaxed italic border-l-2 border-[#C89332] pl-3 py-0.5">
+                      &ldquo;{quoteToDisplay}&rdquo;
+                      {!rawPrincipalQuote && (
+                        <span className="sr-only">
+                          {' '}Pendidikan bukan sekadar capaian angka akademis, melainkan perjalanan menumbuhkan kemandirian budi pekerti dan ketangguhan karakter masa depan.
+                        </span>
+                      )}
+                    </blockquote>
+
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="font-pub-heading font-bold text-sm text-[#062940] leading-tight">
+                        {principalName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Kepala Sekolah SMP Laboratorium UM
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Kolom 3 (Kanan): Informasi Singkat Card dengan Kontak Terverifikasi */}
-            <div className="lg:col-span-3 bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <h3 className="font-pub-heading text-sm font-bold text-[#062940] mb-3 pb-2 border-b border-gray-100">
-                  Informasi Singkat
-                </h3>
-                <dl className="space-y-3 text-xs">
-                  {/* 1. Nama Sekolah */}
-                  <div className="flex items-start gap-2.5">
-                    <BookOpen className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <dt className="text-[10px] text-gray-500 font-medium">Nama Sekolah</dt>
-                      <dd className="font-bold text-[#062940] leading-tight">{schoolName}</dd>
+            <StaggerItem className="lg:col-span-3 flex flex-col justify-between">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full">
+                <div>
+                  <h3 className="font-pub-heading text-sm font-bold text-[#062940] mb-3 pb-2 border-b border-gray-100">
+                    Informasi Singkat
+                  </h3>
+                  <dl className="space-y-3 text-xs">
+                    {/* 1. Nama Sekolah */}
+                    <div className="flex items-start gap-2.5">
+                      <BookOpen className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <dt className="text-[10px] text-gray-500 font-medium">Nama Sekolah</dt>
+                        <dd className="font-bold text-[#062940] leading-tight">{schoolName}</dd>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* 2. Lembaga Pembina */}
-                  <div className="flex items-start gap-2.5">
-                    <Building2 className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <dt className="text-[10px] text-gray-500 font-medium">Lembaga Pembina</dt>
-                      <dd className="font-semibold text-[#062940] leading-tight">P2LP Universitas Negeri Malang</dd>
+                    {/* 2. Lembaga Pembina */}
+                    <div className="flex items-start gap-2.5">
+                      <Building2 className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <dt className="text-[10px] text-gray-500 font-medium">Lembaga Pembina</dt>
+                        <dd className="font-semibold text-[#062940] leading-tight">P2LP Universitas Negeri Malang</dd>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* 3. Akreditasi */}
-                  <div className="flex items-start gap-2.5">
-                    <Award className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <dt className="text-[10px] text-gray-500 font-medium">Akreditasi</dt>
-                      <dd className="font-semibold text-[#062940] leading-tight">
-                        <span>A (Unggul) – Nilai 96</span>
-                        <span className="sr-only">Terakreditasi “A” (Unggul)</span>
-                        <span className="sr-only">{accreditationText}</span>
-                      </dd>
+                    {/* 3. Akreditasi */}
+                    <div className="flex items-start gap-2.5">
+                      <Award className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <dt className="text-[10px] text-gray-500 font-medium">Akreditasi</dt>
+                        <dd className="font-semibold text-[#062940] leading-tight">
+                          <span>A (Unggul) – Nilai 96</span>
+                          <span className="sr-only">Terakreditasi “A” (Unggul)</span>
+                          <span className="sr-only">{accreditationText}</span>
+                        </dd>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* 4. Tahun Berdiri */}
-                  <div className="flex items-start gap-2.5">
-                    <Calendar className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <dt className="text-[10px] text-gray-500 font-medium">Tahun Berdiri</dt>
-                      <dd className="font-semibold text-[#062940] leading-tight">1990</dd>
+                    {/* 4. Tahun Berdiri */}
+                    <div className="flex items-start gap-2.5">
+                      <Calendar className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <dt className="text-[10px] text-gray-500 font-medium">Tahun Berdiri</dt>
+                        <dd className="font-semibold text-[#062940] leading-tight">1990</dd>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* 5. Kurikulum */}
-                  <div className="flex items-start gap-2.5">
-                    <Layers className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <dt className="text-[10px] text-gray-500 font-medium">Kurikulum</dt>
-                      <dd className="font-semibold text-[#062940] leading-tight">Merdeka SNP, ICP, Tahfidz</dd>
+                    {/* 5. Kurikulum */}
+                    <div className="flex items-start gap-2.5">
+                      <Layers className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <dt className="text-[10px] text-gray-500 font-medium">Kurikulum</dt>
+                        <dd className="font-semibold text-[#062940] leading-tight">Merdeka SNP, ICP, Tahfidz</dd>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* 6. Kepala Sekolah */}
-                  <div className="flex items-start gap-2.5">
-                    <UserCheck className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <dt className="text-[10px] text-gray-500 font-medium">Kepala Sekolah</dt>
-                      <dd className="font-semibold text-[#062940] leading-tight">{principalName}</dd>
+                    {/* 6. Kepala Sekolah */}
+                    <div className="flex items-start gap-2.5">
+                      <UserCheck className="w-4 h-4 text-[#0A3D62] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <dt className="text-[10px] text-gray-500 font-medium">Kepala Sekolah</dt>
+                        <dd className="font-semibold text-[#062940] leading-tight">{principalName}</dd>
+                      </div>
                     </div>
-                  </div>
-                </dl>
-              </div>
-
-              {/* Quick Contact & Info Bar Terverifikasi */}
-              <div className="pt-3 mt-4 border-t border-gray-100 flex flex-col gap-1 text-[11px] text-gray-500">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 font-medium">Kontak Resmi:</span>
-                  <Link href="/kontak" className="text-[10px] font-semibold text-[#0A3D62] hover:text-[#C89332]">
-                    Hubungi Kami &rarr;
-                  </Link>
+                  </dl>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-                  <a href={phoneLink} className="text-[#0A3D62] hover:underline font-medium">
-                    {phoneDisplay}
-                  </a>
-                  <span>&bull;</span>
-                  <a href={waLink} className="text-[#0A3D62] hover:underline font-medium">
-                    {waDisplay}
-                  </a>
-                  <span>&bull;</span>
-                  <a href={emailLink} className="text-[#0A3D62] hover:underline font-medium">
-                    {emailDisplay}
-                  </a>
+
+                {/* Quick Contact & Info Bar Terverifikasi */}
+                <div className="pt-3 mt-4 border-t border-gray-100 flex flex-col gap-1 text-[11px] text-gray-500">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-400 font-medium">Kontak Resmi:</span>
+                    <Link href="/kontak" className="text-[10px] font-semibold text-[#0A3D62] hover:text-[#C89332]">
+                      Hubungi Kami &rarr;
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+                    <a href={phoneLink} className="text-[#0A3D62] hover:underline font-medium">
+                      {phoneDisplay}
+                    </a>
+                    <span>&bull;</span>
+                    <a href={waLink} className="text-[#0A3D62] hover:underline font-medium">
+                      {waDisplay}
+                    </a>
+                    <span>&bull;</span>
+                    <a href={emailLink} className="text-[#0A3D62] hover:underline font-medium">
+                      {emailDisplay}
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </section>
 
@@ -399,9 +425,9 @@ export default function ProfilePage() {
           ========================================================================= */}
       <section className="py-12 sm:py-16 lg:py-20 bg-[#F8FAFC] border-b border-gray-100 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <StaggerContainer className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Kolom 1: Visi & Misi Sekolah */}
-            <div className="lg:col-span-4 space-y-4">
+            <StaggerItem className="lg:col-span-4 space-y-4">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block mb-1">
                   VISI &amp; MISI
@@ -437,120 +463,122 @@ export default function ProfilePage() {
                   ))}
                 </ol>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Kolom 2: Sejarah & Transformasi Linimasa Vertikal */}
-            <div id="sejarah" className="lg:col-span-4 scroll-mt-24">
-              <div className="mb-4">
-                <h2 className="font-pub-heading text-xl font-bold text-[#062940] leading-tight">
-                  Sejarah &amp; Transformasi
-                  <span className="sr-only">Sejarah Perkembangan Sekolah</span>
-                </h2>
-                <p className="text-xs text-gray-500 mt-1">
-                  Perjalanan panjang menjadi sekolah laboratorium model.
-                </p>
+            <StaggerItem className="lg:col-span-4 scroll-mt-24">
+              <div id="sejarah" className="scroll-mt-24">
+                <div className="mb-4">
+                  <h2 className="font-pub-heading text-xl font-bold text-[#062940] leading-tight">
+                    Sejarah &amp; Transformasi
+                    <span className="sr-only">Sejarah Perkembangan Sekolah</span>
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Perjalanan panjang menjadi sekolah laboratorium model.
+                  </p>
+                </div>
+
+                {/* Linimasa Vertikal Bersih */}
+                <div className="relative border-l-2 border-gray-200 ml-2.5 pl-4 sm:pl-5 space-y-4">
+                  {/* 1990 */}
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#C89332] border-2 border-white"
+                    />
+                    <span className="text-[11px] font-bold text-[#062940] block">1990</span>
+                    <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
+                      Pendirian SMP IKIP Malang
+                    </h4>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      Di bawah Yayasan Pendidikan Bhinneka Karya IKIP Malang.
+                    </p>
+                  </div>
+
+                  {/* 1996 */}
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
+                    />
+                    <span className="text-[11px] font-bold text-[#062940] block">1996</span>
+                    <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
+                      Transformasi Yayasan
+                      <span className="sr-only">Transformasi Yayasan Pendidikan IKIP Malang</span>
+                    </h4>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      Beralih di bawah Yayasan Pendidikan IKIP Malang (YPUM).
+                    </p>
+                  </div>
+
+                  {/* 2005 / 2006 */}
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
+                    />
+                    <span className="text-[11px] font-bold text-[#062940] block">2005 / 2006</span>
+                    <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
+                      Menjadi SMP Laboratorium UM
+                      <span className="sr-only">SMP Laboratorium UM &amp; Inovasi Sistem Modul</span>
+                    </h4>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      IKIP Malang bertransformasi menjadi UM. Penerapan modul belajar mandiri dan percepatan.
+                    </p>
+                  </div>
+
+                  {/* 2009 */}
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
+                    />
+                    <span className="text-[11px] font-bold text-[#062940] block">2009</span>
+                    <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
+                      Integrasi ke BPLP / P2LP UM
+                      <span className="sr-only">Peleburan ke dalam BPLP / P2LP UM</span>
+                    </h4>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      Pada 15 Oktober 2009, Yayasan Pendidikan UM dan UPSL dilebur menjadi P2LP UM.
+                    </p>
+                  </div>
+
+                  {/* 2010 / 2011 */}
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
+                    />
+                    <span className="text-[11px] font-bold text-[#062940] block">2010 / 2011</span>
+                    <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
+                      Perintisan Sekolah Inklusi
+                      <span className="sr-only">Perintisan Layanan Inklusi &amp; Kecakapan Hidup</span>
+                    </h4>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      Bersama GPK, menjadi percontohan inklusi ramah anak Kota Malang.
+                    </p>
+                  </div>
+
+                  {/* 2016 – Sekarang */}
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
+                    />
+                    <span className="text-[11px] font-bold text-[#062940] block">2016 – Sekarang</span>
+                    <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
+                      Integrasi Cambridge ICP &amp; Ekosistem Digital
+                    </h4>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      Kelas internasional ICP dan digitalisasi pembelajaran berbasis CBT dan Portal Satu Pintu.
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              {/* Linimasa Vertikal Bersih */}
-              <div className="relative border-l-2 border-gray-200 ml-2.5 pl-4 sm:pl-5 space-y-4">
-                {/* 1990 */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#C89332] border-2 border-white"
-                  />
-                  <span className="text-[11px] font-bold text-[#062940] block">1990</span>
-                  <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
-                    Pendirian SMP IKIP Malang
-                  </h4>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    Di bawah Yayasan Pendidikan Bhinneka Karya IKIP Malang.
-                  </p>
-                </div>
-
-                {/* 1996 */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
-                  />
-                  <span className="text-[11px] font-bold text-[#062940] block">1996</span>
-                  <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
-                    Transformasi Yayasan
-                    <span className="sr-only">Transformasi Yayasan Pendidikan IKIP Malang</span>
-                  </h4>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    Beralih di bawah Yayasan Pendidikan IKIP Malang (YPUM).
-                  </p>
-                </div>
-
-                {/* 2005 / 2006 */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
-                  />
-                  <span className="text-[11px] font-bold text-[#062940] block">2005 / 2006</span>
-                  <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
-                    Menjadi SMP Laboratorium UM
-                    <span className="sr-only">SMP Laboratorium UM &amp; Inovasi Sistem Modul</span>
-                  </h4>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    IKIP Malang bertransformasi menjadi UM. Penerapan modul belajar mandiri dan percepatan.
-                  </p>
-                </div>
-
-                {/* 2009 */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
-                  />
-                  <span className="text-[11px] font-bold text-[#062940] block">2009</span>
-                  <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
-                    Integrasi ke BPLP / P2LP UM
-                    <span className="sr-only">Peleburan ke dalam BPLP / P2LP UM</span>
-                  </h4>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    Pada 15 Oktober 2009, Yayasan Pendidikan UM dan UPSL dilebur menjadi P2LP UM.
-                  </p>
-                </div>
-
-                {/* 2010 / 2011 */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
-                  />
-                  <span className="text-[11px] font-bold text-[#062940] block">2010 / 2011</span>
-                  <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
-                    Perintisan Sekolah Inklusi
-                    <span className="sr-only">Perintisan Layanan Inklusi &amp; Kecakapan Hidup</span>
-                  </h4>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    Bersama GPK, menjadi percontohan inklusi ramah anak Kota Malang.
-                  </p>
-                </div>
-
-                {/* 2016 – Sekarang */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="absolute -left-[23px] sm:-left-[27px] top-1 w-3 h-3 rounded-full bg-[#0A3D62] border-2 border-white"
-                  />
-                  <span className="text-[11px] font-bold text-[#062940] block">2016 – Sekarang</span>
-                  <h4 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940]">
-                    Integrasi Cambridge ICP &amp; Ekosistem Digital
-                  </h4>
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
-                    Kelas internasional ICP dan digitalisasi pembelajaran berbasis CBT dan Portal Satu Pintu.
-                  </p>
-                </div>
-              </div>
-            </div>
+            </StaggerItem>
 
             {/* Kolom 3: Program & Layanan Pendidikan */}
-            <div className="lg:col-span-4">
+            <StaggerItem className="lg:col-span-4">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="font-pub-heading text-xl font-bold text-[#062940] leading-tight">
@@ -571,14 +599,14 @@ export default function ProfilePage() {
 
               <div className="space-y-3">
                 {/* Program 1: Kurikulum Merdeka */}
-                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors group">
                   <div className="relative w-16 h-14 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                     <Image
                       src="/images/keunggulan-01.jpg"
                       alt="Kurikulum Merdeka SNP"
                       fill
                       unoptimized
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div>
@@ -592,14 +620,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Program 2: Cambridge ICP */}
-                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors group">
                   <div className="relative w-16 h-14 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                     <Image
                       src="/images/keunggulan-02.jpg"
                       alt="Cambridge International Class Program"
                       fill
                       unoptimized
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div>
@@ -613,14 +641,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Program 3: Program Tahfidz */}
-                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors group">
                   <div className="relative w-16 h-14 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                     <Image
                       src="/images/keunggulan-03.jpg"
                       alt="Program Tahfidz Al-Qur'an"
                       fill
                       unoptimized
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div>
@@ -634,14 +662,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Program 4: Layanan Inklusi */}
-                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-[#C89332]/40 transition-colors group">
                   <div className="relative w-16 h-14 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                     <Image
                       src="/images/keunggulan-04.jpg"
                       alt="Layanan Inklusi"
                       fill
                       unoptimized
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div>
@@ -654,19 +682,19 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </section>
 
       {/* =========================================================================
           5. SECTION 3: SEKOLAH LABORATORIUM MODEL & STRUKTUR ORGANISASI (FULL LAYAR)
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white border-b border-gray-100 w-full">
+      <section className="py-12 sm:py-16 lg:py-20 bg-white border-b border-gray-100 w-full overflow-hidden">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Sisi Kiri: Sekolah Laboratorium Model (3 Kartu) */}
-            <div className="lg:col-span-6">
+            <FadeIn direction="right" className="lg:col-span-6">
               <div className="mb-6">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block mb-1">
                   SEKOLAH LABORATORIUM MODEL
@@ -680,60 +708,66 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Card 1: Wahana Riset Pendidikan */}
-                <div className="p-4 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
-                  <div>
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0A3D62] flex items-center justify-center mb-3">
-                      <Award className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
+                <StaggerItem>
+                  <div className="p-4 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
+                    <div>
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0A3D62] flex items-center justify-center mb-3">
+                        <Award className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
+                      </div>
+                      <h3 className="font-pub-heading font-bold text-xs sm:text-sm text-[#062940] mb-1.5">
+                        Wahana Riset Pendidikan
+                        <span className="sr-only">Laboratorium Riset &amp; Model Pembelajaran</span>
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                        Uji coba metode pedagogi baru, riset tindakan kelas, dan Lesson Study oleh dosen/peneliti UM.
+                      </p>
                     </div>
-                    <h3 className="font-pub-heading font-bold text-xs sm:text-sm text-[#062940] mb-1.5">
-                      Wahana Riset Pendidikan
-                      <span className="sr-only">Laboratorium Riset &amp; Model Pembelajaran</span>
-                    </h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
-                      Uji coba metode pedagogi baru, riset tindakan kelas, dan Lesson Study oleh dosen/peneliti UM.
-                    </p>
                   </div>
-                </div>
+                </StaggerItem>
 
                 {/* Card 2: Supervisi Klinis & Pembinaan */}
-                <div className="p-4 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
-                  <div>
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0A3D62] flex items-center justify-center mb-3">
-                      <GraduationCap className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
+                <StaggerItem>
+                  <div className="p-4 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
+                    <div>
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0A3D62] flex items-center justify-center mb-3">
+                        <GraduationCap className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
+                      </div>
+                      <h3 className="font-pub-heading font-bold text-xs sm:text-sm text-[#062940] mb-1.5">
+                        Supervisi Klinis &amp; Pembinaan
+                        <span className="sr-only">Pembinaan Berkelanjutan dari Pakar UM</span>
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                        Dewan guru dibina langsung oleh akademisi dan pakar pendidikan UM.
+                      </p>
                     </div>
-                    <h3 className="font-pub-heading font-bold text-xs sm:text-sm text-[#062940] mb-1.5">
-                      Supervisi Klinis &amp; Pembinaan
-                      <span className="sr-only">Pembinaan Berkelanjutan dari Pakar UM</span>
-                    </h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
-                      Dewan guru dibina langsung oleh akademisi dan pakar pendidikan UM.
-                    </p>
                   </div>
-                </div>
+                </StaggerItem>
 
                 {/* Card 3: Jejaring Berjenjang */}
-                <div className="p-4 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between">
-                  <div>
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0A3D62] flex items-center justify-center mb-3">
-                      <Users className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
+                <StaggerItem>
+                  <div className="p-4 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
+                    <div>
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0A3D62] flex items-center justify-center mb-3">
+                        <Users className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
+                      </div>
+                      <h3 className="font-pub-heading font-bold text-xs sm:text-sm text-[#062940] mb-1.5">
+                        Jejaring Berjenjang
+                        <span className="sr-only">Integrasi Kurikulum Holistik Berjenjang</span>
+                        <span className="sr-only">Layanan Pendidikan Inklusi Ramah Anak</span>
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                        Bersama SD dan SMA Laboratorium UM di bawah naungan P2LP UM.
+                      </p>
                     </div>
-                    <h3 className="font-pub-heading font-bold text-xs sm:text-sm text-[#062940] mb-1.5">
-                      Jejaring Berjenjang
-                      <span className="sr-only">Integrasi Kurikulum Holistik Berjenjang</span>
-                      <span className="sr-only">Layanan Pendidikan Inklusi Ramah Anak</span>
-                    </h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
-                      Bersama SD dan SMA Laboratorium UM di bawah naungan P2LP UM.
-                    </p>
                   </div>
-                </div>
-              </div>
-            </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </FadeIn>
 
             {/* Sisi Kanan: Struktur Organisasi & Pimpinan (Visual Tree Hierarchy) */}
-            <div className="lg:col-span-6">
+            <FadeIn direction="left" delay={0.15} className="lg:col-span-6">
               <div className="mb-6">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block mb-1">
                   TATA KELOLA SEKOLAH
@@ -793,7 +827,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -803,7 +837,7 @@ export default function ProfilePage() {
           ========================================================================= */}
       <section id="fasilitas" className="py-12 sm:py-16 lg:py-20 bg-[#F8FAFC] border-b border-gray-100 w-full scroll-mt-20">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <FadeIn className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block mb-1">
                 SARANA DAN PRASARANA
@@ -823,135 +857,147 @@ export default function ProfilePage() {
               <span>Lihat Semua Fasilitas</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
-          </div>
+          </FadeIn>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {/* Fasilitas 1: Lab Sains */}
-            <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group">
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                  <Image
-                    src="/images/keunggulan-02.jpg"
-                    alt="Laboratorium Sains & Riset Terpadu"
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group h-full">
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+                    <Image
+                      src="/images/keunggulan-02.jpg"
+                      alt="Laboratorium Sains & Riset Terpadu"
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
+                    Laboratorium Sains &amp; Riset Terpadu
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    Fisika, Biologi, Kimia dan pembinaan KIR.
+                  </p>
                 </div>
-                <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
-                  Laboratorium Sains &amp; Riset Terpadu
-                </h3>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                  Fisika, Biologi, Kimia dan pembinaan KIR.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Fasilitas 2: Lab Komputer */}
-            <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group">
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                  <Image
-                    src="/images/keunggulan-01.jpg"
-                    alt="Laboratorium Komputer & CBT Center"
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group h-full">
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+                    <Image
+                      src="/images/keunggulan-01.jpg"
+                      alt="Laboratorium Komputer & CBT Center"
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
+                    Laboratorium Komputer &amp; CBT Center
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    Ujian digital (ANBK &amp; CBT) dengan jaringan fiber optik.
+                  </p>
                 </div>
-                <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
-                  Laboratorium Komputer &amp; CBT Center
-                </h3>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                  Ujian digital (ANBK &amp; CBT) dengan jaringan fiber optik.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Fasilitas 3: Perpustakaan */}
-            <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group">
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                  <Image
-                    src="/images/keunggulan-04.jpg"
-                    alt="Perpustakaan & Pojok Literasi Digital"
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group h-full">
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+                    <Image
+                      src="/images/keunggulan-04.jpg"
+                      alt="Perpustakaan & Pojok Literasi Digital"
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
+                    Perpustakaan &amp; Pojok Literasi Digital
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    Terhubung dengan repositori literatur akademik UM.
+                  </p>
                 </div>
-                <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
-                  Perpustakaan &amp; Pojok Literasi Digital
-                </h3>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                  Terhubung dengan repositori literatur akademik UM.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Fasilitas 4: Ruang Khusus Inklusi */}
-            <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group">
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                  <Image
-                    src="/images/keunggulan-03.jpg"
-                    alt="Ruang Khusus Inklusi & Resource Center"
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group h-full">
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+                    <Image
+                      src="/images/keunggulan-03.jpg"
+                      alt="Ruang Khusus Inklusi & Resource Center"
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
+                    Ruang Khusus Inklusi &amp; Resource Center
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    Stimulasi &amp; bimbingan belajar individual bersama GPK.
+                  </p>
                 </div>
-                <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
-                  Ruang Khusus Inklusi &amp; Resource Center
-                </h3>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                  Stimulasi &amp; bimbingan belajar individual bersama GPK.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Fasilitas 5: Lapangan Olahraga */}
-            <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group">
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                  <Image
-                    src="/images/keunggulan-04.jpg"
-                    alt="Lapangan Olahraga Serbaguna"
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group h-full">
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+                    <Image
+                      src="/images/keunggulan-04.jpg"
+                      alt="Lapangan Olahraga Serbaguna"
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
+                    Lapangan Olahraga Serbaguna
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    Basket, futsal, bulu tangkis, voli dan upacara.
+                  </p>
                 </div>
-                <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
-                  Lapangan Olahraga Serbaguna
-                </h3>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                  Basket, futsal, bulu tangkis, voli dan upacara.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Fasilitas 6: Masjid & Ruang Ibadah */}
-            <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group">
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                  <Image
-                    src="/images/keunggulan-03.jpg"
-                    alt="Masjid & Ruang Ibadah"
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-200/90 rounded-xl p-3 shadow-2xs hover:border-[#C89332]/50 hover:shadow-xs transition-all flex flex-col justify-between group h-full">
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+                    <Image
+                      src="/images/keunggulan-03.jpg"
+                      alt="Masjid & Ruang Ibadah"
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
+                    Masjid &amp; Ruang Ibadah
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    Pembiasaan sholat Dhuha, berjamaah dan TaBaQu.
+                  </p>
                 </div>
-                <h3 className="font-pub-heading font-bold text-xs sm:text-[13px] text-[#062940] leading-tight mb-1">
-                  Masjid &amp; Ruang Ibadah
-                </h3>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                  Pembiasaan sholat Dhuha, berjamaah dan TaBaQu.
-                </p>
               </div>
-            </div>
-          </div>
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </section>
 
@@ -973,7 +1019,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+          <FadeIn className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
             <div className="text-center lg:text-left">
               <h2 className="font-pub-heading text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Bergabung Bersama Keluarga Besar
@@ -1000,7 +1046,7 @@ export default function ProfilePage() {
                 <span>Hubungi Kami</span>
               </Link>
             </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
     </main>

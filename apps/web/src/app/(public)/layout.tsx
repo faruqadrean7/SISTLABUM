@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { Fraunces, Inter } from 'next/font/google';
-import { SkipLink, PublicHeader, PublicFooter } from '@/components/shell/public';
+import { SkipLink, PublicHeader, PublicFooter, SmoothScrollProvider } from '@/components/shell/public';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -31,15 +31,17 @@ export const metadata: Metadata = {
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={`${fraunces.variable} ${inter.variable} min-h-screen flex flex-col bg-pub-bg-app text-pub-text-main font-pub-sans selection:bg-pub-gold-soft selection:text-pub-navy-deep`}
-    >
-      {/* <SkipLink /> */}
-      <PublicHeader />
-      <div className="flex-1 flex flex-col scroll-mt-20">
-        {children}
+    <SmoothScrollProvider>
+      <div
+        className={`${fraunces.variable} ${inter.variable} min-h-screen flex flex-col bg-pub-bg-app text-pub-text-main font-pub-sans selection:bg-pub-gold-soft selection:text-pub-navy-deep`}
+      >
+        {/* <SkipLink /> */}
+        <PublicHeader />
+        <div className="flex-1 flex flex-col">
+          {children}
+        </div>
+        <PublicFooter />
       </div>
-      <PublicFooter />
-    </div>
+    </SmoothScrollProvider>
   );
 }

@@ -166,9 +166,13 @@ apiClient.interceptors.response.use(
         } catch (refreshErr) {
           processQueue(refreshErr, null);
           tokenStorage.clearAll();
-          // Redirect ke halaman login jika sesi habis di browser
+          // Redirect ke halaman login yang sesuai jika sesi habis di browser
           if (typeof window !== 'undefined') {
-            window.location.href = '/masuk?session_expired=1';
+            const isPPDB = window.location.pathname.startsWith('/ppdb');
+            const loginUrl = isPPDB ? '/ppdb/masuk?session_expired=1' : '/masuk?session_expired=1';
+            if (!window.location.pathname.includes('/masuk')) {
+              window.location.href = loginUrl;
+            }
           }
           return Promise.reject(
             new ApiClientError(
@@ -181,8 +185,15 @@ apiClient.interceptors.response.use(
           isRefreshing = false;
         }
       } else {
-        // Tidak ada refresh token
+        // Tidak ada refresh token (misal sesi pendaftar PPDB)
         tokenStorage.clearAll();
+        if (typeof window !== 'undefined') {
+          const isPPDB = window.location.pathname.startsWith('/ppdb');
+          const loginUrl = isPPDB ? '/ppdb/masuk?session_expired=1' : '/masuk?session_expired=1';
+          if (!window.location.pathname.includes('/masuk')) {
+            window.location.href = loginUrl;
+          }
+        }
       }
     }
 

@@ -49,11 +49,19 @@ export default function RegisterApplicantPage() {
   // State Feedback & Validation
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [nikCheckStatus, setNikCheckStatus] = useState<{ checked: boolean; available?: boolean; message?: string }>({
+
+  // State NIK Check
+  const [nikCheckStatus, setNikCheckStatus] = useState<{
+    checked: boolean;
+    available: boolean;
+    message: string;
+  }>({
     checked: false,
+    available: false,
+    message: '',
   });
 
-  // OTP Modal State
+  // State Dialog Modal OTP
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -61,32 +69,33 @@ export default function RegisterApplicantPage() {
   const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Countdown timer for resend OTP
+  // Timer Cooldown Kirim Ulang OTP
   useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
   }, [resendCooldown]);
 
-  // Handle Input Changes
+  // Input Change Handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrorMessage(null);
-    if (name === 'nik') {
-      setNikCheckStatus({ checked: false });
+
+    // Reset status NIK jika pengguna mengubah input NIK
+    if (name === 'nik' && nikCheckStatus.checked) {
+      setNikCheckStatus({ checked: false, available: false, message: '' });
     }
   };
 
-  // Cek Ketersediaan NIK
+  // Cek Ketersediaan NIK Mandiri
   const handleCheckNik = async () => {
-    if (!formData.nik || formData.nik.length < 16) {
+    if (!formData.nik || formData.nik.trim().length !== 16) {
       setNikCheckStatus({
         checked: true,
         available: false,
-        message: 'NIK harus terdiri dari 16 digit angka.',
+        message: 'NIK wajib terdiri dari 16 digit angka.',
       });
       return;
     }
@@ -219,128 +228,72 @@ export default function RegisterApplicantPage() {
   const handleResendOtp = async () => {
     if (resendCooldown > 0) return;
     try {
-      const res = await ppdbApi.resendOtp(formData.email.trim().toLowerCase());
+      setResendCooldown(60);
+      setOtpError(null);
+      // Memicu pengiriman ulang via endpoint register dengan data yang sama
+      const res = await ppdbApi.register({
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
+        nik: formData.nik.trim() || undefined,
+        password: formData.password,
+        password_confirmation: formData.password_confirmation,
+      });
       if (res.otp) {
         setOtpCode(res.otp);
       }
-      setResendCooldown(60);
-    } catch (err: any) {
-      setOtpError(err.response?.data?.message || 'Gagal mengirim ulang OTP.');
+    } catch {
+      setOtpError('Gagal mengirim ulang OTP. Silakan tunggu beberapa saat.');
     }
   };
 
   return (
-    <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none bg-slate-50">
+    <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none bg-white">
       {/* =========================================================================
-          1. HERO SECTION (FULL-BLEED NAVY STYLE DENGAN FOTO SISWA DI KANAN)
+          1. BREADCRUMB NAVIGASI MINIMALIS (BERSIH DENGAN LATAR PUTIH)
           ========================================================================= */}
-      <section
-        aria-labelledby="register-hero-heading"
-        className="relative bg-[#062940] text-white overflow-hidden border-b border-white/10 w-full"
-      >
-        <div className="relative w-full min-h-0 lg:min-h-[380px] flex flex-col lg:flex-row lg:items-center">
-          {/* Layer Foto Siswa di Kanan - Dominan 62% dengan Gradasi Halus */}
-          <div className="hidden lg:block absolute inset-y-0 right-0 w-[56%] xl:w-[60%] 2xl:w-[64%] overflow-hidden pointer-events-none select-none">
-            <div className="relative w-full h-full">
-              <Image
-                src="/images/ppdb-students.jpg"
-                alt="Siswa-siswi SMP Laboratorium UM berprestasi"
-                fill
-                priority
-                unoptimized
-                sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-cover object-center"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-r from-[#062940] via-[#062940]/80 via-10% lg:via-15% to-transparent to-35% lg:to-45%"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-
-          {/* Konten Teks Hero (Mobile & Desktop) */}
-          <div className="relative z-10 w-full lg:w-[46%] xl:w-[42%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-8 lg:py-14">
-            <div className="max-w-xl space-y-3.5">
-              {/* Breadcrumb Navigation */}
-              <nav aria-label="Navigasi Halaman">
-                <ol className="flex items-center gap-2 text-xs text-white/70">
-                  <li>
-                    <Link
-                      href="/"
-                      className="hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
-                    >
-                      Beranda
-                    </Link>
-                  </li>
-                  <li aria-hidden="true" className="text-white/40">
-                    &gt;
-                  </li>
-                  <li>
-                    <Link
-                      href="/ppdb"
-                      className="hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
-                    >
-                      PPDB Online
-                    </Link>
-                  </li>
-                  <li aria-hidden="true" className="text-white/40">
-                    &gt;
-                  </li>
-                  <li aria-current="page" className="font-semibold text-white">
-                    Pendaftaran Akun
-                  </li>
-                </ol>
-              </nav>
-
-              {/* Badge Pill Emas Persis Referensi */}
-              <div className="inline-flex items-center gap-2 bg-[#C89332] text-white text-xs font-semibold px-4 py-1.5 rounded-full w-fit shadow-2xs">
-                <span>Langkah 01 • Registrasi Akun Calon Murid</span>
-              </div>
-
-              <div>
-                <h1
-                  id="register-hero-heading"
-                  className="font-pub-heading text-3xl sm:text-4xl lg:text-[40px] font-bold text-white tracking-tight leading-[1.18] mb-3"
+      <div className="bg-white border-b border-gray-100 py-3 w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <nav aria-label="Navigasi Halaman">
+            <ol className="flex items-center gap-2 text-xs text-gray-500">
+              <li>
+                <Link
+                  href="/"
+                  className="hover:text-[#062940] transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
                 >
-                  Pendaftaran Akun Baru
-                  <br />
-                  Calon Peserta Didik
-                </h1>
-
-                <p className="text-white/85 text-xs sm:text-sm lg:text-[15px] leading-relaxed max-w-lg">
-                  Buat akun resmi untuk mengisi formulir pendaftaran, memilih jalur seleksi, mengunggah berkas, dan memantau hasil kelulusan PPDB SMP Laboratorium UM 2026/2027.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile / Tablet Image */}
-          <div className="lg:hidden relative aspect-[16/9] w-full overflow-hidden bg-slate-900">
-            <Image
-              src="/images/ppdb-students.jpg"
-              alt="Siswa-siswi SMP Laboratorium UM berprestasi"
-              fill
-              priority
-              unoptimized
-              sizes="100vw"
-              className="object-cover object-center"
-            />
-            <div
-              className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#062940] via-[#062940]/40 to-transparent"
-              aria-hidden="true"
-            />
-          </div>
+                  Beranda
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-gray-300">
+                /
+              </li>
+              <li>
+                <Link
+                  href="/ppdb"
+                  className="hover:text-[#062940] transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
+                >
+                  PPDB Online
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-gray-300">
+                /
+              </li>
+              <li aria-current="page" className="font-semibold text-[#062940]">
+                Pendaftaran Akun
+              </li>
+            </ol>
+          </nav>
         </div>
-      </section>
+      </div>
 
       {/* =========================================================================
-          2. STEPPER PROGRES ALUR (KONSISTEN DENGAN /PPDB)
+          2. STEPPER PROGRES ALUR (BERSIH DENGAN LATAR PUTIH)
           ========================================================================= */}
-      <section aria-label="Tahapan Pendaftaran PPDB" className="bg-white border-b border-gray-200/80 py-4 sm:py-5 w-full">
+      <section aria-label="Tahapan Pendaftaran PPDB" className="bg-white border-b border-gray-100 py-3.5 sm:py-4 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-[#062940] text-white text-xs font-bold font-mono flex items-center justify-center">
+              <span className="w-7 h-7 rounded-full bg-[#062940] text-white text-xs font-bold font-mono flex items-center justify-center">
                 01
               </span>
               <div>
@@ -351,15 +304,15 @@ export default function RegisterApplicantPage() {
 
             <div className="hidden md:flex items-center gap-6 text-xs text-gray-400">
               <span className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-slate-100 text-gray-500 font-mono text-[11px] flex items-center justify-center">02</span>
+                <span className="w-5 h-5 rounded-full bg-slate-100 text-gray-500 font-mono text-[10px] flex items-center justify-center">02</span>
                 <span>Isi Biodata 5 Langkah</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-slate-100 text-gray-500 font-mono text-[11px] flex items-center justify-center">03</span>
+                <span className="w-5 h-5 rounded-full bg-slate-100 text-gray-500 font-mono text-[10px] flex items-center justify-center">03</span>
                 <span>Upload Berkas &amp; Verifikasi</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-slate-100 text-gray-500 font-mono text-[11px] flex items-center justify-center">04</span>
+                <span className="w-5 h-5 rounded-full bg-slate-100 text-gray-500 font-mono text-[10px] flex items-center justify-center">04</span>
                 <span>Pengumuman &amp; Daftar Ulang</span>
               </span>
             </div>
@@ -376,18 +329,24 @@ export default function RegisterApplicantPage() {
       </section>
 
       {/* =========================================================================
-          3. FORM PENDAFTARAN & KOTAK PANDUAN (2 KOLOM RESPONSIVE)
+          3. KONTEN UTAMA: PANDUAN/INFO (KIRI) vs. FORMULIR DAFTAR (KANAN)
+          Didesain berbeda: Kiri bernuansa informatif/panduan, Kanan berupa
+          kartu putih elevated dengan aksen border penegas sebagai pusat aksi.
           ========================================================================= */}
-      <section aria-label="Formulir Pendaftaran Calon Siswa" className="py-12 sm:py-16 w-full">
+      <section aria-label="Formulir Pendaftaran Calon Siswa" className="py-8 sm:py-12 w-full flex-1 bg-white">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* KOLOM KIRI: KARTU PANDUAN & BANTUAN (Span 5 / 12) */}
-            <div className="lg:col-span-5 space-y-6">
+
+            {/* ===================================================================
+                KOLOM KIRI: INFO & PETUNJUK (Span 5 / 12)
+                Menggunakan latar lembut #F8FAFC agar terlihat beda dengan form
+                =================================================================== */}
+            <div className="lg:col-span-5 space-y-5">
               {/* Kartu 1: Petunjuk Penting */}
-              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
-                    <HelpCircle className="w-5 h-5" aria-hidden="true" />
+              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#0A3D62] flex items-center justify-center shrink-0 shadow-2xs">
+                    <HelpCircle className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
                   </div>
                   <div>
                     <h2 className="font-pub-heading font-bold text-base text-[#062940]">
@@ -402,7 +361,9 @@ export default function RegisterApplicantPage() {
                     <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <strong className="text-gray-800 block">Nama Sesuai Dokumen Resmi</strong>
-                      <span>Gunakan nama lengkap sesuai Akta Kelahiran atau Rapor SD/MI tanpa singkatan.</span>
+                      <span className="text-gray-500 leading-relaxed">
+                        Gunakan nama lengkap sesuai Akta Kelahiran atau Rapor SD/MI tanpa singkatan.
+                      </span>
                     </div>
                   </div>
 
@@ -410,7 +371,9 @@ export default function RegisterApplicantPage() {
                     <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <strong className="text-gray-800 block">Email &amp; WhatsApp Aktif</strong>
-                      <span>Kode verifikasi OTP serta pengumuman seleksi akan dikirimkan otomatis ke kontak ini.</span>
+                      <span className="text-gray-500 leading-relaxed">
+                        Kode verifikasi OTP serta pengumuman seleksi akan dikirimkan otomatis ke kontak ini.
+                      </span>
                     </div>
                   </div>
 
@@ -418,20 +381,22 @@ export default function RegisterApplicantPage() {
                     <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <strong className="text-gray-800 block">Satu NIK untuk Satu Pendaftaran</strong>
-                      <span>Sistem memverifikasi NIK untuk memastikan setiap calon murid memiliki satu pendaftaran resmi.</span>
+                      <span className="text-gray-500 leading-relaxed">
+                        Sistem memverifikasi NIK untuk memastikan setiap calon murid memiliki satu pendaftaran resmi.
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Kartu 2: Info Gelombang Aktif */}
-              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200/70">
                   <div className="flex items-center gap-2.5">
                     <Calendar className="w-4 h-4 text-[#C89332]" aria-hidden="true" />
                     <span className="font-bold text-xs text-[#062940]">Gelombang 1 Reguler &amp; Prestasi</span>
                   </div>
-                  <span className="text-[11px] font-semibold text-[#1E7A46] bg-[#E8F5E9] px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[#1E7A46] bg-[#E8F5E9] px-2.5 py-0.5 rounded-full">
                     Aktif
                   </span>
                 </div>
@@ -453,7 +418,7 @@ export default function RegisterApplicantPage() {
               </div>
 
               {/* Kartu 3: Hotline Panitia PPDB */}
-              <div className="bg-[#EBF3F8]/80 border border-[#D0E2ED] rounded-2xl p-6 space-y-3">
+              <div className="bg-[#F0F5FA] border border-[#D0E2ED] rounded-2xl p-5 space-y-2.5">
                 <div className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />
                   <h3 className="font-bold text-xs text-[#0A3D62]">Butuh Bantuan Pendaftaran?</h3>
@@ -473,19 +438,23 @@ export default function RegisterApplicantPage() {
               </div>
             </div>
 
-            {/* KOLOM KANAN: KARTU FORMULIR PENDAFTARAN (Span 7 / 12) */}
-            <div className="lg:col-span-7 bg-white border border-gray-200/90 rounded-2xl p-6 sm:p-8 shadow-xs">
+            {/* ===================================================================
+                KOLOM KANAN: KARTU FORMULIR PENDAFTARAN (Span 7 / 12)
+                Pusat aksi utama: elevated crisp white card dengan aksen border-t-4 navy,
+                bayangan terangkat (shadow-xl), dan heading utama di dalamnya.
+                =================================================================== */}
+            <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-6 sm:p-9 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5">
               {/* Header Kartu Form */}
               <div className="mb-6 pb-5 border-b border-gray-100">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EBF3F8] text-[#0A3D62] mb-2">
+                {/* <div className="inline-flex items-center gap-1.5 bg-[#EBF3F8] text-[#0A3D62] text-xs font-semibold px-3 py-1 rounded-full mb-3">
                   <Award className="w-3.5 h-3.5 text-[#C89332]" aria-hidden="true" />
-                  <span>Formulir Registrasi Mandiri</span>
-                </span>
-                <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-[#062940]">
-                  Lengkapi Data Akun Calon Murid
-                </h2>
-                <p className="text-gray-500 text-xs sm:text-sm mt-1">
-                  Seluruh isian bertanda bintang (<span className="text-red-500 font-bold">*</span>) wajib diisi dengan benar.
+                  <span>Langkah 01 • Registrasi Akun Calon Murid</span>
+                </div> */}
+                <h1 className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#062940] tracking-tight leading-tight">
+                  Pendaftaran Akun Calon Peserta Didik
+                </h1>
+                <p className="text-gray-600 text-xs sm:text-sm mt-1.5 leading-relaxed">
+                  Buat akun resmi untuk mengisi formulir pendaftaran, memilih jalur seleksi, mengunggah berkas, dan memantau status PPDB SMP Laboratorium UM 2026/2027.
                 </p>
               </div>
 
@@ -594,9 +563,8 @@ export default function RegisterApplicantPage() {
                   </div>
                   {nikCheckStatus.checked && (
                     <div
-                      className={`mt-1.5 flex items-center gap-1.5 text-xs font-medium ${
-                        nikCheckStatus.available ? 'text-[#1E7A46]' : 'text-red-600'
-                      }`}
+                      className={`mt-1.5 flex items-center gap-1.5 text-xs font-medium ${nikCheckStatus.available ? 'text-[#1E7A46]' : 'text-red-600'
+                        }`}
                     >
                       {nikCheckStatus.available ? (
                         <CheckCircle2 className="w-3.5 h-3.5 text-[#1E7A46]" aria-hidden="true" />
@@ -811,9 +779,8 @@ export default function RegisterApplicantPage() {
                 type="button"
                 onClick={handleResendOtp}
                 disabled={resendCooldown > 0}
-                className={`inline-flex items-center gap-1 font-semibold transition-colors ${
-                  resendCooldown > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#062940] hover:text-[#C89332]'
-                }`}
+                className={`inline-flex items-center gap-1 font-semibold transition-colors ${resendCooldown > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#062940] hover:text-[#C89332]'
+                  }`}
               >
                 <RotateCw className="w-3.5 h-3.5" />
                 {resendCooldown > 0 ? `Kirim ulang (${resendCooldown}s)` : 'Kirim Ulang Kode'}
@@ -822,56 +789,6 @@ export default function RegisterApplicantPage() {
           </div>
         </div>
       )}
-
-      {/* =========================================================================
-          5. PRE-FOOTER CALL TO ACTION (KONSISTEN SITUS WEB)
-          ========================================================================= */}
-      <section className="relative overflow-hidden bg-[#062940] text-white py-12 sm:py-14 w-full border-t border-white/10 mt-auto">
-        {/* Foto Gedung Sekolah Faded Overlay di Kiri */}
-        <div className="absolute inset-y-0 left-0 w-2/5 overflow-hidden pointer-events-none opacity-25">
-          <Image
-            src="/images/school-gate.jpg"
-            alt=""
-            fill
-            unoptimized
-            sizes="40vw"
-            className="object-cover object-left"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#062940]/80 to-[#062940]" aria-hidden="true" />
-        </div>
-
-        <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
-            <div className="text-center lg:text-left border-l-0 lg:border-l-2 lg:border-white/20 lg:pl-5">
-              <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Punya Pertanyaan Seputar Pendaftaran?
-              </h2>
-              <p className="text-white/80 text-xs sm:text-sm mt-1.5 max-w-xl leading-relaxed">
-                Tim panitia admisi SMP Laboratorium UM siap mendampingi Anda di setiap tahapan.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
-              <a
-                href="https://wa.me/6285126088473"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto text-center bg-[#C89332] hover:bg-[#B57C23] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-sm hover:shadow transition-all inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#062940]"
-              >
-                <MessageCircle className="w-4 h-4" aria-hidden="true" />
-                <span>Konsultasi WhatsApp</span>
-              </a>
-              <Link
-                href="/ppdb"
-                className="w-full sm:w-auto text-center inline-flex items-center justify-center gap-2 bg-[#062940] hover:bg-white/10 border border-white/40 hover:border-white text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
-              >
-                <span>Informasi Alur PPDB</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

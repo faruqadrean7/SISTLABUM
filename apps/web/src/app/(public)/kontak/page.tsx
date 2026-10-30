@@ -24,6 +24,20 @@ import {
 import { CopyContactButton } from '@/features/public-site/components/CopyContactButton';
 import { publicApi } from '@/features/public-site/public-api';
 import { formatPhoneLink, formatWaLink } from '@/features/public-site/utils';
+import {
+  FadeIn,
+  StaggerContainer,
+  StaggerItem,
+  MarqueeTicker,
+} from '@/components/ui/Motion';
+
+const CONTACT_TICKER_ITEMS = [
+  'Pelayanan Tata Usaha & Informasi Resmi SMP Laboratorium UM',
+  'Konsultasi Pendaftaran Peserta Didik Baru (PPDB Online)',
+  'Senin - Jumat Pukul 07.00 - 15.00 WIB',
+  'Kampus Terpadu P2LP Universitas Negeri Malang',
+  'Layanan Cepat Respon via WhatsApp Resmi Sekolah',
+];
 
 export default function ContactPage() {
   const { data: siteData } = useQuery({
@@ -122,7 +136,7 @@ export default function ContactPage() {
 
           {/* Konten Teks Hero (Mobile & Desktop) */}
           <div className="relative z-10 w-full lg:w-[42%] xl:w-[38%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-8 lg:py-16">
-            <div className="max-w-xl space-y-3.5">
+            <FadeIn direction="right" className="max-w-xl space-y-3.5">
               {/* Breadcrumb Navigation */}
               <nav aria-label="Navigasi Halaman">
                 <ol className="flex items-center gap-2 text-xs text-white/70">
@@ -162,7 +176,7 @@ export default function ContactPage() {
                   Kami siap membantu Anda untuk mendapatkan informasi seputar PPDB, layanan tata usaha, maupun koordinasi kemitraan pendidikan di SMP Laboratorium UM.
                 </p>
               </div>
-            </div>
+            </FadeIn>
           </div>
 
           {/* Mobile / Tablet Image: Membentang 100% selebar layar tanpa celah samping */}
@@ -185,23 +199,30 @@ export default function ContactPage() {
       </section>
 
       {/* =========================================================================
-          2. KANAL LAYANAN CEPAT (1 KOLOM JUDUL + 3 KARTU AKSI LANGSUNG)
+          2. RUNNING MARQUEE TICKER (INFORMASI PELAYANAN & JAM LAYANAN RESMI)
+          ========================================================================= */}
+      <section aria-label="Informasi Pelayanan" className="bg-[#FAF8F5] border-b border-[#C89332]/20 py-2.5 overflow-hidden">
+        <MarqueeTicker items={CONTACT_TICKER_ITEMS} speed={28} />
+      </section>
+
+      {/* =========================================================================
+          3. KANAL LAYANAN CEPAT (1 KOLOM JUDUL + 3 KARTU AKSI LANGSUNG)
           ========================================================================= */}
       <section aria-label="Kanal Layanan Cepat" className="py-12 sm:py-16 bg-white border-b border-gray-100 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Kolom Kiri: Judul Seksi (Span 3) */}
-            <div className="lg:col-span-3 space-y-2">
+            <FadeIn direction="right" className="lg:col-span-3 space-y-2">
               <h2 className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#062940] leading-tight">
                 Kanal Layanan Cepat
               </h2>
               <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
                 Pilih kanal komunikasi yang paling sesuai dengan kebutuhan Anda.
               </p>
-            </div>
+            </FadeIn>
 
-            {/* Kolom Kanan: 3 Kartu Aksi Cepat (Span 9) */}
-            <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Kolom Kanan: 3 Kartu Aksi Cepat (Span 9) dengan Stagger Container */}
+            <StaggerContainer className="lg:col-span-9 grid grid-cols-1 md:grid-cols-3 gap-6">
               {directChannels.map((channel) => {
                 const isWa = channel.type === 'whatsapp';
                 const isPhone = channel.type === 'phone';
@@ -226,231 +247,236 @@ export default function ContactPage() {
                   : 'bg-[#C89332] hover:bg-[#B57C23] text-white focus:ring-[#C89332]';
 
                 return (
-                  <div
-                    key={channel.id}
-                    className="bg-white border border-gray-200/90 rounded-2xl p-6 flex flex-col justify-between shadow-xs hover:shadow-md transition-all relative overflow-hidden group"
-                  >
-                    <div>
-                      {/* Baris Ikon & Badge */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${iconBg}`}>
-                          {isWa && <MessageCircle className="w-6 h-6" aria-hidden="true" />}
-                          {isPhone && <Phone className="w-6 h-6" aria-hidden="true" />}
-                          {isEmail && <Mail className="w-6 h-6" aria-hidden="true" />}
+                  <StaggerItem key={channel.id} className="flex">
+                    <div className="bg-white border border-gray-200/90 rounded-2xl p-6 flex flex-col justify-between shadow-xs hover:shadow-md transition-all relative overflow-hidden group w-full">
+                      <div>
+                        {/* Baris Ikon & Badge */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${iconBg}`}>
+                            {isWa && <MessageCircle className="w-6 h-6" aria-hidden="true" />}
+                            {isPhone && <Phone className="w-6 h-6" aria-hidden="true" />}
+                            {isEmail && <Mail className="w-6 h-6" aria-hidden="true" />}
+                          </div>
+                          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${badgeStyle}`}>
+                            {channel.badge}
+                          </span>
                         </div>
-                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${badgeStyle}`}>
-                          {channel.badge}
-                        </span>
+
+                        {/* Judul & Keterangan */}
+                        <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#062940] mb-2 leading-snug">
+                          {channel.title}
+                        </h3>
+                        <p className="text-gray-500 text-xs leading-relaxed mb-5">
+                          {channel.subtitle}
+                        </p>
+
+                        {/* Baris Nilai & Tombol Salin */}
+                        <div className="flex items-center justify-between bg-slate-50 px-3.5 py-2.5 rounded-xl border border-gray-200/80 mb-5">
+                          <span className="font-mono text-xs sm:text-sm font-semibold text-gray-800 select-all">
+                            {channel.displayValue}
+                          </span>
+                          <CopyContactButton textToCopy={channel.value} label={channel.title} />
+                        </div>
                       </div>
 
-                      {/* Judul & Keterangan */}
-                      <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#062940] mb-2 leading-snug">
-                        {channel.title}
-                      </h3>
-                      <p className="text-gray-500 text-xs leading-relaxed mb-5">
-                        {channel.subtitle}
-                      </p>
-
-                      {/* Baris Nilai & Tombol Salin */}
-                      <div className="flex items-center justify-between bg-slate-50 px-3.5 py-2.5 rounded-xl border border-gray-200/80 mb-5">
-                        <span className="font-mono text-xs sm:text-sm font-semibold text-gray-800 select-all">
-                          {channel.displayValue}
-                        </span>
-                        <CopyContactButton textToCopy={channel.value} label={channel.title} />
+                      {/* Tombol Aksi Langsung */}
+                      <div>
+                        <a
+                          href={channel.href}
+                          target={isWa ? '_blank' : undefined}
+                          rel={isWa ? 'noopener noreferrer' : undefined}
+                          className={`w-full inline-flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-2xs hover:shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-2 ${btnStyle}`}
+                        >
+                          <span>{channel.actionLabel}</span>
+                          <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                        </a>
                       </div>
                     </div>
-
-                    {/* Tombol Aksi Langsung */}
-                    <div>
-                      <a
-                        href={channel.href}
-                        target={isWa ? '_blank' : undefined}
-                        rel={isWa ? 'noopener noreferrer' : undefined}
-                        className={`w-full inline-flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-2xs hover:shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-2 ${btnStyle}`}
-                      >
-                        <span>{channel.actionLabel}</span>
-                        <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                      </a>
-                    </div>
-                  </div>
+                  </StaggerItem>
                 );
               })}
-            </div>
+            </StaggerContainer>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          3. INFORMASI KONTAK RESMI & JAM LAYANAN (3 KARTU BERDAMPINGAN)
+          4. INFORMASI KONTAK RESMI & JAM LAYANAN (3 KARTU BERDAMPINGAN)
           ========================================================================= */}
       <section aria-label="Informasi Kontak Resmi" className="py-12 sm:py-16 bg-slate-50/70 border-b border-gray-200/80 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           {/* Header Seksi */}
-          <div className="mb-8">
+          <FadeIn direction="up" className="mb-8">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A3D62] block mb-1">
               Sekretariat &amp; Jam Layanan
             </span>
             <h2 className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#062940]">
               Informasi Kontak Resmi
             </h2>
-          </div>
+          </FadeIn>
 
-          {/* Grid 3 Kartu Berdampingan */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          {/* Grid 3 Kartu Berdampingan dengan Stagger Container */}
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {/* KARTU 1: ALAMAT KAMPUS */}
-            <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
-                    <MapPin className="w-5 h-5" aria-hidden="true" />
+            <StaggerItem className="flex">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between w-full">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
+                      <MapPin className="w-5 h-5" aria-hidden="true" />
+                    </div>
+                    <h3 className="font-pub-heading font-bold text-base text-[#062940]">
+                      Alamat Kampus
+                    </h3>
                   </div>
-                  <h3 className="font-pub-heading font-bold text-base text-[#062940]">
-                    Alamat Kampus
-                  </h3>
+
+                  <div className="space-y-1 mb-4">
+                    <p className="text-gray-700 text-xs sm:text-sm leading-relaxed font-medium">
+                      {addressFull}
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      {VERIFIED_CONTACT_DETAILS.address.campusArea}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1 mb-4">
-                  <p className="text-gray-700 text-xs sm:text-sm leading-relaxed font-medium">
-                    {addressFull}
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    {VERIFIED_CONTACT_DETAILS.address.campusArea}
-                  </p>
+                <div className="space-y-2 pt-4 border-t border-gray-100">
+                  <CopyContactButton
+                    textToCopy={addressFull}
+                    label="Alamat Kampus"
+                    customText="Salin Alamat"
+                    className="w-full justify-center py-2"
+                  />
+                  <a
+                    href={mapsQueryUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#062940] text-white hover:bg-[#0A3D62] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
+                  >
+                    <span>Buka di Google Maps</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </a>
                 </div>
               </div>
-
-              <div className="space-y-2 pt-4 border-t border-gray-100">
-                <CopyContactButton
-                  textToCopy={addressFull}
-                  label="Alamat Kampus"
-                  customText="Salin Alamat"
-                  className="w-full justify-center py-2"
-                />
-                <a
-                  href={mapsQueryUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#062940] text-white hover:bg-[#0A3D62] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
-                >
-                  <span>Buka di Google Maps</span>
-                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                </a>
-              </div>
-            </div>
+            </StaggerItem>
 
             {/* KARTU 2: JAM OPERASIONAL PELAYANAN */}
-            <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
-                    <Clock className="w-5 h-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="font-pub-heading font-bold text-base text-[#062940]">
-                    Jam Operasional Pelayanan
-                  </h3>
-                </div>
-
-                <div className="divide-y divide-gray-100 text-xs">
-                  {OFFICE_HOURS.map((hour, idx) => (
-                    <div key={idx} className="py-3 first:pt-0 last:pb-0 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-gray-800 flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-[#C89332]" aria-hidden="true" />
-                          <span>{hour.days}</span>
-                        </span>
-                        <span
-                          className={`font-mono font-bold px-2 py-0.5 rounded text-[11px] ${
-                            hour.hours === 'Tutup'
-                              ? 'text-red-600 bg-red-50'
-                              : hour.isSpecial
-                              ? 'text-[#9A6700] bg-amber-50'
-                              : 'text-[#062940] bg-slate-100'
-                          }`}
-                        >
-                          {hour.hours}
-                        </span>
-                      </div>
-                      <p className="text-gray-500 text-[11px] leading-relaxed">
-                        {hour.description}
-                      </p>
+            <StaggerItem className="flex">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between w-full">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
+                      <Clock className="w-5 h-5" aria-hidden="true" />
                     </div>
-                  ))}
+                    <h3 className="font-pub-heading font-bold text-base text-[#062940]">
+                      Jam Operasional Pelayanan
+                    </h3>
+                  </div>
+
+                  <div className="divide-y divide-gray-100 text-xs">
+                    {OFFICE_HOURS.map((hour, idx) => (
+                      <div key={idx} className="py-3 first:pt-0 last:pb-0 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-gray-800 flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-[#C89332]" aria-hidden="true" />
+                            <span>{hour.days}</span>
+                          </span>
+                          <span
+                            className={`font-mono font-bold px-2 py-0.5 rounded text-[11px] ${
+                              hour.hours === 'Tutup'
+                                ? 'text-red-600 bg-red-50'
+                                : hour.isSpecial
+                                ? 'text-[#9A6700] bg-amber-50'
+                                : 'text-[#062940] bg-slate-100'
+                            }`}
+                          >
+                            {hour.hours}
+                          </span>
+                        </div>
+                        <p className="text-gray-500 text-[11px] leading-relaxed">
+                          {hour.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* KARTU 3: PANDUAN KONSULTASI */}
-            <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
-                    <MessageSquare className="w-5 h-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="font-pub-heading font-bold text-base text-[#062940]">
-                    <span className="sr-only">Panduan Layanan &amp; </span>
-                    <span>Panduan Konsultasi</span>
-                  </h3>
-                </div>
-
-                <p className="text-gray-500 text-xs leading-relaxed mb-4">
-                  Agar proses komunikasi lebih cepat dan tepat, silakan gunakan kanal sesuai kebutuhan Anda:
-                </p>
-
-                <div className="space-y-3.5 text-xs">
-                  {/* Item 1: PPDB */}
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        <span>PPDB / Pendaftaran Siswa Baru</span>
-                        <span className="sr-only">Pertanyaan PPDB &amp; Biaya Pendidikan</span>
-                      </h4>
-                      <p className="text-gray-500 text-[11px] font-mono mt-0.5">
-                        &rarr; WhatsApp {waDisplay}
-                      </p>
+            <StaggerItem className="flex">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between w-full">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
+                      <MessageSquare className="w-5 h-5" aria-hidden="true" />
                     </div>
+                    <h3 className="font-pub-heading font-bold text-base text-[#062940]">
+                      <span className="sr-only">Panduan Layanan &amp; </span>
+                      <span>Panduan Konsultasi</span>
+                    </h3>
                   </div>
 
-                  {/* Item 2: Tata Usaha */}
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        <span>Administrasi &amp; Tata Usaha</span>
-                      </h4>
-                      <p className="text-gray-500 text-[11px] font-mono mt-0.5">
-                        &rarr; Telepon {phoneDisplay}
-                      </p>
+                  <p className="text-gray-500 text-xs leading-relaxed mb-4">
+                    Agar proses komunikasi lebih cepat dan tepat, silakan gunakan kanal sesuai kebutuhan Anda:
+                  </p>
+
+                  <div className="space-y-3.5 text-xs">
+                    {/* Item 1: PPDB */}
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          <span>PPDB / Pendaftaran Siswa Baru</span>
+                          <span className="sr-only">Pertanyaan PPDB &amp; Biaya Pendidikan</span>
+                        </h4>
+                        <p className="text-gray-500 text-[11px] font-mono mt-0.5">
+                          &rarr; WhatsApp {waDisplay}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Item 3: Kemitraan */}
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        <span>Kerja Sama / Kemitraan</span>
-                      </h4>
-                      <p className="text-gray-500 text-[11px] font-mono mt-0.5">
-                        &rarr; Email {emailDisplay}
-                      </p>
+                    {/* Item 2: Tata Usaha */}
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          <span>Administrasi &amp; Tata Usaha</span>
+                        </h4>
+                        <p className="text-gray-500 text-[11px] font-mono mt-0.5">
+                          &rarr; Telepon {phoneDisplay}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Item 3: Kemitraan */}
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          <span>Kerja Sama / Kemitraan</span>
+                        </h4>
+                        <p className="text-gray-500 text-[11px] font-mono mt-0.5">
+                          &rarr; Email {emailDisplay}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </section>
 
       {/* =========================================================================
-          4. PETA & LOKASI KAMPUS (KIRI TEKS + KANAN FRAME MAPS)
+          5. PETA & LOKASI KAMPUS (KIRI TEKS + KANAN FRAME MAPS)
           ========================================================================= */}
       <section className="py-12 sm:py-16 bg-white w-full" aria-labelledby="map-heading">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Kolom Kiri: Keterangan Lokasi & Tombol Petunjuk (Span 4) */}
-            <div className="lg:col-span-4 space-y-4">
+            <FadeIn direction="right" className="lg:col-span-4 space-y-4">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
                   Lokasi Kampus
@@ -476,10 +502,10 @@ export default function ContactPage() {
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </a>
               </div>
-            </div>
+            </FadeIn>
 
             {/* Kolom Kanan: Frame Peta Google Maps (Span 8) */}
-            <div className="lg:col-span-8">
+            <FadeIn direction="left" className="lg:col-span-8">
               <div className="w-full h-80 sm:h-96 rounded-2xl border border-gray-200 overflow-hidden shadow-xs relative bg-slate-100">
                 <iframe
                   src={mapsEmbedUrl}
@@ -493,13 +519,13 @@ export default function ContactPage() {
                   className="w-full h-full"
                 />
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          5. CALL TO ACTION PRE-FOOTER (PERSIS REFERENSI UI)
+          6. CALL TO ACTION PRE-FOOTER (PERSIS REFERENSI UI)
           ========================================================================= */}
       <section className="relative overflow-hidden bg-[#062940] text-white py-12 sm:py-14 w-full border-t border-white/10">
         {/* Foto Gedung Sekolah Faded Overlay di Kiri */}
@@ -516,8 +542,8 @@ export default function ContactPage() {
         </div>
 
         <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
-            <div className="text-center lg:text-left border-l-0 lg:border-l-2 lg:border-white/20 lg:pl-5">
+          <FadeIn className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+            <div className="text-center lg:text-left">
               <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Siap Bergabung dengan
                 <br />
@@ -545,7 +571,7 @@ export default function ContactPage() {
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
     </main>

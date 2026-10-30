@@ -46,6 +46,23 @@ import {
 import { SCHOOL_CONTACT_INFO } from '@/features/public-site/content/navigation';
 import { formatPhoneLink, formatWaLink } from '@/features/public-site/utils';
 import { formatTanggalIndo } from '@/lib/utils';
+import {
+  FadeIn,
+  StaggerContainer,
+  StaggerItem,
+  AnimatedNumber,
+  MarqueeTicker,
+} from '@/components/ui/Motion';
+
+const TICKER_ITEMS = [
+  'Akreditasi A (Unggul) BAN-SM',
+  'Sekolah Laboratorium Model Riset P2LP UM',
+  'Cambridge International Class Program (ICP)',
+  'Program Tahfidz Al-Qur\'an & Pembinaan Adab',
+  'Sekolah Inklusi Ramah Anak Percontohan Kota Malang',
+  'Penerapan Inovasi Pembelajaran Lesson Study Kolaboratif',
+  'Laboratorium Riset & Pembelajaran Terpadu Universitas Negeri Malang',
+];
 
 export default function HomePage() {
   // Query 3 publikasi berita terbaru dari backend
@@ -167,7 +184,7 @@ export default function HomePage() {
                 {/* Blok 2: Sejarah & Naungan (Hanya di Tablet & Desktop agar mobile ringkas sesuai mockup) */}
                 <div className="hidden sm:block">
                   <p className="text-sm sm:text-base font-bold text-[#0A3D62] leading-tight">
-                    Sejak 1990
+                    Sejak <AnimatedNumber value={1990} duration={1.5} />
                   </p>
                   <p className="text-xs sm:text-sm text-gray-600 font-medium leading-snug mt-1">
                     Bertransformasi di bawah P2LP UM sejak 2009
@@ -281,11 +298,16 @@ export default function HomePage() {
       {/* =========================================================================
           2. TENTANG KAMI & SAMBUTAN KEPALA SEKOLAH (SESUAI MOCKUP)
           ========================================================================= */}
+      {/* Running Marquee Ticker Resmi Emas & Navy */}
+      <div className="bg-[#FAF8F5] border-b border-slate-200/80 py-3 text-[#062940]">
+        <MarqueeTicker items={TICKER_ITEMS} speed={42} />
+      </div>
+
       <section aria-labelledby="profile-heading" className="py-10 sm:py-16 lg:py-20 bg-white">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Kolom Kiri: Narasi Identitas & Pendekatan Riset Sekolah (6 Kolom) */}
-            <div className="lg:col-span-6 space-y-5">
+            <FadeIn direction="right" className="lg:col-span-6 space-y-5">
               <div className="space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
                   TENTANG KAMI
@@ -312,10 +334,10 @@ export default function HomePage() {
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
-            </div>
+            </FadeIn>
 
             {/* Kolom Kanan: Kartu Sambutan Kepala Sekolah Elegan & Proporsional (6 Kolom) */}
-            <div className="lg:col-span-6">
+            <FadeIn direction="left" delay={0.15} className="lg:col-span-6">
               <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-center sm:items-start">
                   {/* Foto Kepala Sekolah Portrait Proporsional */}
@@ -357,76 +379,84 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
 
           {/* Baris Statistik Kunci Institusi (Sesuai Data Terverifikasi & PRD WEB-HOME-01) */}
           <div className="mt-12 lg:mt-16 pt-8 lg:pt-12 border-t border-gray-100">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {/* Card 1: 1990 */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
-                    1990
-                  </span>
-                  <FlaticonBuilding size={42} className="shrink-0 drop-shadow-2xs" />
+              <StaggerItem>
+                <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group h-full">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                      <AnimatedNumber value={1990} />
+                    </span>
+                    <FlaticonBuilding size={42} className="shrink-0 drop-shadow-2xs" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#062940]">Tahun Berdiri</p>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      36+ Tahun Tradisi Pendidikan di Malang
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-[#062940]">Tahun Berdiri</p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                    36+ Tahun Tradisi Pendidikan di Malang
-                  </p>
-                </div>
-              </div>
+              </StaggerItem>
 
               {/* Card 2: Nilai 96 */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
-                    Nilai 96
-                  </span>
-                  <FlaticonMedal size={44} className="shrink-0 drop-shadow-2xs" />
+              <StaggerItem>
+                <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group h-full">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                      Nilai <AnimatedNumber value={96} />
+                    </span>
+                    <FlaticonMedal size={44} className="shrink-0 drop-shadow-2xs" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#062940]">Akreditasi A (Unggul)</p>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      Sertifikat BAN-S/M Berlaku s.d. 2027
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-[#062940]">Akreditasi A (Unggul)</p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                    Sertifikat BAN-S/M Berlaku s.d. 2027
-                  </p>
-                </div>
-              </div>
+              </StaggerItem>
 
               {/* Card 3: 24 Cabang */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
-                    24 Cabang
-                  </span>
-                  <FlaticonTrophy size={42} className="shrink-0 drop-shadow-2xs" />
+              <StaggerItem>
+                <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group h-full">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                      <AnimatedNumber value={24} /> Cabang
+                    </span>
+                    <FlaticonTrophy size={42} className="shrink-0 drop-shadow-2xs" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#062940]">Ekstrakurikuler</p>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      Wadah Riset KIR, Seni, Olahraga &amp; ARSIMBO
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-[#062940]">Ekstrakurikuler</p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                    Wadah Riset KIR, Seni, Olahraga &amp; ARSIMBO
-                  </p>
-                </div>
-              </div>
+              </StaggerItem>
 
               {/* Card 4: 4 Program */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
-                    4 Program
-                  </span>
-                  <FlaticonGraduationCap size={42} className="shrink-0 drop-shadow-2xs" />
+              <StaggerItem>
+                <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#C89332]/40 transition-all duration-200 flex flex-col justify-between group h-full">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#062940] tracking-tight">
+                      <AnimatedNumber value={4} /> Program
+                    </span>
+                    <FlaticonGraduationCap size={42} className="shrink-0 drop-shadow-2xs" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#062940]">Pilihan Akademik</p>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      Reguler, ICP Cambridge, Tahfidz, Inklusi
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-[#062940]">Pilihan Akademik</p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                    Reguler, ICP Cambridge, Tahfidz, Inklusi
-                  </p>
-                </div>
-              </div>
-            </div>
+              </StaggerItem>
+            </StaggerContainer>
           </div>
         </div>
       </section>
@@ -436,7 +466,7 @@ export default function HomePage() {
           ========================================================================= */}
       <section aria-labelledby="programs-heading" className="py-16 sm:py-20 bg-pub-bg-app border-y border-pub-border">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="mb-10 space-y-1.5">
+          <FadeIn className="mb-10 space-y-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
               PROGRAM UNGGULAN
             </span>
@@ -446,121 +476,129 @@ export default function HomePage() {
             >
               Pendidikan Berkualitas untuk Masa Depan
             </h2>
-          </div>
+          </FadeIn>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Card 1: Program Reguler */}
-            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
-              <div className="space-y-4">
-                <FlaticonBook size={52} className="shrink-0" />
-                <div className="space-y-1">
-                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
-                    Program Reguler
-                  </h3>
-                  <p className="text-xs font-semibold text-[#0A3D62]/90">
-                    (Kurikulum Merdeka SNP)
+            <StaggerItem>
+              <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group h-full">
+                <div className="space-y-4">
+                  <FlaticonBook size={52} className="shrink-0" />
+                  <div className="space-y-1">
+                    <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                      Program Reguler
+                    </h3>
+                    <p className="text-xs font-semibold text-[#0A3D62]/90">
+                      (Kurikulum Merdeka SNP)
+                    </p>
+                  </div>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Mastery Learning (belajar tuntas) dengan modul adaptif dan rasio kelas ideal.
                   </p>
                 </div>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Mastery Learning (belajar tuntas) dengan modul adaptif dan rasio kelas ideal.
-                </p>
-              </div>
 
-              <div className="pt-6">
-                <Link
-                  href="/akademik"
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
-                >
-                  <span>Selengkapnya</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            </article>
+                <div className="pt-6">
+                  <Link
+                    href="/akademik"
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                  >
+                    <span>Selengkapnya</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </article>
+            </StaggerItem>
 
             {/* Card 2: ICP */}
-            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
-              <div className="space-y-4">
-                <FlaticonGlobe size={52} className="shrink-0" />
-                <div className="space-y-1">
-                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
-                    ICP
-                  </h3>
-                  <p className="text-xs font-semibold text-[#0A3D62]/90">
-                    (International Class Program)
+            <StaggerItem>
+              <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group h-full">
+                <div className="space-y-4">
+                  <FlaticonGlobe size={52} className="shrink-0" />
+                  <div className="space-y-1">
+                    <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                      ICP
+                    </h3>
+                    <p className="text-xs font-semibold text-[#0A3D62]/90">
+                      (International Class Program)
+                    </p>
+                  </div>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Integrasi Cambridge Lower Secondary dengan lingkungan bilingual.
                   </p>
                 </div>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Integrasi Cambridge Lower Secondary dengan lingkungan bilingual.
-                </p>
-              </div>
 
-              <div className="pt-6">
-                <Link
-                  href="/akademik"
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
-                >
-                  <span>Selengkapnya</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            </article>
+                <div className="pt-6">
+                  <Link
+                    href="/akademik"
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                  >
+                    <span>Selengkapnya</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </article>
+            </StaggerItem>
 
             {/* Card 3: Tahfidz Al-Qur'an */}
-            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
-              <div className="space-y-4">
-                <FlaticonQuran size={52} className="shrink-0" />
-                <div className="space-y-1">
-                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
-                    Tahfidz Al-Qur&apos;an
-                  </h3>
-                  <p className="text-xs font-semibold text-transparent select-none">
-                    &nbsp;
+            <StaggerItem>
+              <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group h-full">
+                <div className="space-y-4">
+                  <FlaticonQuran size={52} className="shrink-0" />
+                  <div className="space-y-1">
+                    <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                      Tahfidz Al-Qur&apos;an
+                    </h3>
+                    <p className="text-xs font-semibold text-transparent select-none">
+                      &nbsp;
+                    </p>
+                  </div>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Metode Ummi, target hafalan bertahap, dan penguatan adab ibadah di Masjid Baitul &apos;Ilmi.
                   </p>
                 </div>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Metode Ummi, target hafalan bertahap, dan penguatan adab ibadah di Masjid Baitul &apos;Ilmi.
-                </p>
-              </div>
 
-              <div className="pt-6">
-                <Link
-                  href="/akademik"
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
-                >
-                  <span>Selengkapnya</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            </article>
+                <div className="pt-6">
+                  <Link
+                    href="/akademik"
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                  >
+                    <span>Selengkapnya</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </article>
+            </StaggerItem>
 
             {/* Card 4: Pendidikan Inklusi */}
-            <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group">
-              <div className="space-y-4">
-                <FlaticonInclusion size={52} className="shrink-0" />
-                <div className="space-y-1">
-                  <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
-                    Pendidikan Inklusi
-                  </h3>
-                  <p className="text-xs font-semibold text-[#0A3D62]/90">
-                    (Ramah Anak)
+            <StaggerItem>
+              <article className="bg-white border border-gray-100 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group h-full">
+                <div className="space-y-4">
+                  <FlaticonInclusion size={52} className="shrink-0" />
+                  <div className="space-y-1">
+                    <h3 className="font-pub-heading font-bold text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors leading-tight">
+                      Pendidikan Inklusi
+                    </h3>
+                    <p className="text-xs font-semibold text-[#0A3D62]/90">
+                      (Ramah Anak)
+                    </p>
+                  </div>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Layanan adaptif untuk PDBK dengan Program Pembelajaran Individual (PPI).
                   </p>
                 </div>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Layanan adaptif untuk PDBK dengan Program Pembelajaran Individual (PPI).
-                </p>
-              </div>
 
-              <div className="pt-6">
-                <Link
-                  href="/akademik"
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
-                >
-                  <span>Selengkapnya</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            </article>
-          </div>
+                <div className="pt-6">
+                  <Link
+                    href="/akademik"
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                  >
+                    <span>Selengkapnya</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </article>
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </section>
 
@@ -569,7 +607,7 @@ export default function HomePage() {
           ========================================================================= */}
       <section aria-labelledby="approach-heading" className="py-16 sm:py-20 bg-white">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="mb-10 space-y-1.5">
+          <FadeIn className="mb-10 space-y-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A6B82] block">
               KEUNGGULAN SEKOLAH
             </span>
@@ -579,105 +617,113 @@ export default function HomePage() {
             >
               Lebih dari Sekadar Akademik
             </h2>
-          </div>
+          </FadeIn>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Card 1: Binaan Dosen UM */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
-                  <Image
-                    src="/images/keunggulan-01.jpg"
-                    alt="Binaan Dosen UM"
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between h-full group">
+                <div>
+                  <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                    <Image
+                      src="/images/keunggulan-01.jpg"
+                      alt="Binaan Dosen UM"
+                      fill
+                      className="object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                    01
+                  </span>
+                  <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                    Binaan Dosen UM
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Pembelajaran didampingi akademisi Universitas Negeri Malang.
+                  </p>
                 </div>
-                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
-                  01
-                </span>
-                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
-                  Binaan Dosen UM
-                </h3>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Pembelajaran didampingi akademisi Universitas Negeri Malang.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Card 2: Karakter Wajib */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
-                  <Image
-                    src="/images/keunggulan-02.jpg"
-                    alt="Karakter Wajib"
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between h-full group">
+                <div>
+                  <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                    <Image
+                      src="/images/keunggulan-02.jpg"
+                      alt="Karakter Wajib"
+                      fill
+                      className="object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                    02
+                  </span>
+                  <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                    Karakter Wajib
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Life Skills (Kelas VII), Pramuka ARSIMBO, dan TaBeQu (Kelas VIII).
+                  </p>
                 </div>
-                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
-                  02
-                </span>
-                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
-                  Karakter Wajib
-                </h3>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Life Skills (Kelas VII), Pramuka ARSIMBO, dan TaBeQu (Kelas VIII).
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Card 3: 24 Ekskul & Prestasi */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
-                  <Image
-                    src="/images/keunggulan-03.jpg"
-                    alt="24 Ekskul & Prestasi"
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between h-full group">
+                <div>
+                  <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                    <Image
+                      src="/images/keunggulan-03.jpg"
+                      alt="24 Ekskul & Prestasi"
+                      fill
+                      className="object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                    03
+                  </span>
+                  <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                    24 Ekskul &amp; Prestasi
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Riset, bahasa, seni, olahraga dan kepemimpinan.
+                  </p>
                 </div>
-                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
-                  03
-                </span>
-                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
-                  24 Ekskul &amp; Prestasi
-                </h3>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Riset, bahasa, seni, olahraga dan kepemimpinan.
-                </p>
               </div>
-            </div>
+            </StaggerItem>
 
             {/* Card 4: Sarana & Fasilitas */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
-                  <Image
-                    src="/images/keunggulan-04.jpg"
-                    alt="Sarana & Fasilitas"
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
+            <StaggerItem>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between h-full group">
+                <div>
+                  <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-slate-100 mb-4">
+                    <Image
+                      src="/images/keunggulan-04.jpg"
+                      alt="Sarana & Fasilitas"
+                      fill
+                      className="object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
+                    04
+                  </span>
+                  <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
+                    Sarana &amp; Fasilitas
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
+                    Lingkungan belajar modern, lengkap dan nyaman.
+                  </p>
                 </div>
-                <span className="text-xs font-bold text-[#7A92A5] tracking-wider block mb-1">
-                  04
-                </span>
-                <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] leading-snug mb-1.5">
-                  Sarana &amp; Fasilitas
-                </h3>
-                <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed">
-                  Lingkungan belajar modern, lengkap dan nyaman.
-                </p>
               </div>
-            </div>
-          </div>
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </section>
 
@@ -743,7 +789,7 @@ export default function HomePage() {
 
           {/* Kondisi 3 & 4: Berita Nyata atau Fallback Tepat Sesuai Mockup */}
           {!isLoadingPosts && !isPostsError && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {(posts && posts.length > 0 ? posts : [
                 {
                   id: 'fallback-1',
@@ -772,43 +818,42 @@ export default function HomePage() {
                   : (post as any).cover?.url || (post as any).cover_file?.url || ['/images/keunggulan-03.jpg', '/images/keunggulan-01.jpg', '/images/hero-academic.jpg'][idx % 3];
 
                 return (
-                  <article
-                    key={post.id}
-                    className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group"
-                  >
-                    <div>
-                      <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-100 mb-3.5">
-                        <Image
-                          src={coverSrc}
-                          alt={post.title}
-                          fill
-                          className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                        />
+                  <StaggerItem key={post.id}>
+                    <article className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group h-full">
+                      <div>
+                        <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-100 mb-3.5">
+                          <Image
+                            src={coverSrc}
+                            alt={post.title}
+                            fill
+                            className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 font-medium mb-1.5">
+                          {formatTanggalIndo(post.published_at || (post as any).created_at)}
+                        </div>
+                        <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors line-clamp-2 leading-snug">
+                          <Link href="/berita" className="focus:outline-none focus:underline">
+                            {post.title}
+                          </Link>
+                        </h3>
                       </div>
-                      <div className="text-xs text-gray-500 font-medium mb-1.5">
-                        {formatTanggalIndo(post.published_at || (post as any).created_at)}
-                      </div>
-                      <h3 className="font-pub-heading font-bold text-base sm:text-lg text-[#0A3D62] group-hover:text-[#C89332] transition-colors line-clamp-2 leading-snug">
-                        <Link href="/berita" className="focus:outline-none focus:underline">
-                          {post.title}
-                        </Link>
-                      </h3>
-                    </div>
 
-                    <div className="pt-4">
-                      <Link
-                        href="/berita"
-                        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
-                      >
-                        <span>Baca Selengkapnya</span>
-                        <span aria-hidden="true">→</span>
-                      </Link>
-                    </div>
-                  </article>
+                      <div className="pt-4">
+                        <Link
+                          href="/berita"
+                          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                        >
+                          <span>Baca Selengkapnya</span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      </div>
+                    </article>
+                  </StaggerItem>
                 );
               })}
-            </div>
+            </StaggerContainer>
           )}
         </div>
       </section>
@@ -864,7 +909,7 @@ export default function HomePage() {
         {/* Content Container dengan padding yang presisi */}
         <div className="relative z-20 w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-8 sm:py-10 lg:py-16">
           {/* Right Text Column - Diposisikan di sisi kanan layar */}
-          <div className="lg:ml-auto lg:w-[52%] xl:w-[50%] lg:pl-8 text-white space-y-4">
+          <FadeIn direction="left" className="lg:ml-auto lg:w-[52%] xl:w-[50%] lg:pl-8 text-white space-y-4">
             <span className="text-xs font-bold uppercase tracking-wider text-[#F4E2BD] block">
               PENERIMAAN PESERTA DIDIK BARU
             </span>
@@ -908,7 +953,7 @@ export default function HomePage() {
                 <span>Lihat Jalur &amp; Syarat</span>
               </Link>
             </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
     </main>

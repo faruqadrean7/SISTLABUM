@@ -16,6 +16,7 @@ import {
   UserCheck,
   Phone,
   Microscope,
+  Quote,
 } from 'lucide-react';
 import {
   FlaticonRosette,
@@ -25,6 +26,13 @@ import {
   FlaticonQuran,
   FlaticonInclusion,
 } from '@/components/ui/FlaticonIcons';
+import {
+  FadeIn,
+  StaggerContainer,
+  StaggerItem,
+  AnimatedNumber,
+  MarqueeTicker,
+} from '@/components/ui/Motion';
 import {
   ACADEMIC_HERO,
   ACADEMIC_PROGRAMS,
@@ -83,6 +91,49 @@ const TALENT_CLUSTER_IMAGES = [
   },
 ];
 
+// 6 Instrumen Sistem Evaluasi & Pelaporan Belajar
+const EVALUATION_SYSTEM_ITEMS = [
+  {
+    icon: FileText,
+    title: 'Asesmen Harian & Formatif',
+    desc: 'Pemantauan pemahaman materi harian secara berkelanjutan.',
+  },
+  {
+    icon: Building2,
+    title: 'Asesmen Sumatif Kurikulum Merdeka',
+    desc: 'Penilaian capaian kompetensi untuk Rapor Pendidikan Nasional.',
+  },
+  {
+    icon: Globe,
+    title: 'Cambridge Progression Report',
+    desc: 'Laporan asesmen berkala berstandar Cambridge (ICP).',
+  },
+  {
+    icon: BookCheck,
+    title: "Buku Pantau Ibadah & Tasmi'",
+    desc: 'Catatan terpadu hafalan Al-Qur\'an, sholat, dan progres tartil.',
+  },
+  {
+    icon: UserCheck,
+    title: 'Evaluasi PPI',
+    desc: 'Laporan capaian individual terukur untuk siswa kelas inklusi.',
+  },
+  {
+    icon: Layers,
+    title: 'Portal Siswa Terpadu',
+    desc: 'Akses transparansi nilai, absensi, konseling, dan perkembangan.',
+  },
+];
+
+const AKADEMIK_TICKER_ITEMS = [
+  'Kurikulum Merdeka Belajar (SNP) Berbasis Mastery Learning',
+  'Cambridge International Class Program (ICP)',
+  'Program Bimbingan Tahfidz Al-Qur\'an & Adab Harian',
+  'Layanan Program Pembelajaran Individual (PPI) Inklusi Ramah Anak',
+  'Sekolah Laboratorium Model Riset Pembelajaran P2LP UM',
+  'Sistem Evaluasi Terpadu & Rapor Perkembangan Siswa Terintegrasi',
+];
+
 export default function AcademicPage() {
   return (
     <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none bg-white">
@@ -116,7 +167,7 @@ export default function AcademicPage() {
 
           {/* Konten Teks Hero (Mobile & Desktop) - Bersih Tanpa Tombol Sesuai Mockup */}
           <div className="relative z-10 w-full lg:w-[42%] xl:w-[38%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-8 lg:py-16">
-            <div className="max-w-xl space-y-3.5">
+            <FadeIn direction="right" className="max-w-xl space-y-3.5">
               {/* Breadcrumb Navigation */}
               <nav aria-label="Navigasi Halaman">
                 <ol className="flex items-center gap-2 text-xs text-white/70">
@@ -160,7 +211,7 @@ export default function AcademicPage() {
                   <Link href="/profil">Profil &amp; Visi Sekolah</Link>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
 
           {/* Mobile / Tablet Image: Membentang 100% selebar layar tanpa celah samping */}
@@ -196,7 +247,9 @@ export default function AcademicPage() {
             <div className="flex items-center gap-2.5 sm:gap-4">
               <FlaticonRosette size={40} className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 drop-shadow-xs" aria-hidden="true" />
               <div>
-                <p className="text-sm sm:text-base font-bold text-white leading-tight">Akreditasi A (Nilai 96)</p>
+                <p className="text-sm sm:text-base font-bold text-white leading-tight">
+                  Akreditasi A (Nilai <AnimatedNumber value={96} />)
+                </p>
                 <p className="text-[11px] sm:text-xs text-white/80 font-normal mt-0.5">BAN-S/M</p>
               </div>
             </div>
@@ -233,13 +286,18 @@ export default function AcademicPage() {
         </div>
       </div>
 
+      {/* Running Marquee Ticker Akademik Emas & Navy */}
+      <div className="bg-[#FAF8F5] border-b border-slate-200/80 py-3 text-[#062940]">
+        <MarqueeTicker items={AKADEMIK_TICKER_ITEMS} speed={42} />
+      </div>
+
       {/* =========================================================================
           3. 4 PROGRAM PENDIDIKAN UNGGULAN (4 KARTU BERBARIS SESUAI REFERENSI)
           ========================================================================= */}
       <section aria-labelledby="programs-heading" className="py-12 sm:py-16 bg-white border-b border-slate-200/80 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           {/* Header Section */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
+          <FadeIn className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
               <h2
                 id="programs-heading"
@@ -258,10 +316,10 @@ export default function AcademicPage() {
               <span>Lihat Detail Program</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
             </Link>
-          </div>
+          </FadeIn>
 
           {/* 4 Cards Grid Bersebelahan */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {ACADEMIC_PROGRAMS.map((program) => {
               const imageInfo = PROGRAM_IMAGES[program.id] || {
                 src: '/images/keunggulan-01.jpg',
@@ -269,101 +327,100 @@ export default function AcademicPage() {
               };
 
               return (
-                <article
-                  key={program.id}
-                  className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:border-[#062940]/30 transition-all duration-300 flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* Foto Header Program */}
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                      <Image
-                        src={imageInfo.src}
-                        alt={imageInfo.alt}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover object-center group-hover:scale-103 transition-transform duration-500"
-                      />
-                    </div>
-
-                    {/* Konten Kartu */}
-                    <div className="p-5">
-                      {/* Baris Ikon & Tag Kategori */}
-                      <div className="flex items-center gap-2.5 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
-                          {program.id === 'reguler' && <FlaticonBook size={22} />}
-                          {program.id === 'icp' && <FlaticonGlobe size={22} />}
-                          {program.id === 'tahfidz' && <FlaticonQuran size={22} />}
-                          {program.id === 'inklusi' && <FlaticonInclusion size={22} />}
-                        </div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#4A6B82]">
-                          {program.badge}
-                        </span>
+                <StaggerItem key={program.id}>
+                  <article className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:border-[#062940]/30 transition-all duration-300 flex flex-col justify-between group h-full">
+                    <div>
+                      {/* Foto Header Program */}
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                        <Image
+                          src={imageInfo.src}
+                          alt={imageInfo.alt}
+                          fill
+                          unoptimized
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          className="object-cover object-center group-hover:scale-103 transition-transform duration-500"
+                        />
                       </div>
 
-                      {/* Judul H3 Sesuai Persyaratan Tes & Subtitle Sesuai Mockup */}
-                      <h3 className="font-pub-heading font-bold text-base text-[#062940] leading-snug">
-                        {program.name}
-                      </h3>
+                      {/* Konten Kartu */}
+                      <div className="p-5">
+                        {/* Baris Ikon & Tag Kategori */}
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
+                            {program.id === 'reguler' && <FlaticonBook size={22} />}
+                            {program.id === 'icp' && <FlaticonGlobe size={22} />}
+                            {program.id === 'tahfidz' && <FlaticonQuran size={22} />}
+                            {program.id === 'inklusi' && <FlaticonInclusion size={22} />}
+                          </div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#4A6B82]">
+                            {program.badge}
+                          </span>
+                        </div>
 
-                      <p className="text-xs font-semibold text-[#0A3D62] mt-0.5 mb-2">
-                        {program.id === 'reguler' && 'Kurikulum Merdeka SNP'}
-                        {program.id === 'icp' && 'International Class Program'}
-                        {program.id === 'tahfidz' && "Program Tahfidz Qur'an"}
-                        {program.id === 'inklusi' && 'Program Inklusi'}
-                      </p>
+                        {/* Judul H3 Sesuai Persyaratan Tes & Subtitle Sesuai Mockup */}
+                        <h3 className="font-pub-heading font-bold text-base text-[#062940] leading-snug">
+                          {program.name}
+                        </h3>
 
-                      {/* Deskripsi Memuat Karakteristik Kunci Teruji */}
-                      <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                        {program.id === 'reguler' && (
-                          <>
-                            Fondasi akademik yang kuat dengan <strong>Penerapan Kurikulum Nasional SNP</strong> berbasis mastery learning, literasi-numerasi, dan penguatan karakter.
-                          </>
-                        )}
-                        {program.id === 'icp' && (
-                          <>
-                            <strong>Integrasi silabus Cambridge Lower Secondary</strong> dengan pembelajaran bilingual dan persiapan Cambridge Checkpoint.
-                          </>
-                        )}
-                        {program.id === 'tahfidz' && (
-                          <>
-                            <strong>Bimbingan tahsin dan tahfidz terstruktur</strong> dengan metode talaqqi dan tartil, serta pembiasaan adab islami.
-                          </>
-                        )}
-                        {program.id === 'inklusi' && (
-                          <>
-                            <strong>Penyusunan Program Pembelajaran Individual (PPI)</strong> adaptif untuk PDBK dengan GPK dalam ekosistem ramah anak.
-                          </>
-                        )}
-                      </p>
+                        <p className="text-xs font-semibold text-[#0A3D62] mt-0.5 mb-2">
+                          {program.id === 'reguler' && 'Kurikulum Merdeka SNP'}
+                          {program.id === 'icp' && 'International Class Program'}
+                          {program.id === 'tahfidz' && "Program Tahfidz Qur'an"}
+                          {program.id === 'inklusi' && 'Program Inklusi'}
+                        </p>
+
+                        {/* Deskripsi Memuat Karakteristik Kunci Teruji */}
+                        <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                          {program.id === 'reguler' && (
+                            <>
+                              Fondasi akademik yang kuat dengan <strong>Penerapan Kurikulum Nasional SNP</strong> berbasis mastery learning, literasi-numerasi, dan penguatan karakter.
+                            </>
+                          )}
+                          {program.id === 'icp' && (
+                            <>
+                              <strong>Integrasi silabus Cambridge Lower Secondary</strong> dengan pembelajaran bilingual dan persiapan Cambridge Checkpoint.
+                            </>
+                          )}
+                          {program.id === 'tahfidz' && (
+                            <>
+                              <strong>Bimbingan tahsin dan tahfidz terstruktur</strong> dengan metode talaqqi dan tartil, serta pembiasaan adab islami.
+                            </>
+                          )}
+                          {program.id === 'inklusi' && (
+                            <>
+                              <strong>Penyusunan Program Pembelajaran Individual (PPI)</strong> adaptif untuk PDBK dengan GPK dalam ekosistem ramah anak.
+                            </>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Tautan Aksi Bawah */}
-                  <div className="p-5 pt-0 mt-auto">
-                    <Link
-                      href="/ppdb"
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
-                    >
-                      <span>Selengkapnya</span>
-                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Link>
-                  </div>
-                </article>
+                    {/* Tautan Aksi Bawah */}
+                    <div className="p-5 pt-0 mt-auto">
+                      <Link
+                        href="/ppdb"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0A3D62] hover:text-[#C89332] transition-colors focus:outline-none focus:underline"
+                      >
+                        <span>Selengkapnya</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </article>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerContainer>
         </div>
       </section>
 
       {/* =========================================================================
           4. DUA KOLOM BENTO: PENDEKATAN PEMBELAJARAN & KARAKTER WAJIB BERJENJANG
           ========================================================================= */}
-      <section className="py-12 sm:py-16 bg-[#FAF8F5] border-b border-slate-200/80 w-full">
+      <section className="py-12 sm:py-16 bg-[#FAF8F5] border-b border-slate-200/80 w-full overflow-hidden">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {/* Kolom Kiri: Pendekatan Pembelajaran (Dark Navy Sesuai Gambar Referensi) */}
-            <div className="lg:col-span-6 bg-[#062940] text-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-xs">
+            <FadeIn direction="right" className="lg:col-span-6 bg-[#062940] text-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-xs">
               <div>
                 <h2
                   id="approach-heading"
@@ -443,10 +500,10 @@ export default function AcademicPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </FadeIn>
 
             {/* Kolom Kanan: Karakter Wajib Berjenjang (Tabel Rapi Sesuai Gambar Referensi) */}
-            <div className="lg:col-span-6 bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-xs">
+            <FadeIn direction="left" delay={0.15} className="lg:col-span-6 bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-xs">
               <div>
                 <h3 className="font-pub-heading text-2xl font-bold text-[#062940] tracking-tight">
                   Karakter Wajib Berjenjang
@@ -519,7 +576,7 @@ export default function AcademicPage() {
                   </table>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -530,7 +587,7 @@ export default function AcademicPage() {
       <section aria-labelledby="development-heading" className="py-12 sm:py-16 bg-white border-b border-slate-200/80 w-full">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           {/* Header Section */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
+          <FadeIn className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
               <h2
                 id="development-heading"
@@ -550,198 +607,133 @@ export default function AcademicPage() {
               <span>Lihat Semua Ekstrakurikuler</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
             </Link>
-          </div>
+          </FadeIn>
 
           {/* 4 Cards Rumpun Minat & Bakat Berfoto */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {STUDENT_DEVELOPMENT_AREAS.interestClusters.map((cluster, idx) => {
               const imageInfo = TALENT_CLUSTER_IMAGES[idx] || TALENT_CLUSTER_IMAGES[0];
 
               return (
-                <div
-                  key={idx}
-                  className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* Foto Kegiatan Rumpun */}
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                      <Image
-                        src={imageInfo.src}
-                        alt={imageInfo.alt}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover object-center group-hover:scale-103 transition-transform duration-500"
-                      />
-                    </div>
-
-                    {/* Deskripsi & Ikon */}
-                    <div className="p-5">
-                      <div className="w-9 h-9 rounded-full border border-blue-200 bg-blue-50/50 flex items-center justify-center text-[#0A3D62] mb-3">
-                        {idx === 0 && <Microscope className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
-                        {idx === 1 && <MessageSquare className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
-                        {idx === 2 && <Palette className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
-                        {idx === 3 && <Trophy className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
+                <StaggerItem key={idx}>
+                  <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group h-full">
+                    <div>
+                      {/* Foto Kegiatan Rumpun */}
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                        <Image
+                          src={imageInfo.src}
+                          alt={imageInfo.alt}
+                          fill
+                          unoptimized
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          className="object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                        />
                       </div>
 
-                      <h3 className="font-pub-heading font-bold text-sm sm:text-base text-[#062940] mb-1.5 leading-snug">
-                        {cluster.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 leading-relaxed">
-                        {cluster.description}
-                      </p>
+                      {/* Deskripsi & Ikon */}
+                      <div className="p-5">
+                        <div className="w-9 h-9 rounded-full border border-blue-200 bg-blue-50/50 flex items-center justify-center text-[#0A3D62] mb-3">
+                          {idx === 0 && <Microscope className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
+                          {idx === 1 && <MessageSquare className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
+                          {idx === 2 && <Palette className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
+                          {idx === 3 && <Trophy className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />}
+                        </div>
+
+                        <h3 className="font-pub-heading font-bold text-sm sm:text-base text-[#062940] mb-1.5 leading-snug">
+                          {cluster.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          {cluster.description}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerContainer>
         </div>
       </section>
 
       {/* =========================================================================
           6. SISTEM EVALUASI & PELAPORAN BELAJAR (SESUAI MOCKUP REFERENSI)
           ========================================================================= */}
-      <section aria-labelledby="evaluation-heading" className="py-12 sm:py-16 bg-[#FAF8F5] border-b border-slate-200/80 w-full">
+      <section aria-labelledby="evaluation-heading" className="py-14 sm:py-18 bg-[#FAF8F5] border-b border-slate-200/80 w-full overflow-hidden">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="max-w-3xl mb-8 sm:mb-10">
+          <FadeIn className="max-w-3xl mb-8 sm:mb-10">
             <h2
               id="evaluation-heading"
               className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#062940] tracking-tight"
             >
               Sistem Evaluasi &amp; Pelaporan Belajar
             </h2>
-            <p className="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">
+            <p className="text-gray-600 text-xs sm:text-sm mt-1.5 leading-relaxed">
               Transparan dan terintegrasi melalui Portal Siswa Terpadu.
             </p>
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Kolom Kiri: 6 Kartu Mini Penilaian */}
+            {/* Kolom Kiri: 6 Kartu Evaluasi dalam Grid 3 Kolom x 2 Baris yang Rapi & Proporsional */}
             <div className="lg:col-span-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                {/* 1. Asesmen Harian */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-[#0A3D62] mb-2.5">
-                    <FileText className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h4 className="font-pub-heading font-bold text-xs text-[#062940] mb-1 leading-snug">
-                      Asesmen Harian &amp; Formatif
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
-                      Pemantauan pemahaman materi harian.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 2. Asesmen Sumatif */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-[#0A3D62] mb-2.5">
-                    <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h4 className="font-pub-heading font-bold text-xs text-[#062940] mb-1 leading-snug">
-                      Asesmen Sumatif Kurikulum Merdeka
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
-                      Rapor Pendidikan Nasional.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 3. Cambridge Progression Report */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-[#0A3D62] mb-2.5">
-                    <Globe className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h4 className="font-pub-heading font-bold text-xs text-[#062940] mb-1 leading-snug">
-                      Cambridge Progression Report
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
-                      Laporan berstandar Cambridge (ICP).
-                    </p>
-                  </div>
-                </div>
-
-                {/* 4. Buku Pantau Ibadah */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-[#0A3D62] mb-2.5">
-                    <BookCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h4 className="font-pub-heading font-bold text-xs text-[#062940] mb-1 leading-snug">
-                      Buku Pantau Ibadah &amp; Tasmi&apos;
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
-                      Catatan hafalan dan progres tartil.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 5. Evaluasi PPI */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-[#0A3D62] mb-2.5">
-                    <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h4 className="font-pub-heading font-bold text-xs text-[#062940] mb-1 leading-snug">
-                      Evaluasi PPI
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
-                      Laporan capaian individual untuk kelas inklusi.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 6. Portal Siswa Terpadu */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                  <div className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-[#0A3D62] mb-2.5">
-                    <Layers className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h4 className="font-pub-heading font-bold text-xs text-[#062940] mb-1 leading-snug">
-                      Portal Siswa Terpadu
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
-                      Akses nilai, kehadiran, konseling, dan perkembangan.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
+                {EVALUATION_SYSTEM_ITEMS.map((item, idx) => (
+                  <StaggerItem key={idx}>
+                    <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-[#C89332]/40 transition-all flex flex-col justify-between group h-full">
+                      <div>
+                        <div className="w-9 h-9 rounded-xl bg-[#0A3D62]/5 border border-[#0A3D62]/10 flex items-center justify-center text-[#0A3D62] mb-3.5 group-hover:bg-[#0A3D62] group-hover:text-white transition-colors">
+                          <item.icon className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <h3 className="font-pub-heading font-bold text-sm text-[#062940] mb-1.5 leading-snug">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </StaggerContainer>
             </div>
 
-            {/* Kolom Kanan: Quote Card Terang Berlatar Kampus Sesuai Referensi Gambar */}
-            <div className="lg:col-span-4">
-              <div className="relative rounded-2xl overflow-hidden p-6 sm:p-7 flex flex-col justify-between shadow-2xs h-full min-h-[200px] border border-slate-200 bg-white">
+            {/* Kolom Kanan: Quote Card Elegan Berlatar Kampus */}
+            <FadeIn direction="left" delay={0.15} className="lg:col-span-4 flex">
+              <div className="relative w-full rounded-2xl overflow-hidden p-6 sm:p-8 flex flex-col justify-between shadow-xs border border-slate-200/90 bg-white group h-full">
                 {/* Background Image Kampus Transparan di Sisi Kanan */}
-                <div className="absolute inset-y-0 right-0 w-1/2 overflow-hidden pointer-events-none opacity-20">
+                <div className="absolute inset-y-0 right-0 w-3/5 overflow-hidden pointer-events-none opacity-15">
                   <Image
                     src="/images/school-gate.jpg"
                     alt=""
                     fill
                     unoptimized
-                    sizes="200px"
-                    className="object-cover object-right"
+                    sizes="320px"
+                    className="object-cover object-right group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-white via-white/50 to-transparent" aria-hidden="true" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent" aria-hidden="true" />
                 </div>
 
                 <div className="relative z-10 flex-1 flex flex-col justify-between">
-                  <blockquote className="text-sm sm:text-base italic leading-relaxed text-[#062940] font-medium">
-                    &ldquo;Pendidikan bukan hanya tentang pengetahuan, tetapi tentang membentuk karakter dan masa depan.&rdquo;
-                  </blockquote>
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-[#C89332]/10 flex items-center justify-center text-[#C89332] mb-5">
+                      <Quote className="w-5 h-5 fill-[#C89332]/20" aria-hidden="true" />
+                    </div>
+                    <blockquote className="font-pub-heading text-base sm:text-lg italic leading-relaxed text-[#062940] font-semibold">
+                      &ldquo;Pendidikan bukan hanya tentang pengetahuan, tetapi tentang membentuk karakter dan masa depan.&rdquo;
+                    </blockquote>
+                  </div>
 
-                  <div className="pt-3 mt-4">
-                    <div className="h-0.5 w-8 bg-[#C89332] mb-1.5" />
+                  <div className="pt-6 mt-6 border-t border-slate-100">
+                    <div className="h-0.5 w-10 bg-[#C89332] mb-2" />
                     <p className="font-bold text-xs uppercase tracking-wider text-[#062940]">
                       SMP Laboratorium UM
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      P2LP Universitas Negeri Malang
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -764,7 +756,7 @@ export default function AcademicPage() {
         </div>
 
         <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+          <FadeIn className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
             <div className="text-center lg:text-left">
               <h2 className="font-pub-heading text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Siap Menjadi Bagian dari
@@ -792,7 +784,7 @@ export default function AcademicPage() {
                 <span className="sr-only"> (Konsultasi Akademik)</span>
               </Link>
             </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
     </main>

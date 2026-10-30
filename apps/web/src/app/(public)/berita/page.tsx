@@ -26,6 +26,20 @@ import {
   NEWS_GRID_ARTICLES,
   NewsArticleItem,
 } from '@/features/public-site/content/news';
+import {
+  FadeIn,
+  StaggerContainer,
+  StaggerItem,
+  MarqueeTicker,
+} from '@/components/ui/Motion';
+
+const NEWS_TICKER_ITEMS = [
+  'Warta & Prestasi Resmi SMP Laboratorium UM',
+  'Liputan Riset Pembelajaran & Cambridge International Program',
+  'Informasi Pendaftaran Peserta Didik Baru (PPDB Online)',
+  'Dokumentasi Karya, Proyek P5, dan Karakter Adab Siswa',
+  'Agenda Parenting & Kolaborasi Bersama P2LP Universitas Negeri Malang',
+];
 
 function formatTanggalIndo(dateStr?: string): string {
   if (!dateStr) return '';
@@ -191,7 +205,7 @@ export default function NewsIndexPage() {
 
           {/* Konten Teks Hero (Mobile & Desktop) */}
           <div className="relative z-10 w-full lg:w-[42%] xl:w-[38%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-8 lg:py-16">
-            <div className="max-w-xl space-y-3.5">
+            <FadeIn direction="right" className="max-w-xl space-y-3.5">
               {/* Breadcrumb Navigation */}
               <nav aria-label="Navigasi Halaman">
                 <ol className="flex items-center gap-2 text-xs text-white/70">
@@ -212,12 +226,6 @@ export default function NewsIndexPage() {
                 </ol>
               </nav>
 
-              {/* Badge Pill Persis Referensi */}
-              {/* <div className="inline-flex items-center gap-2 bg-[#C89332]/25 border border-[#C89332]/40 text-[#F4E2BD] text-xs font-semibold px-3.5 py-1 rounded-full w-fit shadow-2xs">
-                <Newspaper className="w-3.5 h-3.5 text-[#C89332]" aria-hidden="true" />
-                <span>Publikasi Resmi Sekolah</span>
-              </div> */}
-
               <div>
                 <h1
                   id="news-hero-heading"
@@ -232,7 +240,7 @@ export default function NewsIndexPage() {
                   Dapatkan informasi terbaru seputar prestasi, kegiatan, agenda, dan pengumuman resmi SMP Laboratorium UM.
                 </p>
               </div>
-            </div>
+            </FadeIn>
           </div>
 
           {/* Mobile / Tablet Image: Membentang 100% selebar layar tanpa celah samping */}
@@ -255,7 +263,14 @@ export default function NewsIndexPage() {
       </section>
 
       {/* =========================================================================
-          2. SEARCH & CATEGORY FILTER BAR (PILL BUTTONS PERSIS REFERENSI)
+          2. RUNNING MARQUEE TICKER (WARTA TERKINI & REPUTASI PUBLIKASI)
+          ========================================================================= */}
+      <section aria-label="Warta Terkini" className="bg-[#FAF8F5] border-b border-[#C89332]/20 py-2.5 overflow-hidden">
+        <MarqueeTicker items={NEWS_TICKER_ITEMS} speed={28} />
+      </section>
+
+      {/* =========================================================================
+          3. SEARCH & CATEGORY FILTER BAR (PILL BUTTONS PERSIS REFERENSI)
           ========================================================================= */}
       <section
         aria-label="Filter dan Pencarian Berita"
@@ -337,7 +352,7 @@ export default function NewsIndexPage() {
       </section>
 
       {/* =========================================================================
-          3. KONTEN BERITA: FEATURED ARTICLE & GRID (SESUAI REFERENSI)
+          4. KONTEN BERITA: FEATURED ARTICLE & GRID (SESUAI REFERENSI)
           ========================================================================= */}
       <section aria-label="Daftar Berita" className="py-10 sm:py-14 w-full flex-1">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
@@ -423,190 +438,193 @@ export default function NewsIndexPage() {
             <div className="space-y-8">
               {/* --- FEATURED HERO POST (HANYA MUNCUL DI HALAMAN 1 TANPA FILTER PENCARIAN) --- */}
               {featuredItem && (
-                <article className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow group">
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                    {/* Kolom Foto Kiri (7 Kolom pada Desktop) */}
-                    <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto w-full bg-slate-100 min-h-[260px] lg:min-h-[340px] overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={featuredItem.image}
-                        alt={`Sampul warta ${featuredItem.title}`}
-                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                      <div className="absolute top-4 left-4 z-10">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#C89332] text-white shadow-xs">
-                          <Trophy className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>{featuredItem.category.name}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Kolom Detail Kanan (5 Kolom pada Desktop) */}
-                    <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between">
-                      <div>
-                        {/* Metadata Row */}
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-500 mb-3">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                            <span>{featuredItem.dateFormatted}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                            <span>{featuredItem.author}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                            <span>{featuredItem.readingTime}</span>
-                          </div>
+                <FadeIn direction="up">
+                  <article className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow group">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                      {/* Kolom Foto Kiri (7 Kolom pada Desktop) */}
+                      <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto w-full bg-slate-100 min-h-[260px] lg:min-h-[340px] overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={featuredItem.image}
+                          alt={`Sampul warta ${featuredItem.title}`}
+                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute top-4 left-4 z-10">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#C89332] text-white shadow-xs">
+                            <Trophy className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{featuredItem.category.name}</span>
+                          </span>
                         </div>
-
-                        <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-[#062940] group-hover:text-[#C89332] transition-colors leading-snug mb-3">
-                          <Link href={`/berita/${featuredItem.slug}`} className="focus:outline-none focus:underline">
-                            {featuredItem.title}
-                          </Link>
-                        </h2>
-
-                        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-4">
-                          {featuredItem.excerpt}
-                        </p>
                       </div>
 
-                      <div className="pt-5 mt-4 border-t border-slate-100">
-                        <Link
-                          href={`/berita/${featuredItem.slug}`}
-                          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0A3D62] hover:text-[#C89332] transition-colors group-hover:translate-x-0.5 transform duration-200"
-                        >
-                          <span>Baca Selengkapnya</span>
-                          <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              )}
-
-              {/* --- GRID 6 KARTU BERITA (3 KOLOM PADA DESKTOP) --- */}
-              {gridItems.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-                  {gridItems.map((article) => (
-                    <article
-                      key={article.id}
-                      className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
-                    >
-                      <div>
-                        {/* Thumbnail Foto Sampul */}
-                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={article.image}
-                            alt={`Sampul warta ${article.title}`}
-                            className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = 'none';
-                            }}
-                          />
-                          <div className="absolute top-3 left-3 z-10">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shadow-2xs ${article.category.badgeStyle}`}
-                            >
-                              {article.category.name}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Konten Teks & Meta */}
-                        <div className="p-5">
-                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 mb-2.5">
-                            <div className="flex items-center gap-1">
+                      {/* Kolom Detail Kanan (5 Kolom pada Desktop) */}
+                      <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between">
+                        <div>
+                          {/* Metadata Row */}
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-500 mb-3">
+                            <div className="flex items-center gap-1.5">
                               <Calendar className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                              <span>{article.dateFormatted}</span>
+                              <span>{featuredItem.dateFormatted}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                               <User className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                              <span className="truncate max-w-[110px]">{article.author}</span>
+                              <span>{featuredItem.author}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                               <Clock className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                              <span>{article.readingTime}</span>
+                              <span>{featuredItem.readingTime}</span>
                             </div>
                           </div>
 
-                          <h3 className="font-pub-heading text-base sm:text-lg font-bold text-[#062940] group-hover:text-[#C89332] transition-colors leading-snug mb-2 line-clamp-2">
-                            <Link href={`/berita/${article.slug}`} className="focus:outline-none focus:underline">
-                              {article.title}
+                          <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-[#062940] group-hover:text-[#C89332] transition-colors leading-snug mb-3">
+                            <Link href={`/berita/${featuredItem.slug}`} className="focus:outline-none focus:underline">
+                              {featuredItem.title}
                             </Link>
-                          </h3>
+                          </h2>
 
-                          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
-                            {article.excerpt}
+                          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-4">
+                            {featuredItem.excerpt}
                           </p>
                         </div>
-                      </div>
 
-                      <div className="px-5 pb-5 pt-0">
-                        <Link
-                          href={`/berita/${article.slug}`}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D62] hover:text-[#C89332] transition-colors group-hover:translate-x-0.5 transform duration-200"
-                        >
-                          <span>Baca Selengkapnya</span>
-                          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                        </Link>
+                        <div className="pt-5 mt-4 border-t border-slate-100">
+                          <Link
+                            href={`/berita/${featuredItem.slug}`}
+                            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0A3D62] hover:text-[#C89332] transition-colors group-hover:translate-x-0.5 transform duration-200"
+                          >
+                            <span>Baca Selengkapnya</span>
+                            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                          </Link>
+                        </div>
                       </div>
-                    </article>
+                    </div>
+                  </article>
+                </FadeIn>
+              )}
+
+              {/* --- GRID 6 KARTU BERITA (3 KOLOM PADA DESKTOP DENGAN STAGGER REVEAL) --- */}
+              {gridItems.length > 0 && (
+                <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                  {gridItems.map((article) => (
+                    <StaggerItem key={article.id} className="flex">
+                      <article className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group w-full">
+                        <div>
+                          {/* Thumbnail Foto Sampul */}
+                          <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={article.image}
+                              alt={`Sampul warta ${article.title}`}
+                              className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <div className="absolute top-3 left-3 z-10">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shadow-2xs ${article.category.badgeStyle}`}
+                              >
+                                {article.category.name}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Konten Teks & Meta */}
+                          <div className="p-5">
+                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 mb-2.5">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
+                                <span>{article.dateFormatted}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <User className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
+                                <span className="truncate max-w-[110px]">{article.author}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
+                                <span>{article.readingTime}</span>
+                              </div>
+                            </div>
+
+                            <h3 className="font-pub-heading text-base sm:text-lg font-bold text-[#062940] group-hover:text-[#C89332] transition-colors leading-snug mb-2 line-clamp-2">
+                              <Link href={`/berita/${article.slug}`} className="focus:outline-none focus:underline">
+                                {article.title}
+                              </Link>
+                            </h3>
+
+                            <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                              {article.excerpt}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="px-5 pb-5 pt-0">
+                          <Link
+                            href={`/berita/${article.slug}`}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D62] hover:text-[#C89332] transition-colors group-hover:translate-x-0.5 transform duration-200"
+                          >
+                            <span>Baca Selengkapnya</span>
+                            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                          </Link>
+                        </div>
+                      </article>
+                    </StaggerItem>
                   ))}
-                </div>
+                </StaggerContainer>
               )}
 
               {/* --- KONTROL PAGINASI (SESUAI MOCKUP DENGAN TOMBOL NOMOR) --- */}
               {totalPages > 1 && (
-                <nav
-                  aria-label="Paginasi Halaman Berita"
-                  className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-200/80 pt-6 mt-8 gap-4"
-                >
-                  <p className="text-xs text-gray-500">
-                    Halaman <strong className="text-[#062940]">{page}</strong> dari{' '}
-                    <strong className="text-[#062940]">{totalPages}</strong> (Total {meta?.total || posts.length} warta)
-                  </p>
+                <FadeIn>
+                  <nav
+                    aria-label="Paginasi Halaman Berita"
+                    className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-200/80 pt-6 mt-8 gap-4"
+                  >
+                    <p className="text-xs text-gray-500">
+                      Halaman <strong className="text-[#062940]">{page}</strong> dari{' '}
+                      <strong className="text-[#062940]">{totalPages}</strong> (Total {meta?.total || posts.length} warta)
+                    </p>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={page <= 1}
-                      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                      className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-300 bg-white text-[#062940] hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-[#C89332]"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Sebelumnya</span>
-                    </button>
-
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((pageNum) => (
+                    <div className="flex items-center gap-1.5">
                       <button
-                        key={pageNum}
                         type="button"
-                        onClick={() => setPage(pageNum)}
-                        className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center ${page === pageNum
-                            ? 'bg-[#062940] text-white shadow-xs'
-                            : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
-                          }`}
+                        disabled={page <= 1}
+                        onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-300 bg-white text-[#062940] hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-[#C89332]"
                       >
-                        {pageNum}
+                        <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Sebelumnya</span>
                       </button>
-                    ))}
 
-                    <button
-                      type="button"
-                      disabled={page >= totalPages}
-                      onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                      className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-300 bg-white text-[#062940] hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-[#C89332]"
-                    >
-                      <span>Berikutnya</span>
-                      <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
-                  </div>
-                </nav>
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setPage(pageNum)}
+                          className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center ${page === pageNum
+                              ? 'bg-[#062940] text-white shadow-xs'
+                              : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-300 bg-white text-[#062940] hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-[#C89332]"
+                      >
+                        <span>Berikutnya</span>
+                        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </nav>
+                </FadeIn>
               )}
             </div>
           )}
@@ -614,7 +632,7 @@ export default function NewsIndexPage() {
       </section>
 
       {/* =========================================================================
-          4. CALL TO ACTION PENDAFTARAN & KONTAK (PERSIS REFERENSI UI)
+          5. CALL TO ACTION PENDAFTARAN & KONTAK (PERSIS REFERENSI UI)
           ========================================================================= */}
       <section className="relative overflow-hidden bg-[#062940] text-white py-12 sm:py-14 w-full border-t border-white/10">
         {/* Foto Kampus dengan Pohon Hijau di Sisi Kiri Faded Overlay */}
@@ -631,8 +649,8 @@ export default function NewsIndexPage() {
         </div>
 
         <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
-            <div className="text-center lg:text-left border-l-0 lg:border-l-2 lg:border-white/20 lg:pl-5">
+          <FadeIn className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+            <div className="text-center lg:text-left">
               <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Jangan lewatkan informasi terbaru
                 <br />
@@ -658,7 +676,7 @@ export default function NewsIndexPage() {
                 <span>Hubungi Kami</span>
               </Link>
             </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
     </main>

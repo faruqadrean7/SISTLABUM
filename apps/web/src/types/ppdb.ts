@@ -234,6 +234,7 @@ export interface EnrollApplicantPayload {
 export interface PPDBRankingItem {
   id: string;
   registration_no: string;
+  nik?: string | null;
   full_name: string;
   birth_date?: string;
   track_code?: string;
@@ -299,11 +300,13 @@ export interface PPDBStatsResponse {
 
 export interface CheckPPDBResultPayload {
   registration_no: string;
+  nik?: string | null;
   birth_date: string; // YYYY-MM-DD
 }
 
 export interface PPDBPublicResult {
   registration_no: string;
+  nik?: string | null;
   full_name: string;
   birth_date?: string;
   wave_id?: string;
@@ -389,6 +392,7 @@ export interface PPDBLoginResponse {
 export interface ApplicantProfileApplication {
   id: string;
   registration_no: string;
+  nik?: string | null;
   full_name: string;
   birth_date?: string | null;
   status: ApplicantStatus;

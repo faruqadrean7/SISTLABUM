@@ -100,7 +100,7 @@ export default function PublicPPDBPage() {
         aria-labelledby="ppdb-hero-heading"
         className="relative bg-[#062940] text-white overflow-hidden border-b border-white/10 w-full"
       >
-        <div className="relative w-full min-h-0 lg:min-h-[460px] flex flex-col lg:flex-row lg:items-center">
+        <div className="relative w-full min-h-0 lg:min-h-[440px] flex flex-col lg:flex-row lg:items-center">
           {/* Layer Foto Siswa di Kanan - Dominan 65% dengan Gradasi Halus Persis Referensi */}
           <div className="hidden lg:block absolute inset-y-0 right-0 w-[58%] xl:w-[62%] 2xl:w-[66%] overflow-hidden pointer-events-none select-none">
             <div className="relative w-full h-full">

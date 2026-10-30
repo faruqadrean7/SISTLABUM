@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -33,6 +33,17 @@ export default function PPDBLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
+
+  // Periksa apakah pengguna dialihkan karena sesi berakhir
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('session_expired') === '1') {
+        setSessionExpiredNotice(true);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +65,9 @@ export default function PPDBLoginPage() {
         password,
       });
 
-      // Simpan Access Token via tokenStorage (agar terinjeksi ke apiClient) & localStorage
+      // Simpan token via tokenStorage & legacy localStorage
       if (res.accessToken) {
-        tokenStorage.setTokens(res.accessToken, res.refreshToken);
+        tokenStorage.setTokens(res.accessToken);
         if (res.user) {
           tokenStorage.setUser(res.user as any);
         }
@@ -66,143 +77,77 @@ export default function PPDBLoginPage() {
         }
       }
 
-      // Berhasil -> redirect ke dashboard pendaftar
+      // Redirect ke dashboard
       router.push('/ppdb/dashboard');
     } catch (err: any) {
-      const code = err.response?.data?.error?.code || err.response?.data?.code;
-      const msg = err.response?.data?.error?.message || err.response?.data?.message || err.message;
-
-      if (code === 'INVALID_CREDENTIALS' || err.response?.status === 401) {
-        setErrorMessage('Kredensial tidak sesuai. Periksa kembali email/nomor registrasi dan kata sandi Anda.');
-      } else if (code === 'ACCOUNT_INACTIVE' || err.response?.status === 403) {
-        setErrorMessage('Akun pendaftar ini belum aktif atau belum diverifikasi OTP. Silakan lakukan verifikasi.');
-      } else if (code === 'RATE_LIMITED' || err.response?.status === 429) {
-        setErrorMessage('Terlalu banyak percobaan masuk yang gagal. Silakan tunggu beberapa saat sebelum mencoba kembali.');
-      } else {
-        setErrorMessage(msg || 'Gagal masuk ke akun pendaftar. Periksa koneksi atau coba beberapa saat lagi.');
-      }
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error?.message ||
+        'Gagal masuk. Periksa kembali nomor registrasi/email dan kata sandi Anda.';
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none bg-slate-50">
+    <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none bg-white">
       {/* =========================================================================
-          1. HERO SECTION (FULL-BLEED NAVY STYLE DENGAN FOTO SISWA DI KANAN)
+          1. BREADCRUMB NAVIGASI MINIMALIS (BERSIH DENGAN LATAR PUTIH)
           ========================================================================= */}
-      <section
-        aria-labelledby="login-hero-heading"
-        className="relative bg-[#062940] text-white overflow-hidden border-b border-white/10 w-full"
-      >
-        <div className="relative w-full min-h-0 lg:min-h-[380px] flex flex-col lg:flex-row lg:items-center">
-          {/* Layer Foto Siswa di Kanan - Dominan 62% dengan Gradasi Halus */}
-          <div className="hidden lg:block absolute inset-y-0 right-0 w-[56%] xl:w-[60%] 2xl:w-[64%] overflow-hidden pointer-events-none select-none">
-            <div className="relative w-full h-full">
-              <Image
-                src="/images/ppdb-students.jpg"
-                alt="Siswa-siswi SMP Laboratorium UM berprestasi"
-                fill
-                priority
-                unoptimized
-                sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-cover object-center"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-r from-[#062940] via-[#062940]/80 via-10% lg:via-15% to-transparent to-35% lg:to-45%"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-
-          {/* Konten Teks Hero (Mobile & Desktop) */}
-          <div className="relative z-10 w-full lg:w-[46%] xl:w-[42%] px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-12 pb-8 lg:py-14">
-            <div className="max-w-xl space-y-3.5">
-              {/* Breadcrumb Navigation */}
-              <nav aria-label="Navigasi Halaman">
-                <ol className="flex items-center gap-2 text-xs text-white/70">
-                  <li>
-                    <Link
-                      href="/"
-                      className="hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
-                    >
-                      Beranda
-                    </Link>
-                  </li>
-                  <li aria-hidden="true" className="text-white/40">
-                    &gt;
-                  </li>
-                  <li>
-                    <Link
-                      href="/ppdb"
-                      className="hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
-                    >
-                      PPDB Online
-                    </Link>
-                  </li>
-                  <li aria-hidden="true" className="text-white/40">
-                    &gt;
-                  </li>
-                  <li aria-current="page" className="font-semibold text-white">
-                    Masuk Pendaftar
-                  </li>
-                </ol>
-              </nav>
-
-              {/* Badge Pill Emas Persis Referensi */}
-              <div className="inline-flex items-center gap-2 bg-[#C89332] text-white text-xs font-semibold px-4 py-1.5 rounded-full w-fit shadow-2xs">
-                <span>Portal Masuk Calon Peserta Didik</span>
-              </div>
-
-              <div>
-                <h1
-                  id="login-hero-heading"
-                  className="font-pub-heading text-3xl sm:text-4xl lg:text-[40px] font-bold text-white tracking-tight leading-[1.18] mb-3"
+      <div className="bg-white border-b border-gray-100 py-3 w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+          <nav aria-label="Navigasi Halaman">
+            <ol className="flex items-center gap-2 text-xs text-gray-500">
+              <li>
+                <Link
+                  href="/"
+                  className="hover:text-[#062940] transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
                 >
-                  Masuk Portal Pendaftar
-                  <br />
-                  <span className="text-white">PPDB SMP Laboratorium UM</span>
-                </h1>
-
-                <p className="text-white/85 text-xs sm:text-sm lg:text-[15px] leading-relaxed max-w-lg">
-                  Silakan masuk menggunakan nomor registrasi, email, atau nomor WhatsApp yang didaftarkan untuk melanjutkan pengisian formulir, unggah berkas, dan memantau status seleksi.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile / Tablet Image */}
-          <div className="lg:hidden relative aspect-[16/9] w-full overflow-hidden bg-slate-900">
-            <Image
-              src="/images/ppdb-students.jpg"
-              alt="Siswa-siswi SMP Laboratorium UM berprestasi"
-              fill
-              priority
-              unoptimized
-              sizes="100vw"
-              className="object-cover object-center"
-            />
-            <div
-              className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#062940] via-[#062940]/40 to-transparent"
-              aria-hidden="true"
-            />
-          </div>
+                  Beranda
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-gray-300">
+                /
+              </li>
+              <li>
+                <Link
+                  href="/ppdb"
+                  className="hover:text-[#062940] transition-colors focus:outline-none focus:ring-1 focus:ring-[#C89332] rounded"
+                >
+                  PPDB Online
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-gray-300">
+                /
+              </li>
+              <li aria-current="page" className="font-semibold text-[#062940]">
+                Masuk Pendaftar
+              </li>
+            </ol>
+          </nav>
         </div>
-      </section>
+      </div>
 
       {/* =========================================================================
-          2. KONTEN UTAMA: FORM LOGIN & KOTAK INFORMASI (2 KOLOM RESPONSIVE)
+          2. KONTEN UTAMA: INFO/PETUNJUK (KIRI) vs. FORMULIR MASUK (KANAN)
+          Didesain berbeda: Kiri bernuansa informatif/panduan, Kanan berupa
+          kartu putih elevated dengan aksen border penegas sebagai pusat aksi.
           ========================================================================= */}
-      <section aria-label="Area Masuk Portal Pendaftar" className="py-12 sm:py-16 w-full">
+      <section aria-label="Area Masuk Portal Pendaftar" className="py-8 sm:py-12 w-full flex-1 bg-white">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* KOLOM KIRI: INFORMASI AKSES & BANTUAN (Span 5 / 12) */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Kartu 1: Apa yang Bisa Dilakukan di Dashboard? */}
-              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF3F8] text-[#0A3D62] flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" aria-hidden="true" />
+
+            {/* ===================================================================
+                KOLOM KIRI: INFO & PETUNJUK (Span 5 / 12)
+                Menggunakan latar lembut #F8FAFC agar terlihat beda dengan form
+                =================================================================== */}
+            <div className="lg:col-span-5 space-y-5">
+              {/* Kartu 1: Fasilitas Dashboard Pendaftar */}
+              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#0A3D62] flex items-center justify-center shrink-0 shadow-2xs">
+                    <FileText className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
                   </div>
                   <div>
                     <h2 className="font-pub-heading font-bold text-base text-[#062940]">
@@ -217,7 +162,9 @@ export default function PPDBLoginPage() {
                     <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <strong className="text-gray-800 block">Lengkapi Formulir 5 Langkah</strong>
-                      <span>Data diri, orang tua/wali, sekolah asal, peminatan jalur, dan unggah berkas.</span>
+                      <span className="text-gray-500 leading-relaxed">
+                        Data diri, orang tua/wali, sekolah asal, peminatan jalur, dan unggah berkas.
+                      </span>
                     </div>
                   </div>
 
@@ -225,7 +172,9 @@ export default function PPDBLoginPage() {
                     <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <strong className="text-gray-800 block">Pantau Validasi &amp; Catatan Revisi</strong>
-                      <span>Lihat status pemeriksaan berkas secara transparan oleh tim verifikator panitia.</span>
+                      <span className="text-gray-500 leading-relaxed">
+                        Lihat status pemeriksaan berkas secara transparan oleh tim verifikator panitia.
+                      </span>
                     </div>
                   </div>
 
@@ -233,17 +182,19 @@ export default function PPDBLoginPage() {
                     <CheckCircle2 className="w-4 h-4 text-[#1E7A46] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <strong className="text-gray-800 block">Cetak Kartu Tanda Peserta PPDB</strong>
-                      <span>Unduh dokumen resmi kartu peserta lengkap dengan kode QR verifikasi keabsahan.</span>
+                      <span className="text-gray-500 leading-relaxed">
+                        Unduh dokumen resmi kartu peserta lengkap dengan kode QR verifikasi keabsahan.
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Kartu 2: Belum Memiliki Akun? */}
-              <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-xs space-y-3">
+              {/* Kartu 2: Belum Terdaftar? */}
+              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs text-[#062940]">Belum Terdaftar?</span>
-                  <span className="text-[11px] font-semibold text-[#1E7A46] bg-[#E8F5E9] px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[#1E7A46] bg-[#E8F5E9] px-2.5 py-0.5 rounded-full">
                     PPDB 2026/2027
                   </span>
                 </div>
@@ -260,7 +211,7 @@ export default function PPDBLoginPage() {
               </div>
 
               {/* Kartu 3: Catatan Pembeda Portal Sekolah (/masuk) */}
-              <div className="bg-[#EBF3F8]/80 border border-[#D0E2ED] rounded-2xl p-6 space-y-3">
+              <div className="bg-[#F0F5FA] border border-[#D0E2ED] rounded-2xl p-5 space-y-2.5">
                 <div className="flex items-center gap-2 text-[#0A3D62]">
                   <School className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <h3 className="font-bold text-xs">Bukan Calon Siswa Baru?</h3>
@@ -278,21 +229,38 @@ export default function PPDBLoginPage() {
               </div>
             </div>
 
-            {/* KOLOM KANAN: KARTU LOGIN PENDAFTAR (Span 7 / 12) */}
-            <div className="lg:col-span-7 bg-white border border-gray-200/90 rounded-2xl p-6 sm:p-8 shadow-xs">
+            {/* ===================================================================
+                KOLOM KANAN: KARTU FORMULIR MASUK (Span 7 / 12)
+                Pusat aksi utama: elevated crisp white card dengan aksen border-t-4 navy,
+                bayangan terangkat (shadow-xl), dan heading utama di dalamnya.
+                =================================================================== */}
+            <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-6 sm:p-9 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5">
               {/* Header Kartu Form */}
               <div className="mb-6 pb-5 border-b border-gray-100">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EBF3F8] text-[#0A3D62] mb-2">
+                {/* <div className="inline-flex items-center gap-1.5 bg-[#EBF3F8] text-[#0A3D62] text-xs font-semibold px-3 py-1 rounded-full mb-3">
                   <KeyRound className="w-3.5 h-3.5 text-[#C89332]" aria-hidden="true" />
                   <span>Otorisasi Akses Pendaftar</span>
-                </span>
-                <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-[#062940]">
+                </div> */}
+                <h1 className="font-pub-heading text-2xl sm:text-3xl font-bold text-[#062940] tracking-tight leading-tight">
                   Masuk ke Dashboard Calon Siswa
-                </h2>
-                <p className="text-gray-500 text-xs sm:text-sm mt-1">
+                </h1>
+                <p className="text-gray-600 text-xs sm:text-sm mt-1.5 leading-relaxed">
                   Masukkan salah satu identitas pendaftaran Anda beserta kata sandi yang telah dibuat.
                 </p>
               </div>
+
+              {/* Alert Pemberitahuan Sesi Kedaluwarsa */}
+              {sessionExpiredNotice && (
+                <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs sm:text-sm text-amber-900 animate-in fade-in">
+                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="flex-1">
+                    <strong className="block font-semibold">Sesi Anda Telah Berakhir</strong>
+                    <span className="mt-0.5 block text-xs text-amber-800 leading-relaxed">
+                      Sesi masuk akun calon siswa telah kedaluwarsa demi keamanan. Silakan masukkan nomor registrasi/email dan kata sandi Anda kembali.
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Alert Pesan Kesalahan */}
               {errorMessage && (
@@ -423,56 +391,6 @@ export default function PPDBLoginPage() {
                   </a>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          3. PRE-FOOTER CALL TO ACTION (KONSISTEN SITUS WEB)
-          ========================================================================= */}
-      <section className="relative overflow-hidden bg-[#062940] text-white py-12 sm:py-14 w-full border-t border-white/10 mt-auto">
-        {/* Foto Gedung Sekolah Faded Overlay di Kiri */}
-        <div className="absolute inset-y-0 left-0 w-2/5 overflow-hidden pointer-events-none opacity-25">
-          <Image
-            src="/images/school-gate.jpg"
-            alt=""
-            fill
-            unoptimized
-            sizes="40vw"
-            className="object-cover object-left"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#062940]/80 to-[#062940]" aria-hidden="true" />
-        </div>
-
-        <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
-            <div className="text-center lg:text-left border-l-0 lg:border-l-2 lg:border-white/20 lg:pl-5">
-              <h2 className="font-pub-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Punya Pertanyaan Seputar Pendaftaran?
-              </h2>
-              <p className="text-white/80 text-xs sm:text-sm mt-1.5 max-w-xl leading-relaxed">
-                Tim panitia admisi SMP Laboratorium UM siap mendampingi Anda di setiap tahapan.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
-              <a
-                href="https://wa.me/6285126088473"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto text-center bg-[#C89332] hover:bg-[#B57C23] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-sm hover:shadow transition-all inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#062940]"
-              >
-                <MessageCircle className="w-4 h-4" aria-hidden="true" />
-                <span>Konsultasi WhatsApp</span>
-              </a>
-              <Link
-                href="/ppdb"
-                className="w-full sm:w-auto text-center inline-flex items-center justify-center gap-2 bg-[#062940] hover:bg-white/10 border border-white/40 hover:border-white text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#C89332]"
-              >
-                <span>Informasi Alur PPDB</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
             </div>
           </div>
         </div>
