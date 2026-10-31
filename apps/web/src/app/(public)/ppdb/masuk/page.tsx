@@ -140,12 +140,13 @@ export default function PPDBLoginPage() {
 
             {/* ===================================================================
                 KOLOM KIRI: INFO & PETUNJUK (Span 5 / 12)
-                Menggunakan latar lembut #F8FAFC agar terlihat beda dengan form
+                Menggunakan latar abu sejuk (bg-slate-100/80) agar terasa tenang/sekunder
+                dan kartu form putih di kanan langsung menjadi pusat perhatian mata.
                 =================================================================== */}
             <div className="lg:col-span-5 space-y-5">
               {/* Kartu 1: Fasilitas Dashboard Pendaftar */}
-              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-4">
-                <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70">
+              <div className="bg-slate-100/85 border border-slate-200/90 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-200/80">
                   <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#0A3D62] flex items-center justify-center shrink-0 shadow-2xs">
                     <FileText className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
                   </div>
@@ -191,7 +192,7 @@ export default function PPDBLoginPage() {
               </div>
 
               {/* Kartu 2: Belum Terdaftar? */}
-              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-3">
+              <div className="bg-slate-100/85 border border-slate-200/90 rounded-2xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs text-[#062940]">Belum Terdaftar?</span>
                   <span className="text-[11px] font-semibold text-[#1E7A46] bg-[#E8F5E9] px-2.5 py-0.5 rounded-full">
@@ -211,7 +212,7 @@ export default function PPDBLoginPage() {
               </div>
 
               {/* Kartu 3: Catatan Pembeda Portal Sekolah (/masuk) */}
-              <div className="bg-[#F0F5FA] border border-[#D0E2ED] rounded-2xl p-5 space-y-2.5">
+              <div className="bg-slate-100/85 border border-slate-200/90 rounded-2xl p-5 space-y-2.5">
                 <div className="flex items-center gap-2 text-[#0A3D62]">
                   <School className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <h3 className="font-bold text-xs">Bukan Calon Siswa Baru?</h3>

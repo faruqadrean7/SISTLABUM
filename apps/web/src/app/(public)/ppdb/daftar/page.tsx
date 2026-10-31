@@ -339,12 +339,13 @@ export default function RegisterApplicantPage() {
 
             {/* ===================================================================
                 KOLOM KIRI: INFO & PETUNJUK (Span 5 / 12)
-                Menggunakan latar lembut #F8FAFC agar terlihat beda dengan form
+                Menggunakan latar abu sejuk (bg-slate-100/85) agar terasa tenang/sekunder
+                dan kartu form putih di kanan langsung menjadi pusat perhatian mata.
                 =================================================================== */}
             <div className="lg:col-span-5 space-y-5">
               {/* Kartu 1: Petunjuk Penting */}
-              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-4">
-                <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70">
+              <div className="bg-slate-100/85 border border-slate-200/90 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-200/80">
                   <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#0A3D62] flex items-center justify-center shrink-0 shadow-2xs">
                     <HelpCircle className="w-5 h-5 text-[#0A3D62]" aria-hidden="true" />
                   </div>
@@ -390,8 +391,8 @@ export default function RegisterApplicantPage() {
               </div>
 
               {/* Kartu 2: Info Gelombang Aktif */}
-              <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-6 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-200/70">
+              <div className="bg-slate-100/85 border border-slate-200/90 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                   <div className="flex items-center gap-2.5">
                     <Calendar className="w-4 h-4 text-[#C89332]" aria-hidden="true" />
                     <span className="font-bold text-xs text-[#062940]">Gelombang 1 Reguler &amp; Prestasi</span>
@@ -418,7 +419,7 @@ export default function RegisterApplicantPage() {
               </div>
 
               {/* Kartu 3: Hotline Panitia PPDB */}
-              <div className="bg-[#F0F5FA] border border-[#D0E2ED] rounded-2xl p-5 space-y-2.5">
+              <div className="bg-slate-100/85 border border-slate-200/90 rounded-2xl p-5 space-y-2.5">
                 <div className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-[#0A3D62]" aria-hidden="true" />
                   <h3 className="font-bold text-xs text-[#0A3D62]">Butuh Bantuan Pendaftaran?</h3>
